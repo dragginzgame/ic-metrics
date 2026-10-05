@@ -1,12 +1,11 @@
 # Measurement extraction contract
 
-This is scope and source evidence for a candidate extraction, not an implemented
-API or a second issue tracker. Re-read consumer worktrees before extracting;
-the audit observed concurrent Canic changes.
+This records the implemented arithmetic extraction and its consumer boundaries.
+Re-read consumer worktrees before editing; concurrent work is active in the consumers.
 
 ## Demonstrated overlap
 
-| Consumer source | Existing behavior | Shared candidate |
+| Consumer source | Existing behavior | Shared boundary |
 | --- | --- | --- |
 | `icydb/crates/icydb-core/src/runtime.rs` | IC performance counter 1; native zero substitute | Explicit instruction-reader boundary |
 | `icydb/crates/icydb-core/src/metrics/state.rs` | Saturating sample count, total, and maximum | Small measurement arithmetic |
@@ -15,13 +14,13 @@ the audit observed concurrent Canic changes.
 
 Paths are relative to the parent projects directory and are evidence, not
 dependencies or build inputs. No sibling needs to be present for this crate to
-build. `ic-timers` is an additional candidate, not authorized adoption scope.
+build. All three named consumers are authorized integration scope.
 
 ## Canonical ownership
 
-Measurement math may move here when at least IcyDB and Canic have concrete
-callers. Start by comparing maintained summaries; a tiny counter reader alone
-does not justify a framework. Add no speculative modules, registry, trait,
+`record_sample` now serves IcyDB and Canic directly; `MeasurementSummary` is
+the canonical summary re-exported by ic-timers. All remain allocation-free.
+A tiny counter reader alone does not justify a framework. Add no speculative modules, registry, trait,
 feature matrix, serialization contract, or persisted state.
 
 Document empty versus zero samples, independent saturation of count and total,
@@ -60,3 +59,23 @@ on this crate, uses its primitives, removes the replaced local implementation,
 and passes focused checks for its own attribution and reset contracts.
 Use released package dependencies for published consumers; any temporary local
 path is explicit integration wiring, never hidden sibling discovery.
+
+## Implemented adoption and evidence
+
+IcyDB retains its report fields and maximum arithmetic while sharing count/total
+updates. Canic removes `PerfSlot::increment` and shares the same count/total
+primitive without changing exclusive nesting. ic-timers moves its summary into
+this crate and directly re-exports it; role collection and registration identity
+remain consumer-owned. Public report/serialized shapes are unchanged.
+
+Six core tests cover empty/zero, latest/maximum, independent saturation and constant
+evaluation. Nine IcyDB state tests, four Canic endpoint tests and three ic-timers
+measurement/projection tests passed on Linux during extraction. These are native
+contract tests, not IC instruction measurements or qualification of later unrelated
+consumer edits. No instruction-count, cycle or Wasm-size improvement is claimed.
+
+All dependencies are explicitly declared local paths with an exact 0.1.0 requirement.
+The crate is unpublished and publishing consumers requires a released dependency.
+IC counter readers remain local: their backend execution needs its own demonstrated
+contract and real IC evidence before it moves. Other crates can consume the pure
+arithmetic without acquiring product instrumentation or an IC runtime dependency.

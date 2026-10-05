@@ -9,7 +9,8 @@ not the unit of work.
 This principle combines IcyDB's landing-slice guidance with Canic's distinction
 between implementation slices and release batches. The shared baseline owns
 continuation, validation authority and effect authorization. Consumers define
-their accepted outcomes, qualification gates and release targets within it.
+their accepted outcomes, qualification gates and release inputs within it.
+Release command names and sequencing follow the [common contract](../releases.md).
 
 ## Coherent outcome
 
@@ -47,6 +48,16 @@ Stop and split or update the plan when work reveals another production
 behavior, canonical owner, or independently useful result. The cost of another
 compile or review is not sufficient reason to hide that outcome in the current
 change.
+
+## Cleanup reporting
+
+Build the final cleanup report from the actual diff, including declarations in
+deleted files. List every removed function, method and type, public or private,
+with its former file or module, removal reason and replacement when applicable.
+Use exact names so the maintainer can identify what disappeared and why; a
+summary such as "removed legacy helpers" or a symbol count is insufficient.
+Group entries with the same reason if useful, while enumerating every name.
+Label moves and renames explicitly so they do not imply behavior was deleted.
 
 ## Validation
 

@@ -1,40 +1,50 @@
 # ic-metrics
 
-Repository scaffold for shared Internet Computer measurement primitives.
+Allocation-free saturating measurement arithmetic for Internet Computer crates.
 
-The workspace contains one unpublished, dependency-free `no_std` library.
-It currently exports no public API and is not used by IcyDB or Canic.
+The dependency-free `no_std` library exports `record_sample` for consumer-owned
+count/total fields and `MeasurementSummary` for samples, total, latest and maximum.
+Zero is a valid observation; an empty summary has no latest or maximum value.
+Count and total saturate independently. Consumers establish units, identity and
+reset boundaries before comparing observations; saturated totals cannot supply
+exact interval arithmetic.
 
-The intended boundary is small: saturating measurement summaries and a
-well-defined IC instruction-counter interface. Product metric names, inclusive
-or exclusive attribution, global registries, persistence, and public reporting
-remain owned by consumers. [The extraction contract](docs/extraction.md)
-records the source evidence and adoption requirements.
+```rust
+use ic_metrics::MeasurementSummary;
+
+let mut summary = MeasurementSummary::EMPTY;
+assert_eq!(summary.latest(), None);
+summary.record(0);
+assert_eq!(summary.samples(), 1);
+assert_eq!(summary.latest(), Some(0));
+```
+
+IcyDB, Canic and ic-timers currently use explicit local integration dependencies.
+Their inclusive or exclusive attribution, registries, callback roles, replication,
+persistence and reporting remain local. IC counter reads also remain consumer-owned.
+[The extraction contract](docs/extraction.md) records scope and evidence.
 
 ## Development
 
-Install Rust through rustup, Git, GNU Make, Bash 3.2 or newer, and a SHA-256
-utility. The pinned toolchain is Rust 1.99.0; the initial MSRV is 1.88.0.
-For Wasm compilation, install `wasm32-unknown-unknown` with rustup.
+Install rustup, Git, GNU Make, Bash 3.2 or newer and a SHA-256 utility. The pinned
+toolchain is Rust 1.99.0 and the MSRV is 1.88.0. Install `wasm32-unknown-unknown`
+for Wasm checks. `make help` lists focused commands; select named tests during
+implementation. Full `make ci` requires an explicit request outside configured CI.
 
-`make help` lists commands. Use `make fmt`, `make check`, `make check-wasm`,
-`make clippy`, and `make docs-check` for focused scaffold validation.
-Run a named test once maintained behavior exists. `make ci` is the full gate,
-requiring an explicit request outside configured CI.
+See [agent rules](AGENTS.md), [host support](docs/hosts.md) and
+[the current handoff](docs/status/current.md). Reviewed shared tooling is vendored;
+normal checks and release scripts need no Shared Tooling sibling checkout.
 
-See [agent rules](AGENTS.md), [host support](docs/hosts.md), and
-[the current handoff](docs/status/current.md). Shared tooling is vendored at an
-exact reviewed revision; normal checks need no sibling checkout.
+## Releases and adoption
 
-## Adoption and publication
+The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
+The [changelog](CHANGELOG.md) preserves the initial `0.1.0` scaffold and one undated
+Draft toward `0.1.1`. Cargo metadata remains `0.1.0`; publication is disabled.
+Temporary consumer paths must become released dependencies before publication.
 
-Creating this repository does not change any consumer dependency. Adoption
-requires a concrete API, a reviewed dependency update in each consumer, removal
-of superseded implementations, and focused behavioral evidence.
-
-Cargo's initial `0.1.0` metadata is not a release commitment. Publication is
-disabled while this is a scaffold. No GitHub remote or published crate exists
-as a result of this setup.
-
-When hosted, use an accurate repository description:
-"Repository scaffold for shared Internet Computer measurement primitives."
+Maintainer-owned `make release-patch`, `release-minor` and `release-major` use the
+[same reviewed workflow](docs/releases.md), with `RELEASE_REMOTE=origin` and
+`RELEASE_BRANCH=main`. They require cargo-edit (`cargo set-version`), run the
+complete offline gate, prepare only Cargo metadata and release notes, commit,
+tag and atomically push. They do not publish the crate. Inspect retained release
+state before `make release-resume VERSION=X.Y.Z` resumes an interrupted candidate.

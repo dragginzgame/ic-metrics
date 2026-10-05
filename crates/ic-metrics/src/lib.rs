@@ -1,6 +1,11 @@
-//! Repository scaffold for shared Internet Computer measurement primitives.
+//! Allocation-free measurement arithmetic for Internet Computer consumers.
 //!
-//! No public API is implemented yet. See the repository extraction contract
-//! for intended ownership and consumer adoption requirements.
+//! Values use one consumer-selected unit per aggregate. Consumers own sampling,
+//! attribution, counter identity, reset windows and reporting. This crate does
+//! not read an IC counter or manufacture measurements on native hosts.
 
 #![no_std]
+
+mod summary;
+
+pub use summary::{MeasurementSummary, record_sample};
