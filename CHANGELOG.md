@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.5]
+## [0.1.5] - 2026-10-05
 
 - Add an opt-in, Wasm-only call-context instruction reader through the safe IC
   binding. Keep the default arithmetic core dependency-free and `no_std`, with
