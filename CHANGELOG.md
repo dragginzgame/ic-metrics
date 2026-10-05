@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.5]
+
+- Add an opt-in, Wasm-only call-context instruction reader through the safe IC
+  binding. Keep the default arithmetic core dependency-free and `no_std`, with
+  attribution and native substitutes owned by consumers
+  ([#3](https://github.com/dragginzgame/ic-metrics/issues/3)).
+- Add `make reader-check` for direct-counter and async-callback qualification in
+  PocketIC, with an explicit, checksum-verified 16.0.0 binary.
+
 ## [0.1.4] - 2026-10-05
 
 - Document published crates.io adoption with a root workspace dependency example,

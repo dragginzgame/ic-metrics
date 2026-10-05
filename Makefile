@@ -36,7 +36,7 @@ release-prepared-check release-commit-check release-committed-check release-tagg
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check test msrv shared-tooling-check release-tools-check ci
+.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check reader-check test msrv shared-tooling-check release-tools-check ci
 
 help:
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
@@ -46,6 +46,7 @@ help:
 	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, msrv, shared-tooling-check"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
+	@echo "IC reader: reader-check POCKET_IC_BIN=/absolute/path/to/pocket-ic (pinned 16.0.0)"
 	@echo "Full gates (explicit request or configured CI): test, ci"
 
 publish:
@@ -73,12 +74,20 @@ check:
 
 check-wasm:
 	cargo check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
+	cargo check -p $(PACKAGE) --locked --target wasm32-unknown-unknown --features ic
 
 clippy:
 	cargo clippy -p $(PACKAGE) --all-targets --locked -- -D warnings
+	cargo clippy -p $(PACKAGE) --lib --example ic_reader_canister --locked --target wasm32-unknown-unknown --features ic -- -D warnings
 
 docs-check:
 	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps
+	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown --features ic
+
+reader-check:
+	@test -n "$(POCKET_IC_BIN)" || { echo "Set POCKET_IC_BIN to a verified PocketIC 16.0.0 binary" >&2; exit 2; }
+	CARGO_TARGET_DIR="$(CURDIR)/target" cargo build -p $(PACKAGE) --example ic_reader_canister --target wasm32-unknown-unknown --features ic --release --locked --offline
+	CARGO_TARGET_DIR="$(CURDIR)/target" POCKET_IC_BIN="$(POCKET_IC_BIN)" IC_METRICS_READER_WASM="$(CURDIR)/target/wasm32-unknown-unknown/release/examples/ic_reader_canister.wasm" cargo test -p $(PACKAGE) --test ic_reader --locked --offline call_context_reader_matches_ic_and_survives_callback -- --exact --ignored --nocapture
 
 test:
 	cargo test -p $(PACKAGE) --locked
@@ -86,6 +95,7 @@ test:
 msrv:
 	cargo +$(MSRV) check -p $(PACKAGE) --locked
 	cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
+	cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown --features ic
 
 shared-tooling-check:
 	bash scripts/ci/verify-shared-tooling-snapshot.sh

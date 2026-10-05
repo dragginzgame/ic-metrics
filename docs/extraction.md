@@ -81,12 +81,29 @@ registry-dependent `no_std` fixture passes Rust 1.88 host and Wasm checks.
 IcyDB already selects registry 0.1.3. IC Timers' root and testing lockfiles now
 select registry 0.1.3, preserving every other package record. Focused
 measurement, registration/reset identity and delivery checks pass on Linux.
-Canic's local path still needs replacement after its active maintainer release
-finishes; IcyDB's active release likewise owns its current validation inputs.
+The maintainer also published 0.1.4 at
+`1a144139a2b84e7a389d721febe79aaac3775b0c`; its verified archive matches the tag
+and passes the same standalone Rust 1.88 host/Wasm compilation checks. Canic's
+primary checkout now selects registry 0.1.4 without a sibling path, preserving
+all other lock records and package metadata. The isolated candidate first passed
+locked offline Linux metadata, manifest sorting, strict Core library Clippy and
+all four endpoint tests. After its primary release command stopped, source/lock
+identities were rechecked and the patch was applied there. Primary metadata,
+manifest sorting, strict Core Clippy and all four endpoint tests also pass.
+IcyDB's clean committed adoption source `1a8511c3a` passed metrics-enabled strict
+Core Clippy and all nine selected state tests in an isolated worktree with a
+separate build directory. Primary source/manifest/lock inputs matched the captured
+qualification revision. After its primary release command stopped, the prepared
+registry notes and obsolete-comment cleanup were applied with source/free-lock
+checks. Primary locked Linux metadata and manifest sorting pass; typed Cargo
+metadata, lock bytes and all other changelog content are preserved.
+Focused evidence remains separate from complete consumer native release/CI and
+publication qualification.
 The [publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
 links each consumer's path removal and qualification evidence.
-IC counter readers remain local: their backend execution needs its own demonstrated
-contract and real IC evidence before it moves. Other crates can consume the pure
+Published consumer IC counter readers remain local until the new API is released
+and adopted under [#3](https://github.com/dragginzgame/ic-metrics/issues/3).
+Other crates can consume the pure
 arithmetic without acquiring product instrumentation or an IC runtime dependency.
 
 ## IC reader contract audit
@@ -105,18 +122,41 @@ must remain local and must not be promoted to shared IC measurements. Consumers
 currently use saturating subtraction for their span policy, so extracting a
 reader alone must not silently reinterpret regressions or measured zero.
 
-The existing cached binding `ic0 1.2.0` uses `std::mem::MaybeUninit` and has no
-`no_std` feature. There is no selected backend dependency in this crate. A direct
-raw import would also conflict with the workspace's `unsafe_code = "forbid"`
-policy. Preserve the dependency-free arithmetic boundary while resolving a safe,
-target-specific backend; do not vendor the binding or weaken that policy to move
-three one-line calls. [Reader extraction](https://github.com/dragginzgame/ic-metrics/issues/3)
-owns this contract and its real IC qualification.
+The selected `ic0 1.2.0` binding uses `std::mem::MaybeUninit` and has no `no_std`
+feature. The new `ic` feature explicitly opts into its safe API, only on
+`wasm32-unknown-unknown`. The default feature set does not select that dependency
+on host or Wasm. The arithmetic source remains `no_std`; the optional IC backend
+requires the binding's `std` support. This preserves `unsafe_code = "forbid"`
+without a raw project-owned import, a vendored binding or a policy exception.
+The feature owns just this runtime boundary, not attribution or a backend matrix;
+an unconditional Wasm dependency would unnecessarily change arithmetic-only
+consumers. [Reader extraction](https://github.com/dragginzgame/ic-metrics/issues/3)
+owns publication, caller adoption and the execution evidence.
 
 The upstream binding at
 [`dfinity/cdk-rs` revision `624606f7fd1ecd6668e9608594946486aec29167`](https://github.com/dfinity/cdk-rs/blob/624606f7fd1ecd6668e9608594946486aec29167/ic0/src/lib.rs)
 still uses std and declares no no_std feature. The earlier
 [no_std request](https://github.com/dfinity/cdk-rs/issues/588) was closed with an
 explanation about ic-cdk's Candid dependency; that does not demonstrate a no_std
-contract for the lower-level ic0 binding. No upstream change or new dependency
-has been selected here.
+contract for the lower-level ic0 binding. The explicit opt-in does not claim that
+ic0 is `no_std` or require an upstream change.
+
+The maintained Wasm fixture brackets shared reads with direct counter-1 reads,
+executes bounded work, then checks continuity across an actual self-call callback
+against the per-message counter 0. `make reader-check` runs only this named
+PocketIC test with a caller-supplied 16.0.0 binary; its version and platform digest
+are checked before server startup. No native counter fake is used. Runtime
+qualification and its artifact identities are recorded in [the host record](hosts.md).
+The synchronous and replicated callback fixture does not qualify composite-query
+execution or complete consumer lifecycle behavior, and claims no performance gain.
+
+## Additional consumer source audit
+
+A read-only scan of IC Memory, IC Query, IC Blob Storage, IC Backup, IC Testkit
+and IC Host Tools did not establish another matching saturating sample summary.
+IC Testkit's `BenchmarkCounters` uses `u128`, checked deltas and typed overflow
+errors across instruction and byte counters; substituting the current `u64`
+saturating arithmetic would change that contract. Its canister performance
+reader also includes memory counters. These ownership and unit differences do
+not justify another shared mode or widening the current API. No additional
+repository was modified and no native timing measurements were run.

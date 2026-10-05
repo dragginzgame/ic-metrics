@@ -10,5 +10,28 @@ description.workspace = true
 readme = "../../README.md"
 publish = ["crates-io"]
 
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+candid.workspace = true
+ic-cdk.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+ic-testkit.workspace = true
+sha2.workspace = true
+
+[package.metadata.docs.rs]
+features = ["ic"]
+default-target = "wasm32-unknown-unknown"
+
+[features]
+ic = ["dep:ic0"]
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+ic0 = { workspace = true, optional = true }
+
+[[example]]
+name = "ic_reader_canister"
+crate-type = ["cdylib"]
+required-features = ["ic"]
+
 [lints]
 workspace = true

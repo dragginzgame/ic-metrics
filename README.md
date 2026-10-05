@@ -2,7 +2,7 @@
 
 Allocation-free saturating measurement arithmetic for Internet Computer crates.
 
-The dependency-free `no_std` library exports `record_sample` for consumer-owned
+The default dependency-free `no_std` library exports `record_sample` for consumer-owned
 count/total fields and `MeasurementSummary` for samples, total, latest and maximum.
 Zero is a valid observation; an empty summary has no latest or maximum value.
 Count and total saturate independently. Consumers establish units, identity and
@@ -21,9 +21,26 @@ assert_eq!(summary.latest(), Some(0));
 
 IcyDB, Canic and ic-timers integrate this arithmetic.
 Their inclusive or exclusive attribution, registries, callback roles, replication,
-persistence and reporting remain local. IC counter reads also remain consumer-owned.
+persistence and reporting remain local.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
 records scope and evidence.
+
+The pending 0.1.5 addition exposes `ic_metrics::call_context_instructions()` with
+feature `ic` on `wasm32-unknown-unknown`. It reads IC performance counter 1;
+consumers establish call-context identity and own any subtraction or attribution.
+The opt-in IC binding uses `std`. Default arithmetic builds have no runtime
+dependencies on host or Wasm, and native builds expose no counter substitute.
+After the maintainer publishes 0.1.5, opt in from the root dependency catalog:
+
+```toml
+[workspace.dependencies]
+ic-metrics = { version = "0.1.5", features = ["ic"] }
+```
+
+The reader is an instruction count, not cycles or elapsed time. Its replicated
+call context can span callbacks; unrelated calls, timer deliveries and resets
+do not establish comparable readings. The API documents the non-replicated
+composite-query boundary separately.
 
 ## Development
 
@@ -58,13 +75,13 @@ normal checks and release scripts need no Shared Tooling sibling checkout.
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.1.3`](https://crates.io/crates/ic-metrics/0.1.3)
-is published on crates.io and matches tag `v0.1.3`. Declare it in the consumer's
+tooling releases. [`ic-metrics 0.1.4`](https://crates.io/crates/ic-metrics/0.1.4)
+is published on crates.io and matches tag `v0.1.4`. Declare it in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.1.3"
+ic-metrics = "0.1.4"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

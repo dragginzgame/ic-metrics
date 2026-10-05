@@ -33,9 +33,27 @@ and Wasm checks on Linux; its archive checksum, sources, license and embedded Gi
 revision match the tag. These checks supply compilation and tooling evidence,
 not IC instruction measurements or native qualification of consumer releases.
 
-The library core is `no_std` and targets `wasm32-unknown-unknown` in addition
+The published `0.1.4` revision
+`1a144139a2b84e7a389d721febe79aaac3775b0c` also passed
+[CI run 37353066599](https://github.com/dragginzgame/ic-metrics/actions/runs/37353066599)
+on Ubuntu 24.04, both declared macOS 15 architectures and Linux MSRV. Its registry
+archive matches the tagged Rust sources, license and embedded Git identity, and
+an isolated registry-dependent `no_std` fixture passes locked offline Rust 1.88
+host and Wasm compilation. Consumer worktrees retain their own qualification.
+
+The default library core is `no_std` and targets `wasm32-unknown-unknown` in addition
 to native host compilation. A Wasm check proves compilation only, not IC
 instruction accounting; runtime measurement needs canister execution evidence.
+
+The pending 0.1.5 reader has focused Linux runtime qualification in PocketIC
+16.0.0: shared reads lie between direct counter-1 reads, increase after measured
+work, and retain call-context continuity across a replicated self-call callback.
+The [execution record](evidence/ic-reader.md) binds readings to the exact source,
+lockfile, server binary and Wasm artifact. This is IC instruction evidence from
+PocketIC, not native timing, mainnet evidence or a performance comparison.
+Composite-query execution and consumer lifecycle behavior are outside this fixture.
+The new worktree's macOS qualification is separate from the successful tagged
+0.1.4 CI recorded above.
 
 ## Prerequisites and focused checks
 
@@ -46,13 +64,32 @@ instruction accounting; runtime measurement needs canister execution evidence.
   `cargo install cargo-sort --version 2.1.4 --locked`. Formatting, CI and release
   validation check all workspace manifests before Rust formatting.
 - SHA-256 via `sha256sum` on Linux or `shasum -a 256` on macOS.
-- No third-party Rust dependencies, network services, or external IC tools are
-  needed by the arithmetic library. Provision toolchains explicitly before offline checks.
+- Default arithmetic library builds need no third-party runtime dependencies,
+  network services or external IC tools. Feature `ic` selects ic0 1.2.0 only on
+  Wasm; that optional binding uses `std`. Native tests and lint compile the
+  PocketIC harness dependencies. Prepare the selected lockfile cache explicitly
+  with `cargo fetch --locked` before offline validation.
 
 Run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
-`make msrv` checks the declared floor. Select
+`make msrv` checks the declared floor. Wasm checks, Clippy and docs also cover
+the opt-in reader; Clippy covers its canister fixture. Select
 named tests relevant to the change rather than running the full suite by default.
+
+For actual instruction-counter execution, provision the exact PocketIC 16.0.0
+binary from [the upstream release](https://github.com/dfinity/pocketic/releases/tag/16.0.0)
+for the supported host, then run:
+
+```sh
+make reader-check POCKET_IC_BIN=/absolute/path/to/pocket-ic
+```
+
+The host fixture checks its pinned platform digest and version before starting
+the server, with bounded startup, request time and server lifetime. The target
+builds the Wasm example under this repository's `target/`, then runs only the
+named ignored integration test. Ordinary tests do not implicitly discover,
+download or launch PocketIC. Linux x86_64 and both declared macOS architectures
+have explicit digest pins; this worktree's actual execution evidence is Linux.
 
 The configured CI runs `make ci` natively on every declared host and
 `make msrv` on Linux. Full `make test`/`make ci` gates remain user-owned
