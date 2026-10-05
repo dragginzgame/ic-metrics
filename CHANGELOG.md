@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.4]
+## [0.1.4] - 2026-10-05
 
 - Document published crates.io adoption with a root workspace dependency example,
   so consumers can use ic-metrics without a sibling checkout
