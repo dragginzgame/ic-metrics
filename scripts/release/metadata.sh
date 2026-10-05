@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Consumer adapter. Dependencies: Cargo/cargo-edit, Git, awk and Unix utilities.
+# Consumer adapter. Dependencies: Cargo/cargo-edit/cargo-sort, Git, awk and Unix utilities.
 operation="${1:-}"
 [[ $# -eq 1 ]] || exit 2
 version() {
@@ -29,6 +29,7 @@ case "$operation" in
         [[ "$(version)" == "${RELEASE_PREVIOUS:?}" ]]
         admit_files
         cargo set-version --help >/dev/null
+        cargo sort --help >/dev/null
         cargo fetch --locked --offline
         ;;
     prepare)
@@ -55,6 +56,8 @@ case "$operation" in
         trap 'exit 130' INT
         trap 'exit 143' TERM
         cargo set-version --workspace --offline "${RELEASE_VERSION:?}"
+        # Only root metadata changes; members were sorted by the validation gate.
+        cargo sort
         # Retain every dependency selection; change this one local package only.
         awk -v previous="$RELEASE_PREVIOUS" -v version="$RELEASE_VERSION" '
             /^\[\[package\]\]$/ { owned=0 }

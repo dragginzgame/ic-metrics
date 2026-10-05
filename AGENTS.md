@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`b8537873ac124ad17b30e32aa23e9006a3e6ec21` and file digests are recorded in
+`f52c0e2476aee094359ed21de91c468540d3969f` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -39,5 +39,7 @@ and [the extraction contract](docs/extraction.md) before implementation.
 - Fix warnings in the selected Clippy gate before later validation.
 - Do not patch snapshot-owned files. Refresh through the upstream distribution
   helper from a clean checkout of a reviewed revision, then verify the snapshot.
-- Keep one undated top `Draft` changelog until a release is selected. Track
-  follow-up work exclusively in GitHub issues, not local task lists.
+- Maintain one numbered, undated pending changelog under the shared rules;
+  derive its version from the latest finalized release and the complete batch's
+  compatibility impact. This does not authorize package version changes or a
+  release. Track follow-up work exclusively in GitHub issues, not local task lists.

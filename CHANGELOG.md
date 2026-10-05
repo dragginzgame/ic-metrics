@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.1.2]
+
+### Changed
+
+- Clarify IC instruction-counter continuity, native-substitute boundaries and
+  the requirements for a backend that preserves the dependency-free arithmetic core.
+- Run Cargo manifest sorting before Rust formatting in `make fmt` and enforce
+  both in `make fmt-check`, CI and release validation. Developer setup requires
+  pinned `cargo-sort` 2.1.4; release metadata preparation preserves this ordering.
+- Adopt the latest committed Shared Tooling rules, including automatically
+  numbered pending notes and complete workspace dependency inheritance. Enable
+  the standard formatting hook per clone with `make install-hooks`; partial
+  staging is rejected and unrelated working edits are preserved.
+
+### Fixed
+
+- Include the MIT license text and repository URL in the Cargo package, with
+  README documentation links usable outside the workspace.
+- Rerun the same release target after interruption: early failures repeat
+  validation and prepared releases reconcile the saved candidate without another
+  bump, duplicate commit/tag or uncertain push replay. Exact-version
+  `release-resume` remains available; evidence and conflict checks are preserved.
+- Install the standard formatting hook through logical checkout aliases using
+  the corrected shared installer.
+  [Shared Tooling #1](https://github.com/dragginzgame/shared-tooling/issues/1).
+
+### Testing
+
+- Check the standard hook against this workspace's Makefile in native CI,
+  including aliased-path installation, selected-file refresh, partial staging
+  and failure isolation without creating commits.
+- Exercise release metadata preparation and failure restoration in CI, preserving
+  historical notes, member manifests and artifacts when formatting, metadata
+  validation or candidate selection fails. Fixtures create no release commits.
+
 ## [0.1.1] - 2026-10-05
 
 Development toward `0.1.1`; the release is not selected or published.

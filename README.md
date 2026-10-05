@@ -22,7 +22,8 @@ assert_eq!(summary.latest(), Some(0));
 IcyDB, Canic and ic-timers currently use explicit local integration dependencies.
 Their inclusive or exclusive attribution, registries, callback roles, replication,
 persistence and reporting remain local. IC counter reads also remain consumer-owned.
-[The extraction contract](docs/extraction.md) records scope and evidence.
+[The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
+records scope and evidence.
 
 ## Development
 
@@ -31,20 +32,51 @@ toolchain is Rust 1.99.0 and the MSRV is 1.88.0. Install `wasm32-unknown-unknown
 for Wasm checks. `make help` lists focused commands; select named tests during
 implementation. Full `make ci` requires an explicit request outside configured CI.
 
-See [agent rules](AGENTS.md), [host support](docs/hosts.md) and
-[the current handoff](docs/status/current.md). Reviewed shared tooling is vendored;
+Install the pinned manifest formatter during developer setup:
+
+```bash
+cargo install cargo-sort --version 2.1.4 --locked
+make install-hooks
+```
+
+`make fmt` sorts every workspace manifest before Rust formatting. `make fmt-check`
+checks both without changing files; CI installs the same pinned formatter.
+Run `make install-hooks` once per clone and after updating shared tooling. The
+repository-local pre-commit hook formats the staged snapshot, refreshes selected
+files, rejects partial staging and preserves unrelated working edits. It refuses
+to replace existing hook installations. `make hook-check` exercises these
+contracts in scratch repositories without creating commits.
+
+See [agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md),
+[host support](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md) and
+[the current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md).
+Reviewed shared tooling is vendored;
 normal checks and release scripts need no Shared Tooling sibling checkout.
 
 ## Releases and adoption
 
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
-The [changelog](CHANGELOG.md) preserves the initial `0.1.0` scaffold and one undated
-Draft toward `0.1.1`. Cargo metadata remains `0.1.0`; publication is disabled.
-Temporary consumer paths must become released dependencies before publication.
+The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
+preserves the initial `0.1.0` scaffold and the
+maintainer's tagged `0.1.1` arithmetic release. Cargo metadata is `0.1.1`;
+registry publication remains disabled. The tagged revision passed native CI on
+Linux and both supported macOS architectures. Temporary consumer paths must
+become registry dependencies before the consuming packages can be published;
+[the publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
+links each consumer's adoption work.
 
 Maintainer-owned `make release-patch`, `release-minor` and `release-major` use the
-[same reviewed workflow](docs/releases.md), with `RELEASE_REMOTE=origin` and
-`RELEASE_BRANCH=main`. They require cargo-edit (`cargo set-version`), run the
-complete offline gate, prepare only Cargo metadata and release notes, commit,
-tag and atomically push. They do not publish the crate. Inspect retained release
-state before `make release-resume VERSION=X.Y.Z` resumes an interrupted candidate.
+[same reviewed workflow](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md),
+with `RELEASE_REMOTE=origin` and
+`RELEASE_BRANCH=main`. They require cargo-edit (`cargo set-version`) and
+cargo-sort 2.1.4, run the complete offline gate, prepare only Cargo metadata
+and release notes, commit,
+tag and atomically push. They do not publish the crate. Rerun the same release
+target after interruption to reconcile the saved candidate without another bump.
+`make release-resume VERSION=X.Y.Z` remains available for explicit selection;
+identity, payload and destination conflicts stop recovery.
+
+`cargo package -p ic-metrics --locked --offline --allow-dirty` prepares and verifies
+a local archive without uploading it. The package includes the canonical MIT
+license text, source and this README; documentation links resolve to the public
+repository. `publish = false` remains an explicit publication boundary.

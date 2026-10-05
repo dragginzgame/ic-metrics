@@ -7,6 +7,7 @@ edition = "2024"
 rust-version = "1.88.0"
 version = "0.1.1"
 license = "MIT"
+repository = "https://github.com/dragginzgame/ic-metrics"
 authors = ["borovan <84897664+borovan@users.noreply.github.com>"]
 description = "Allocation-free saturating measurement arithmetic for Internet Computer crates"
 

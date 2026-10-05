@@ -52,6 +52,8 @@ jobs:
           toolchain: 1.99.0
           components: rustfmt, clippy
           targets: wasm32-unknown-unknown
+      - name: Install pinned manifest formatter
+        run: cargo install cargo-sort --version 2.1.4 --locked
       - name: Run native CI
         run: make ci
 

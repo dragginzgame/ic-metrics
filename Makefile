@@ -36,19 +36,30 @@ release-prepared-check release-commit-check release-committed-check release-tagg
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help fmt fmt-check check check-wasm clippy docs-check test msrv shared-tooling-check release-tools-check ci
+.PHONY: help install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check test msrv shared-tooling-check release-tools-check ci
 
 help:
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
+	@echo "Recovery: rerun the same release target to reconcile the saved candidate"
+	@echo "Clone setup: install-hooks (requires prepared cargo-sort 2.1.4 and rustfmt)"
 	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, msrv, shared-tooling-check"
+	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Full gates (explicit request or configured CI): test, ci"
 
+install-hooks:
+	bash scripts/dev/install-git-hooks.sh
+
+hook-check:
+	bash scripts/dev/test-format-hook.sh
+
 fmt:
+	cargo sort --workspace
 	cargo fmt --all
 
 fmt-check:
-	cargo fmt --all --check
+	cargo sort --workspace --check
+	cargo fmt --all -- --check
 
 check:
 	cargo check -p $(PACKAGE) --locked
@@ -75,11 +86,13 @@ shared-tooling-check:
 release-tools-check:
 	bash scripts/ci/test-release-runner.sh
 	bash scripts/release/test-standard-release.sh
+	bash scripts/release/test-metadata.sh
 
 # Keep order explicit: stop on a failed gate, including any Clippy warning.
 ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
 	+$(MAKE) --no-print-directory release-tools-check
+	+$(MAKE) --no-print-directory hook-check
 	+$(MAKE) --no-print-directory fmt-check
 	+$(MAKE) --no-print-directory check
 	+$(MAKE) --no-print-directory check-wasm

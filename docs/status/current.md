@@ -1,37 +1,95 @@
 # Current handoff
 
-The repository now owns allocation-free measurement arithmetic. `record_sample`
-updates borrowed count/total fields; `MeasurementSummary` owns count, total, latest
-and maximum with independent saturation and empty/zero distinction. No runtime
-dependency, registry, serializer or IC reader was added; the library stays `no_std`.
+ic-metrics owns allocation-free measurement arithmetic. `record_sample` updates
+borrowed count/total fields; `MeasurementSummary` owns count, total, latest and
+maximum, with independent saturation and distinct empty/zero states. The library
+remains dependency-free and `no_std`; consumer attribution, identity, persistence,
+endpoints and IC readers stay local. See the [extraction contract](../extraction.md).
 
-IcyDB and Canic call shared sample arithmetic while retaining inclusive and
-exclusive attribution respectively. ic-timers directly re-exports the canonical
-summary, retaining callback roles and registration identity. Their explicit local
-path dependencies are integration wiring, not published package adoption.
-Cargo metadata remains 0.1.0 and publication remains disabled. The [changelog](../../CHANGELOG.md)
-preserves the scaffold history and one Draft toward 0.1.1; no release was selected.
+The maintainer tagged 0.1.1 at `e3d4b0c3b3d19dbaa7b4e5763bea1144cb6570bc`.
+Cargo metadata remains 0.1.1 and registry publication remains disabled. The
+[changelog](../../CHANGELOG.md) preserves finalized history and extends the
+requested, undated 0.1.2 candidate. The pending packaging and development-tooling
+batch is compatible with the arithmetic API; notes do not authorize a release.
+No agent commit, tag, push, registry upload or consumer artifact cleanup occurred.
 
-The snapshot records reviewed Shared Tooling revision
-`b8537873ac124ad17b30e32aa23e9006a3e6ec21`, distributed from the clean committed source.
-All four consumer snapshots verify. Standard release commands use that runner;
-local adapters own metadata and full gates. No project commit, tag, hosted
-release push, package publication or automatic artifact cleanup was executed during this batch.
+IcyDB and Canic use shared sample arithmetic while retaining inclusive and
+exclusive attribution respectively. ic-timers directly re-exports the summary
+while retaining callback roles and registration identity. Their root dependency
+pins and four applicable lockfiles select local ic-metrics 0.1.1. Temporary paths
+remain integration wiring rather than published adoption;
+[publication/adoption #4](https://github.com/dragginzgame/ic-metrics/issues/4)
+links the consumers' registry dependency work.
 
-Focused Linux evidence: core formatting, strict Clippy, six arithmetic tests,
-Wasm compilation, Rust 1.88 host/Wasm checks and warnings-as-errors docs passed.
-IcyDB's nine measurement-state tests, Canic's four endpoint-accounting tests and
-ic-timers' three role/identity projection tests passed during extraction.
-These results do not qualify concurrent unrelated consumer changes. Shared runner
-command stubs cover all increments, failure boundaries and lost replies. Selected
-adapter shell lint and syntax checks pass. Temporary metadata fixtures with real
-offline Cargo and Git read stubs pass all three increments in core, IcyDB, Canic
-and ic-timers, preserving notes and artifacts. The existing IcyDB fixture suite
-also exercised Git operations against its isolated temporary local remote, never
-project refs or a hosted remote. The broader Shared Tooling suite stopped
-at missing cloc. Native macOS and live IC qualification are not supplied by these checks.
+The current snapshot records reviewed Shared Tooling revision
+`f52c0e2476aee094359ed21de91c468540d3969f`, verified as GitHub's latest committed
+main during adoption. The final remote recheck detected this newly committed
+revision after the initial c0206f1 refresh; the canonical helper then exported
+its committed bytes from the now-clean Shared Tooling checkout.
+All 20 declared files verify, including the new dependency/hook rules, standard
+pre-commit hook and installer. AGENTS.md follows automatically numbered pending
+notes. Root/member formatting covers all maintained manifests; there are no
+runtime dependencies or independent nested workspaces to centralize.
 
-The [public repository](https://github.com/dragginzgame/ic-metrics) contains initial
-commit `975dabc` on main. The core extraction remains uncommitted for maintainer
-review. Consumer worktrees contain concurrent maintainer commits and unrelated
-work; preserve them. [Host qualification](../hosts.md) preserves the initial CI's macOS verifier failures; the refreshed worktree awaits native CI.
+`make fmt` runs pinned cargo-sort 2.1.4 before Rustfmt; `fmt-check` checks both
+without mutation. Developer setup and native CI use that same formatter version.
+`make install-hooks` is documented and has enabled repository-local
+`core.hooksPath=.githooks` in this clone; no prior effective hook setting or
+executable private hook was present. CI runs the consumer's actual-Makefile hook
+fixture on each declared host, independently of its non-mutating formatting gate.
+
+The latest shared installer includes the physical-path correction from
+[Shared Tooling #1](https://github.com/dragginzgame/shared-tooling/issues/1).
+The temporary consumer setup workaround was removed; Make invokes the unchanged
+shared installer directly. Its aliased-path fixture passes on Linux. The snapshot
+also includes automatic same-kind release recovery. Corrected native macOS
+execution remains unqualified for this working-tree adoption.
+
+All three standard release targets use the adopted shared runner and the same
+consumer-owned gate. Preflight/validation-only failures allow fresh normal-target
+retries; after preparation starts, rerunning the same target reconciles saved intent
+without another increment or duplicated effects. Exact-version release-resume
+remains available; identity, payload and destination conflicts stop recovery.
+Preparation formats only the changed root manifest, retains dependency selections
+and historical notes, and restores metadata after failure. The complete gate
+includes independent formatting and hook checks; no real release was executed.
+
+Focused Linux checks pass for snapshot integrity, formatting, shell/workflow lint,
+release runner/entry-point fixtures and consumer metadata/hook fixtures. The hook
+fixture verifies selected refresh, unrelated edit preservation, partial-stage
+rejection and formatter failure isolation, including aliased setup. Metadata
+fixtures use real offline sorting/metadata with Cargo-edit and Git substitutions;
+formatter, metadata and conflicting-note failures restore original files and
+retain member manifests/artifacts. An initial fixture attempt omitted its relative
+changelog helper and failed; copying that helper into scratch resolved it.
+Separate temporary fixtures also exercised all increments with real offline
+Cargo-edit and substituted Git reads. No full local CI ran.
+
+The earlier arithmetic extraction passed strict Clippy, six core tests, Wasm and
+Rust 1.88 host/Wasm checks and warning-free docs; IcyDB's nine state tests, Canic's
+four endpoint tests and ic-timers' three projection tests passed on Linux. Later
+selected Canic and IcyDB library builds passed. IcyDB's first build attempt met an
+occupied lock and was stopped; its unfiltered metadata also needed uncached
+Windows-only clipboard-win 5.4.1, while focused Linux metadata passed. IC Timers'
+selected build completed with an unused-assignment warning in separate delivery
+retirement work at runtime/mod.rs:1090; this is not warning-free qualification.
+These observations do not qualify concurrent unrelated consumer edits.
+
+The tagged 0.1.1 [native CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37339148886)
+passed Linux, both declared macOS hosts and Linux MSRV. The
+[host record](../hosts.md) preserves earlier failures and scopes that evidence to
+its exact revision; the current adoption needs its own native macOS run. Shared
+Tooling's corrected dirty-source portable suite stopped at missing cloc after
+validation-runner, installer and hook fixtures passed; its separate distribution
+and release-runner fixtures passed. This is not a complete portable-suite pass.
+
+Package preparation inherits the public repository URL and includes a regular
+package-local copy of the canonical MIT license. README links work outside the
+checkout. Offline Cargo packaging verifies the archive; archived license bytes
+match the root exactly. Its standalone manifest passed Rust 1.88 host/Wasm checks
+using this repository's target directory. An earlier SPDX-plus-license-file
+attempt warned; the conflicting declaration was removed before verification.
+Publication remains disabled. The [reader audit](../extraction.md#ic-reader-contract-audit)
+records continuity and native-substitute boundaries. ic0 uses std; raw FFI conflicts
+with the unchanged unsafe-code policy. No IC backend was added; qualified reader
+work remains scoped in [#3](https://github.com/dragginzgame/ic-metrics/issues/3).

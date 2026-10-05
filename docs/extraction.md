@@ -74,8 +74,44 @@ measurement/projection tests passed on Linux during extraction. These are native
 contract tests, not IC instruction measurements or qualification of later unrelated
 consumer edits. No instruction-count, cycle or Wasm-size improvement is claimed.
 
-All dependencies are explicitly declared local paths with an exact 0.1.0 requirement.
-The crate is unpublished and publishing consumers requires a released dependency.
+The maintainer tagged arithmetic release `0.1.1` at
+`e3d4b0c3b3d19dbaa7b4e5763bea1144cb6570bc`. The three consumer dependency pins
+and four applicable lockfiles now select that local `0.1.1` package. Registry
+publication is still disabled; a Git tag is not an available registry dependency.
+The [publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
+links each consumer's replacement of temporary paths.
 IC counter readers remain local: their backend execution needs its own demonstrated
 contract and real IC evidence before it moves. Other crates can consume the pure
 arithmetic without acquiring product instrumentation or an IC runtime dependency.
+
+## IC reader contract audit
+
+All three current readers select `ic0.performance_counter(1)` rather than the
+per-message counter `0`. The [System API specification](https://docs.internetcomputer.org/references/ic-interface-spec/canister-interface/#performance-counter)
+defines continuity within one replicated call context, including its message
+executions. Non-replicated continuity is scoped to the corresponding composite
+query helper and its callbacks; downstream query helpers are excluded. Neither
+mode establishes continuity across unrelated calls, timer deliveries, resets or
+upgrades. A numerically increasing pair is not proof of shared identity.
+
+IcyDB and Canic return native zero substitutes. IC Timers instead keeps a test-only
+fake counter; its production reader uses the IC binding. These native contracts
+must remain local and must not be promoted to shared IC measurements. Consumers
+currently use saturating subtraction for their span policy, so extracting a
+reader alone must not silently reinterpret regressions or measured zero.
+
+The existing cached binding `ic0 1.2.0` uses `std::mem::MaybeUninit` and has no
+`no_std` feature. There is no selected backend dependency in this crate. A direct
+raw import would also conflict with the workspace's `unsafe_code = "forbid"`
+policy. Preserve the dependency-free arithmetic boundary while resolving a safe,
+target-specific backend; do not vendor the binding or weaken that policy to move
+three one-line calls. [Reader extraction](https://github.com/dragginzgame/ic-metrics/issues/3)
+owns this contract and its real IC qualification.
+
+The upstream binding at
+[`dfinity/cdk-rs` revision `624606f7fd1ecd6668e9608594946486aec29167`](https://github.com/dfinity/cdk-rs/blob/624606f7fd1ecd6668e9608594946486aec29167/ic0/src/lib.rs)
+still uses std and declares no no_std feature. The earlier
+[no_std request](https://github.com/dfinity/cdk-rs/issues/588) was closed with an
+explanation about ic-cdk's Candid dependency; that does not demonstrate a no_std
+contract for the lower-level ic0 binding. No upstream change or new dependency
+has been selected here.
