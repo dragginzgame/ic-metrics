@@ -1,6 +1,6 @@
 # Changelog
 
-## [Draft]
+## [0.1.1] - 2026-10-05
 
 Development toward `0.1.1`; the release is not selected or published.
 
