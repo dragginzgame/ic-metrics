@@ -6,25 +6,43 @@ maximum, with independent saturation and distinct empty/zero states. The library
 remains dependency-free and `no_std`; consumer attribution, identity, persistence,
 endpoints and IC readers stay local. See the [extraction contract](../extraction.md).
 
-The maintainer tagged 0.1.2 at `7a302c9542619c7252f6c62584e771ccb86a4cd8`.
-Cargo metadata remains 0.1.2. The reported missing publish target is corrected:
-`make publish` delegates to locked, verified Cargo publication of only ic-metrics
-on crates.io, and `make publish-check` runs its upload-free dry run. The crate's
-manifest now permits only crates.io. These targets use the current version,
-perform no Git release effects and retain artifacts. Commit publication edits
-before using the targets; Cargo's dirty-tree check remains enabled.
-The [changelog](../../CHANGELOG.md) preserves finalized history and extends one
-undated 0.1.3 candidate for compatible publication tooling. Notes do not authorize
-a version bump or registry upload.
+The maintainer published 0.1.3 and tagged `v0.1.3` at
+`a45c6fb156139efda8cfdfe7fbea1372cc11e559`; Cargo metadata is 0.1.3.
+The official crates.io sparse index records a non-yanked, dependency-free release
+with Rust 1.88 minimum. Its downloaded archive's checksum, Rust sources, license
+and embedded Git revision match that release. An isolated registry-dependent
+`no_std` fixture passes locked offline Rust 1.88 host and Wasm checks using this
+repository's target directory. The crates.io REST API returned HTTP 403; index
+and downloaded-artifact verification supply the publication evidence instead.
+
+`make publish` publishes only the current ic-metrics package to crates.io;
+`make publish-check` runs Cargo's upload-free dry run. Publication remains separate
+from Git release commands. The [changelog](../../CHANGELOG.md) preserves finalized
+0.1.3 and opens compatible 0.1.4 documentation notes; package versions are unchanged.
 No agent commit, tag, push, registry upload or consumer artifact cleanup occurred.
 
 IcyDB and Canic use shared sample arithmetic while retaining inclusive and
-exclusive attribution respectively. ic-timers directly re-exports the summary
-while retaining callback roles and registration identity. Their root dependency
-pins and four applicable lockfiles select local ic-metrics 0.1.1. Temporary paths
-remain integration wiring rather than published adoption;
-[publication/adoption #4](https://github.com/dragginzgame/ic-metrics/issues/4)
-links the consumers' registry dependency work.
+exclusive attribution respectively. IC Timers directly re-exports the summary
+while retaining callback roles and registration identity. IcyDB's maintainer
+already selected registry 0.1.3. IC Timers now selects registry 0.1.3 in both
+independent lockfiles; every other lock record is preserved. The maintainer
+committed this adoption and focused guard/fixture repairs at `685b4ff` while
+checks were in progress, changing the root requirement to the compatible `0.1.3`
+range. Current adoption documentation remains uncommitted. Its focused Linux
+measurement, registration/reset identity, stale delivery and abandonment tests
+pass, as does warning-denied library Clippy. The first Clippy attempt reported
+three delivery-guard diagnostics; preserving the whole guard through normal
+completion and using `let ... else` corrected them. A completion fixture initially
+aborted during thread-local teardown with a still-armed recurring timer; explicit
+unregistration repairs that fixture without altering the platform substitute.
+Two initial test filters matched no tests; exact maintained names supplied the
+reported evidence. No broad timer or PocketIC gate ran.
+
+Canic still selects a local path. Its maintainer is executing `make release-patch`
+and IcyDB is executing `make release-minor`; leave their source and release inputs
+unchanged until those workflows finish. The existing
+[publication/adoption issue](https://github.com/dragginzgame/ic-metrics/issues/4)
+links the consumer-owned path removal and qualification evidence.
 
 The current snapshot records reviewed Shared Tooling revision
 `f52c0e2476aee094359ed21de91c468540d3969f`, verified as GitHub's latest committed
@@ -47,8 +65,9 @@ The latest shared installer includes the physical-path correction from
 [Shared Tooling #1](https://github.com/dragginzgame/shared-tooling/issues/1).
 The temporary consumer setup workaround was removed; Make invokes the unchanged
 shared installer directly. Its aliased-path fixture passes on Linux. The snapshot
-also includes automatic same-kind release recovery. Corrected native macOS
-execution remains unqualified for this working-tree adoption.
+also includes automatic same-kind release recovery. The tagged 0.1.3 CI now
+qualifies these maintained fixtures on both declared macOS hosts; live maintainer
+release-adapter execution remains a separate boundary.
 
 All three standard release targets use the adopted shared runner and the same
 consumer-owned gate. Preflight/validation-only failures allow fresh normal-target
@@ -83,7 +102,10 @@ These observations do not qualify concurrent unrelated consumer edits.
 The tagged 0.1.1 [native CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37339148886)
 passed Linux, both declared macOS hosts and Linux MSRV. The
 [host record](../hosts.md) preserves earlier failures and scopes that evidence to
-its exact revision; the current adoption needs its own native macOS run. Shared
+its exact revision. The tagged 0.1.3
+[CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37351475035) also
+passed Linux, both declared macOS hosts and Linux MSRV, qualifying the refreshed
+snapshot, packaging and maintained hook/formatter fixtures at that release. Shared
 Tooling's corrected dirty-source portable suite stopped at missing cloc after
 validation-runner, installer and hook fixtures passed; its separate distribution
 and release-runner fixtures passed. This is not a complete portable-suite pass.
@@ -99,10 +121,10 @@ records continuity and native-substitute boundaries. ic0 uses std; raw FFI confl
 with the unchanged unsafe-code policy. No IC backend was added; qualified reader
 work remains scoped in [#3](https://github.com/dragginzgame/ic-metrics/issues/3).
 
-Publication target command fixtures cover exact package/registry selection,
+Before the 0.1.3 release, publication target command fixtures covered exact package/registry selection,
 separate dry-run semantics and propagated Cargo failures without registry effects.
-Shell lint, formatting and locked metadata pass; Cargo metadata retains version
-0.1.2 and publish=["crates-io"]. Offline Cargo publication dry runs, both directly
+At that preparation revision, shell lint, formatting and locked metadata passed;
+Cargo metadata was 0.1.2 with publish=["crates-io"]. Offline Cargo publication dry runs, both directly
 and through Make, stopped because Cargo required an HTTP request. No online retry
 or registry upload was attempted. Offline archive verification supplies package
 build evidence separately from registry dry-run qualification.

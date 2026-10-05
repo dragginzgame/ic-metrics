@@ -22,6 +22,17 @@ command-stub tooling at that exact revision; later worktrees and live maintainer
 release-adapter execution need their own evidence. The initial failed run remains
 historical evidence rather than the current qualification state.
 
+The published `0.1.3` revision
+`a45c6fb156139efda8cfdfe7fbea1372cc11e559` passed
+[CI run 37351475035](https://github.com/dragginzgame/ic-metrics/actions/runs/37351475035):
+Ubuntu 24.04, macOS 15 Intel, macOS 15 Apple Silicon and Linux MSRV all succeeded.
+This qualifies the maintained library and tooling at that tag, including the
+f52c0e2 snapshot, manifest formatting and hook fixtures. A separately downloaded
+registry-dependent `no_std` fixture also passes locked offline Rust 1.88 host
+and Wasm checks on Linux; its archive checksum, sources, license and embedded Git
+revision match the tag. These checks supply compilation and tooling evidence,
+not IC instruction measurements or native qualification of consumer releases.
+
 The library core is `no_std` and targets `wasm32-unknown-unknown` in addition
 to native host compilation. A Wasm check proves compilation only, not IC
 instruction accounting; runtime measurement needs canister execution evidence.
@@ -48,14 +59,14 @@ The configured CI runs `make ci` natively on every declared host and
 outside configured CI unless explicitly requested. Release command stubs run in native CI. Maintainer release preparation requires
 cargo-edit and does not implicitly publish or clean artifacts. Native release
 adapter execution remains unqualified on macOS; Linux stubs do not close that gap.
-The pending 0.1.2 formatter setup and packaging changes have focused Linux
-evidence only; the 0.1.1 CI run does not qualify this later worktree.
+The later formatter setup and packaging changes are covered by the tagged
+0.1.3 native CI evidence above; the earlier 0.1.1 run remains scoped to its tag.
 The adoption snapshot now records f52c0e2. Native CI includes a scratch hook
 fixture using this consumer's actual formatting and setup targets. It covers
 logical path aliases, selected refresh, unrelated edits, partial staging and
 formatter failure isolation. The shared installer normalizes physical paths,
 including the correction tracked in
 [Shared Tooling #1](https://github.com/dragginzgame/shared-tooling/issues/1).
-Focused Linux fixtures pass; this working-tree adoption awaits its own native
-macOS execution. `make hook-check` runs only these tooling fixtures, with no
-commits or product compilation.
+Focused Linux fixtures and the tagged 0.1.3 native CI pass on their declared hosts.
+`make hook-check` runs only these tooling fixtures, with no commits or product
+compilation.

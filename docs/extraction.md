@@ -74,13 +74,17 @@ measurement/projection tests passed on Linux during extraction. These are native
 contract tests, not IC instruction measurements or qualification of later unrelated
 consumer edits. No instruction-count, cycle or Wasm-size improvement is claimed.
 
-The maintainer tagged arithmetic release `0.1.1` at
-`e3d4b0c3b3d19dbaa7b4e5763bea1144cb6570bc`. The three consumer dependency pins
-and four applicable lockfiles now select that local `0.1.1` package. Registry
-publication now has a separate maintainer command; enabling its policy and creating
-a Git tag do not establish an available registry dependency.
+The maintainer published `0.1.3`, matching tag `v0.1.3` at
+`a45c6fb156139efda8cfdfe7fbea1372cc11e559`. The registry index and downloaded
+archive confirm its identity; packaged Rust sources match the tag. A standalone
+registry-dependent `no_std` fixture passes Rust 1.88 host and Wasm checks.
+IcyDB already selects registry 0.1.3. IC Timers' root and testing lockfiles now
+select registry 0.1.3, preserving every other package record. Focused
+measurement, registration/reset identity and delivery checks pass on Linux.
+Canic's local path still needs replacement after its active maintainer release
+finishes; IcyDB's active release likewise owns its current validation inputs.
 The [publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
-links each consumer's replacement of temporary paths.
+links each consumer's path removal and qualification evidence.
 IC counter readers remain local: their backend execution needs its own demonstrated
 contract and real IC evidence before it moves. Other crates can consume the pure
 arithmetic without acquiring product instrumentation or an IC runtime dependency.

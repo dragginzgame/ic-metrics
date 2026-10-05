@@ -19,7 +19,7 @@ assert_eq!(summary.samples(), 1);
 assert_eq!(summary.latest(), Some(0));
 ```
 
-IcyDB, Canic and ic-timers currently use explicit local integration dependencies.
+IcyDB, Canic and ic-timers integrate this arithmetic.
 Their inclusive or exclusive attribution, registries, callback roles, replication,
 persistence and reporting remain local. IC counter reads also remain consumer-owned.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
@@ -57,13 +57,22 @@ normal checks and release scripts need no Shared Tooling sibling checkout.
 
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
-preserves the initial `0.1.0` scaffold, the maintainer's tagged `0.1.1` arithmetic
-release and `0.1.2` tooling release. Cargo metadata is `0.1.2` and the crate is
-eligible for crates.io publication. The tagged `0.1.1` revision passed native CI
-on Linux and both supported macOS architectures. Temporary consumer paths must
-become registry dependencies before the consuming packages can be published;
-[the publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
-links each consumer's adoption work.
+preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
+tooling releases. [`ic-metrics 0.1.3`](https://crates.io/crates/ic-metrics/0.1.3)
+is published on crates.io and matches tag `v0.1.3`. Declare it in the consumer's
+root dependency catalog:
+
+```toml
+[workspace.dependencies]
+ic-metrics = "0.1.3"
+```
+
+Members inherit with `ic-metrics = { workspace = true }`. Published consumers
+must resolve the registry package rather than require a sibling checkout.
+[The adoption issue](https://github.com/dragginzgame/ic-metrics/issues/4)
+links each consumer's integration evidence. Native qualification is recorded
+against its actual revision in
+[the host record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md).
 
 Maintainer-owned `make release-patch`, `release-minor` and `release-major` use the
 [same reviewed workflow](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md),
@@ -76,7 +85,7 @@ target after interruption to reconcile the saved candidate without another bump.
 `make release-resume VERSION=X.Y.Z` remains available for explicit selection;
 identity, payload and destination conflicts stop recovery.
 
-After committing publication-related changes, the maintainer can run:
+For a subsequent committed package release, the maintainer can run:
 
 ```bash
 make publish-check
