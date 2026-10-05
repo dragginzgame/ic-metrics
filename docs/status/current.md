@@ -6,11 +6,16 @@ maximum, with independent saturation and distinct empty/zero states. The library
 remains dependency-free and `no_std`; consumer attribution, identity, persistence,
 endpoints and IC readers stay local. See the [extraction contract](../extraction.md).
 
-The maintainer tagged 0.1.1 at `e3d4b0c3b3d19dbaa7b4e5763bea1144cb6570bc`.
-Cargo metadata remains 0.1.1 and registry publication remains disabled. The
-[changelog](../../CHANGELOG.md) preserves finalized history and extends the
-requested, undated 0.1.2 candidate. The pending packaging and development-tooling
-batch is compatible with the arithmetic API; notes do not authorize a release.
+The maintainer tagged 0.1.2 at `7a302c9542619c7252f6c62584e771ccb86a4cd8`.
+Cargo metadata remains 0.1.2. The reported missing publish target is corrected:
+`make publish` delegates to locked, verified Cargo publication of only ic-metrics
+on crates.io, and `make publish-check` runs its upload-free dry run. The crate's
+manifest now permits only crates.io. These targets use the current version,
+perform no Git release effects and retain artifacts. Commit publication edits
+before using the targets; Cargo's dirty-tree check remains enabled.
+The [changelog](../../CHANGELOG.md) preserves finalized history and extends one
+undated 0.1.3 candidate for compatible publication tooling. Notes do not authorize
+a version bump or registry upload.
 No agent commit, tag, push, registry upload or consumer artifact cleanup occurred.
 
 IcyDB and Canic use shared sample arithmetic while retaining inclusive and
@@ -89,7 +94,15 @@ checkout. Offline Cargo packaging verifies the archive; archived license bytes
 match the root exactly. Its standalone manifest passed Rust 1.88 host/Wasm checks
 using this repository's target directory. An earlier SPDX-plus-license-file
 attempt warned; the conflicting declaration was removed before verification.
-Publication remains disabled. The [reader audit](../extraction.md#ic-reader-contract-audit)
+Registry publication has not been executed by the agent. The [reader audit](../extraction.md#ic-reader-contract-audit)
 records continuity and native-substitute boundaries. ic0 uses std; raw FFI conflicts
 with the unchanged unsafe-code policy. No IC backend was added; qualified reader
 work remains scoped in [#3](https://github.com/dragginzgame/ic-metrics/issues/3).
+
+Publication target command fixtures cover exact package/registry selection,
+separate dry-run semantics and propagated Cargo failures without registry effects.
+Shell lint, formatting and locked metadata pass; Cargo metadata retains version
+0.1.2 and publish=["crates-io"]. Offline Cargo publication dry runs, both directly
+and through Make, stopped because Cargo required an HTTP request. No online retry
+or registry upload was attempted. Offline archive verification supplies package
+build evidence separately from registry dry-run qualification.

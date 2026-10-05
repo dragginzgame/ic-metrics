@@ -77,7 +77,8 @@ consumer edits. No instruction-count, cycle or Wasm-size improvement is claimed.
 The maintainer tagged arithmetic release `0.1.1` at
 `e3d4b0c3b3d19dbaa7b4e5763bea1144cb6570bc`. The three consumer dependency pins
 and four applicable lockfiles now select that local `0.1.1` package. Registry
-publication is still disabled; a Git tag is not an available registry dependency.
+publication now has a separate maintainer command; enabling its policy and creating
+a Git tag do not establish an available registry dependency.
 The [publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
 links each consumer's replacement of temporary paths.
 IC counter readers remain local: their backend execution needs its own demonstrated

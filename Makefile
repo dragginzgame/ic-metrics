@@ -36,16 +36,23 @@ release-prepared-check release-commit-check release-committed-check release-tagg
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check test msrv shared-tooling-check release-tools-check ci
+.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check test msrv shared-tooling-check release-tools-check ci
 
 help:
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Recovery: rerun the same release target to reconcile the saved candidate"
+	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
 	@echo "Clone setup: install-hooks (requires prepared cargo-sort 2.1.4 and rustfmt)"
 	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, msrv, shared-tooling-check"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Full gates (explicit request or configured CI): test, ci"
+
+publish:
+	cargo publish -p $(PACKAGE) --locked --registry crates-io
+
+publish-check:
+	cargo publish -p $(PACKAGE) --locked --registry crates-io --dry-run
 
 install-hooks:
 	bash scripts/dev/install-git-hooks.sh

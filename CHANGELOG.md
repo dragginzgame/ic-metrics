@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.3]
+
+### Fixed
+
+- Add `make publish` for the ic-metrics crate on crates.io and `make publish-check`
+  for upload-free validation. Enable the crate's publication policy while keeping
+  publication separate from version bumps, Git releases and artifact cleanup.
+  [#4](https://github.com/dragginzgame/ic-metrics/issues/4).
+
 ## [0.1.2] - 2026-10-05
 
 ### Changed

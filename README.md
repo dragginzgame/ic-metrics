@@ -57,10 +57,10 @@ normal checks and release scripts need no Shared Tooling sibling checkout.
 
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
-preserves the initial `0.1.0` scaffold and the
-maintainer's tagged `0.1.1` arithmetic release. Cargo metadata is `0.1.1`;
-registry publication remains disabled. The tagged revision passed native CI on
-Linux and both supported macOS architectures. Temporary consumer paths must
+preserves the initial `0.1.0` scaffold, the maintainer's tagged `0.1.1` arithmetic
+release and `0.1.2` tooling release. Cargo metadata is `0.1.2` and the crate is
+eligible for crates.io publication. The tagged `0.1.1` revision passed native CI
+on Linux and both supported macOS architectures. Temporary consumer paths must
 become registry dependencies before the consuming packages can be published;
 [the publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
 links each consumer's adoption work.
@@ -76,7 +76,21 @@ target after interruption to reconcile the saved candidate without another bump.
 `make release-resume VERSION=X.Y.Z` remains available for explicit selection;
 identity, payload and destination conflicts stop recovery.
 
+After committing publication-related changes, the maintainer can run:
+
+```bash
+make publish-check
+make publish
+```
+
+`publish-check` delegates to Cargo's dry run. `publish` uploads only ic-metrics to
+crates.io, using the existing package version, locked dependencies and normal
+Cargo credential setup (`cargo login --registry crates-io`). Both retain Cargo's
+package verification and dirty-tree rejection. Publication creates no Git commit
+or tag, does not bump versions and preserves build artifacts.
+See [Cargo's publication documentation](https://doc.rust-lang.org/cargo/commands/cargo-publish.html).
+
 `cargo package -p ic-metrics --locked --offline --allow-dirty` prepares and verifies
-a local archive without uploading it. The package includes the canonical MIT
-license text, source and this README; documentation links resolve to the public
-repository. `publish = false` remains an explicit publication boundary.
+a local development archive without uploading it. The package includes the
+canonical MIT license text, source and this README; documentation links resolve
+to the public repository. The manifest restricts publication to crates.io.
