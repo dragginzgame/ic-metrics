@@ -8,8 +8,8 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 ## Ownership
 
-- Own small, allocation-free measurement arithmetic and, when its contract is
-  demonstrated, an IC instruction-counter boundary. Keep the core `no_std`.
+- Own small, allocation-free measurement arithmetic. Keep the library
+  dependency-free and `no_std`; consumers own platform counter reads.
 - Consumer code owns measurement attribution, registries, labels, replication
   policy, reset/restart identity, persistence, lifecycle hooks, and endpoints.
   Do not add dependencies on IcyDB, Canic, `ic-timers`, or `ic-backup`.
@@ -49,17 +49,11 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 ## Dependency qualification
 
-- The optional Wasm `ic0 = "=1.2.0"` constraint preserves the explicitly qualified
-  safe System API binding described in [the extraction contract](docs/extraction.md#ic-reader-contract-audit).
-  Its exact value is recorded in `ci/dependency-pinning-exceptions.json`; changing
-  that boundary requires reader/callback qualification, not only lock resolution.
-  Development registry dependencies use compatible requirements and locked builds.
 - `make check-pins` requires prepared Git, jq and Mike Farah yq; consumer-selected
   tool versions/digests are in the reviewed `ci/tool-versions.env`. Explicit
   `make install-host-tools` prepares the pair under `.tools/host/bin`;
   `make host-tools-check` verifies it offline. IC executable pins live only in
-  `ci/ic-tools.tsv`; the reader harness independently checks the qualified raw
-  PocketIC binary. The checker and release gates never install tools or unlock graphs.
+  `ci/ic-tools.tsv`. The checker and release gates never install tools or unlock graphs.
 - Shared structural reviews use [the common methods](audits/README.md), with
   this overlay's allocation, units, counter identity and ownership constraints.
   Source scope is `crates/ic-metrics`, owning tooling and the affected downstream

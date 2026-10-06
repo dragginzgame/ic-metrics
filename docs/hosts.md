@@ -112,6 +112,20 @@ and step outcomes without downloading the 0.1.7 artifacts. The runtime library
 remains unchanged from 0.1.5; consumer releases and the subsequent uncommitted
 Shared Tooling adoption require their own evidence.
 
+The published 0.1.9 source `083254a6a7c24f1e07d1e952a867059746f6feb5` has
+passed MSRV and all three declared native hosts in
+[run 37452356472](https://github.com/dragginzgame/ic-metrics/actions/runs/37452356472).
+Each native job includes the recovery/admission fixtures, explicit local parser/IC
+setup, actual reader execution and evidence upload. All three downloaded artifact
+ZIPs, bundled logs/Wasm, 21 tagged source hashes per host and IC pins were
+independently verified; recorded
+harness/server binary hashes remain distinct from downloaded binary proof.
+This establishes the adoption's native Linux, Intel macOS and Apple Silicon
+qualification. Recovery fixtures use explicit command substitutes and real Git;
+they do not claim live interrupted releases. Publication/archive evidence is recorded in
+[the current handoff](status/current.md#released-019), without relabelling the
+earlier Linux preparation or tagged host results.
+
 ## Prerequisites and focused checks
 
 - The a37771f Shared Tooling adoption provides `make install-tools` and offline
@@ -131,17 +145,16 @@ Shared Tooling adoption require their own evidence.
   `cargo install cargo-sort --version 2.1.4 --locked`. Formatting, CI and release
   validation check all workspace manifests before Rust formatting.
 - SHA-256 via `sha256sum` on Linux or `shasum -a 256` on macOS.
-- Default arithmetic library builds need no third-party runtime dependencies,
-  network services or external IC tools. Feature `ic` selects ic0 1.2.0 only on
-  Wasm; that optional binding uses `std`. Native tests and lint compile the
-  PocketIC harness dependencies. Prepare the selected lockfile cache explicitly
-  with `cargo fetch --locked` before offline validation.
+- Library builds and named arithmetic tests have no third-party dependencies,
+  network services or external IC runtime requirements. There is no platform
+  reader, IC feature, fixture or PocketIC harness in the current library graph.
 
 Run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
-`make msrv` checks the declared floor. Wasm checks, Clippy and docs also cover
-the opt-in reader; Clippy covers its canister fixture. Select
+`make msrv` checks the declared floor on host and Wasm. Select
 named tests relevant to the change rather than running the full suite by default.
+The pending 0.2.0 cut needs its own hosted qualification; earlier results above
+remain evidence for their original tags, including the retired reader.
 
 Prepare tools explicitly before local validation:
 
@@ -157,22 +170,11 @@ fixtures substitute Cargo-edit or cheap gates where declared, exercise actual
 Git index/selected-commit checks and the actual Make/logger adapter, and preserve
 normal nested release selections while isolating independent fixture inputs.
 
-For actual instruction-counter execution, explicit `make install-ic-tools`
-provides the exact PocketIC 16.0.0 from the shared set for the supported host.
-The default reader command uses that checkout-local binary:
-
-```sh
-make reader-check
-```
-
-An explicit `POCKET_IC_BIN=/absolute/path/to/pocket-ic` remains supported. The
-host fixture checks its independently qualified raw platform digest and version before starting
-the server, with bounded startup, request time and server lifetime. The target
-builds the Wasm example under this repository's `target/`, then runs only the
-named ignored integration test, including its ordinary and composite-query cases.
-Ordinary tests do not implicitly discover,
-download or launch PocketIC. Linux x86_64 and both declared macOS architectures
-have explicit digest pins; this worktree's actual execution evidence is Linux.
+Actual instruction-counter execution belongs to each consumer's platform and
+attribution checks. The old `make reader-check` and its CI artifacts qualify
+only the tagged pre-0.2 reader; they are not arithmetic-only qualification.
+Current native CI explicitly verifies the common pinned IC tool setup without
+running a reader canister, retaining source hashes, outcomes and logs for 30 days.
 
 The configured CI runs `make ci` natively on every declared host and
 `make msrv` on Linux. Full `make test`/`make ci` gates remain user-owned

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0]
+
+- **Breaking:** remove `call_context_instructions` and feature `ic`. Consumers
+  must read the IC counter through their existing CDK/System API adapter and
+  remove the feature selection. `record_sample`, `MeasurementSummary`, zero/empty
+  semantics and saturation are unchanged
+  ([#10](https://github.com/dragginzgame/ic-metrics/issues/10)).
+- Keep the entire library dependency-free and `no_std` on host and Wasm. Retire
+  `make reader-check`, its fixture and host harness; arithmetic checks no longer
+  compile IC test infrastructure. CI retains native/tooling evidence and historical
+  reader records remain tied to their original releases
+  ([#8](https://github.com/dragginzgame/ic-metrics/issues/8)).
+
 ## [0.1.9] - 2026-10-06
 
 - Prepare ripgrep explicitly on Linux and macOS CI so dependency-pin fixtures

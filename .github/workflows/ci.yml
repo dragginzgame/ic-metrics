@@ -72,15 +72,10 @@ jobs:
           make install-host-tools
           make host-tools-check
           echo "$GITHUB_WORKSPACE/.tools/host/bin" >> "$GITHUB_PATH"
-      - name: Run native CI
-        id: native_ci
+      - name: Record native qualification inputs
+        id: native_inputs
         run: |
-          mkdir -p target/evidence/reader
-          make ci 2>&1 | tee target/evidence/reader/native-ci.log
-      - name: Record reader inputs and prepare locked dependencies
-        id: reader_inputs
-        run: |
-          mkdir -p target/evidence/reader
+          mkdir -p target/evidence/native-ci
           {
             git rev-parse HEAD
             printf 'run=%s attempt=%s event=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_EVENT_NAME"
@@ -88,72 +83,58 @@ jobs:
             uname -m
             rustc --version
             cargo --version
-          } > target/evidence/reader/inputs.txt
+          } > target/evidence/native-ci/inputs.txt
           git ls-files Cargo.toml Cargo.lock Makefile .shared-tooling.snapshot \
             crates/ic-metrics .github/workflows/ci.yml ci/tool-versions.env ci/ic-tools.tsv \
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
-            > target/evidence/reader/source-files.txt
+            > target/evidence/native-ci/source-files.txt
           while IFS= read -r file; do
             shasum -a 256 "$file"
-          done < target/evidence/reader/source-files.txt > target/evidence/reader/source-sha256.txt
-          cargo fetch --locked 2>&1 | tee target/evidence/reader/fetch.log
+          done < target/evidence/native-ci/source-files.txt > target/evidence/native-ci/source-sha256.txt
       - name: Provision and verify the pinned local IC tool set
-        id: reader_provision
+        id: ic_tools
         run: |
-          make install-ic-tools > target/evidence/reader/provision.log 2>&1
-          make ic-tools-check >> target/evidence/reader/provision.log 2>&1
-          cat target/evidence/reader/provision.log
+          make install-ic-tools 2>&1 | tee target/evidence/native-ci/provision.log
+          make ic-tools-check 2>&1 | tee -a target/evidence/native-ci/provision.log
           echo "$GITHUB_WORKSPACE/.tools/ic/bin" >> "$GITHUB_PATH"
-          printf 'POCKET_IC_BIN=%s\n' "$GITHUB_WORKSPACE/.tools/ic/bin/pocket-ic" >> "$GITHUB_ENV"
-      - name: Execute instruction-reader qualification
-        id: reader_execution
+      - name: Run native CI
+        id: native_ci
         run: |
-          CARGO_NET_OFFLINE=true make reader-check POCKET_IC_BIN="$POCKET_IC_BIN" \
-            2>&1 | tee target/evidence/reader/qualification.log
-      - name: Retain reader artifacts and outcome
-        if: always() && steps.native_ci.outcome != 'skipped'
+          make ci 2>&1 | tee target/evidence/native-ci/native-ci.log
+      - name: Retain native artifacts and outcome
+        if: always() && steps.native_inputs.outcome != 'skipped'
         env:
           NATIVE_OUTCOME: ${{ steps.native_ci.outcome }}
-          INPUT_OUTCOME: ${{ steps.reader_inputs.outcome }}
-          PROVISION_OUTCOME: ${{ steps.reader_provision.outcome }}
-          EXECUTION_OUTCOME: ${{ steps.reader_execution.outcome }}
+          INPUT_OUTCOME: ${{ steps.native_inputs.outcome }}
+          PROVISION_OUTCOME: ${{ steps.ic_tools.outcome }}
         run: |
-          mkdir -p target/evidence/reader
-          git rev-parse HEAD > target/evidence/reader/source-commit.txt
-          printf 'native=%s\ninputs=%s\nprovision=%s\nexecution=%s\n' \
-            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" "$EXECUTION_OUTCOME" > target/evidence/reader/outcome.txt
+          mkdir -p target/evidence/native-ci
+          git rev-parse HEAD > target/evidence/native-ci/source-commit.txt
+          printf 'native=%s\ninputs=%s\nprovision=%s\n' \
+            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" > target/evidence/native-ci/outcome.txt
           if [[ -f .tools/ic/files.sha256 ]]; then
-            cp .tools/ic/files.sha256 target/evidence/reader/ic-tool-files.sha256
-            cp .tools/ic/pins.tsv target/evidence/reader/ic-tool-pins.tsv
-            cp .tools/ic/host target/evidence/reader/ic-tool-host.txt
+            cp .tools/ic/files.sha256 target/evidence/native-ci/ic-tool-files.sha256
+            cp .tools/ic/pins.tsv target/evidence/native-ci/ic-tool-pins.tsv
+            cp .tools/ic/host target/evidence/native-ci/ic-tool-host.txt
           fi
-          wasm=target/wasm32-unknown-unknown/release/examples/ic_reader_canister.wasm
-          if [[ -f "$wasm" ]]; then
-            cp "$wasm" target/evidence/reader/ic_reader_canister.wasm
-          fi
-          {
-            if [[ -n "${POCKET_IC_BIN:-}" && -f "$POCKET_IC_BIN" ]]; then
-              shasum -a 256 "$POCKET_IC_BIN"
+          for file in target/evidence/native-ci/*.log; do
+            if [[ -f "$file" ]]; then
+              shasum -a 256 "$file"
             fi
-            for file in target/evidence/reader/*.log target/evidence/reader/*.wasm target/debug/deps/ic_reader-*; do
-              if [[ -f "$file" && "$file" != *.d ]]; then
-                shasum -a 256 "$file"
-              fi
-            done
-          } > target/evidence/reader/artifact-sha256.txt
+          done > target/evidence/native-ci/artifact-sha256.txt
       # actions/upload-artifact v7
-      - name: Upload reader evidence
-        if: always() && steps.native_ci.outcome != 'skipped'
+      - name: Upload native evidence
+        if: always() && steps.native_inputs.outcome != 'skipped'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ic-reader-${{ matrix.runner }}-${{ github.run_attempt }}
-          path: target/evidence/reader/
+          name: native-${{ matrix.runner }}-${{ github.run_attempt }}
+          path: target/evidence/native-ci/
           if-no-files-found: error
           retention-days: 30
       - name: Upload failed local tool candidates
-        if: failure() && (steps.host_tools.outcome == 'failure' || steps.reader_provision.outcome == 'failure')
+        if: failure() && (steps.host_tools.outcome == 'failure' || steps.ic_tools.outcome == 'failure')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: tool-install-${{ matrix.runner }}-${{ github.run_attempt }}

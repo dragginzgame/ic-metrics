@@ -6,7 +6,6 @@ RELEASE_REMOTE ?= origin
 RELEASE_BRANCH ?= main
 IC_TOOL_PINS ?= ci/ic-tools.tsv
 HOST_TOOL_VERSIONS ?= ci/tool-versions.env
-POCKET_IC_BIN ?= $(CURDIR)/.tools/ic/bin/pocket-ic
 export PATH := $(CURDIR)/.tools/host/bin:$(CURDIR)/.tools/ic/bin:$(PATH)
 export YQ := $(CURDIR)/.tools/host/bin/yq
 
@@ -44,7 +43,7 @@ release-prepared-check release-committed-check release-tagged-check release-push
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check reader-check test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
+.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 .PHONY: install-tools tools-check install-host-tools host-tools-check install-ic-tools ic-tools-check local-tools-test
 
 help:
@@ -57,7 +56,6 @@ help:
 	@echo "Tooling fixtures: hook-check, release-tools-check, pin-tools-check (no release Git effects)"
 	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
-	@echo "IC reader: reader-check (local PocketIC 16.0.0; explicit POCKET_IC_BIN supported)"
 	@echo "Full gates (explicit request or configured CI): test, ci"
 
 publish:
@@ -110,20 +108,14 @@ check:
 
 check-wasm:
 	cargo check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
-	cargo check -p $(PACKAGE) --locked --target wasm32-unknown-unknown --features ic
 
 clippy:
 	cargo clippy -p $(PACKAGE) --all-targets --locked -- -D warnings
-	cargo clippy -p $(PACKAGE) --lib --example ic_reader_canister --locked --target wasm32-unknown-unknown --features ic -- -D warnings
+	cargo clippy -p $(PACKAGE) --lib --locked --target wasm32-unknown-unknown -- -D warnings
 
 docs-check:
 	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps
-	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown --features ic
-
-reader-check:
-	@test -x "$(POCKET_IC_BIN)" || { echo "Run make install-ic-tools or select a verified PocketIC 16.0.0 binary with POCKET_IC_BIN" >&2; exit 2; }
-	CARGO_TARGET_DIR="$(CURDIR)/target" cargo build -p $(PACKAGE) --example ic_reader_canister --target wasm32-unknown-unknown --features ic --release --locked --offline
-	CARGO_TARGET_DIR="$(CURDIR)/target" POCKET_IC_BIN="$(POCKET_IC_BIN)" IC_METRICS_READER_WASM="$(CURDIR)/target/wasm32-unknown-unknown/release/examples/ic_reader_canister.wasm" cargo test -p $(PACKAGE) --test ic_reader --locked --offline call_context_reader_matches_ic_and_survives_callback -- --exact --ignored --nocapture
+	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown
 
 test:
 	cargo test -p $(PACKAGE) --locked
@@ -131,7 +123,6 @@ test:
 msrv:
 	cargo +$(MSRV) check -p $(PACKAGE) --locked
 	cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
-	cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown --features ic
 
 shared-tooling-check:
 	bash scripts/ci/verify-shared-tooling-snapshot.sh

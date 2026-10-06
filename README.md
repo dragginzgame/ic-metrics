@@ -1,8 +1,8 @@
 # ic-metrics
 
-Allocation-free measurement arithmetic and an opt-in IC instruction reader.
+Allocation-free, dependency-free measurement arithmetic.
 
-The default dependency-free `no_std` library exports `record_sample` for consumer-owned
+The `no_std` library exports `record_sample` for consumer-owned
 count/total fields and `MeasurementSummary` for samples, total, latest and maximum.
 Zero is a valid observation; an empty summary has no latest or maximum value.
 Count and total saturate independently. Consumers establish units, identity and
@@ -21,7 +21,7 @@ assert_eq!(summary.latest(), Some(0));
 
 Known downstream consumers are IcyDB, Canic, ic-timers and ic-backup. Their
 attribution, registries, callback roles, replication, persistence and reporting
-remain local. ic-backup's prepared host integration uses arithmetic-only summaries
+remain local. ic-backup's released 0.3.7 host integration uses arithmetic-only summaries
 for local durations in nanoseconds and prepared chunk sizes in bytes; it enables
 no IC reader and its diagnostics establish no IC instruction or cycle cost.
 The crate has no global consumer registry, stable-memory allocation or endpoints.
@@ -29,42 +29,22 @@ Consumers own their summary instances, labels and persistence policy.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
 records scope and evidence.
 
-Published 0.1.5 exposes `ic_metrics::call_context_instructions()` with
-feature `ic` on `wasm32-unknown-unknown`. It reads IC performance counter 1;
-consumers establish call-context identity and own any subtraction or attribution.
-The opt-in IC binding uses `std`. Default arithmetic builds have no runtime
-dependencies on host or Wasm, and native builds expose no counter substitute.
-Opt in from the root dependency catalog:
+The pending 0.2.0 hard cut removes the `ic` feature and
+`call_context_instructions`. Platform reads belong in consumer adapters:
+IcyDB and Canic use `ic_cdk::api::call_context_instruction_counter()`; IC Timers
+uses its existing `ic0::performance_counter(1)` binding. Both read counter 1.
+Consumers own target gating, native handling, call-context identity and attribution.
+IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
+remain different consumer contracts.
 
-```toml
-[workspace.dependencies]
-ic-metrics = { version = "0.1.5", features = ["ic"] }
-```
-
-Gate the Rust import on the IC target as well:
-
-```rust
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use ic_metrics::call_context_instructions;
-```
-
-Use the same condition for code that calls the reader. Enabling `ic` does not
-expose it on native targets used for linting or Candid generation; consumers own
-their native handling.
-
-The reader is an instruction count, not cycles or elapsed time. Its replicated
-call context can span callbacks; unrelated calls, timer deliveries and resets
-do not establish comparable readings. The API documents the non-replicated
-composite-query boundary separately.
-
-`make reader-check` qualifies direct reads, replicated callbacks, ordinary queries
-and composite-query callbacks in PocketIC. The
-[query execution record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/ic-reader-query.md)
-includes a downstream-work exclusion check; it does not qualify consumer lifecycle
-behavior or claim a performance improvement.
-The CI workflow explicitly provisions pinned PocketIC 16.0.0 and runs this check
-on Linux and both macOS architectures, retaining evidence for 30 days. Ordinary
-local tests still require an explicit `make reader-check` invocation to run it.
+The latest published package is still 0.1.9. Consumers can remove their direct `ic` feature
+selection and switch their reader now while retaining published 0.1 arithmetic. Change the
+registry requirement to 0.2 only after its publication; no compatibility reader
+or replacement runtime crate is provided here. Published IC Timers still enables the old feature transitively in IcyDB/Canic;
+its prepared adapter must be released before their graphs shed that edge. Stored
+data, reports and endpoints are unchanged. Historical reader execution remains in the source-bound
+[evidence](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md#released-019)
+and tagged releases; current CI qualifies arithmetic and repository tooling.
 
 ## Measuring cost
 
@@ -72,8 +52,8 @@ Measure raw canister Wasm bytes, IC instructions and actual cycle charges
 separately. The shared arithmetic allocates nothing; labels, map updates and
 report encoding are consumer costs. Build profiles belong to the consumer
 workspace. The [performance audit](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/performance-audit.md)
-records compiler checks and size/instruction/cycle comparisons for the reader
-test canister, with their workload limits. It does not establish consumer savings.
+records historical compiler checks and size/instruction/cycle comparisons for
+the retired reader test canister, with their workload limits. It does not establish consumer savings.
 
 The separate [consumer lookup measurements](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/consumer-lookups.md)
 cover IcyDB and Canic's borrowed-key changes. Their isolated IC fixtures show
@@ -128,8 +108,8 @@ Git and the prepared local parsers. Their single reviewed pin owner is
 `ci/tool-versions.env`; IC executable pins live in `ci/ic-tools.tsv`.
 Local setup and focused commands are in
 [host support](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks).
-Compatible registry requirements and tracked lockfiles preserve build selection;
-the optional IC binding's exact constraint records its qualified runtime boundary.
+The library has no Cargo dependencies. Tracked lockfiles preserve workspace
+identity.
 Dependency changes must prepare every affected independent workspace graph before
 release validation. Checks never upgrade dependencies or install tools implicitly.
 
@@ -138,14 +118,15 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.1.8`](https://crates.io/crates/ic-metrics/0.1.8)
-is published on crates.io with tag `v0.1.8`. The reader's minimum release
-remains 0.1.5. Declare the current release in the consumer's
+tooling releases. [`ic-metrics 0.1.9`](https://crates.io/crates/ic-metrics/0.1.9)
+is published on crates.io with tag `v0.1.9`. The worktree prepares the breaking
+0.2.0 contract without changing package versions. Declare the published release
+in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.1.8"
+ic-metrics = "0.1.9"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

@@ -1,15 +1,147 @@
 # Current handoff
 
-ic-metrics owns allocation-free sample arithmetic and the optional IC
-call-context instruction reader. Default arithmetic stays dependency-free and
-`no_std`. Feature `ic` exposes `call_context_instructions` only on
-`wasm32-unknown-unknown`, using the safe ic0 1.2.0 binding, which explicitly uses
-`std`. `unsafe_code = "forbid"` is unchanged. Attribution, counter identity,
-replication, reset/persistence policy, labels, lifecycle and endpoints remain
-consumer-owned. Native builds have no shared counter or substitute. See the
-[extraction contract](../extraction.md).
+ic-metrics now owns allocation-free measurement arithmetic only. The pending
+**0.2.0** removes the public `call_context_instructions` function and `ic` feature,
+so a pre-1.0 minor release is required. `record_sample`, `MeasurementSummary`,
+zero/empty and saturation semantics are unchanged. Consumers own counter reads,
+attribution, identities, persistence and endpoints. The library is dependency-free
+and `no_std` on host and Wasm. See the [current contract](../extraction.md).
 
-## 0.1.9 tooling preparation after 0.1.8
+## Pending arithmetic-only 0.2.0
+
+The reader module, canister example, host harness, their dependency catalog and
+`make reader-check` are retired. Native CI retains common pinned tool setup and
+source/outcome/log artifacts without executing a reader fixture. Historical
+reader reports and release evidence are preserved, including the
+[frozen pre-cut extraction record](../evidence/extraction-through-019.md).
+The before-cut manifests include a concurrent ic-testkit 0.19 update; removing
+that graph is deliberate harness retirement, not qualification of the update.
+
+IcyDB/Canic adapters and IcyDB audit/test callers use the existing named CDK
+counter-1 API; IC Timers uses its existing ic0 counter-1 binding. Their native
+handling, inclusive/exclusive/role attribution, sample admission and reports
+stay unchanged. Consumer registry arithmetic requirements remain 0.1 until 0.2
+publication. Published IC Timers 0.13.5 still requests the old `ic` feature
+transitively in IcyDB/Canic; direct consumer declarations no longer request it.
+IC Timers publication removes that remaining feature edge. Subsequent shared
+summary re-exports need coordinated 0.2 type identity, tracked in #10. IC Backup
+already uses arithmetic-only summaries. Preparation and owning adoption are
+coordinated in
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10) and
+[#4](https://github.com/dragginzgame/ic-metrics/issues/4).
+
+Package versions remain unchanged. No commit, push, release or publication ran.
+Focused Linux validation passes: six unchanged arithmetic tests, strict host/
+Wasm lint, warning-denied docs, Rust 1.88 host/Wasm checks, formatting, the 44-file
+snapshot, dependency pins, workflow lint and verified offline development
+packaging. The actual revised CI shell blocks preserve a controlled failed-gate
+exit, log and outcome; the metadata fixture passes with Cargo-edit/Git substitutes.
+No full local test/CI/release gate ran. New hosted qualification remains separate.
+
+IcyDB passes strict Core metrics library/tests lint, ten named state tests and
+strict library lint for thirteen selected Wasm packages/twelve native callers.
+The first Wasm attempt exposed incomplete child-module reader renames; its log
+is preserved separately from the corrected passes. IC Timers passes strict
+host/Wasm library lint, two named role/projection tests and both independent
+locked/offline metadata checks. Canic passes strict Core host/Wasm lint, eight
+native performance tests and its exact governed PocketIC interleaving case in
+both completion orders. Current IcyDB/Canic graphs select ic-memory 0.28.0 and
+ic-testkit 0.19.0 from concurrent work; those selections were preserved, with
+explicit offline preparation from already verified local archives where needed.
+IC Timers' independent graph selections remain unchanged. Qualification input
+hashes match after execution. These are focused proofs, not complete consumer
+release/native CI or a cost comparison. A later Canic fixture/PocketIC dependency
+edit was qualified separately with strict fixture host lint and the same governed
+IC case; five new input hashes match after execution. Its admitted Wasm cache was
+reused. A rejected direct fixture Wasm check remains recorded; the canonical build
+guard was not bypassed. See the
+[preparation record](../evidence/arithmetic-cut-020.md) and retained inputs/logs
+under `target/evidence/arithmetic-cut-020/`.
+
+[#8](https://github.com/dragginzgame/ic-metrics/issues/8) is resolved by deleting
+the retired harness graph; #10 retains publication/type-identity/adoption
+coordination. Package versions remain maintainer-owned. GitHub's repository
+description, “Shared measurement primitives for Internet Computer crates.”,
+remains accurate for this narrower worktree and the published release.
+
+## Released 0.1.9
+
+The maintainer published 0.1.9 at tag `v0.1.9`, commit
+`083254a6a7c24f1e07d1e952a867059746f6feb5`. The non-yanked registry index and
+downloaded archive agree on SHA-256
+`14478c4b7c31f0b9ac3226cd33056d273b8488dc5cb8820b13e64dff171ded65`.
+The archive's embedded Git identity, original manifest, README, license, library
+source, example and reader harness match the tag. Normalized package metadata
+reports edition 2024 and Rust 1.88. Archive comparison evidence remains under
+`target/evidence/release-019/`; it is publication/source evidence, not a new build
+or runtime qualification. Runtime library source is unchanged from 0.1.8.
+
+The exact-source [CI run 37452356472](https://github.com/dragginzgame/ic-metrics/actions/runs/37452356472)
+has passed MSRV and all three native jobs: Ubuntu 24.04 x86-64, macOS 15 Intel
+and macOS 15 Apple Silicon. Each completed the native gate, local host/IC setup,
+actual PocketIC reader execution and evidence upload. All three artifact ZIPs,
+their bundled logs/Wasm, 21 source hashes per host and IC pins were independently
+verified against the tagged source and retained manifests.
+The harness/server binary bytes are not bundled; their recorded hashes were not
+independently recomputed from CI binaries. This completes the supported-host
+adoption proof for [release recovery #5](https://github.com/dragginzgame/ic-metrics/issues/5)
+and [local tool adoption #6](https://github.com/dragginzgame/ic-metrics/issues/6).
+Recovery fixtures retain their command-substitute/real-Git scope; no live
+interrupted-release or deployment behavior is inferred from those passes.
+
+Shared Tooling's committed local HEAD and remote main still identify the adopted
+`a37771f1b6b5fc9a88ed6ab3b705bdda35cd8fa3`; the 44-file snapshot verifies.
+Its local checkout now contains uncommitted documentation-link, release-command
+and exact registry-version helpers. None has been distributed into this snapshot;
+the adopted rules and tooling retain their reviewed committed identity.
+Fresh locked offline Linux checks used the current IcyDB and Canic graphs,
+both selecting registry ic-metrics 0.1.9 and ic-memory 0.27.3. Logs, locked
+metadata and before/after input hashes remain in `target/evidence/consumer-review-019/`.
+IcyDB's metrics-enabled strict Core Clippy and ten selected state tests passed
+on the then-0.265.0 manifest, based on `1f4737a9486fa2d0fb0f72927c92b15b6da4d0d4`.
+Its owning Cargo home and `target/icydb` were used. A subsequent Wasm Clippy pass
+overlapped a newly started maintainer release; that mistake is retained in
+`icydb-overlap.txt`, and the check is not exclusive release-gate evidence.
+The measured source and lock hashes stayed unchanged. The maintainer then
+completed a clean 0.265.1 checkout at `84fa00fd4a765f9bdcd6e587f6598b0725a63da5`;
+that newer revision has no matching hosted run in the observed listing.
+
+Canic's uncommitted batch based on `e1a211a00f01568ccc99bedc494c62a7141444dd`
+passed strict selected Core/macros/facade/internal-test Clippy, eight Core perf
+tests, fifteen expansion tests and the public facade checkpoint test. The governed
+`interleaved_endpoint_and_checkpoint_metrics_preserve_call_contexts` PocketIC
+case also passed against actual IC counters in both completion orders, with
+source/manifest/lock hashes unchanged. This requalifies the
+[async attribution fix #99](https://github.com/dragginzgame/canic/issues/99)
+on lock SHA-256 `2fa2330bfac3a441eb4b9f9492fc1a63cb88c97beec6398b34ab842708e5d60e`;
+earlier child-lifecycle evidence retains its older dependency graph.
+Direct Core instrumentation changes require a minor release. The selected Canic
+0.110.53 patch remains incompatible; its exact 0.110 human closeout audit and
+accepted verdict are required before crossing that boundary. Complete owning
+native release/CI evidence remains separate, coordinated under
+[consumer adoption #4](https://github.com/dragginzgame/ic-metrics/issues/4),
+[IcyDB #298](https://github.com/dragginzgame/icydb/issues/298) and
+[Canic #447](https://github.com/dragginzgame/canic/issues/447).
+IC Timers remains a downstream consumer; its ongoing work was preserved.
+IC Backup's metrics integration is now in release 0.3.7 at
+`1a23d66dd65b1e36e986b8c7d13758cf3c92d193`, selecting arithmetic-only ic-metrics
+0.1.7 in that committed graph. Its exact-source
+[main CI](https://github.com/dragginzgame/ic-backup/actions/runs/37453307419) and
+[tag CI](https://github.com/dragginzgame/ic-backup/actions/runs/37453307321)
+have passed Linux and Apple Silicon; Intel macOS is still running at this
+observation. The pending 0.3.8 worktree selects ic-metrics 0.1.9 with default
+features disabled, preserving the same guard-local metrics source. This is not
+the graph tested by those 0.3.7 runs. Read-only source/lock/CI evidence remains
+under `target/evidence/downstream-review-019/`; see the
+[downstream boundary](../evidence/extraction-through-019.md#ic-backup-host-adoption).
+No IC Timers/IC Backup build commands, sibling source mutation or agent release
+effect were performed.
+
+This continuation records publication and qualification evidence. Finalized
+0.1.9 notes are preserved; no new behavior/tooling batch or pending release is
+selected by these evidence updates. Package versions and Cargo.lock stay 0.1.9.
+
+## Earlier 0.1.9 tooling preparation after 0.1.8
 
 The maintainer released 0.1.8 at
 `1bcca2020a3190f5130d6279eeef997dc1bcba01`. Its non-yanked registry entry has
