@@ -75,7 +75,7 @@ library/tooling gates rather than opt-in server execution.
 
 The 0.1.6 workflow explicitly provisions PocketIC 16.0.0 and invokes
 `make reader-check` after the native gate on all three hosts. The consumer-owned
-[installer](../scripts/ci/install-reader-pocketic.sh) selects the exact platform
+[earlier installer](https://github.com/dragginzgame/ic-metrics/blob/v0.1.6/scripts/ci/install-reader-pocketic.sh) selects the exact platform
 asset and verifies its SHA-256 before extraction, then checks the version before
 returning the binary path. Archive pins were checked against the official
 [16.0.0 release metadata](https://api.github.com/repos/dfinity/pocketic/releases/tags/16.0.0).
@@ -114,16 +114,19 @@ Shared Tooling adoption require their own evidence.
 
 ## Prerequisites and focused checks
 
-- The a7efade Shared Tooling adoption adds `make check-pins` to native CI and
-  release validation. Git, jq and Mike Farah yq 4.47.2 are required; the parser
-  version and Linux/macOS digests are consumer-owned in `ci/tool-versions.env`.
-  CI installs the parser explicitly and verifies its checksum and version.
-  Linux focused results are recorded in the current handoff; the updated gates
-  still need their own hosted Linux/macOS results after commit. Earlier tagged
-  host evidence above does not qualify this uncommitted tooling batch.
+- The a37771f Shared Tooling adoption provides `make install-tools` and offline
+  `make tools-check`. Host parser pins live in the reviewed `ci/tool-versions.env`;
+  IC executable pins live in `ci/ic-tools.tsv`. Make selects `.tools/host/bin`
+  and `.tools/ic/bin`. `make check-pins` and release validation never install tools.
+  Explicit CI setup installs the pinned parser pair and prepares ripgrep before
+  fixtures; the separate IC setup step verifies all six local executables before
+  reader execution. New hosted results must qualify this consumer wiring.
 - rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.88.0 for MSRV checks.
 - Install the `wasm32-unknown-unknown` target for each checked toolchain.
 - Git, GNU Make (`make`), Bash 3.2 or newer, and standard Unix utilities.
+- curl, Perl, tar/gzip/xz and ripgrep for explicit local setup and tooling
+  fixtures. Follow the [system bootstrap instructions](local-setup.md#bootstrap-prerequisites)
+  for Linux Mint/Ubuntu or macOS; these packages are separate from pinned local tools.
 - cargo-sort 2.1.4, installed explicitly with
   `cargo install cargo-sort --version 2.1.4 --locked`. Formatting, CI and release
   validation check all workspace manifests before Rust formatting.
@@ -140,36 +143,30 @@ Run `make shared-tooling-check`, `make fmt`, `make check`,
 the opt-in reader; Clippy covers its canister fixture. Select
 named tests relevant to the change rather than running the full suite by default.
 
-Prepare the selected parser explicitly for local checks:
+Prepare tools explicitly before local validation:
 
 ```sh
-source ci/tool-versions.env
-case "$(uname -s):$(uname -m)" in
-  Linux:x86_64) digest="$IC_METRICS_YQ_SHA256_LINUX_AMD64" ;;
-  Darwin:x86_64) digest="$IC_METRICS_YQ_SHA256_DARWIN_AMD64" ;;
-  Darwin:arm64) digest="$IC_METRICS_YQ_SHA256_DARWIN_ARM64" ;;
-  *) echo 'unsupported parser host' >&2; exit 1 ;;
-esac
-yq_bin="$(bash scripts/ci/install-yq.sh --version "$IC_METRICS_YQ_VERSION" \
-  --sha256 "$digest" --install-dir "$PWD/target/tools")"
-YQ="$yq_bin" make check-pins
+make install-tools
+make tools-check
+make check-pins
 ```
 
-`make pin-tools-check`, `make release-tools-check` and `make hook-check` run
+`make local-tools-test`, `make pin-tools-check`, `make release-tools-check` and `make hook-check` run
 focused tooling fixtures without creating commits, tags or pushes. Release
 fixtures substitute Cargo-edit or cheap gates where declared, exercise actual
 Git index/selected-commit checks and the actual Make/logger adapter, and preserve
 normal nested release selections while isolating independent fixture inputs.
 
-For actual instruction-counter execution, provision the exact PocketIC 16.0.0
-binary from [the upstream release](https://github.com/dfinity/pocketic/releases/tag/16.0.0)
-for the supported host, then run:
+For actual instruction-counter execution, explicit `make install-ic-tools`
+provides the exact PocketIC 16.0.0 from the shared set for the supported host.
+The default reader command uses that checkout-local binary:
 
 ```sh
-make reader-check POCKET_IC_BIN=/absolute/path/to/pocket-ic
+make reader-check
 ```
 
-The host fixture checks its pinned platform digest and version before starting
+An explicit `POCKET_IC_BIN=/absolute/path/to/pocket-ic` remains supported. The
+host fixture checks its independently qualified raw platform digest and version before starting
 the server, with bounded startup, request time and server lifetime. The target
 builds the Wasm example under this repository's `target/`, then runs only the
 named ignored integration test, including its ordinary and composite-query cases.
@@ -184,7 +181,8 @@ cargo-edit and does not implicitly publish or clean artifacts. Native release
 adapter execution remains unqualified on macOS; Linux stubs do not close that gap.
 The later formatter setup and packaging changes are covered by the tagged
 0.1.3 native CI evidence above; the earlier 0.1.1 run remains scoped to its tag.
-The adoption snapshot now records a7efade; earlier tagged evidence used f52c0e2.
+The adoption snapshot now records a37771f; 0.1.8 used a7efade and earlier tagged
+evidence used f52c0e2.
 Native CI includes a scratch hook
 fixture using this consumer's actual formatting and setup targets. It covers
 logical path aliases, selected refresh, unrelated edits, partial staging and

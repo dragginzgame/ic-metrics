@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`a7efade1a68e43f148252a1a73908a46c4cbe9e9` and file digests are recorded in
+`a37771f1b6b5fc9a88ed6ab3b705bdda35cd8fa3` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -55,5 +55,14 @@ and [the extraction contract](docs/extraction.md) before implementation.
   that boundary requires reader/callback qualification, not only lock resolution.
   Development registry dependencies use compatible requirements and locked builds.
 - `make check-pins` requires prepared Git, jq and Mike Farah yq; consumer-selected
-  tool versions/digests are in `ci/tool-versions.env`. CI provisions the parser
-  explicitly. The checker and release gates do not install tools or unlock graphs.
+  tool versions/digests are in the reviewed `ci/tool-versions.env`. Explicit
+  `make install-host-tools` prepares the pair under `.tools/host/bin`;
+  `make host-tools-check` verifies it offline. IC executable pins live only in
+  `ci/ic-tools.tsv`; the reader harness independently checks the qualified raw
+  PocketIC binary. The checker and release gates never install tools or unlock graphs.
+- Shared structural reviews use [the common methods](audits/README.md), with
+  this overlay's allocation, units, counter identity and ownership constraints.
+  Source scope is `crates/ic-metrics`, owning tooling and the affected downstream
+  contracts in `docs/extraction.md`; focused commands remain in `docs/hosts.md`.
+  Existing performance evidence under `docs/evidence` retains its domain scope
+  and original identities. Audit adoption schedules no review or broad gate.

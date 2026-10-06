@@ -4,6 +4,11 @@ PACKAGE := ic-metrics
 MSRV ?= 1.88.0
 RELEASE_REMOTE ?= origin
 RELEASE_BRANCH ?= main
+IC_TOOL_PINS ?= ci/ic-tools.tsv
+HOST_TOOL_VERSIONS ?= ci/tool-versions.env
+POCKET_IC_BIN ?= $(CURDIR)/.tools/ic/bin/pocket-ic
+export PATH := $(CURDIR)/.tools/host/bin:$(CURDIR)/.tools/ic/bin:$(PATH)
+export YQ := $(CURDIR)/.tools/host/bin/yq
 
 ifneq ($(word 2,$(filter release-patch release-minor release-major release-resume,$(MAKECMDGOALS))),)
 $(error Select exactly one release target)
@@ -40,16 +45,19 @@ release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
 .PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check reader-check test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
+.PHONY: install-tools tools-check install-host-tools host-tools-check install-ic-tools ic-tools-check local-tools-test
 
 help:
+	@echo "Local setup: install-tools; offline verification: tools-check"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
 	@echo "Clone setup: install-hooks (requires prepared cargo-sort 2.1.4 and rustfmt)"
 	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, msrv, shared-tooling-check, check-pins"
 	@echo "Tooling fixtures: hook-check, release-tools-check, pin-tools-check (no release Git effects)"
+	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
-	@echo "IC reader: reader-check POCKET_IC_BIN=/absolute/path/to/pocket-ic (pinned 16.0.0)"
+	@echo "IC reader: reader-check (local PocketIC 16.0.0; explicit POCKET_IC_BIN supported)"
 	@echo "Full gates (explicit request or configured CI): test, ci"
 
 publish:
@@ -60,6 +68,31 @@ publish-check:
 
 install-hooks:
 	bash scripts/dev/install-git-hooks.sh
+
+install-tools:
+	+$(MAKE) --no-print-directory install-host-tools
+	+$(MAKE) --no-print-directory install-ic-tools
+
+tools-check:
+	+$(MAKE) --no-print-directory host-tools-check
+	+$(MAKE) --no-print-directory ic-tools-check
+
+install-host-tools:
+	bash scripts/dev/install-host-tools.sh --versions "$(HOST_TOOL_VERSIONS)"
+
+host-tools-check:
+	bash scripts/dev/install-host-tools.sh --versions "$(HOST_TOOL_VERSIONS)" --check
+
+install-ic-tools:
+	bash scripts/dev/install-ic-tools.sh --pins "$(IC_TOOL_PINS)"
+
+ic-tools-check:
+	bash scripts/dev/install-ic-tools.sh --pins "$(IC_TOOL_PINS)" --check
+
+local-tools-test:
+	bash scripts/ci/test-host-tools.sh
+	bash scripts/ci/test-ic-tools.sh
+	bash scripts/ci/test-evidence-checksums.sh
 
 hook-check:
 	bash scripts/dev/test-format-hook.sh
@@ -88,7 +121,7 @@ docs-check:
 	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown --features ic
 
 reader-check:
-	@test -n "$(POCKET_IC_BIN)" || { echo "Set POCKET_IC_BIN to a verified PocketIC 16.0.0 binary" >&2; exit 2; }
+	@test -x "$(POCKET_IC_BIN)" || { echo "Run make install-ic-tools or select a verified PocketIC 16.0.0 binary with POCKET_IC_BIN" >&2; exit 2; }
 	CARGO_TARGET_DIR="$(CURDIR)/target" cargo build -p $(PACKAGE) --example ic_reader_canister --target wasm32-unknown-unknown --features ic --release --locked --offline
 	CARGO_TARGET_DIR="$(CURDIR)/target" POCKET_IC_BIN="$(POCKET_IC_BIN)" IC_METRICS_READER_WASM="$(CURDIR)/target/wasm32-unknown-unknown/release/examples/ic_reader_canister.wasm" cargo test -p $(PACKAGE) --test ic_reader --locked --offline call_context_reader_matches_ic_and_survives_callback -- --exact --ignored --nocapture
 
@@ -118,8 +151,10 @@ release-tools-check:
 # Keep order explicit: stop on a failed gate, including any Clippy warning.
 ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
+	+$(MAKE) --no-print-directory host-tools-check
 	+$(MAKE) --no-print-directory check-pins
 	+$(MAKE) --no-print-directory pin-tools-check
+	+$(MAKE) --no-print-directory local-tools-test
 	+$(MAKE) --no-print-directory release-tools-check
 	+$(MAKE) --no-print-directory hook-check
 	+$(MAKE) --no-print-directory fmt-check

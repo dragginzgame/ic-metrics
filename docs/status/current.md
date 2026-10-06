@@ -9,7 +9,75 @@ replication, reset/persistence policy, labels, lifecycle and endpoints remain
 consumer-owned. Native builds have no shared counter or substitute. See the
 [extraction contract](../extraction.md).
 
-## Shared Tooling adoption after 0.1.7
+## 0.1.9 tooling preparation after 0.1.8
+
+The maintainer released 0.1.8 at
+`1bcca2020a3190f5130d6279eeef997dc1bcba01`. Its non-yanked registry entry has
+checksum `a2ac963f667122ad6bb64cee4380aa5bbd51fd585bde1d4dbd652a1247fe650b`
+and Rust 1.88 minimum. This is index verification, not a separately downloaded
+archive comparison. Package versions remain 0.1.8. The compatible next draft is
+0.1.9 for CI prerequisites and local tooling; no library API, attribution or
+measurement contract changes.
+
+Exact 0.1.8 [CI run 37450502931](https://github.com/dragginzgame/ic-metrics/actions/runs/37450502931)
+passed MSRV but failed native validation on all three hosts because the pin
+fixture requires ripgrep and setup omitted it. Failed Linux/Apple Silicon job
+logs remain in `target/evidence/ci-018/`. This batch explicitly prepares ripgrep
+and xz through apt/Homebrew before fixtures, and uploads native CI logs/outcomes
+even when validation stops before reader setup. The original failed run retains
+its source identity; new hosted qualification requires the maintainer's committed
+fix. [Release recovery #5](https://github.com/dragginzgame/ic-metrics/issues/5)
+owns that remaining consumer proof.
+
+The clean reviewed Shared Tooling source and remote HEAD identified
+`a37771f1b6b5fc9a88ed6ab3b705bdda35cd8fa3`. Its distribution helper refreshed
+44 declared files, including common host/IC setup, pins, checksum fixtures and
+structural audit methods. No snapshot-owned file was patched. `make install-tools`
+explicitly installs local jq/yq and Quill/ICP CLI/didc/ic-wasm/PocketIC/Binaryen;
+`make tools-check` verifies both sets offline. Make/CI select the local paths.
+The shared PocketIC 16.0.0 archive pins match the old qualified installer on all
+three hosts. That local downloader and its obsolete fixture are removed; shared
+tool fixtures cover rejection/retention, while the reader harness retains its
+independently qualified raw-binary checksum and real execution contract.
+
+Actual Linux installation of all eight binaries, checksum/version checks and
+repeat setup with curl disabled pass. Shared tool/manifest rejection fixtures,
+selected consumer release/hook fixtures, formatting, pin declarations, ShellCheck
+and workflow lint pass. Source, inputs and logs remain under
+`target/evidence/tooling-a37771f/`. These are consumer-local Linux results;
+substitute platform fixtures establish mapping/refusal behavior, not native
+macOS execution. [Local tool adoption #6](https://github.com/dragginzgame/ic-metrics/issues/6)
+retains the complete consumer host qualification requirement.
+
+Warning-denied locked offline host/reader-harness and Wasm library/example
+Clippy pass with the unchanged ic-testkit 0.18.3 lock selection. The named
+`make reader-check` passes against the newly installed local PocketIC binary,
+covering replicated updates/callbacks, ordinary queries and composite-query
+downstream exclusion. The first attempt failed because the sandbox denied a
+localhost bind; that log remains alongside the successful socket-enabled retry.
+No performance gain is claimed. An isolated execution of the workflow's actual
+retention block also preserves a native-gate failure before reader setup,
+including its source identity, raw log, outcome and artifact checksum. CI uploads
+failed installer candidates separately when host or IC setup fails.
+
+Upstream exact-source [CI run 37450707625](https://github.com/dragginzgame/shared-tooling/actions/runs/37450707625)
+passes lint/security and portable regression on Linux, macOS Intel and Apple
+Silicon. This qualifies the recorded upstream source, not this uncommitted
+consumer wiring or a live release.
+
+The shared audit definitions apply through this AGENTS overlay, the extraction
+contract and host commands. The existing performance audit and consumer lookup
+records remain unchanged domain evidence, with no structural score comparison,
+new product audit or scheduled gate. This is definition/ownership adoption review.
+The GitHub description still accurately identifies shared measurement primitives.
+
+Root/library/fixture Rust and Cargo.lock are unchanged from the released source.
+IcyDB/Canic's adopting local HEADs still have no matching hosted run; their owning
+release/native qualification remains in [consumer adoption #4](https://github.com/dragginzgame/ic-metrics/issues/4).
+No sibling source, version, commit, tag, push, workflow rerun/dispatch, publication
+or cleanup was performed.
+
+## Earlier 0.1.8 Shared Tooling preparation
 
 The maintainer released 0.1.7 at
 `adf9c3f5676b8ce7983fe2f35724c800d1b00a59`; the local tag and package metadata

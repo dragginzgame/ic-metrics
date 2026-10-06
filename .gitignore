@@ -1,3 +1,4 @@
 /target/
+/.tools/
 .DS_Store
 .shared-tooling-refresh.*

@@ -55,31 +55,28 @@ jobs:
           targets: wasm32-unknown-unknown
       - name: Install pinned manifest formatter
         run: cargo install cargo-sort --version 2.1.4 --locked
-      - name: Install pinned YAML and TOML parser
+      - name: Install native tooling prerequisites
         run: |
-          source ci/tool-versions.env
-          case "$(uname -s):$(uname -m)" in
-            Linux:x86_64) digest="$IC_METRICS_YQ_SHA256_LINUX_AMD64" ;;
-            Darwin:x86_64) digest="$IC_METRICS_YQ_SHA256_DARWIN_AMD64" ;;
-            Darwin:arm64) digest="$IC_METRICS_YQ_SHA256_DARWIN_ARM64" ;;
-            *) echo 'unsupported parser host' >&2; exit 1 ;;
+          case "$(uname -s)" in
+            Linux)
+              sudo apt-get update
+              sudo apt-get install -y ripgrep xz-utils
+              ;;
+            Darwin) brew install ripgrep xz ;;
+            *) echo 'unsupported native host' >&2; exit 1 ;;
           esac
-          if ! command -v jq >/dev/null; then
-            case "$(uname -s)" in
-              Linux)
-                sudo apt-get update
-                sudo apt-get install -y jq
-                ;;
-              Darwin) brew install jq ;;
-              *) echo 'unsupported jq host' >&2; exit 1 ;;
-            esac
-          fi
-          yq_bin="$(bash scripts/ci/install-yq.sh \
-            --version "$IC_METRICS_YQ_VERSION" --sha256 "$digest" \
-            --install-dir "$RUNNER_TEMP/ic-metrics-tools")"
-          printf 'YQ=%s\n' "$yq_bin" >> "$GITHUB_ENV"
+          rg --version
+      - name: Install pinned local JSON, YAML and TOML parsers
+        id: host_tools
+        run: |
+          make install-host-tools
+          make host-tools-check
+          echo "$GITHUB_WORKSPACE/.tools/host/bin" >> "$GITHUB_PATH"
       - name: Run native CI
-        run: make ci
+        id: native_ci
+        run: |
+          mkdir -p target/evidence/reader
+          make ci 2>&1 | tee target/evidence/reader/native-ci.log
       - name: Record reader inputs and prepare locked dependencies
         id: reader_inputs
         run: |
@@ -93,39 +90,45 @@ jobs:
             cargo --version
           } > target/evidence/reader/inputs.txt
           git ls-files Cargo.toml Cargo.lock Makefile .shared-tooling.snapshot \
-            crates/ic-metrics .github/workflows/ci.yml scripts/ci/install-reader-pocketic.sh \
-            scripts/ci/verify-file-checksum.sh scripts/ci/test-reader-provisioning.sh \
+            crates/ic-metrics .github/workflows/ci.yml ci/tool-versions.env ci/ic-tools.tsv \
+            scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
+            scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
+            scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
             > target/evidence/reader/source-files.txt
           while IFS= read -r file; do
             shasum -a 256 "$file"
           done < target/evidence/reader/source-files.txt > target/evidence/reader/source-sha256.txt
           cargo fetch --locked 2>&1 | tee target/evidence/reader/fetch.log
-      - name: Check provisioning rejection boundaries
-        id: reader_integrity
-        run: bash scripts/ci/test-reader-provisioning.sh 2>&1 | tee target/evidence/reader/provisioning-fixture.log
-      - name: Provision pinned PocketIC 16.0.0
+      - name: Provision and verify the pinned local IC tool set
         id: reader_provision
         run: |
-          bash scripts/ci/install-reader-pocketic.sh \
-            > target/evidence/reader/pocketic-path.txt 2> target/evidence/reader/provision.log
+          make install-ic-tools > target/evidence/reader/provision.log 2>&1
+          make ic-tools-check >> target/evidence/reader/provision.log 2>&1
           cat target/evidence/reader/provision.log
-          printf 'POCKET_IC_BIN=%s\n' "$(cat target/evidence/reader/pocketic-path.txt)" >> "$GITHUB_ENV"
+          echo "$GITHUB_WORKSPACE/.tools/ic/bin" >> "$GITHUB_PATH"
+          printf 'POCKET_IC_BIN=%s\n' "$GITHUB_WORKSPACE/.tools/ic/bin/pocket-ic" >> "$GITHUB_ENV"
       - name: Execute instruction-reader qualification
         id: reader_execution
         run: |
           CARGO_NET_OFFLINE=true make reader-check POCKET_IC_BIN="$POCKET_IC_BIN" \
             2>&1 | tee target/evidence/reader/qualification.log
       - name: Retain reader artifacts and outcome
-        if: always() && steps.reader_inputs.outcome != 'skipped'
+        if: always() && steps.native_ci.outcome != 'skipped'
         env:
+          NATIVE_OUTCOME: ${{ steps.native_ci.outcome }}
           INPUT_OUTCOME: ${{ steps.reader_inputs.outcome }}
-          INTEGRITY_OUTCOME: ${{ steps.reader_integrity.outcome }}
           PROVISION_OUTCOME: ${{ steps.reader_provision.outcome }}
           EXECUTION_OUTCOME: ${{ steps.reader_execution.outcome }}
         run: |
           mkdir -p target/evidence/reader
-          printf 'inputs=%s\nintegrity=%s\nprovision=%s\nexecution=%s\n' \
-            "$INPUT_OUTCOME" "$INTEGRITY_OUTCOME" "$PROVISION_OUTCOME" "$EXECUTION_OUTCOME" > target/evidence/reader/outcome.txt
+          git rev-parse HEAD > target/evidence/reader/source-commit.txt
+          printf 'native=%s\ninputs=%s\nprovision=%s\nexecution=%s\n' \
+            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" "$EXECUTION_OUTCOME" > target/evidence/reader/outcome.txt
+          if [[ -f .tools/ic/files.sha256 ]]; then
+            cp .tools/ic/files.sha256 target/evidence/reader/ic-tool-files.sha256
+            cp .tools/ic/pins.tsv target/evidence/reader/ic-tool-pins.tsv
+            cp .tools/ic/host target/evidence/reader/ic-tool-host.txt
+          fi
           wasm=target/wasm32-unknown-unknown/release/examples/ic_reader_canister.wasm
           if [[ -f "$wasm" ]]; then
             cp "$wasm" target/evidence/reader/ic_reader_canister.wasm
@@ -142,12 +145,23 @@ jobs:
           } > target/evidence/reader/artifact-sha256.txt
       # actions/upload-artifact v7
       - name: Upload reader evidence
-        if: always() && steps.reader_inputs.outcome != 'skipped'
+        if: always() && steps.native_ci.outcome != 'skipped'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ic-reader-${{ matrix.runner }}-${{ github.run_attempt }}
           path: target/evidence/reader/
           if-no-files-found: error
+          retention-days: 30
+      - name: Upload failed local tool candidates
+        if: failure() && (steps.host_tools.outcome == 'failure' || steps.reader_provision.outcome == 'failure')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tool-install-${{ matrix.runner }}-${{ github.run_attempt }}
+          path: |
+            .tools/host-set.*/
+            .tools/ic-set.*/
+          include-hidden-files: true
+          if-no-files-found: warn
           retention-days: 30
 
   msrv:

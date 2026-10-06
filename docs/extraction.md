@@ -176,7 +176,8 @@ ic0 is `no_std` or require an upstream change.
 The maintained Wasm fixture brackets shared reads with direct counter-1 reads,
 executes bounded work, then checks continuity across an actual self-call callback
 against the per-message counter 0. `make reader-check` runs only this named
-PocketIC test with a caller-supplied 16.0.0 binary; its version and platform digest
+PocketIC test with an explicitly installed local or caller-supplied 16.0.0 binary;
+its version and platform digest
 are checked before server startup. No native counter fake is used. Runtime
 qualification and its artifact identities are recorded in [the host record](hosts.md).
 The earlier synchronous and replicated callback evidence is retained separately.

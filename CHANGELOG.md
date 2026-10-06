@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.9]
+
+- Prepare ripgrep explicitly on Linux and macOS CI so dependency-pin fixtures
+  can run, and retain native gate logs when validation fails before reader setup
+  ([#5](https://github.com/dragginzgame/ic-metrics/issues/5)).
+- Add common repository-local host and IC tools through `make install-tools`
+  and offline `make tools-check`. Use pinned local jq/yq and the common PocketIC
+  installer, preserving explicit setup, failed candidates and reader qualification
+  ([#6](https://github.com/dragginzgame/ic-metrics/issues/6)).
+
 ## [0.1.8] - 2026-10-06
 
 - Adopt the reviewed Shared Tooling rules and dependency declaration checker in
