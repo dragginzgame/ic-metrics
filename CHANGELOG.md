@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0]
+## [0.2.0] - 2026-10-06
 
 - **Breaking:** remove `call_context_instructions` and feature `ic`. Consumers
   must read the IC counter through their existing CDK/System API adapter and
