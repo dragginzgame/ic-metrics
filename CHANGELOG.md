@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.2]
+## [0.2.2] - 2026-10-06
 
 - Attempt every metadata restore after a preparation failure, report incomplete
   recovery and retain all originals when a file cannot be restored
