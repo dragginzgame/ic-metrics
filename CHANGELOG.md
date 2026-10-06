@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.1]
+## [0.2.1] - 2026-10-06
 
 - Retain failed release, metadata and formatting-hook fixture inputs and logs,
   report their scratch paths, and cover child-command and assertion failures
