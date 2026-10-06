@@ -1,13 +1,146 @@
 # Current handoff
 
-ic-metrics now owns allocation-free measurement arithmetic only. The pending
-**0.2.0** removes the public `call_context_instructions` function and `ic` feature,
-so a pre-1.0 minor release is required. `record_sample`, `MeasurementSummary`,
+ic-metrics now owns allocation-free measurement arithmetic only. Published
+**0.2.0** removes the public `call_context_instructions` function and `ic` feature.
+`record_sample`, `MeasurementSummary`,
 zero/empty and saturation semantics are unchanged. Consumers own counter reads,
 attribution, identities, persistence and endpoints. The library is dependency-free
 and `no_std` on host and Wasm. See the [current contract](../extraction.md).
 
-## Pending arithmetic-only 0.2.0
+## Current release and compatible 0.2.1 cleanup
+
+Tag `v0.2.0` identifies source `8657c35e441a0f2e6add7f784892e85c9b5e1117`.
+The non-yanked registry package has SHA-256
+`e6df432373e44c1956cbaa15548625efbebdbad4070a916e9fe0c7e4359f6265`;
+the downloaded archive's embedded source, original manifest, README, license
+and arithmetic source match that tag. Runtime and development dependencies and
+feature declarations are empty. Archive evidence remains under
+`target/evidence/release-020/`. Exact-source
+[CI run 37461297392](https://github.com/dragginzgame/ic-metrics/actions/runs/37461297392)
+passes all three native hosts and MSRV.
+
+The maintainer reports downstream adoption. Read-only manifest/lock inspection
+finds registry ic-metrics 0.2.0 in IcyDB and Canic's current worktrees, both with
+IC Timers 0.14.0. Those dependency edits remain uncommitted among concurrent
+work. IC Timers release 0.14.0 (`902323a`) selects 0.2; IC Backup release 0.3.9
+(`2587259`) still selects arithmetic-only 0.1.9. Consumer source/graph observations
+do not establish complete owning release/CI qualification or a cost improvement.
+[Adoption #10](https://github.com/dragginzgame/ic-metrics/issues/10) retains those
+owning obligations; no sibling is changed by this cleanup.
+
+The single undated pending changelog is **0.2.1**: fixture failure evidence and
+portable documentation are compatible tooling fixes, with no arithmetic API or
+sample-semantics change. Failed release, metadata and hook fixtures retain inputs
+and outputs, print their scratch paths and return their original failure status.
+Release and formatter prerequisite checks now inspect producer exit status before
+comparing output: valid-looking output from a failed command cannot advance a
+release. Failed selected-commit checks retain exported metadata and report its
+path; successful checks remove only their owned scratch. Preparation still
+restores the original metadata when its final version reader fails.
+The retention check runs real fixtures with controlled child/assertion failures
+and also verifies successful scratch cleanup; its evidence is uploaded by the
+existing native CI artifact owner. Linux passes all twelve scenarios, shell syntax
+and selected ShellCheck. Native macOS qualification remains owning configured CI
+work under [#7](https://github.com/dragginzgame/ic-metrics/issues/7).
+Documentation portability is tracked in
+[#9](https://github.com/dragginzgame/ic-metrics/issues/9).
+Package versions remain 0.2.0; no commit or release is selected by these notes.
+
+## Shared Tooling 0.1.8 adoption
+
+The current snapshot is reviewed commit
+`d957d1f8801885c5b69e4a9ef900155f5f2a8a9d`, exported through the upstream
+distribution helper from a clean detached checkout. All 50 declared files verify.
+The previous snapshot was verified and differing snapshot-owned bytes backed up
+before reconciling the earlier unfinished refresh; unrelated edits and the real
+index were preserved. Refresh inputs/logs remain under
+`target/evidence/adoption-018/`.
+
+`make hook-check` now delegates to the committed shared checker with explicit
+Rust/manifest/formatter inputs and `--no-dependency-tables`. The local adapter
+retains its pinned formatter prerequisite and nested failure diagnostics; its
+duplicated export and hook cases are retired. The shared checker preserves
+formatting, idempotence, partial Rust/manifest staging, failed-formatter isolation,
+locks, unrelated edits and installer alias/conflict behavior. The retention
+fixture follows the shared exports and verifies failed expected/actual inputs.
+`make check-pins` additionally selects the shared Cargo inheritance checks.
+
+Focused native Linux hook checks, Bash 3.2.57 retention scenarios, Cargo inheritance
+fixtures, metadata preparation/restoration, release admission, formatting,
+workflow/ShellCheck lint, document links and snapshot checks pass. The upstream
+[0.1.8 CI run](https://github.com/dragginzgame/shared-tooling/actions/runs/37484175750)
+passes Linux and lint/security but fails both native macOS jobs between the IC
+installer pass and host-installer completion; no precise failed assertion is
+established by the public log. Those logs are retained separately. This snapshot
+adoption does not establish native macOS consumer qualification; owning evidence
+remains in [#7](https://github.com/dragginzgame/ic-metrics/issues/7) and
+[#11](https://github.com/dragginzgame/ic-metrics/issues/11). The compatible pending
+release remains 0.2.1; package version, lockfile and library source remain 0.2.0.
+
+## Earlier 0.2.1 helper preparation
+
+Shared Tooling was refreshed from a clean, detached checkout of reviewed commit
+`9f8c7c768793f4ce8f25be9e88282c0f63a06e7f`. The expanded 49-file snapshot verifies;
+it adds the helper guide, referenced tag-maintenance guide, documentation-link
+checker, release-command checker and local-lockfile transformer. Tag deletion
+tooling is not adopted or executed. Release-command routing now uses the shared
+checker, while publication and admission/recovery remain local. Preparation
+transforms a retained lockfile candidate, checks its status before replacement,
+and restores files while retaining failed preparation evidence. The affected
+metadata/admission fixtures, host/IC installer fixtures, checksum fixtures and
+dependency pins pass on Linux. `make check-doc-links` covers the maintained
+Markdown roster: 134 local references across 40 documents, including newly
+adopted files. The five new public link destinations are verified through GitHub;
+Canic's historical handoff remains represented by its public owning issue because
+its local commit is unavailable through GitHub at this inspection.
+
+Upstream [CI run 37479591040](https://github.com/dragginzgame/shared-tooling/actions/runs/37479591040)
+passes Linux portable regressions and lint/security; both native macOS jobs
+subsequently failed after the IC installer fixture and before the host installer
+fixture reported success. The public log does not establish the exact failed
+assertion. The host installer fixture passes under GNU Bash 3.2.57 on Linux;
+that does not reproduce or qualify the native macOS failure.
+This does not qualify the changed consumer source.
+The formatting-hook helper in that revision requires an ordering-only unsorted
+dependency table. This crate has no dependency tables, so the local real-target
+hook fixture remains necessary. That adoption constraint stays in
+[#11](https://github.com/dragginzgame/ic-metrics/issues/11) and upstream
+[#16](https://github.com/dragginzgame/shared-tooling/issues/16).
+Refresh/check logs and the pre-refresh snapshot remain under
+`target/evidence/cleanup-021/`; the first rejected additional snapshot lacked
+required verifiers and changed no helper files. The successful expanded refresh
+uses the complete roster and preserves the consumer's unrelated edits.
+
+The #7 follow-up corrects CI evidence ownership: native validation creates its
+TMPDIR under the uploaded evidence tree, includes hidden scratch Git state in
+the artifact and records release/hook/helper inputs with the source roster.
+The actual revised native step passes a controlled failing Make gate under GNU
+Bash 3.2.57: status 43, the log and both ordinary/hidden fixture inputs survive.
+The eleven retention scenarios also pass under that shell on Linux. Workflow
+lint passes. No new native macOS consumer result is claimed; #7 remains open for
+that owning qualification after the maintainer commits the batch.
+
+For #11, the maintainer authorized and the agent applied the four-file upstream
+patch retained under `target/evidence/issues-021/shared-hook-proposal.patch`.
+It adds explicit
+`--no-dependency-tables` selection to the shared checker, omitting only dependency
+order perturbation while preserving real fmt/fmt-check, partial Rust/manifest
+staging, idempotence, lock/unrelated-edit preservation, formatter failures and
+installer checks. The applied helper passes against this actual dependency-free
+consumer under GNU Bash 3.2.57 on Linux; the upstream real-Cargo hook fixture also
+passes both selected modes. Selected and full required upstream ShellCheck pass.
+The applied portable suite passes through hook qualification, then stops at
+its missing cloc prerequisite; its log is retained. The upstream checker, its
+real-Cargo fixture, helper guide and changelog were patched without disturbing
+concurrent upstream work. This fix remains uncommitted, so it is not adopted in
+the consumer snapshot. Source commit and native qualification remain
+maintainer/CI-owned. Logs, inputs and rejected
+attempts remain under `target/evidence/issues-021/`.
+
+## Earlier arithmetic-only 0.2.0 preparation
+
+The following preparation observations precede the publication and adoption
+updates above; their source identities and qualification scope are preserved.
 
 The reader module, canister example, host harness, their dependency catalog and
 `make reader-check` are retired. Native CI retains common pinned tool setup and
@@ -389,8 +522,9 @@ Canic's reader-adoption batch has native and Wasm Core library Clippy passing
 with warnings denied, plus all four endpoint-accounting tests. Formatting ran
 before validation and preserved concurrent release-flow fixture edits. Only the
 metrics lock entry changed; package versions and other dependency selections
-are preserved. Its [handoff](/home/adam/projects/canic/docs/status/current.md)
-scopes the results separately from concurrent release-script/fixture repairs.
+are preserved. The handoff was inspected locally; public coordination in
+[Canic #447](https://github.com/dragginzgame/canic/issues/447) retains the owning
+scope separately from concurrent release-script/fixture repairs.
 The maintainer committed the 0.110.53 batch at
 `05707b8c06f658297915c96c4727a8accf98dbdc`; that commit does not relabel the focused
 reader checks as complete release or hosted qualification.
@@ -401,7 +535,7 @@ regressions while its package still identified as 0.13.0. The maintainer committ
 that source and selected 0.13.1 at `54bbcfc`; the release commit changed metadata
 only. Both independent locked graphs select one registry metrics package. All
 other external selections are preserved; the local timer package version changed
-only through the maintainer's release. Its [handoff](/home/adam/projects/ic-timers/docs/status/current.md)
+only through the maintainer's release. Its [release handoff](https://github.com/dragginzgame/ic-timers/blob/54bbcfc4985d4657578150cbe7112795297115fd/docs/status/current.md)
 records the distinction between these native-substitute results and complete
 owning PocketIC/release/hosted qualification.
 
@@ -427,8 +561,8 @@ there, with new 0.265.1 notes preserving all finalized history. Package versions
 and every other lock record remain unchanged. Primary native/Wasm strict Core
 Clippy and all nine selected state tests pass at 0.265.0, supplying their own
 results rather than relabelling the earlier isolated package evidence. Its
-[adoption record](/home/adam/projects/icydb/docs/governance/shared-tooling.md)
-contains the current qualification details.
+[adoption record](https://github.com/dragginzgame/icydb/blob/20a9aa7d9802cf73ad17ed9444fc06a2c37e2909/docs/governance/shared-tooling.md)
+contains the qualification details for that historical batch.
 The maintainer committed the 0.265.1 batch at
 `20a9aa7d9802cf73ad17ed9444fc06a2c37e2909`; the earlier focused qualification
 remains scoped to its actual package and inputs.

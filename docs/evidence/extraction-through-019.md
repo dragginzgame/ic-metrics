@@ -231,10 +231,11 @@ does not reconstruct observations. Synchronization, inclusive host sampling,
 duration clamping and public diagnostics remain IC Backup-owned. No measurement
 identity, persistence, transport, completion or spending authority moves here.
 
-IC Backup's owning [adoption record](/home/adam/projects/ic-backup/docs/ic-metrics-adoption.json)
-and [handoff](/home/adam/projects/ic-backup/docs/status/current.md)
+IC Backup's owning [adoption record](https://github.com/dragginzgame/ic-backup/blob/1a23d66dd65b1e36e986b8c7d13758cf3c92d193/docs/ic-metrics-adoption.json)
+and [handoff](https://github.com/dragginzgame/ic-backup/blob/1a23d66dd65b1e36e986b8c7d13758cf3c92d193/docs/status/current.md)
 describe its focused native qualification. At this review those records and the
-integration were uncommitted.
+integration were uncommitted. The portable links now target their later committed
+0.3.7 records; they do not change the original review's scope.
 This review inspected local source and tests, without running consumer commands,
 native timing benchmarks or IC measurements. Native macOS qualification remains
 consumer-owned. No IC Backup file was changed.

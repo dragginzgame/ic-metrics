@@ -11,15 +11,20 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-metadata-test.XXXXXX")"
 cleanup() {
     local status=$?
-    if [[ "$status" != 0 && -f "${worktree:-}/result.log" ]]; then
-        cat "$worktree/result.log" >&2
+    if [[ "$status" != 0 ]]; then
+        for log in "${worktree:-}/setup.log" "${worktree:-}/result.log"; do
+            if [[ -f "$log" ]]; then cat "$log" >&2 || :; fi
+        done
+        echo "failed metadata fixture retained: $fixture" >&2
+    else
+        rm -rf "$fixture"
     fi
-    rm -rf "$fixture"
     exit "$status"
 }
 trap cleanup EXIT
 FIXTURE_REAL_CARGO="$(command -v cargo)"
-export FIXTURE_REAL_CARGO
+FIXTURE_REAL_AWK="$(command -v awk)"
+export FIXTURE_REAL_CARGO FIXTURE_REAL_AWK
 real_bash="$(command -v bash)"
 mkdir -p "$fixture/bin"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
@@ -47,15 +52,28 @@ case "$*" in
 esac
 GIT
 chmod +x "$fixture/bin/git"
+printf '#!%s\n' "$real_bash" > "$fixture/bin/awk"
+cat >> "$fixture/bin/awk" <<'AWK'
+set -euo pipefail
+if [[ "$1" == '/^\[workspace.package\]$/'* ]]; then
+    actual="$("$FIXTURE_REAL_AWK" "$@")"
+    printf '%s\n' "$actual"
+    if [[ "$actual" == "${FIXTURE_FAIL_VERSION:-}" ]]; then exit 43; fi
+else
+    exec "$FIXTURE_REAL_AWK" "$@"
+fi
+AWK
+chmod +x "$fixture/bin/awk"
 export PATH="$fixture/bin:$PATH" CARGO_NET_OFFLINE=true
 export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-05
 
-for scenario in prepared sort metadata conflicting-notes; do
+for scenario in prepared sort metadata lock conflicting-notes version-before version-after; do
     worktree="$fixture/$scenario"
-    mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci"
+    mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
     cp "$root/scripts/ci/finalize-release-changelog.awk" "$worktree/scripts/ci/"
+    cp "$root/scripts/ci/rewrite-local-lock-versions.pl" "$worktree/scripts/ci/"
     cd "$worktree"
-    export CARGO_TARGET_DIR="$worktree/target" FIXTURE_FAIL_STEP=""
+    export CARGO_TARGET_DIR="$worktree/target" FIXTURE_FAIL_STEP="" FIXTURE_FAIL_VERSION="" TMPDIR="$worktree/attempts"
     cat > Cargo.toml <<'TOML'
 [workspace]
 members = ["crates/ic-metrics"]
@@ -89,13 +107,25 @@ NOTES
     fi
     cargo generate-lockfile --offline > setup.log 2>&1
     cargo sort --workspace >> setup.log 2>&1
+    if [[ "$scenario" == lock ]]; then
+        sed 's/version = "0.1.1"/version = "0.1.0"/' Cargo.lock > mismatch.lock
+        mv mismatch.lock Cargo.lock
+    fi
     cp Cargo.toml Cargo.lock CHANGELOG.md originals/
     cp crates/ic-metrics/Cargo.toml originals/member.toml
     printf 'retained fixture artifact\n' > target/evidence
     cp target/evidence originals/evidence
-    case "$scenario" in sort|metadata) export FIXTURE_FAIL_STEP="$scenario" ;; esac
+    case "$scenario" in
+        sort|metadata) export FIXTURE_FAIL_STEP="$scenario" ;;
+        version-before) export FIXTURE_FAIL_VERSION="$RELEASE_PREVIOUS" ;;
+        version-after) export FIXTURE_FAIL_VERSION="$RELEASE_VERSION" ;;
+    esac
     if [[ "$scenario" == prepared ]]; then
         bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1
+        status=0
+        FIXTURE_FAIL_VERSION="$RELEASE_VERSION" bash "$root/scripts/release/metadata.sh" check \
+            > failed-check.log 2>&1 || status=$?
+        [[ "$status" == 43 ]]
         bash "$root/scripts/release/metadata.sh" check >> result.log 2>&1
         cargo sort --workspace --check >> result.log 2>&1
         [[ "$(bash "$root/scripts/release/metadata.sh" version)" == "$RELEASE_VERSION" ]]
@@ -106,12 +136,35 @@ NOTES
         cmp history-before history-after
         awk '$0 == "- Preserve the pending note." { found=1 } END { exit !found }' CHANGELOG.md
     else
-        if bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1; then
+        if [[ "$scenario" == version-before ]]; then
+            status=0
+            bash "$root/scripts/release/metadata.sh" preflight > failed-preflight.log 2>&1 || status=$?
+            [[ "$status" == 43 ]]
+        fi
+        status=0
+        bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1 || status=$?
+        if [[ "$status" == 0 ]]; then
             echo "metadata fixture unexpectedly accepted $scenario" >&2
             exit 1
         fi
         case "$scenario" in sort|metadata) [[ "$(cat failure-reached)" == "$scenario" ]] ;; esac
         for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$path"; done
+        if [[ "$scenario" == version-* ]]; then
+            [[ "$status" == 43 ]]
+            if [[ "$scenario" == version-before ]]; then
+                for remaining in attempts/*; do [[ ! -e "$remaining" ]]; done
+            else
+                set -- attempts/metrics-release-backup.*
+                [[ $# == 1 && -f "$1/candidate.lock" ]]
+                for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$1/$path"; done
+            fi
+        fi
+        if [[ "$scenario" == lock ]]; then
+            grep -F 'local package version mismatch: ic-metrics' result.log >/dev/null
+            set -- attempts/metrics-release-backup.*
+            [[ $# == 1 && -f "$1/Cargo.lock" && -f "$1/candidate.lock" && ! -s "$1/candidate.lock" ]]
+            cmp originals/Cargo.lock "$1/Cargo.lock"
+        fi
     fi
     cmp originals/member.toml crates/ic-metrics/Cargo.toml
     cmp originals/evidence target/evidence

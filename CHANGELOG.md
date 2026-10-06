@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.1]
+
+- Retain failed release, metadata and formatting-hook fixture inputs and logs,
+  report their scratch paths, and cover child-command and assertion failures
+  without release or publication effects. Native CI uploads failed scratch
+  directories, including their Git index evidence
+  ([#7](https://github.com/dragginzgame/ic-metrics/issues/7)).
+- Stop release checks when version readers, Git object checks or formatter
+  prerequisites fail, even if they print expected output; retain failed
+  selected-commit metadata exports for diagnosis.
+- Use reviewed shared release-command, local-lockfile and dependency-free hook
+  checks, retaining failed evidence after restoring the selected metadata
+  ([#11](https://github.com/dragginzgame/ic-metrics/issues/11)).
+- Enforce Cargo workspace version and dependency inheritance in `make check-pins`.
+- Make downstream evidence links usable outside the local workspace and align
+  current release/adoption guidance with published 0.2.0; check local document
+  references in CI with `make check-doc-links`
+  ([#9](https://github.com/dragginzgame/ic-metrics/issues/9)).
+
 ## [0.2.0] - 2026-10-06
 
 - **Breaking:** remove `call_context_instructions` and feature `ic`. Consumers

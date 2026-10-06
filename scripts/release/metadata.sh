@@ -28,7 +28,8 @@ admit_files() (
 case "$operation" in
     version) version ;;
     preflight)
-        [[ "$(version)" == "${RELEASE_PREVIOUS:?}" ]]
+        current_version="$(version)"
+        [[ "$current_version" == "${RELEASE_PREVIOUS:?}" ]]
         admit_files
         for path in Cargo.toml Cargo.lock CHANGELOG.md; do
             [[ -f "$path" && ! -L "$path" ]]
@@ -41,7 +42,8 @@ case "$operation" in
         cargo fetch --locked --offline
         ;;
     prepare)
-        [[ "$(version)" == "${RELEASE_PREVIOUS:?}" ]]
+        current_version="$(version)"
+        [[ "$current_version" == "${RELEASE_PREVIOUS:?}" ]]
         backup="$(mktemp -d "${TMPDIR:-/tmp}/metrics-release-backup.XXXXXX")"
         files=(Cargo.toml Cargo.lock CHANGELOG.md)
         for path in "${files[@]}"; do
@@ -56,8 +58,10 @@ case "$operation" in
                 for path in "${files[@]}"; do
                     cp -p "$backup/$path" "$path" || { echo "restore failed; originals: $backup" >&2; exit 1; }
                 done
+                echo "failed metadata preparation restored; evidence retained: $backup" >&2
+            else
+                rm -rf "$backup"
             fi
-            rm -rf "$backup"
             exit "$status"
         }
         trap cleanup EXIT
@@ -67,33 +71,39 @@ case "$operation" in
         # Only root metadata changes; members were sorted by the validation gate.
         cargo sort
         # Retain every dependency selection; change this one local package only.
-        awk -v previous="$RELEASE_PREVIOUS" -v version="$RELEASE_VERSION" '
-            /^\[\[package\]\]$/ { owned=0 }
-            /^name = "ic-metrics"$/ { owned=1 }
-            owned && $0 == "version = \"" previous "\"" {
-                $0="version = \"" version "\""; count++
-            }
-            { print }
-            END { if (count != 1) exit 1 }
-        ' "$backup/Cargo.lock" > Cargo.lock
+        perl scripts/ci/rewrite-local-lock-versions.pl "$backup/Cargo.lock" \
+            "$RELEASE_PREVIOUS" "$RELEASE_VERSION" ic-metrics > "$backup/candidate.lock" || exit $?
+        cp "$backup/candidate.lock" Cargo.lock
         awk -v version="$RELEASE_VERSION" -v date="${RELEASE_DATE:?}" \
             -f scripts/ci/finalize-release-changelog.awk "$backup/CHANGELOG.md" > CHANGELOG.md
         cargo metadata --locked --offline --format-version 1 >/dev/null
-        [[ "$(version)" == "$RELEASE_VERSION" ]]
+        current_version="$(version)"
+        [[ "$current_version" == "$RELEASE_VERSION" ]]
         complete=true
         ;;
     check|commit-check)
         metadata_root=.
         if [[ -n "${RELEASE_COMMIT:-}" ]]; then
             [[ "$RELEASE_COMMIT" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ ]]
-            [[ "$(git cat-file -t "$RELEASE_COMMIT")" == commit ]]
+            object_type="$(git cat-file -t "$RELEASE_COMMIT")"
+            [[ "$object_type" == commit ]]
             metadata_root="$(mktemp -d "${TMPDIR:-/tmp}/metrics-committed-metadata.XXXXXX")"
-            trap 'rm -rf "$metadata_root"' EXIT
+            cleanup_committed_metadata() {
+                local status=$?
+                if [[ "$status" == 0 ]]; then
+                    rm -rf "$metadata_root"
+                else
+                    echo "failed selected-commit metadata retained: $metadata_root" >&2
+                fi
+                exit "$status"
+            }
+            trap cleanup_committed_metadata EXIT
             for path in Cargo.toml Cargo.lock CHANGELOG.md; do
                 git show "$RELEASE_COMMIT:$path" > "$metadata_root/$path"
             done
         fi
-        [[ "$(version "$metadata_root/Cargo.toml")" == "${RELEASE_VERSION:?}" ]]
+        current_version="$(version "$metadata_root/Cargo.toml")"
+        [[ "$current_version" == "${RELEASE_VERSION:?}" ]]
         awk -v heading="## [$RELEASE_VERSION] - ${RELEASE_DATE:?}" \
             '$0 == heading { count++ } END { if (count != 1) exit 1 }' "$metadata_root/CHANGELOG.md"
         awk -v expected="$RELEASE_VERSION" '

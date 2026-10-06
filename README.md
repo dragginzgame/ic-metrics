@@ -29,7 +29,7 @@ Consumers own their summary instances, labels and persistence policy.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
 records scope and evidence.
 
-The pending 0.2.0 hard cut removes the `ic` feature and
+The published 0.2.0 hard cut removes the `ic` feature and
 `call_context_instructions`. Platform reads belong in consumer adapters:
 IcyDB and Canic use `ic_cdk::api::call_context_instruction_counter()`; IC Timers
 uses its existing `ic0::performance_counter(1)` binding. Both read counter 1.
@@ -37,12 +37,13 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-The latest published package is still 0.1.9. Consumers can remove their direct `ic` feature
-selection and switch their reader now while retaining published 0.1 arithmetic. Change the
-registry requirement to 0.2 only after its publication; no compatibility reader
-or replacement runtime crate is provided here. Published IC Timers still enables the old feature transitively in IcyDB/Canic;
-its prepared adapter must be released before their graphs shed that edge. Stored
-data, reports and endpoints are unchanged. Historical reader execution remains in the source-bound
+The latest published package is 0.2.0. IC Timers 0.14.0 uses the arithmetic-only
+registry package. IcyDB and Canic's current worktrees select that timer release
+and ic-metrics 0.2.0; their owning release/CI qualification remains separate.
+IC Backup 0.3.9 still selects arithmetic-only ic-metrics 0.1.9 and needs no reader
+change. Consumers exposing `MeasurementSummary` in public APIs must coordinate
+their 0.2 dependency identity. Stored data, reports and endpoints are unchanged.
+Historical reader execution remains in the source-bound
 [evidence](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md#released-019)
 and tagged releases; current CI qualifies arithmetic and repository tooling.
 
@@ -118,15 +119,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.1.9`](https://crates.io/crates/ic-metrics/0.1.9)
-is published on crates.io with tag `v0.1.9`. The worktree prepares the breaking
-0.2.0 contract without changing package versions. Declare the published release
+tooling releases. [`ic-metrics 0.2.0`](https://crates.io/crates/ic-metrics/0.2.0)
+is published on crates.io with tag `v0.2.0`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.1.9"
+ic-metrics = "0.2"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

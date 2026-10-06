@@ -153,8 +153,11 @@ Run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
 `make msrv` checks the declared floor on host and Wasm. Select
 named tests relevant to the change rather than running the full suite by default.
-The pending 0.2.0 cut needs its own hosted qualification; earlier results above
-remain evidence for their original tags, including the retired reader.
+Published 0.2.0 source `8657c35e441a0f2e6add7f784892e85c9b5e1117` passed
+MSRV and all three native jobs in
+[CI run 37461297392](https://github.com/dragginzgame/ic-metrics/actions/runs/37461297392).
+Earlier results above remain evidence for their original tags, including the
+retired reader. Pending 0.2.1 fixture changes need their own native macOS CI proof.
 
 Prepare tools explicitly before local validation:
 
@@ -169,6 +172,22 @@ focused tooling fixtures without creating commits, tags or pushes. Release
 fixtures substitute Cargo-edit or cheap gates where declared, exercise actual
 Git index/selected-commit checks and the actual Make/logger adapter, and preserve
 normal nested release selections while isolating independent fixture inputs.
+The hook adapter uses the reviewed shared checker with
+`--no-dependency-tables`, preserving actual formatting and index/working-edit
+checks without introducing test dependencies. `make check-pins` also selects
+the shared Cargo inheritance checks for the actual workspace graph.
+`bash scripts/release/test-fixture-retention.sh` checks successful scratch cleanup
+and unexpected child/assertion failures in release, metadata and formatting-hook
+fixtures. Failed inputs, outputs and reported scratch paths remain under
+`target/evidence/native-ci/fixture-retention.*/`, included in native CI artifacts.
+Native CI also puts ordinary fixture TMPDIR scratch under
+`target/evidence/native-ci/scratch/` and includes hidden files so failed Git
+index and configuration evidence survive the job. Success cleanup stays
+invocation-owned. Bash 3.2 execution on Linux is shell-portability evidence;
+supported native macOS qualification still requires the owning CI jobs.
+`make check-doc-links` checks maintained Markdown references with the shared
+local-link helper; public URL availability and historical source scope are
+reviewed separately. These tooling changes are collected under pending 0.2.1.
 
 Actual instruction-counter execution belongs to each consumer's platform and
 attribution checks. The old `make reader-check` and its CI artifacts qualify

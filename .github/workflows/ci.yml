@@ -89,6 +89,11 @@ jobs:
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
+            'scripts/release/*.sh' scripts/dev/test-format-hook.sh \
+            scripts/ci/check-release-commands.sh scripts/ci/check-documentation-links.pl \
+            scripts/ci/check-formatting-hooks.sh \
+            scripts/ci/rewrite-local-lock-versions.pl .githooks/pre-commit \
+            scripts/dev/install-git-hooks.sh \
             > target/evidence/native-ci/source-files.txt
           while IFS= read -r file; do
             shasum -a 256 "$file"
@@ -101,7 +106,10 @@ jobs:
           echo "$GITHUB_WORKSPACE/.tools/ic/bin" >> "$GITHUB_PATH"
       - name: Run native CI
         id: native_ci
+        env:
+          TMPDIR: ${{ github.workspace }}/target/evidence/native-ci/scratch
         run: |
+          mkdir -p "$TMPDIR"
           make ci 2>&1 | tee target/evidence/native-ci/native-ci.log
       - name: Retain native artifacts and outcome
         if: always() && steps.native_inputs.outcome != 'skipped'
@@ -131,6 +139,7 @@ jobs:
         with:
           name: native-${{ matrix.runner }}-${{ github.run_attempt }}
           path: target/evidence/native-ci/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
       - name: Upload failed local tool candidates

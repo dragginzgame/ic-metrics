@@ -28,6 +28,19 @@ selected_date="$(git -C "$root" show "$selected_commit:CHANGELOG.md" | \
     awk -v heading="## [$selected_version] - " 'index($0, heading) == 1 { print $4; count++ } END { if (count != 1) exit 1 }')"
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TEMPLATE_DIR="$fixture/templates"
 real_bash="$(command -v bash)"
+ADMISSION_REAL_GIT="$(command -v git)"
+export ADMISSION_REAL_GIT
+printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
+cat >> "$fixture/bin/git" <<'GIT'
+set -euo pipefail
+case "${ADMISSION_FAIL_GIT:-}:$1" in
+    type:cat-file|export:show)
+        "$ADMISSION_REAL_GIT" "$@"
+        exit 43 ;;
+    *) exec "$ADMISSION_REAL_GIT" "$@" ;;
+esac
+GIT
+chmod +x "$fixture/bin/git"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'
 set -euo pipefail
@@ -42,7 +55,7 @@ export PATH="$fixture/bin:$PATH" ADMISSION_CARGO_EVENTS="$fixture/cargo-events"
 setup() {
     local name="$1"
     worktree="$fixture/$name"
-    mkdir -p "$worktree"
+    mkdir -p "$worktree" "$fixture/attempts/$name"
     git -C "$worktree" init --quiet
     mkdir -p "$worktree/.git/objects/info"
     printf '%s\n' "$source_objects" > "$worktree/.git/objects/info/alternates"
@@ -62,7 +75,8 @@ TOML
     printf '# Changelog\n\n## [0.1.1] - 2026-10-06\n\n- Prepared fixture.\n' > CHANGELOG.md
     git add -- Cargo.toml Cargo.lock CHANGELOG.md
     : > "$ADMISSION_CARGO_EVENTS"
-    unset RELEASE_COMMIT
+    unset RELEASE_COMMIT ADMISSION_FAIL_GIT
+    export TMPDIR="$fixture/attempts/$name"
     export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-06
 }
 reject() {
@@ -129,8 +143,16 @@ export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" REL
 printf 'Newer unrelated worktree metadata.\n' > Cargo.toml
 bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1
 [[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]]; done
 export RELEASE_VERSION=9.8.7
 reject check
+set -- "$TMPDIR"/metrics-committed-metadata.*
+[[ $# == 1 && -d "$1" ]]
+grep -F "failed selected-commit metadata retained: $1" "$fixture/result.log" >/dev/null
+for path in Cargo.toml Cargo.lock CHANGELOG.md; do
+    git show "$selected_commit:$path" > "$fixture/expected-metadata"
+    cmp "$fixture/expected-metadata" "$1/$path"
+done
 export RELEASE_VERSION="$selected_version" RELEASE_DATE=1999-01-01
 reject check
 export RELEASE_DATE="$selected_date" RELEASE_COMMIT=abcdef0
@@ -140,6 +162,27 @@ reject check
 RELEASE_COMMIT="$(git rev-parse "$source_commit:Cargo.toml")"
 export RELEASE_COMMIT
 reject check
+
+# Valid-looking output cannot override a failed Git producer. Export failures
+# retain the selected input and status; type failures stop before creating it.
+for scenario in type export; do
+    setup "selected-failed-$scenario"
+    export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" RELEASE_DATE="$selected_date"
+    export ADMISSION_FAIL_GIT="$scenario"
+    status=0
+    bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1 || status=$?
+    [[ "$status" == 43 && ! -s "$ADMISSION_CARGO_EVENTS" ]]
+    unset ADMISSION_FAIL_GIT
+    if [[ "$scenario" == type ]]; then
+        for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]]; done
+    else
+        set -- "$TMPDIR"/metrics-committed-metadata.*
+        [[ $# == 1 && -f "$1/Cargo.toml" ]]
+        grep -F "failed selected-commit metadata retained: $1" "$fixture/result.log" >/dev/null
+        git show "$selected_commit:Cargo.toml" > "$fixture/expected-metadata"
+        cmp "$fixture/expected-metadata" "$1/Cargo.toml"
+    fi
+done
 
 # Execute this consumer's release-verify adapter, substituting only cheap gates.
 # Nested Make must preserve release selections and never route to the parent CI.

@@ -43,7 +43,7 @@ release-prepared-check release-committed-check release-tagged-check release-push
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
+.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 .PHONY: install-tools tools-check install-host-tools host-tools-check install-ic-tools ic-tools-check local-tools-test
 
 help:
@@ -52,7 +52,7 @@ help:
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
 	@echo "Clone setup: install-hooks (requires prepared cargo-sort 2.1.4 and rustfmt)"
-	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, msrv, shared-tooling-check, check-pins"
+	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
 	@echo "Tooling fixtures: hook-check, release-tools-check, pin-tools-check (no release Git effects)"
 	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
@@ -117,6 +117,11 @@ docs-check:
 	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps
 	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown
 
+check-doc-links:
+	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
+		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
+		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md
+
 test:
 	cargo test -p $(PACKAGE) --locked
 
@@ -128,7 +133,7 @@ shared-tooling-check:
 	bash scripts/ci/verify-shared-tooling-snapshot.sh
 
 check-pins:
-	bash scripts/ci/check-dependency-pins.sh
+	bash scripts/ci/check-dependency-pins.sh --cargo-inheritance
 
 pin-tools-check:
 	bash scripts/ci/test-dependency-pins.sh
@@ -138,10 +143,12 @@ release-tools-check:
 	bash scripts/release/test-standard-release.sh
 	bash scripts/release/test-metadata.sh
 	bash scripts/release/test-release-admission.sh
+	bash scripts/release/test-fixture-retention.sh
 
 # Keep order explicit: stop on a failed gate, including any Clippy warning.
 ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
+	+$(MAKE) --no-print-directory check-doc-links
 	+$(MAKE) --no-print-directory host-tools-check
 	+$(MAKE) --no-print-directory check-pins
 	+$(MAKE) --no-print-directory pin-tools-check
