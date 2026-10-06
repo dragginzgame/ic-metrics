@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.7]
+## [0.1.7] - 2026-10-06
 
 - Document the platform-gated Rust reader import alongside its opt-in dependency,
   so native linting and Candid generation preserve the Wasm-only API boundary.
