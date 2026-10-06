@@ -29,7 +29,8 @@ selected_date="$(git -C "$root" show "$selected_commit:CHANGELOG.md" | \
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TEMPLATE_DIR="$fixture/templates"
 real_bash="$(command -v bash)"
 ADMISSION_REAL_GIT="$(command -v git)"
-export ADMISSION_REAL_GIT
+ADMISSION_REAL_CARGO="$(command -v cargo)"
+export ADMISSION_REAL_GIT ADMISSION_REAL_CARGO
 printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 set -euo pipefail
@@ -44,6 +45,8 @@ chmod +x "$fixture/bin/git"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'
 set -euo pipefail
+# Manifest parsing is read-only; keep it real while substituting effectful gates.
+if [[ "${1:-}" == locate-project ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
 printf '%s\n' "$*" >> "$ADMISSION_CARGO_EVENTS"
 case "$*" in
     'set-version --help'|'sort --help'|'fetch --locked --offline'|'metadata --locked --offline --format-version 1') ;;

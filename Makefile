@@ -43,7 +43,7 @@ release-prepared-check release-committed-check release-tagged-check release-push
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
+.PHONY: help publish publish-check install-hooks hook-check format-tools-check fmt fmt-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 .PHONY: install-tools tools-check install-host-tools host-tools-check install-ic-tools ic-tools-check local-tools-test
 
 help:
@@ -52,7 +52,7 @@ help:
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
 	@echo "Clone setup: install-hooks (requires prepared cargo-sort 2.1.4 and rustfmt)"
-	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
+	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
 	@echo "Tooling fixtures: hook-check, release-tools-check, pin-tools-check (no release Git effects)"
 	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
@@ -95,11 +95,14 @@ local-tools-test:
 hook-check:
 	bash scripts/dev/test-format-hook.sh
 
-fmt:
+format-tools-check:
+	@. "$(HOST_TOOL_VERSIONS)" && bash scripts/ci/check-format-tools.sh "$${SHARED_TOOLING_CARGO_SORT_VERSION:?}"
+
+fmt: format-tools-check
 	cargo sort --workspace
 	cargo fmt --all
 
-fmt-check:
+fmt-check: format-tools-check
 	cargo sort --workspace --check
 	cargo fmt --all -- --check
 
@@ -139,6 +142,7 @@ pin-tools-check:
 	bash scripts/ci/test-dependency-pins.sh
 
 release-tools-check:
+	bash scripts/ci/test-format-tools.sh
 	bash scripts/ci/test-release-runner.sh
 	bash scripts/release/test-standard-release.sh
 	bash scripts/release/test-metadata.sh

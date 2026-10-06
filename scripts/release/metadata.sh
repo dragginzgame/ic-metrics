@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Consumer adapter. Dependencies: Cargo/cargo-edit/cargo-sort, Git, awk and Unix utilities.
+# Consumer adapter. Dependencies: Cargo/cargo-edit/cargo-sort, jq, yq, Git, awk and Unix utilities.
 operation="${1:-}"
 [[ $# -eq 1 ]] || exit 2
-version() {
-    awk '/^\[workspace.package\]$/ { package=1; next }
-        /^\[/ { package=0 }
-        package && /^version = "/ { gsub(/"/, "", $3); print $3; count++ }
-        END { if (count != 1) exit 1 }' "${1:-Cargo.toml}"
-}
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+reader="$root/scripts/ci/read-cargo-workspace-version.sh"
 admit_files() (
     local paths path admitted=true
     paths="$(mktemp "${TMPDIR:-/tmp}/metrics-release-paths.XXXXXX")"
@@ -26,23 +22,23 @@ admit_files() (
     [[ "$admitted" == true ]]
 )
 case "$operation" in
-    version) version ;;
+    version) bash "$reader" Cargo.toml ;;
     preflight)
-        current_version="$(version)"
+        current_version="$(bash "$reader" Cargo.toml)"
         [[ "$current_version" == "${RELEASE_PREVIOUS:?}" ]]
         admit_files
         for path in Cargo.toml Cargo.lock CHANGELOG.md; do
             [[ -f "$path" && ! -L "$path" ]]
         done
         # Refuse conflicting pending notes before a gate or preparation intent.
-        awk -v version="${RELEASE_VERSION:?}" -v date="${RELEASE_DATE:?}" \
+        awk -v version="${RELEASE_VERSION:?}" -v previous="$RELEASE_PREVIOUS" -v date="${RELEASE_DATE:?}" \
             -f scripts/ci/finalize-release-changelog.awk CHANGELOG.md > /dev/null
         cargo set-version --help >/dev/null
         cargo sort --help >/dev/null
         cargo fetch --locked --offline
         ;;
     prepare)
-        current_version="$(version)"
+        current_version="$(bash "$reader" Cargo.toml)"
         [[ "$current_version" == "${RELEASE_PREVIOUS:?}" ]]
         backup="$(mktemp -d "${TMPDIR:-/tmp}/metrics-release-backup.XXXXXX")"
         files=(Cargo.toml Cargo.lock CHANGELOG.md)
@@ -52,12 +48,19 @@ case "$operation" in
         done
         complete=false
         cleanup() {
-            local status=$? path
+            local status=$? path restore_failed=false
             trap - EXIT
             if [[ "$complete" != true ]]; then
                 for path in "${files[@]}"; do
-                    cp -p "$backup/$path" "$path" || { echo "restore failed; originals: $backup" >&2; exit 1; }
+                    if ! cp -p "$backup/$path" "$path"; then
+                        echo "metadata restore failed: $path" >&2
+                        restore_failed=true
+                    fi
                 done
+                if [[ "$restore_failed" == true ]]; then
+                    echo "metadata restoration incomplete; originals retained: $backup" >&2
+                    exit 1
+                fi
                 echo "failed metadata preparation restored; evidence retained: $backup" >&2
             else
                 rm -rf "$backup"
@@ -74,10 +77,10 @@ case "$operation" in
         perl scripts/ci/rewrite-local-lock-versions.pl "$backup/Cargo.lock" \
             "$RELEASE_PREVIOUS" "$RELEASE_VERSION" ic-metrics > "$backup/candidate.lock" || exit $?
         cp "$backup/candidate.lock" Cargo.lock
-        awk -v version="$RELEASE_VERSION" -v date="${RELEASE_DATE:?}" \
+        awk -v version="$RELEASE_VERSION" -v previous="$RELEASE_PREVIOUS" -v date="${RELEASE_DATE:?}" \
             -f scripts/ci/finalize-release-changelog.awk "$backup/CHANGELOG.md" > CHANGELOG.md
         cargo metadata --locked --offline --format-version 1 >/dev/null
-        current_version="$(version)"
+        current_version="$(bash "$reader" Cargo.toml)"
         [[ "$current_version" == "$RELEASE_VERSION" ]]
         complete=true
         ;;
@@ -102,7 +105,7 @@ case "$operation" in
                 git show "$RELEASE_COMMIT:$path" > "$metadata_root/$path"
             done
         fi
-        current_version="$(version "$metadata_root/Cargo.toml")"
+        current_version="$(bash "$reader" "$metadata_root/Cargo.toml")"
         [[ "$current_version" == "${RELEASE_VERSION:?}" ]]
         awk -v heading="## [$RELEASE_VERSION] - ${RELEASE_DATE:?}" \
             '$0 == heading { count++ } END { if (count != 1) exit 1 }' "$metadata_root/CHANGELOG.md"

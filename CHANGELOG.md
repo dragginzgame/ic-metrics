@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.2]
+
+- Attempt every metadata restore after a preparation failure, report incomplete
+  recovery and retain all originals when a file cannot be restored
+  ([#11](https://github.com/dragginzgame/ic-metrics/issues/11)).
+- Archive native CI evidence before upload so valid fixture filenames and hidden
+  Git state survive artifact restrictions
+  ([#7](https://github.com/dragginzgame/ic-metrics/issues/7)).
+- Adopt the reviewed shared host-tool fixture fix, preserving authenticated
+  archive bytes and exposing failed installer diagnostics.
+- Use the shared TOML workspace-version reader and offline formatter prerequisite
+  checks. Valid TOML comments work, invalid manifests and failed parsers are
+  rejected, and formatting uses the same reviewed pin as setup and CI
+  ([#12](https://github.com/dragginzgame/ic-metrics/issues/12)).
+- Preserve older undated changelog entries during release preparation by passing
+  the saved previous version to the shared finalizer.
+
 ## [0.2.1] - 2026-10-06
 
 - Retain failed release, metadata and formatting-hook fixture inputs and logs,

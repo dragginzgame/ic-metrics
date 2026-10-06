@@ -10,6 +10,7 @@ fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-format-hook.XXXXXX")"
 cleanup() {
     local status=$?
     if [[ "$status" != 0 ]]; then
+        if [[ -f "$fixture/format-tools.log" ]]; then cat "$fixture/format-tools.log" >&2 || :; fi
         if [[ -f "$fixture/hook.log" ]]; then cat "$fixture/hook.log" >&2 || :; fi
         for log in "$fixture"/formatting-adoption.*/*.log "$fixture"/formatting-adoption.*/*/.git/*.log; do
             if [[ -f "$log" ]]; then cat "$log" >&2 || :; fi
@@ -21,15 +22,14 @@ cleanup() {
     exit "$status"
 }
 trap cleanup EXIT
-sort_version="$(cargo sort --version)"
-[[ "$sort_version" == 'cargo-sort 2.1.4' ]] || {
-    echo 'hook checks require prepared cargo-sort 2.1.4' >&2
-    exit 1
-}
+# shellcheck source=ci/tool-versions.env
+source "$root/ci/tool-versions.env"
+bash "$root/scripts/ci/check-format-tools.sh" "$SHARED_TOOLING_CARGO_SORT_VERSION" > "$fixture/format-tools.log" 2>&1
 # The shared checker owns disposable exports and mechanical hook cases.
 # Nest its retained failures under this consumer's reported evidence directory.
 TMPDIR="$fixture" bash "$root/scripts/ci/check-formatting-hooks.sh" "$root" \
     crates/ic-metrics/src/lib.rs crates/ic-metrics/Cargo.toml \
     --no-dependency-tables Cargo.toml Cargo.lock crates/ic-metrics/LICENSE \
+    ci/tool-versions.env scripts/ci/check-format-tools.sh \
     > "$fixture/hook.log" 2>&1
 cat "$fixture/hook.log"

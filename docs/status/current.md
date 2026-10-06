@@ -7,7 +7,51 @@ zero/empty and saturation semantics are unchanged. Consumers own counter reads,
 attribution, identities, persistence and endpoints. The library is dependency-free
 and `no_std` on host and Wasm. See the [current contract](../extraction.md).
 
-## Current release and compatible 0.2.1 cleanup
+## Current release and compatible 0.2.2 cleanup
+
+Tag `v0.2.1` identifies source `009592f93d4014b079f7c31de51c244bc7df6564`.
+Its [CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37488116668)
+passes Linux and MSRV, but both native macOS jobs stop in the shared host-tool
+fixture. Their evidence uploads also fail because an unpacked fixture filename
+contains a colon. The public logs do not identify the exact host-fixture assertion.
+
+The single undated pending changelog is **0.2.2**. It contains compatible tooling
+fixes; arithmetic APIs, units, sample semantics and package versions stay unchanged.
+Rollback attempts every remaining file if restoring one file fails, reports
+incomplete recovery and retains all originals. Native evidence is packed into a
+checksummed tarball before upload, preserving fixture names and hidden Git state.
+
+The 53-file snapshot adopts reviewed Shared Tooling commit
+`b32d3038c850a7c53470c326b0f7f11263b31669` through its distribution helper from a
+clean source checkout. The shared host fixture restores the exact authenticated
+archive rather than regenerating gzip headers, and retains installer diagnostics.
+No upstream CI result was available for this commit at inspection.
+The shared workspace-version reader replaces the local AWK parser, accepts valid
+TOML comments and validates manifest structure offline without resolving dependencies.
+`fmt`, `fmt-check`, hook checks and CI use the shared formatter prerequisite check
+with the pin from `ci/tool-versions.env`; prerequisite checks never install tools.
+The release adapter passes the saved previous version to the shared finalizer,
+preserving older undated history while still rejecting conflicting candidates.
+
+Native qualification and adoption remain in
+[#7](https://github.com/dragginzgame/ic-metrics/issues/7),
+[#11](https://github.com/dragginzgame/ic-metrics/issues/11) and
+[#12](https://github.com/dragginzgame/ic-metrics/issues/12).
+The pending batch has no remote CI result until the maintainer commits it.
+Cargo metadata remains 0.2.1; no release, commit or publication is performed here.
+
+Focused GNU Bash 3.2.57 checks on Linux pass for metadata reading/preparation,
+undated-history preservation, rollback failures, selected-commit admission,
+formatter prerequisites, the host-tool fixture and release-runner substitutes.
+All twelve real fixture-retention scenarios pass. The actual revised CI retention
+block preserves a colon-containing path, hidden Git index, logs, outcomes and
+checksums through a local tarball round-trip. Formatting, selected ShellCheck,
+workflow lint, dependency inheritance, 53 snapshot files and local document links
+pass. Evidence and rejected attempts remain under `target/evidence/cleanup-022/`.
+These are local focused results; neither native macOS execution nor an actual
+GitHub upload of the new artifact format is claimed.
+
+## Earlier 0.2.1 preparation
 
 Tag `v0.2.0` identifies source `8657c35e441a0f2e6add7f784892e85c9b5e1117`.
 The non-yanked registry package has SHA-256

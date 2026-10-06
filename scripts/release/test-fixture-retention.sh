@@ -62,6 +62,13 @@ case "$1" in
     *) exec "$FIXTURE_RETENTION_REAL_CMP" "$@" ;;
 esac
 CMP
+            elif [[ "$kind" == metadata && "$scenario" == assertion ]]; then
+                cat >> "$run/bin/$executable" <<'CMP'
+case "$1" in
+    history-before) ;;
+    *) exec "$FIXTURE_RETENTION_REAL_CMP" "$@" ;;
+esac
+CMP
             fi
             if [[ "$scenario" == formatter-version ]]; then
                 # The expected stdout must not hide this producer's failure.
@@ -83,7 +90,9 @@ FAIL
             continue
         fi
         [[ "$status" != 0 ]]
-        if [[ "$kind" == standard && "$scenario" == *child ]]; then
+        if [[ "$scenario" == formatter-version ]]; then
+            [[ "$status" == 1 ]] # The shared prerequisite checker rejects the failed producer.
+        elif [[ "$kind" == standard && "$scenario" == *child ]]; then
             [[ "$status" == 1 ]] # The real fixture rejects the unexpected Make status.
         else
             [[ "$status" == 43 ]] # Cleanup must preserve the injected failure status.

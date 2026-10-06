@@ -157,7 +157,13 @@ Published 0.2.0 source `8657c35e441a0f2e6add7f784892e85c9b5e1117` passed
 MSRV and all three native jobs in
 [CI run 37461297392](https://github.com/dragginzgame/ic-metrics/actions/runs/37461297392).
 Earlier results above remain evidence for their original tags, including the
-retired reader. Pending 0.2.1 fixture changes need their own native macOS CI proof.
+retired reader. Tagged 0.2.1 source `009592f93d4014b079f7c31de51c244bc7df6564`
+passes Linux and MSRV in
+[CI run 37488116668](https://github.com/dragginzgame/ic-metrics/actions/runs/37488116668),
+but both macOS gates stop in the host-tool fixture and their evidence uploads
+reject a colon in a retained fixture filename. Pending 0.2.2 fixes adopt the shared
+archive-restoration fixture correction and pack native evidence before upload;
+they still require their own native macOS CI proof.
 
 Prepare tools explicitly before local validation:
 
@@ -185,9 +191,14 @@ Native CI also puts ordinary fixture TMPDIR scratch under
 index and configuration evidence survive the job. Success cleanup stays
 invocation-owned. Bash 3.2 execution on Linux is shell-portability evidence;
 supported native macOS qualification still requires the owning CI jobs.
+Native uploads contain `native-ci.tar.gz` and its checksum; unpack the tarball
+to inspect the complete evidence tree, including filenames rejected by direct
+artifact uploads. `make format-tools-check` verifies the reviewed cargo-sort pin
+and prepared rustfmt offline before either formatting target. Release metadata
+uses the shared read-only TOML version reader and prepared local jq/yq.
 `make check-doc-links` checks maintained Markdown references with the shared
 local-link helper; public URL availability and historical source scope are
-reviewed separately. These tooling changes are collected under pending 0.2.1.
+reviewed separately. Current tooling changes are collected under pending 0.2.2.
 
 Actual instruction-counter execution belongs to each consumer's platform and
 attribution checks. The old `make reader-check` and its CI artifacts qualify

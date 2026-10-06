@@ -54,7 +54,10 @@ jobs:
           components: rustfmt, clippy
           targets: wasm32-unknown-unknown
       - name: Install pinned manifest formatter
-        run: cargo install cargo-sort --version 2.1.4 --locked
+        run: |
+          source ci/tool-versions.env
+          cargo install cargo-sort --version "$SHARED_TOOLING_CARGO_SORT_VERSION" --locked
+          bash scripts/ci/check-format-tools.sh "$SHARED_TOOLING_CARGO_SORT_VERSION"
       - name: Install native tooling prerequisites
         run: |
           case "$(uname -s)" in
@@ -92,6 +95,8 @@ jobs:
             'scripts/release/*.sh' scripts/dev/test-format-hook.sh \
             scripts/ci/check-release-commands.sh scripts/ci/check-documentation-links.pl \
             scripts/ci/check-formatting-hooks.sh \
+            scripts/ci/check-format-tools.sh scripts/ci/test-format-tools.sh \
+            scripts/ci/read-cargo-workspace-version.sh \
             scripts/ci/rewrite-local-lock-versions.pl .githooks/pre-commit \
             scripts/dev/install-git-hooks.sh \
             > target/evidence/native-ci/source-files.txt
@@ -132,13 +137,19 @@ jobs:
               shasum -a 256 "$file"
             fi
           done > target/evidence/native-ci/artifact-sha256.txt
+          # Archive scratch names verbatim: upload-artifact rejects colons and
+          # other valid fixture filenames when uploading an unpacked tree.
+          tar -czf target/evidence/native-ci.tar.gz -C target/evidence/native-ci .
+          shasum -a 256 target/evidence/native-ci.tar.gz > target/evidence/native-ci.tar.gz.sha256
       # actions/upload-artifact v7
       - name: Upload native evidence
         if: always() && steps.native_inputs.outcome != 'skipped'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-${{ matrix.runner }}-${{ github.run_attempt }}
-          path: target/evidence/native-ci/
+          path: |
+            target/evidence/native-ci.tar.gz
+            target/evidence/native-ci.tar.gz.sha256
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
