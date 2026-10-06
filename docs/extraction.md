@@ -78,13 +78,13 @@ The maintainer published `0.1.3`, matching tag `v0.1.3` at
 `a45c6fb156139efda8cfdfe7fbea1372cc11e559`. The registry index and downloaded
 archive confirm its identity; packaged Rust sources match the tag. A standalone
 registry-dependent `no_std` fixture passes Rust 1.88 host and Wasm checks.
-IcyDB already selects registry 0.1.3. IC Timers' root and testing lockfiles now
-select registry 0.1.3, preserving every other package record. Focused
+During that adoption, IcyDB selected registry 0.1.3. IC Timers' root and testing
+lockfiles selected registry 0.1.3, preserving every other package record. Focused
 measurement, registration/reset identity and delivery checks pass on Linux.
 The maintainer also published 0.1.4 at
 `1a144139a2b84e7a389d721febe79aaac3775b0c`; its verified archive matches the tag
 and passes the same standalone Rust 1.88 host/Wasm compilation checks. Canic's
-primary checkout now selects registry 0.1.4 without a sibling path, preserving
+primary checkout then selected registry 0.1.4 without a sibling path, preserving
 all other lock records and package metadata. The isolated candidate first passed
 locked offline Linux metadata, manifest sorting, strict Core library Clippy and
 all four endpoint tests. After its primary release command stopped, source/lock
@@ -101,8 +101,13 @@ Focused evidence remains separate from complete consumer native release/CI and
 publication qualification.
 The [publication issue](https://github.com/dragginzgame/ic-metrics/issues/4)
 links each consumer's path removal and qualification evidence.
-Published consumer IC counter readers remain local until the new API is released
-and adopted under [#3](https://github.com/dragginzgame/ic-metrics/issues/3).
+Published ic-metrics 0.1.5 now supplies the shared reader. All three named primary
+consumer checkouts select its registry package with `ic` and delegate their Wasm
+read to it. IcyDB/Canic retain native zero; IC Timers retains its existing native
+production binding and test fake. No attribution, report or identity contract
+changed. Owning release/CI qualification remains coordinated under
+[#3](https://github.com/dragginzgame/ic-metrics/issues/3), with focused results in
+[the current handoff](status/current.md).
 Other crates can consume the pure
 arithmetic without acquiring product instrumentation or an IC runtime dependency.
 
@@ -147,8 +152,14 @@ against the per-message counter 0. `make reader-check` runs only this named
 PocketIC test with a caller-supplied 16.0.0 binary; its version and platform digest
 are checked before server startup. No native counter fake is used. Runtime
 qualification and its artifact identities are recorded in [the host record](hosts.md).
-The synchronous and replicated callback fixture does not qualify composite-query
-execution or complete consumer lifecycle behavior, and claims no performance gain.
+The earlier synchronous and replicated callback evidence is retained separately.
+The extended fixture also executes ordinary queries and composite-query callbacks
+using a distinct downstream canister. Increasing downstream work leaves the
+caller's measured callback interval unchanged; each interval establishes its own
+local counter identity before comparison. The [query execution record](evidence/ic-reader-query.md)
+binds these observations to the pending 0.1.6 fixture and unchanged published
+reader source. This does not qualify complete consumer lifecycle behavior or claim
+a performance gain.
 
 ## Additional consumer source audit
 

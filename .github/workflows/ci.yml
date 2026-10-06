@@ -18,6 +18,7 @@ defaults:
 
 jobs:
   native:
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -56,6 +57,75 @@ jobs:
         run: cargo install cargo-sort --version 2.1.4 --locked
       - name: Run native CI
         run: make ci
+      - name: Record reader inputs and prepare locked dependencies
+        id: reader_inputs
+        run: |
+          mkdir -p target/evidence/reader
+          {
+            git rev-parse HEAD
+            printf 'run=%s attempt=%s event=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_EVENT_NAME"
+            uname -s
+            uname -m
+            rustc --version
+            cargo --version
+          } > target/evidence/reader/inputs.txt
+          git ls-files Cargo.toml Cargo.lock Makefile .shared-tooling.snapshot \
+            crates/ic-metrics .github/workflows/ci.yml scripts/ci/install-reader-pocketic.sh \
+            scripts/ci/verify-file-checksum.sh scripts/ci/test-reader-provisioning.sh \
+            > target/evidence/reader/source-files.txt
+          while IFS= read -r file; do
+            shasum -a 256 "$file"
+          done < target/evidence/reader/source-files.txt > target/evidence/reader/source-sha256.txt
+          cargo fetch --locked 2>&1 | tee target/evidence/reader/fetch.log
+      - name: Check provisioning rejection boundaries
+        id: reader_integrity
+        run: bash scripts/ci/test-reader-provisioning.sh 2>&1 | tee target/evidence/reader/provisioning-fixture.log
+      - name: Provision pinned PocketIC 16.0.0
+        id: reader_provision
+        run: |
+          bash scripts/ci/install-reader-pocketic.sh \
+            > target/evidence/reader/pocketic-path.txt 2> target/evidence/reader/provision.log
+          cat target/evidence/reader/provision.log
+          printf 'POCKET_IC_BIN=%s\n' "$(cat target/evidence/reader/pocketic-path.txt)" >> "$GITHUB_ENV"
+      - name: Execute instruction-reader qualification
+        id: reader_execution
+        run: |
+          CARGO_NET_OFFLINE=true make reader-check POCKET_IC_BIN="$POCKET_IC_BIN" \
+            2>&1 | tee target/evidence/reader/qualification.log
+      - name: Retain reader artifacts and outcome
+        if: always() && steps.reader_inputs.outcome != 'skipped'
+        env:
+          INPUT_OUTCOME: ${{ steps.reader_inputs.outcome }}
+          INTEGRITY_OUTCOME: ${{ steps.reader_integrity.outcome }}
+          PROVISION_OUTCOME: ${{ steps.reader_provision.outcome }}
+          EXECUTION_OUTCOME: ${{ steps.reader_execution.outcome }}
+        run: |
+          mkdir -p target/evidence/reader
+          printf 'inputs=%s\nintegrity=%s\nprovision=%s\nexecution=%s\n' \
+            "$INPUT_OUTCOME" "$INTEGRITY_OUTCOME" "$PROVISION_OUTCOME" "$EXECUTION_OUTCOME" > target/evidence/reader/outcome.txt
+          wasm=target/wasm32-unknown-unknown/release/examples/ic_reader_canister.wasm
+          if [[ -f "$wasm" ]]; then
+            cp "$wasm" target/evidence/reader/ic_reader_canister.wasm
+          fi
+          {
+            if [[ -n "${POCKET_IC_BIN:-}" && -f "$POCKET_IC_BIN" ]]; then
+              shasum -a 256 "$POCKET_IC_BIN"
+            fi
+            for file in target/evidence/reader/*.log target/evidence/reader/*.wasm target/debug/deps/ic_reader-*; do
+              if [[ -f "$file" && "$file" != *.d ]]; then
+                shasum -a 256 "$file"
+              fi
+            done
+          } > target/evidence/reader/artifact-sha256.txt
+      # actions/upload-artifact v7
+      - name: Upload reader evidence
+        if: always() && steps.reader_inputs.outcome != 'skipped'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ic-reader-${{ matrix.runner }}-${{ github.run_attempt }}
+          path: target/evidence/reader/
+          if-no-files-found: error
+          retention-days: 30
 
   msrv:
     runs-on: ubuntu-24.04

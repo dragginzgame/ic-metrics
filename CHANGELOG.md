@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.6]
+
+- Document published 0.1.5 reader adoption, including the required `ic` feature
+  and registry dependency floor. Describe both arithmetic and the opt-in reader
+  in package metadata
+  ([#3](https://github.com/dragginzgame/ic-metrics/issues/3)).
+
+- Extend `make reader-check` with actual query and composite-query execution,
+  verifying callback continuity and exclusion of downstream query work. Configure
+  pinned PocketIC execution on Linux and both macOS CI architectures, retaining
+  instruction logs, source/artifact identities and failure outcomes. Use the
+  ic-testkit 0.18 harness while preserving the core runtime dependencies
+  ([#3](https://github.com/dragginzgame/ic-metrics/issues/3)).
+
 ## [0.1.5] - 2026-10-05
 
 - Add an opt-in, Wasm-only call-context instruction reader through the safe IC

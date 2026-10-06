@@ -1,6 +1,6 @@
 # ic-metrics
 
-Allocation-free saturating measurement arithmetic for Internet Computer crates.
+Allocation-free measurement arithmetic and an opt-in IC instruction reader.
 
 The default dependency-free `no_std` library exports `record_sample` for consumer-owned
 count/total fields and `MeasurementSummary` for samples, total, latest and maximum.
@@ -22,15 +22,17 @@ assert_eq!(summary.latest(), Some(0));
 IcyDB, Canic and ic-timers integrate this arithmetic.
 Their inclusive or exclusive attribution, registries, callback roles, replication,
 persistence and reporting remain local.
+The crate has no global consumer registry, stable-memory allocation or endpoints.
+Consumers own their summary instances, labels and persistence policy.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
 records scope and evidence.
 
-The pending 0.1.5 addition exposes `ic_metrics::call_context_instructions()` with
+Published 0.1.5 exposes `ic_metrics::call_context_instructions()` with
 feature `ic` on `wasm32-unknown-unknown`. It reads IC performance counter 1;
 consumers establish call-context identity and own any subtraction or attribution.
 The opt-in IC binding uses `std`. Default arithmetic builds have no runtime
 dependencies on host or Wasm, and native builds expose no counter substitute.
-After the maintainer publishes 0.1.5, opt in from the root dependency catalog:
+Opt in from the root dependency catalog:
 
 ```toml
 [workspace.dependencies]
@@ -41,6 +43,15 @@ The reader is an instruction count, not cycles or elapsed time. Its replicated
 call context can span callbacks; unrelated calls, timer deliveries and resets
 do not establish comparable readings. The API documents the non-replicated
 composite-query boundary separately.
+
+`make reader-check` qualifies direct reads, replicated callbacks, ordinary queries
+and composite-query callbacks in PocketIC. The
+[query execution record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/ic-reader-query.md)
+includes a downstream-work exclusion check; it does not qualify consumer lifecycle
+behavior or claim a performance improvement.
+The CI workflow explicitly provisions pinned PocketIC 16.0.0 and runs this check
+on Linux and both macOS architectures, retaining evidence for 30 days. Ordinary
+local tests still require an explicit `make reader-check` invocation to run it.
 
 ## Development
 
@@ -75,13 +86,13 @@ normal checks and release scripts need no Shared Tooling sibling checkout.
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.1.4`](https://crates.io/crates/ic-metrics/0.1.4)
-is published on crates.io and matches tag `v0.1.4`. Declare it in the consumer's
+tooling releases. [`ic-metrics 0.1.5`](https://crates.io/crates/ic-metrics/0.1.5)
+is published on crates.io and matches tag `v0.1.5`. Declare it in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.1.4"
+ic-metrics = "0.1.5"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

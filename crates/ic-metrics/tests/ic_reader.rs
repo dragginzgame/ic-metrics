@@ -53,5 +53,35 @@ fn call_context_reader_matches_ic_and_survives_callback() -> Result<(), Box<dyn 
     assert_eq!(callback.len(), 5);
     assert!(callback[..4].windows(2).all(|pair| pair[0] <= pair[1]));
     assert!(callback[2] > callback[4]);
+
+    let query: Vec<u64> = pic.query_candid(canister, "query_probe", ())?;
+    println!("query_counter_1_readings={query:?}");
+    assert_eq!(query.len(), 5);
+    assert!(query.windows(2).all(|pair| pair[0] <= pair[1]));
+    assert!(query[3] > query[1]);
+
+    // Use a distinct canister to establish separate downstream execution;
+    // never compare absolute counters across their different identities.
+    let downstream_wasm = std::fs::read(std::env::var("IC_METRICS_READER_WASM")?)?;
+    let downstream =
+        pic.try_create_and_install(InstallSpec::new(downstream_wasm, vec![], 1_000_000_000_000))?;
+    let mut caller_intervals = Vec::new();
+    let mut downstream_intervals = Vec::new();
+    for iterations in [0_u32, 1_000_000] {
+        let composite: Result<Vec<u64>, ()> =
+            pic.query_candid(canister, "across_query_callback", (downstream, iterations))?;
+        let composite = composite.expect("downstream query succeeds");
+        println!("composite_query_iterations={iterations} readings={composite:?}");
+        assert_eq!(composite.len(), 10);
+        assert!(composite[..4].windows(2).all(|pair| pair[0] <= pair[1]));
+        assert!(composite[2] > composite[4]);
+        assert!(composite[5..].windows(2).all(|pair| pair[0] <= pair[1]));
+        caller_intervals.push(composite[2] - composite[0]);
+        downstream_intervals.push(composite[8] - composite[6]);
+    }
+    // Each delta uses one established local call context. Compare completed
+    // intervals, not absolute snapshots from separate canisters or queries.
+    assert!(downstream_intervals[1] > downstream_intervals[0]);
+    assert_eq!(caller_intervals[0], caller_intervals[1]);
     Ok(())
 }

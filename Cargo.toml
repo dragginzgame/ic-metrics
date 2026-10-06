@@ -9,12 +9,12 @@ version = "0.1.5"
 license = "MIT"
 repository = "https://github.com/dragginzgame/ic-metrics"
 authors = ["borovan <84897664+borovan@users.noreply.github.com>"]
-description = "Allocation-free saturating measurement arithmetic for Internet Computer crates"
+description = "Allocation-free measurement arithmetic and an opt-in IC instruction reader"
 
 [workspace.dependencies]
 candid = "=0.10.37"
 ic-cdk = "=0.20.3"
-ic-testkit = "=0.17.3"
+ic-testkit = "0.18"
 ic0 = "=1.2.0"
 sha2 = "=0.10.9"
 

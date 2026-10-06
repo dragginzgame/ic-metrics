@@ -45,15 +45,53 @@ The default library core is `no_std` and targets `wasm32-unknown-unknown` in add
 to native host compilation. A Wasm check proves compilation only, not IC
 instruction accounting; runtime measurement needs canister execution evidence.
 
-The pending 0.1.5 reader has focused Linux runtime qualification in PocketIC
+The 0.1.5 reader has focused Linux runtime qualification in PocketIC
 16.0.0: shared reads lie between direct counter-1 reads, increase after measured
 work, and retain call-context continuity across a replicated self-call callback.
 The [execution record](evidence/ic-reader.md) binds readings to the exact source,
 lockfile, server binary and Wasm artifact. This is IC instruction evidence from
 PocketIC, not native timing, mainnet evidence or a performance comparison.
-Composite-query execution and consumer lifecycle behavior are outside this fixture.
-The new worktree's macOS qualification is separate from the successful tagged
-0.1.4 CI recorded above.
+Composite-query execution and consumer lifecycle behavior were outside that fixture.
+The source in that pre-release record matches the published 0.1.5 library.
+The 0.1.5 archive, embedded Git revision, license and source match tag
+`bb28e217c5b3069715c1a58322b7900bec7fbb84`; a registry-dependent IC-feature fixture
+passes Rust 1.88 host/Wasm checks. The exact-release
+[CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37370018375)
+passed the complete native gate on macOS 15 Intel and Apple Silicon, and the
+Linux MSRV checks. Its first Linux native job never acquired a hosted runner;
+GitHub reported cancellation without executing any repository steps. A targeted
+job retry then passed the complete Ubuntu native gate. The successful second
+attempt qualifies the 0.1.5 library and development tooling on all declared
+native hosts, plus MSRV. The initial runner-admission failure is retained as
+evidence; ordinary native CI does not execute the opt-in PocketIC fixture.
+
+The pending 0.1.6 fixture extends the same focused target to ordinary and composite
+queries. Linux PocketIC 16.0.0 execution passes direct-counter bracketing, query
+callback continuity and downstream-work exclusion; the reader library source is
+unchanged from published 0.1.5. Strict host/Wasm Clippy and Rust 1.88 Wasm example
+compilation pass. See the separate [query execution record](evidence/ic-reader-query.md).
+macOS runtime execution of the expanded fixture remains unqualified; the tagged
+native CI above proves library/tooling gates rather than opt-in server execution.
+
+The pending workflow now explicitly provisions PocketIC 16.0.0 and invokes
+`make reader-check` after the native gate on all three hosts. The consumer-owned
+[installer](../scripts/ci/install-reader-pocketic.sh) selects the exact platform
+asset and verifies its SHA-256 before extraction, then checks the version before
+returning the binary path. Archive pins were checked against the official
+[16.0.0 release metadata](https://api.github.com/repos/dfinity/pocketic/releases/tags/16.0.0).
+The harness independently verifies the extracted binary's existing platform pin
+before launching the server. Unsupported hosts fail without downloading.
+
+CI prepares the selected lockfile cache explicitly, runs the reader offline and
+uploads per-host evidence for 30 days on success or failure. Evidence includes
+the checked-out revision, toolchain/host, source and lock hashes, provisioning and
+execution logs, step outcomes, server/harness hashes and the built Wasm fixture.
+Only the workflow's explicit provisioning step downloads PocketIC; `make ci` and
+ordinary local tests continue to ignore the server-dependent reader test.
+The [CI preparation record](evidence/reader-ci.md) retains the failed initial
+installer attempt and corrected Linux execution. Hosted execution of this pending
+workflow, including both macOS runtime checks and artifact upload, remains
+unqualified until the maintainer commits and pushes it.
 
 ## Prerequisites and focused checks
 
@@ -87,7 +125,8 @@ make reader-check POCKET_IC_BIN=/absolute/path/to/pocket-ic
 The host fixture checks its pinned platform digest and version before starting
 the server, with bounded startup, request time and server lifetime. The target
 builds the Wasm example under this repository's `target/`, then runs only the
-named ignored integration test. Ordinary tests do not implicitly discover,
+named ignored integration test, including its ordinary and composite-query cases.
+Ordinary tests do not implicitly discover,
 download or launch PocketIC. Linux x86_64 and both declared macOS architectures
 have explicit digest pins; this worktree's actual execution evidence is Linux.
 
