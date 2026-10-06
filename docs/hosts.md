@@ -161,9 +161,14 @@ retired reader. Tagged 0.2.1 source `009592f93d4014b079f7c31de51c244bc7df6564`
 passes Linux and MSRV in
 [CI run 37488116668](https://github.com/dragginzgame/ic-metrics/actions/runs/37488116668),
 but both macOS gates stop in the host-tool fixture and their evidence uploads
-reject a colon in a retained fixture filename. Pending 0.2.2 fixes adopt the shared
+reject a colon in a retained fixture filename. The 0.2.2 fixes adopt the shared
 archive-restoration fixture correction and pack native evidence before upload;
-they still require their own native macOS CI proof.
+tagged source `057d98813300d741d5782a6cab7c51507f63c55a` passes all three native
+hosts and MSRV in
+[CI run 37493725240](https://github.com/dragginzgame/ic-metrics/actions/runs/37493725240).
+Native retention and uploads pass, and the downloaded tarball/source receipts
+and retained fixture outcomes were verified in the
+[release record](evidence/release-022.md).
 
 Prepare tools explicitly before local validation:
 
@@ -198,7 +203,7 @@ and prepared rustfmt offline before either formatting target. Release metadata
 uses the shared read-only TOML version reader and prepared local jq/yq.
 `make check-doc-links` checks maintained Markdown references with the shared
 local-link helper; public URL availability and historical source scope are
-reviewed separately. Current tooling changes are collected under pending 0.2.2.
+reviewed separately. Those tooling changes are included in released 0.2.2.
 
 Actual instruction-counter execution belongs to each consumer's platform and
 attribution checks. The old `make reader-check` and its CI artifacts qualify
@@ -213,8 +218,9 @@ cargo-edit and does not implicitly publish or clean artifacts. Native release
 adapter execution remains unqualified on macOS; Linux stubs do not close that gap.
 The later formatter setup and packaging changes are covered by the tagged
 0.1.3 native CI evidence above; the earlier 0.1.1 run remains scoped to its tag.
-The adoption snapshot now records a37771f; 0.1.8 used a7efade and earlier tagged
-evidence used f52c0e2.
+The pending 0.2.3 snapshot records 46c0277; 0.2.2 used b32d303,
+0.1.9 used a37771f, 0.1.8 used a7efade
+and earlier tagged evidence used f52c0e2.
 Native CI includes a scratch hook
 fixture using this consumer's actual formatting and setup targets. It covers
 logical path aliases, selected refresh, unrelated edits, partial staging and

@@ -7,7 +7,71 @@ zero/empty and saturation semantics are unchanged. Consumers own counter reads,
 attribution, identities, persistence and endpoints. The library is dependency-free
 and `no_std` on host and Wasm. See the [current contract](../extraction.md).
 
-## Current release and compatible 0.2.2 cleanup
+## Current release
+
+Tag `v0.2.2` identifies source `057d98813300d741d5782a6cab7c51507f63c55a`.
+Its [CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37493725240)
+passes Linux, both supported macOS hosts and MSRV. All native retention and
+upload steps succeed. The downloaded tarballs, source receipts, twelve fixture
+outcomes and retained Git indexes were independently verified; see the
+[release record](../evidence/release-022.md). This completes the native and
+artifact qualification for [#7](https://github.com/dragginzgame/ic-metrics/issues/7),
+[#11](https://github.com/dragginzgame/ic-metrics/issues/11) and
+[#12](https://github.com/dragginzgame/ic-metrics/issues/12).
+The official sparse registry index reports non-yanked 0.2.2 with checksum
+`0fa3982ca31b157ba4d0aeda9d9c578c0b4e6b8e5755c39d593160551ad61285`.
+Cargo metadata remains 0.2.2; no package version is changed here.
+
+## Compatible 0.2.3 tooling adoption
+
+The single undated pending changelog is **0.2.3**, selected for compatible tooling
+fixes with unchanged arithmetic APIs, dependencies, units and sample semantics.
+The 53-file snapshot adopts reviewed Shared Tooling source
+`46c02774a8335cb3949d6f04284c4f53375353c1` through the distribution helper from
+its clean committed checkout. Its
+[CI run](https://github.com/dragginzgame/shared-tooling/actions/runs/37500153922)
+passes Linux and both native macOS hosts, including the formerly broken
+failure-injection fixture and large-component changelog cases.
+
+The finalizer compares version components textually so pending notes are not
+mistaken for undated history beyond floating-point precision. The logger leaves
+passing/ignored `error::` test names unhighlighted and retains ordinary failure
+context with a neutral label. Shared release and pin fixtures retain failed
+inputs. The baseline and agent-maintenance rule are refreshed together: authorized
+repairs apply directly to the working tree and owning-repository issue reports
+carry standing authorization. Sibling source edits, commits, closure and releases
+retain their existing authority. Upstream acceptance and consumer qualification
+remain separate; no dirty sibling bytes enter the snapshot.
+
+Focused Linux qualification with GNU Bash 3.2.57 passes `release-tools-check`,
+`pin-tools-check`, dependency inheritance, document links and snapshot verification.
+The adopted release fixture covers exact large-component note ownership and
+conflicting drafts; consumer metadata, rollback, selected-commit admission and
+twelve retained failure scenarios also pass. Checks against the actual vendored
+logger preserve passing/ignored test names, highlight compiler errors and failed
+tests, and keep ordinary retained context neutral. Selected ShellCheck and diff
+checks pass. Evidence remains under `target/evidence/adoption-023/` and the
+invocation-owned `target/evidence/native-ci/` fixture directory.
+These are focused local consumer checks. The uncommitted 0.2.3 batch has no
+native consumer CI result; the upstream all-host pass does not substitute for it.
+No full local gate, package version change, commit, push or publication ran.
+
+Read-only consumer inspection finds committed 0.2 requirements in IcyDB
+`049e561a843a8d3f4526460fd15876a4a238df10`, IC Timers
+`e001ab98195d3c8541430a934fd76f756c0717d2` and IC Backup
+`52532cca4d5276bb67810ffb346aba464d5a719a`. Their committed lockfiles select
+0.2.0, 0.2.1 and 0.2.0 respectively. Canic's committed source
+`d815abfc661d791ecf72afc5b1e4b6a990f37a91` still requires 0.1.5; its worktree
+migration selects 0.2 and remains uncommitted. IcyDB's separate working lock now
+selects 0.2.2. These graph observations do not prove consumer attribution or
+complete native qualification. Owning adoption remains in
+[#4](https://github.com/dragginzgame/ic-metrics/issues/4) and
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10).
+
+## Earlier 0.2.2 preparation
+
+The following observations describe preparation before the tagged release;
+the current release record above supplies the later native evidence.
 
 Tag `v0.2.1` identifies source `009592f93d4014b079f7c31de51c244bc7df6564`.
 Its [CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37488116668)

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.3]
+
+- Preserve pending changelog notes when version components exceed floating-point
+  integer precision; older undated history stays intact
+  ([Shared Tooling #23](https://github.com/dragginzgame/shared-tooling/issues/23)).
+- Keep passing and ignored Rust tests with `error::` names out of highlighted
+  errors, while retaining real diagnostics and neutral failure context
+  ([Shared Tooling #22](https://github.com/dragginzgame/shared-tooling/issues/22)).
+- Retain failed shared release and dependency-pin fixtures for inspection
+  ([Shared Tooling #21](https://github.com/dragginzgame/shared-tooling/issues/21)).
+
 ## [0.2.2] - 2026-10-06
 
 - Attempt every metadata restore after a preparation failure, report incomplete

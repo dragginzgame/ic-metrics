@@ -41,14 +41,17 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-The latest published release is 0.2.0. IC Timers 0.14.0 selects it; IcyDB and
-Canic's current worktrees select ic-metrics 0.2 and IC Timers 0.14. Their locks
-contain one registry ic-metrics 0.2.0 identity. Complete owning qualification
-remains tracked in [#10](https://github.com/dragginzgame/ic-metrics/issues/10).
+Release 0.2.2 is available in the registry; its tagged native qualification is recorded
+in the [current handoff](status/current.md). IcyDB, IC Timers and IC Backup have
+committed registry requirements for ic-metrics 0.2. Canic's 0.2 migration remains
+in its working tree; committed Canic still requires 0.1.5. Lockfile observations
+and complete owning qualification remain separate, tracked in
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10).
 IC Backup's integration began in release 0.3.7 at
-`1a23d66dd65b1e36e986b8c7d13758cf3c92d193`; release 0.3.9 still selects
-arithmetic-only ic-metrics 0.1.9 and needs no reader changes. Public summary
-re-exports require coordinated dependency identity when that consumer moves to 0.2.
+`1a23d66dd65b1e36e986b8c7d13758cf3c92d193`; release 0.4.0 at
+`52532cca4d5276bb67810ffb346aba464d5a719a` selects ic-metrics 0.2 with a 0.2.0
+registry lock identity. It needed no reader changes. Public summary re-exports
+still require a consistent dependency identity in applications combining crates.
 
 ## Downstream contract checks
 
