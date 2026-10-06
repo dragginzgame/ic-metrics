@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.9]
+## [0.1.9] - 2026-10-06
 
 - Prepare ripgrep explicitly on Linux and macOS CI so dependency-pin fixtures
   can run, and retain native gate logs when validation fails before reader setup
