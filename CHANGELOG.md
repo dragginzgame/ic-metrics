@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.6]
+## [0.1.6] - 2026-10-06
 
 - Document published 0.1.5 reader adoption, including the required `ic` feature
   and registry dependency floor. Describe both arithmetic and the opt-in reader
