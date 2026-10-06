@@ -65,15 +65,15 @@ attempt qualifies the 0.1.5 library and development tooling on all declared
 native hosts, plus MSRV. The initial runner-admission failure is retained as
 evidence; ordinary native CI does not execute the opt-in PocketIC fixture.
 
-The pending 0.1.6 fixture extends the same focused target to ordinary and composite
+The 0.1.6 fixture extends the same focused target to ordinary and composite
 queries. Linux PocketIC 16.0.0 execution passes direct-counter bracketing, query
 callback continuity and downstream-work exclusion; the reader library source is
 unchanged from published 0.1.5. Strict host/Wasm Clippy and Rust 1.88 Wasm example
 compilation pass. See the separate [query execution record](evidence/ic-reader-query.md).
-macOS runtime execution of the expanded fixture remains unqualified; the tagged
-native CI above proves library/tooling gates rather than opt-in server execution.
+That pre-release evidence is Linux-only; the older tagged native CI above proves
+library/tooling gates rather than opt-in server execution.
 
-The pending workflow now explicitly provisions PocketIC 16.0.0 and invokes
+The 0.1.6 workflow explicitly provisions PocketIC 16.0.0 and invokes
 `make reader-check` after the native gate on all three hosts. The consumer-owned
 [installer](../scripts/ci/install-reader-pocketic.sh) selects the exact platform
 asset and verifies its SHA-256 before extraction, then checks the version before
@@ -89,9 +89,20 @@ execution logs, step outcomes, server/harness hashes and the built Wasm fixture.
 Only the workflow's explicit provisioning step downloads PocketIC; `make ci` and
 ordinary local tests continue to ignore the server-dependent reader test.
 The [CI preparation record](evidence/reader-ci.md) retains the failed initial
-installer attempt and corrected Linux execution. Hosted execution of this pending
-workflow, including both macOS runtime checks and artifact upload, remains
-unqualified until the maintainer commits and pushes it.
+installer attempt and corrected Linux execution. The published 0.1.6 tag at
+`6cf2c3851019b1e989e42c5f79a4845ae911dc7f` has passed hosted Linux native CI,
+MSRV, reader execution and artifact upload in
+[run 37431032911](https://github.com/dragginzgame/ic-metrics/actions/runs/37431032911).
+Both macOS native gates, reader execution and evidence uploads also passed.
+All four jobs succeeded on attempt 1, completing the declared host/MSRV matrix
+for exact 0.1.6, including actual ordinary/composite-query execution on each host.
+Downloaded evidence ZIP, source, server and log/Wasm identities were independently
+verified for all three hosts. The fixture artifacts and absolute readings differ
+by host; each run establishes its own context intervals, without a cross-host
+identity or performance claim. Later worktrees and consumer releases retain their
+own qualification.
+See the separate [release record](evidence/release-016.md)
+for exact hosted and registry inputs rather than relabelling earlier evidence.
 
 ## Prerequisites and focused checks
 

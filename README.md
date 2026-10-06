@@ -39,6 +39,17 @@ Opt in from the root dependency catalog:
 ic-metrics = { version = "0.1.5", features = ["ic"] }
 ```
 
+Gate the Rust import on the IC target as well:
+
+```rust
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use ic_metrics::call_context_instructions;
+```
+
+Use the same condition for code that calls the reader. Enabling `ic` does not
+expose it on native targets used for linting or Candid generation; consumers own
+their native handling.
+
 The reader is an instruction count, not cycles or elapsed time. Its replicated
 call context can span callbacks; unrelated calls, timer deliveries and resets
 do not establish comparable readings. The API documents the non-replicated
@@ -52,6 +63,21 @@ behavior or claim a performance improvement.
 The CI workflow explicitly provisions pinned PocketIC 16.0.0 and runs this check
 on Linux and both macOS architectures, retaining evidence for 30 days. Ordinary
 local tests still require an explicit `make reader-check` invocation to run it.
+
+## Measuring cost
+
+Measure raw canister Wasm bytes, IC instructions and actual cycle charges
+separately. The shared arithmetic allocates nothing; labels, map updates and
+report encoding are consumer costs. Build profiles belong to the consumer
+workspace. The [performance audit](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/performance-audit.md)
+records compiler checks and size/instruction/cycle comparisons for the reader
+test canister, with their workload limits. It does not establish consumer savings.
+
+The separate [consumer lookup measurements](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/consumer-lookups.md)
+cover IcyDB and Canic's borrowed-key changes. Their isolated IC fixtures show
+lower instruction work and cycle charges for repeated keys, but higher costs
+for first insertions. Use the recorded workload and artifact identities when
+assessing those consumer changes; upgrading ic-metrics alone does not apply them.
 
 ## Development
 
@@ -86,13 +112,14 @@ normal checks and release scripts need no Shared Tooling sibling checkout.
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.1.5`](https://crates.io/crates/ic-metrics/0.1.5)
-is published on crates.io and matches tag `v0.1.5`. Declare it in the consumer's
+tooling releases. [`ic-metrics 0.1.6`](https://crates.io/crates/ic-metrics/0.1.6)
+is published on crates.io and matches tag `v0.1.6`. The reader's minimum release
+remains 0.1.5. Declare the current release in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.1.5"
+ic-metrics = "0.1.6"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

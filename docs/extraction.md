@@ -18,6 +18,12 @@ build. All three named consumers are authorized integration scope.
 
 ## Canonical ownership
 
+The [consumer lookup record](evidence/consumer-lookups.md) measures subsequent
+IcyDB/Canic allocation and reporting changes. Repeated keys benefit, while first
+insertions cost more; neither result changes the shared core's ownership.
+Canic's async endpoint attribution defect remains consumer-owned in
+[#99](https://github.com/dragginzgame/canic/issues/99).
+
 `record_sample` now serves IcyDB and Canic directly; `MeasurementSummary` is
 the canonical summary re-exported by ic-timers. All remain allocation-free.
 A tiny counter reader alone does not justify a framework. Add no speculative modules, registry, trait,
@@ -157,9 +163,13 @@ The extended fixture also executes ordinary queries and composite-query callback
 using a distinct downstream canister. Increasing downstream work leaves the
 caller's measured callback interval unchanged; each interval establishes its own
 local counter identity before comparison. The [query execution record](evidence/ic-reader-query.md)
-binds these observations to the pending 0.1.6 fixture and unchanged published
+binds these observations to the pre-release 0.1.6 fixture and unchanged published
 reader source. This does not qualify complete consumer lifecycle behavior or claim
 a performance gain.
+The maintainer subsequently published and pushed 0.1.6. Its exact tagged hosted
+qualification and independently verified registry archive are recorded in
+[the release record](evidence/release-016.md); earlier observations retain their
+original source and package identities.
 
 ## Additional consumer source audit
 

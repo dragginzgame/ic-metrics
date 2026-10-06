@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.7]
+
+- Document the platform-gated Rust reader import alongside its opt-in dependency,
+  so native linting and Candid generation preserve the Wasm-only API boundary.
+  Update the registry adoption example to published 0.1.6
+  ([#3](https://github.com/dragginzgame/ic-metrics/issues/3)).
+
+- Document how to assess canister Wasm size, instruction work and actual cycle
+  charges separately, with a scoped reader-canister audit and consumer ownership.
+  Record consumer lookup measurements and their new-key cost tradeoff, separately
+  from the unchanged shared core and reader.
+
 ## [0.1.6] - 2026-10-06
 
 - Document published 0.1.5 reader adoption, including the required `ic` feature
