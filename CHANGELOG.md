@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.8]
+## [0.1.8] - 2026-10-06
 
 - Adopt the reviewed Shared Tooling rules and dependency declaration checker in
   CI and release validation. Use compatible development dependency requirements
