@@ -19,9 +19,11 @@ assert_eq!(summary.samples(), 1);
 assert_eq!(summary.latest(), Some(0));
 ```
 
-IcyDB, Canic and ic-timers integrate this arithmetic.
-Their inclusive or exclusive attribution, registries, callback roles, replication,
-persistence and reporting remain local.
+Known downstream consumers are IcyDB, Canic, ic-timers and ic-backup. Their
+attribution, registries, callback roles, replication, persistence and reporting
+remain local. ic-backup's prepared host integration uses arithmetic-only summaries
+for local durations in nanoseconds and prepared chunk sizes in bytes; it enables
+no IC reader and its diagnostics establish no IC instruction or cycle cost.
 The crate has no global consumer registry, stable-memory allocation or endpoints.
 Consumers own their summary instances, labels and persistence policy.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
@@ -107,19 +109,29 @@ See [agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md
 Reviewed shared tooling is vendored;
 normal checks and release scripts need no Shared Tooling sibling checkout.
 
+`make check-pins` checks dependency and workflow declarations offline using
+Git, jq and Mike Farah yq. The reviewed parser version and platform digests live
+in `ci/tool-versions.env`; CI installs it explicitly through the checksum-verified
+shared installer. Local setup and focused commands are in
+[host support](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks).
+Compatible registry requirements and tracked lockfiles preserve build selection;
+the optional IC binding's exact constraint records its qualified runtime boundary.
+Dependency changes must prepare every affected independent workspace graph before
+release validation. Checks never upgrade dependencies or install tools implicitly.
+
 ## Releases and adoption
 
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.1.6`](https://crates.io/crates/ic-metrics/0.1.6)
-is published on crates.io and matches tag `v0.1.6`. The reader's minimum release
+tooling releases. [`ic-metrics 0.1.7`](https://crates.io/crates/ic-metrics/0.1.7)
+is published on crates.io with tag `v0.1.7`. The reader's minimum release
 remains 0.1.5. Declare the current release in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.1.6"
+ic-metrics = "0.1.7"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers
@@ -135,8 +147,11 @@ with `RELEASE_REMOTE=origin` and
 `RELEASE_BRANCH=main`. They require cargo-edit (`cargo set-version`) and
 cargo-sort 2.1.4, run the complete offline gate, prepare only Cargo metadata
 and release notes, commit,
-tag and atomically push. They do not publish the crate. Rerun the same release
-target after interruption to reconcile the saved candidate without another bump.
+tag and atomically push. They do not publish the crate. Normal release targets
+reconcile an interrupted release at its saved commit. Newer committed fixes or
+a different requested increment then receive fresh preflight and full validation
+before the next release is prepared. Failed validation logs remain under the
+Git directory's `release-state/validation-failures/`; earlier attempts are retained.
 `make release-resume VERSION=X.Y.Z` remains available for explicit selection;
 identity, payload and destination conflicts stop recovery.
 

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# This independent fixture owns its release and logger selections.
+unset MAKEFLAGS MFLAGS MAKEOVERRIDES RELEASE_COMMIT
+unset VALIDATION_REPOSITORY_ROOT VALIDATION_RUNNER_SNAPSHOT_PATH
+
 # Exercise the consumer's preparation boundary without release or Git effects.
 # Cargo-edit is substituted; sorting and locked offline metadata use real Cargo.
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
@@ -38,7 +42,7 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 set -euo pipefail
 case "$*" in
-    'diff --name-only -z HEAD --'|'ls-files --others --exclude-standard -z') ;;
+    'diff --cached --name-only -z HEAD --'|'diff --name-only -z --'|'ls-files --others --exclude-standard -z') ;;
     *) echo 'unexpected fixture Git operation' >&2; exit 99 ;;
 esac
 GIT

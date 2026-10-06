@@ -55,6 +55,29 @@ jobs:
           targets: wasm32-unknown-unknown
       - name: Install pinned manifest formatter
         run: cargo install cargo-sort --version 2.1.4 --locked
+      - name: Install pinned YAML and TOML parser
+        run: |
+          source ci/tool-versions.env
+          case "$(uname -s):$(uname -m)" in
+            Linux:x86_64) digest="$IC_METRICS_YQ_SHA256_LINUX_AMD64" ;;
+            Darwin:x86_64) digest="$IC_METRICS_YQ_SHA256_DARWIN_AMD64" ;;
+            Darwin:arm64) digest="$IC_METRICS_YQ_SHA256_DARWIN_ARM64" ;;
+            *) echo 'unsupported parser host' >&2; exit 1 ;;
+          esac
+          if ! command -v jq >/dev/null; then
+            case "$(uname -s)" in
+              Linux)
+                sudo apt-get update
+                sudo apt-get install -y jq
+                ;;
+              Darwin) brew install jq ;;
+              *) echo 'unsupported jq host' >&2; exit 1 ;;
+            esac
+          fi
+          yq_bin="$(bash scripts/ci/install-yq.sh \
+            --version "$IC_METRICS_YQ_VERSION" --sha256 "$digest" \
+            --install-dir "$RUNNER_TEMP/ic-metrics-tools")"
+          printf 'YQ=%s\n' "$yq_bin" >> "$GITHUB_ENV"
       - name: Run native CI
         run: make ci
       - name: Record reader inputs and prepare locked dependencies

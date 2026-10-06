@@ -24,27 +24,30 @@ release-preflight:
 	@bash scripts/release/metadata.sh preflight
 
 release-verify:
-	+CARGO_NET_OFFLINE=true $(MAKE) --no-print-directory ci
-	+CARGO_NET_OFFLINE=true $(MAKE) --no-print-directory msrv
+	+CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
+		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv
 
 release-prepare-version:
 	@bash scripts/release/metadata.sh prepare
 
-release-prepared-check release-commit-check release-committed-check release-tagged-check release-push-check:
+release-commit-check:
+	@bash scripts/release/metadata.sh commit-check
+
+release-prepared-check release-committed-check release-tagged-check release-push-check:
 	@bash scripts/release/metadata.sh check
 
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check reader-check test msrv shared-tooling-check release-tools-check ci
+.PHONY: help publish publish-check install-hooks hook-check fmt fmt-check check check-wasm clippy docs-check reader-check test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 
 help:
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
-	@echo "Recovery: rerun the same release target to reconcile the saved candidate"
+	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
 	@echo "Clone setup: install-hooks (requires prepared cargo-sort 2.1.4 and rustfmt)"
-	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, msrv, shared-tooling-check"
-	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
+	@echo "Focused: fmt, fmt-check, check, check-wasm, clippy, docs-check, msrv, shared-tooling-check, check-pins"
+	@echo "Tooling fixtures: hook-check, release-tools-check, pin-tools-check (no release Git effects)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "IC reader: reader-check POCKET_IC_BIN=/absolute/path/to/pocket-ic (pinned 16.0.0)"
 	@echo "Full gates (explicit request or configured CI): test, ci"
@@ -100,14 +103,23 @@ msrv:
 shared-tooling-check:
 	bash scripts/ci/verify-shared-tooling-snapshot.sh
 
+check-pins:
+	bash scripts/ci/check-dependency-pins.sh
+
+pin-tools-check:
+	bash scripts/ci/test-dependency-pins.sh
+
 release-tools-check:
 	bash scripts/ci/test-release-runner.sh
 	bash scripts/release/test-standard-release.sh
 	bash scripts/release/test-metadata.sh
+	bash scripts/release/test-release-admission.sh
 
 # Keep order explicit: stop on a failed gate, including any Clippy warning.
 ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
+	+$(MAKE) --no-print-directory check-pins
+	+$(MAKE) --no-print-directory pin-tools-check
 	+$(MAKE) --no-print-directory release-tools-check
 	+$(MAKE) --no-print-directory hook-check
 	+$(MAKE) --no-print-directory fmt-check

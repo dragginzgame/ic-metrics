@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.8]
+
+- Adopt the reviewed Shared Tooling rules and dependency declaration checker in
+  CI and release validation. Use compatible development dependency requirements
+  with locked builds and document the qualified exact IC binding constraint.
+- Strengthen release admission and recovery: reject hidden staged edits and
+  conflicting pending notes before validation, check the selected release commit,
+  and retain failed validation logs across retries. Normal release targets can
+  reconcile a saved committed release before validating newer fixes
+  ([#5](https://github.com/dragginzgame/ic-metrics/issues/5),
+  [Shared Tooling #5](https://github.com/dragginzgame/shared-tooling/issues/5),
+  [#7](https://github.com/dragginzgame/shared-tooling/issues/7)).
+- Document ic-backup's prepared arithmetic-only host adoption and include its
+  duration/byte diagnostics in downstream contract reviews.
+
 ## [0.1.7] - 2026-10-06
 
 - Document the platform-gated Rust reader import alongside its opt-in dependency,

@@ -9,7 +9,77 @@ replication, reset/persistence policy, labels, lifecycle and endpoints remain
 consumer-owned. Native builds have no shared counter or substitute. See the
 [extraction contract](../extraction.md).
 
-## Release identity
+## Shared Tooling adoption after 0.1.7
+
+The maintainer released 0.1.7 at
+`adf9c3f5676b8ce7983fe2f35724c800d1b00a59`; the local tag and package metadata
+agree, and the public registry index confirms a non-yanked 0.1.7 with Rust 1.88
+minimum. Its index checksum is
+`9e8632a16ca69a8a9ab1fd4daa276f7739d9996bd970373992e6c97087a04378`.
+This index observation does not claim a separately verified archive or hosted
+0.1.7 run. The release and earlier evidence below retain their original scope.
+
+A subsequent issue-closeout review observed the exact 0.1.7 source in
+[CI run 37441090866](https://github.com/dragginzgame/ic-metrics/actions/runs/37441090866),
+attempt 1. Linux, macOS Intel, macOS Apple Silicon and Linux MSRV jobs all
+succeeded. Each native job executed the PocketIC reader qualification and
+uploaded its evidence successfully. This is workflow/job evidence; this review
+did not independently download or verify the 0.1.7 artifacts. Runtime library
+source is unchanged from 0.1.5. These results qualify the tagged source, not the
+uncommitted 0.1.8 tooling below or the consumer worktrees.
+
+At adoption, the clean Shared Tooling checkout and its remote HEAD identified reviewed
+`a7efade1a68e43f148252a1a73908a46c4cbe9e9`. Its distribution helper refreshed
+27 declared files, including pinning and agent-maintenance rules, the checker,
+parser installer, updated hook and release runner, and validation logger.
+Snapshot-owned files were not patched. Local AGENTS and the consumer adapters
+apply the new contract; ordinary CI/issue inspection remains distinct from repair.
+
+CI and release gates now invoke the offline declaration checker with explicitly
+prepared Git/jq/yq. Consumer parser versions/digests live in `ci/tool-versions.env`.
+Development registry requirements are compatible; the optional exact ic0 1.2.0
+constraint documents its existing qualified IC boundary. The pre-existing dirty
+ic-testkit 0.18.3 lock selection is preserved byte for byte. No dependency upgrade,
+runtime Rust change or package-version mutation belongs to this adoption.
+
+Release preflight checks staged and unstaged paths independently and validates
+the pending candidate before fetching or validation. Commit admission checks the
+entire allowed index against prepared metadata. Late checks read metadata from
+`RELEASE_COMMIT`; normal commands use the shared reconciliation behavior before
+fresh validation for newer fixes. The actual release gate retains failed raw logs
+outside release inputs, including temporary-log fallback if retention fails.
+Independent fixtures isolate their Make/logger inputs while normal nested gates
+retain release selections.
+
+The compatible next draft is 0.1.8 from finalized 0.1.7: it strengthens tooling
+and admission without changing the library API or consumer measurement contracts.
+Package metadata stays 0.1.7. Linux snapshot verification, checksum/version-checked
+parser setup, pin declarations and rejection fixtures, manifest/Rust formatting,
+locked offline metadata, ShellCheck and workflow lint all pass. Release-runner
+stubs, the consumer Make/publication adapters, preparation/rollback fixtures,
+real Git admission/selected-commit checks and hook fixtures pass. The actual
+Make/logger fixture verifies CI-before-MSRV ordering, fail-fast behavior, retained
+first/second-gate failures, retry retention and temporary-log fallback.
+
+The release/hook fixtures also pass through the actual logger in a distinct parent
+checkout under inherited `RELEASE_VERSION=9.8.7` and a parent commit selection.
+No parent gate was dispatched. Evidence and source/input identities remain in
+`target/evidence/shared-tooling-a7efade/`; substitutes are identified in the logs.
+These are focused Linux tooling/metadata results, not runtime qualification of
+the preserved development dependency update or a native macOS pass for this batch.
+Hosted Linux/macOS adoption qualification remains pending the new committed
+source's configured CI. No full local gate, commit, tag, push or publication ran.
+
+The downstream review set now includes IcyDB, Canic, ic-timers and ic-backup.
+IC Backup's pending host integration selects registry 0.1.7 without the IC reader,
+using guard-local summaries for nanosecond durations and prepared chunk bytes.
+Its source/tests were reviewed read-only; no consumer command or edit ran here.
+The [extraction contract](../extraction.md#downstream-contract-checks) records
+the distinct qualification obligations and the prepared adoption's source scope.
+This documentation extends the compatible 0.1.8 batch without changing core APIs,
+package versions or qualification of consumer releases.
+
+## Earlier release identity and 0.1.7 preparation
 
 The maintainer committed, tagged and pushed 0.1.6 at
 `6cf2c3851019b1e989e42c5f79a4845ae911dc7f`; Cargo metadata is 0.1.6. The crates.io
@@ -195,7 +265,7 @@ dependency selections matched published 0.1.5 at that qualification. No new cons
 broad local gate ran for that pre-release evidence. Hosted qualification is now
 recorded separately under the exact 0.1.6 release above.
 
-The reviewed Shared Tooling snapshot remains
+The earlier reviewed Shared Tooling snapshot recorded
 `f52c0e2476aee094359ed21de91c468540d3969f`, with 20 declared files. Snapshot-owned
 files were not patched. Formatting uses pinned cargo-sort 2.1.4 before Rustfmt;
 root and child dependency declarations inherit from the workspace catalog.

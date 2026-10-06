@@ -10,11 +10,13 @@ Re-read consumer worktrees before editing; concurrent work is active in the cons
 | `icydb/crates/icydb-core/src/runtime.rs` | IC performance counter 1; native zero substitute | Explicit instruction-reader boundary |
 | `icydb/crates/icydb-core/src/metrics/state.rs` | Saturating sample count, total, and maximum | Small measurement arithmetic |
 | `canic/crates/canic-core/src/perf.rs` | Same instruction source and saturating count/total | Same primitives with consumer-owned attribution |
-| `ic-timers/crates/ic-timers/src/snapshot/metrics.rs` | Summary with samples, total, latest, maximum | Existing contract to compare before designing another |
+| `ic-timers/crates/ic-timers/src/snapshot/metrics.rs` | Summary with samples, total, latest, maximum | Canonical summary with consumer-owned scheduler/work attribution |
+| `ic-backup/crates/ic-backup/src/ops/persistence/download_journal/metrics/mod.rs` | Guard-local host duration and prepared-byte summaries | Arithmetic-only `MeasurementSummary`; no IC reader |
 
 Paths are relative to the parent projects directory and are evidence, not
 dependencies or build inputs. No sibling needs to be present for this crate to
-build. All three named consumers are authorized integration scope.
+build. These are the known downstream consumers to review when shared contracts
+change. Sibling mutations require authorization for their exact targets.
 
 ## Canonical ownership
 
@@ -25,7 +27,9 @@ Canic's async endpoint attribution defect remains consumer-owned in
 [#99](https://github.com/dragginzgame/canic/issues/99).
 
 `record_sample` now serves IcyDB and Canic directly; `MeasurementSummary` is
-the canonical summary re-exported by ic-timers. All remain allocation-free.
+the canonical summary re-exported by ic-timers and used by ic-backup's prepared
+host diagnostics. Shared arithmetic remains allocation-free; sampling and
+synchronization stay with each consumer.
 A tiny counter reader alone does not justify a framework. Add no speculative modules, registry, trait,
 feature matrix, serialization contract, or persisted state.
 
@@ -65,6 +69,23 @@ on this crate, uses its primitives, removes the replaced local implementation,
 and passes focused checks for its own attribution and reset contracts.
 Use released package dependencies for published consumers; any temporary local
 path is explicit integration wiring, never hidden sibling discovery.
+
+## Downstream contract checks
+
+Review the affected caller contracts when changing shared arithmetic or the
+reader, using each consumer's focused commands and source-bound evidence.
+
+| Consumer | Contracts to preserve and check |
+| --- | --- |
+| IcyDB | Inclusive overlapping spans, measured zero, saturation, maximum/report fields, reset identity and journal-debt separation. |
+| Canic | Exclusive synchronous nesting, async call-context identity, checkpoint ownership, measured zero, saturation and report ordering. |
+| ic-timers | Scheduler/work attribution, registration/epoch identity, completion/trap sample admission and empty/zero/saturated snapshots. |
+| ic-backup | Separate nanosecond/byte units and success/rejection samples, zero/repeated chunks, duration clamping, copied views, Send + Sync and empty create/open state. Diagnostics remain outside persistence, spending and receipt authority. |
+
+ic-backup uses only the default arithmetic core. Its host durations can include
+nested verification and therefore overlap; they supply no IC cost evidence.
+Reader-only changes do not require IC execution in this host consumer. Shared
+library validation and complete downstream release qualification are separate.
 
 ## Implemented adoption and evidence
 
@@ -173,11 +194,39 @@ original source and package identities.
 
 ## Additional consumer source audit
 
-A read-only scan of IC Memory, IC Query, IC Blob Storage, IC Backup, IC Testkit
-and IC Host Tools did not establish another matching saturating sample summary.
+The initial read-only scan of IC Memory, IC Query, IC Blob Storage, IC Backup,
+IC Testkit and IC Host Tools did not establish another matching saturating sample
+summary. IC Backup subsequently added an arithmetic-only integration, described
+below; that later adoption supersedes its initial audit disposition.
 IC Testkit's `BenchmarkCounters` uses `u128`, checked deltas and typed overflow
 errors across instruction and byte counters; substituting the current `u64`
 saturating arithmetic would change that contract. Its canister performance
 reader also includes memory counters. These ownership and unit differences do
 not justify another shared mode or widening the current API. No additional
 repository was modified and no native timing measurements were run.
+
+## IC Backup host adoption
+
+A subsequent read-only review found pending integration on IC Backup HEAD
+`f4b1426b5afac3ad53d3c862e39f784cef7391f9` (0.3.6). Its uncommitted 0.3.7 batch
+declares registry `ic-metrics 0.1.7` with default features disabled and member
+workspace inheritance. The lock selects 0.1.7 with checksum
+`9e8632a16ca69a8a9ab1fd4daa276f7739d9996bd970373992e6c97087a04378`, without
+the IC binding. This is prepared consumer adoption, not a released integration.
+
+`DownloadJournalGuard::ic_snapshot_metrics` returns a copied guard-local
+`IcSnapshotLocalMetrics` view. Verification and upload metadata/data preparation
+record separate returned success/rejection durations in nanoseconds. Successful
+data preparation records chunk bytes, including zero and repeated preparation.
+Each field uses `MeasurementSummary`. Create/open starts empty; journal replay
+does not reconstruct observations. Synchronization, inclusive host sampling,
+duration clamping and public diagnostics remain IC Backup-owned. No measurement
+identity, persistence, transport, completion or spending authority moves here.
+
+IC Backup's owning [adoption record](/home/adam/projects/ic-backup/docs/ic-metrics-adoption.json)
+and [handoff](/home/adam/projects/ic-backup/docs/status/current.md)
+describe its focused native qualification. At this review those records and the
+integration were uncommitted.
+This review inspected local source and tests, without running consumer commands,
+native timing benchmarks or IC measurements. Native macOS qualification remains
+consumer-owned. No IC Backup file was changed.

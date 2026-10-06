@@ -104,8 +104,23 @@ own qualification.
 See the separate [release record](evidence/release-016.md)
 for exact hosted and registry inputs rather than relabelling earlier evidence.
 
+The exact 0.1.7 source `adf9c3f5676b8ce7983fe2f35724c800d1b00a59` also passed
+[CI run 37441090866](https://github.com/dragginzgame/ic-metrics/actions/runs/37441090866)
+on attempt 1: all three native jobs and Linux MSRV succeeded, including each
+host's explicit reader execution and evidence upload. This review inspected job
+and step outcomes without downloading the 0.1.7 artifacts. The runtime library
+remains unchanged from 0.1.5; consumer releases and the subsequent uncommitted
+Shared Tooling adoption require their own evidence.
+
 ## Prerequisites and focused checks
 
+- The a7efade Shared Tooling adoption adds `make check-pins` to native CI and
+  release validation. Git, jq and Mike Farah yq 4.47.2 are required; the parser
+  version and Linux/macOS digests are consumer-owned in `ci/tool-versions.env`.
+  CI installs the parser explicitly and verifies its checksum and version.
+  Linux focused results are recorded in the current handoff; the updated gates
+  still need their own hosted Linux/macOS results after commit. Earlier tagged
+  host evidence above does not qualify this uncommitted tooling batch.
 - rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.88.0 for MSRV checks.
 - Install the `wasm32-unknown-unknown` target for each checked toolchain.
 - Git, GNU Make (`make`), Bash 3.2 or newer, and standard Unix utilities.
@@ -124,6 +139,27 @@ Run `make shared-tooling-check`, `make fmt`, `make check`,
 `make msrv` checks the declared floor. Wasm checks, Clippy and docs also cover
 the opt-in reader; Clippy covers its canister fixture. Select
 named tests relevant to the change rather than running the full suite by default.
+
+Prepare the selected parser explicitly for local checks:
+
+```sh
+source ci/tool-versions.env
+case "$(uname -s):$(uname -m)" in
+  Linux:x86_64) digest="$IC_METRICS_YQ_SHA256_LINUX_AMD64" ;;
+  Darwin:x86_64) digest="$IC_METRICS_YQ_SHA256_DARWIN_AMD64" ;;
+  Darwin:arm64) digest="$IC_METRICS_YQ_SHA256_DARWIN_ARM64" ;;
+  *) echo 'unsupported parser host' >&2; exit 1 ;;
+esac
+yq_bin="$(bash scripts/ci/install-yq.sh --version "$IC_METRICS_YQ_VERSION" \
+  --sha256 "$digest" --install-dir "$PWD/target/tools")"
+YQ="$yq_bin" make check-pins
+```
+
+`make pin-tools-check`, `make release-tools-check` and `make hook-check` run
+focused tooling fixtures without creating commits, tags or pushes. Release
+fixtures substitute Cargo-edit or cheap gates where declared, exercise actual
+Git index/selected-commit checks and the actual Make/logger adapter, and preserve
+normal nested release selections while isolating independent fixture inputs.
 
 For actual instruction-counter execution, provision the exact PocketIC 16.0.0
 binary from [the upstream release](https://github.com/dfinity/pocketic/releases/tag/16.0.0)
@@ -148,7 +184,8 @@ cargo-edit and does not implicitly publish or clean artifacts. Native release
 adapter execution remains unqualified on macOS; Linux stubs do not close that gap.
 The later formatter setup and packaging changes are covered by the tagged
 0.1.3 native CI evidence above; the earlier 0.1.1 run remains scoped to its tag.
-The adoption snapshot now records f52c0e2. Native CI includes a scratch hook
+The adoption snapshot now records a7efade; earlier tagged evidence used f52c0e2.
+Native CI includes a scratch hook
 fixture using this consumer's actual formatting and setup targets. It covers
 logical path aliases, selected refresh, unrelated edits, partial staging and
 formatter failure isolation. The shared installer normalizes physical paths,

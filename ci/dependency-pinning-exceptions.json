@@ -1,0 +1,10 @@
+[
+  {
+    "rule": "cargo-exact",
+    "file": "Cargo.toml",
+    "subject": "ic0",
+    "value": "=1.2.0",
+    "reason": "Preserve the qualified safe IC System API boundary; changing it requires actual reader and callback qualification.",
+    "evidence": "AGENTS.md#dependency-qualification"
+  }
+]

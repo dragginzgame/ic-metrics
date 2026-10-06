@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+unset MAKEFLAGS MFLAGS MAKEOVERRIDES
+unset VALIDATION_REPOSITORY_ROOT VALIDATION_RUNNER_SNAPSHOT_PATH
 
 # Exercise the adopted hook and this consumer's real formatting/setup targets.
 # Reuse existing objects; never create commits or touch the consumer's index.
