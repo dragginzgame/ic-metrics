@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.6]
+## [0.2.6] - 2026-10-07
 
 - Add constant-capable `checked_mean` and `MeasurementSummary::mean()` with
   typed errors for saturated or inconsistent aggregates, preserving empty and
