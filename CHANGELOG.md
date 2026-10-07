@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.4]
+## [0.2.4] - 2026-10-07
 
 - Add `MeasurementHistogram` with fixed caller-selected bounds, disjoint
   saturating buckets, overflow and the existing summary semantics. Invalid
