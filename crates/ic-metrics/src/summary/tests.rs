@@ -1,4 +1,79 @@
-use super::{MeasurementSummary, record_sample};
+use super::{MeasurementMeanError, MeasurementSummary, checked_mean, record_sample};
+
+#[test]
+fn checked_mean_preserves_empty_zero_and_floor_division() {
+    for (samples, total, expected) in [
+        (0, 0, None),
+        (1, 0, Some(0)),
+        (7, 0, Some(0)),
+        (2, 9, Some(4)),
+        (4, 3, Some(0)),
+        (1, u64::MAX - 1, Some(u64::MAX - 1)),
+        (u64::MAX - 1, u64::MAX - 1, Some(1)),
+    ] {
+        assert_eq!(checked_mean(samples, total), Ok(expected));
+    }
+}
+
+#[test]
+fn checked_mean_rejects_inconsistent_and_saturated_fields() {
+    use MeasurementMeanError::{SaturatedSamples, SaturatedTotal, TotalWithoutSamples};
+    for (samples, total, error) in [
+        (0, 1, TotalWithoutSamples),
+        (0, u64::MAX, TotalWithoutSamples),
+        (u64::MAX, 0, SaturatedSamples),
+        (u64::MAX, 9, SaturatedSamples),
+        (1, u64::MAX, SaturatedTotal),
+        (u64::MAX, u64::MAX, SaturatedSamples),
+    ] {
+        assert_eq!(checked_mean(samples, total), Err(error));
+    }
+}
+
+#[test]
+fn summary_mean_preserves_recording_and_saturation_contracts() {
+    let mut summary = MeasurementSummary::EMPTY;
+    assert_eq!(summary.mean(), Ok(None));
+    summary.record(0);
+    assert_eq!(summary.mean(), Ok(Some(0)));
+    summary.record(9);
+    assert_eq!(summary.mean(), Ok(Some(4)));
+    summary.record(u64::MAX - 9);
+    assert_eq!(summary.total(), u64::MAX);
+    assert_eq!(summary.mean(), Err(MeasurementMeanError::SaturatedTotal));
+    summary.record(1);
+    assert_eq!(summary.mean(), Err(MeasurementMeanError::SaturatedTotal));
+    assert_eq!(summary.latest(), Some(1));
+    let saturated_count = MeasurementSummary {
+        samples: u64::MAX,
+        total: 9,
+        latest: 9,
+        maximum: 9,
+    };
+    assert_eq!(
+        saturated_count.mean(),
+        Err(MeasurementMeanError::SaturatedSamples)
+    );
+}
+
+#[test]
+fn checked_mean_is_available_in_constant_evaluation() {
+    const RAW: Result<Option<u64>, MeasurementMeanError> = checked_mean(2, 9);
+    const EMPTY: Result<Option<u64>, MeasurementMeanError> = checked_mean(0, 0);
+    const INVALID: Result<Option<u64>, MeasurementMeanError> = checked_mean(0, 1);
+    const SATURATED: Result<Option<u64>, MeasurementMeanError> = checked_mean(1, u64::MAX);
+    const SUMMARY: Result<Option<u64>, MeasurementMeanError> = {
+        let mut summary = MeasurementSummary::EMPTY;
+        summary.record(9);
+        summary.record(0);
+        summary.mean()
+    };
+    assert_eq!(RAW, Ok(Some(4)));
+    assert_eq!(EMPTY, Ok(None));
+    assert_eq!(INVALID, Err(MeasurementMeanError::TotalWithoutSamples));
+    assert_eq!(SATURATED, Err(MeasurementMeanError::SaturatedTotal));
+    assert_eq!(SUMMARY, RAW);
+}
 
 #[test]
 fn empty_and_measured_zero_are_distinct() {

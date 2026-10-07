@@ -191,7 +191,8 @@ done
 # Nested Make must preserve release selections and never route to the parent CI.
 for scenario in retention fallback; do
     setup "logger-$scenario"
-    mkdir -p scripts/ci "$worktree/tmp"
+    mkdir -p scripts/ci make "$worktree/tmp"
+    cp "$root/make/tools.mk" make/
     cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
     cp "$root/scripts/ci/check-make-execution.sh" scripts/ci/
     cat > Makefile <<'MAKE'
@@ -254,7 +255,8 @@ done
 
 # The second gate still runs after successful CI; its failures are retained too.
 setup logger-second-gate
-mkdir -p scripts/ci
+mkdir -p scripts/ci make
+cp "$root/make/tools.mk" make/
 cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
 cp "$root/scripts/ci/check-make-execution.sh" scripts/ci/
 cat > Makefile <<'MAKE'

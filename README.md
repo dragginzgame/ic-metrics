@@ -20,6 +20,19 @@ assert_eq!(summary.samples(), 1);
 assert_eq!(summary.latest(), Some(0));
 ```
 
+The pending 0.2.6 source adds `checked_mean(samples, total)` and
+`MeasurementSummary::mean()`. Both return `Result<Option<u64>, MeasurementMeanError>`:
+empty data is `None`, measured zero is `Some(0)`, and nonempty unsaturated means
+use floor division. A nonzero total without samples or either counter at
+`u64::MAX` returns a typed error, including an exactly reached cap. The raw-field
+function supports consumer-owned report shapes without constructing an accumulator.
+These additions are not available in published 0.2.5.
+
+The [application guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md) is included in
+packaged crate documentation, with a compiled example of fixed named histograms,
+separate units and event counts. It covers sample admission, async attribution,
+resets, reporting and cost qualification; applications own those policies.
+
 For a distribution, construct `MeasurementHistogram::new([10, 100])`. Its
 disjoint buckets cover `0..=10` and `11..=100`; `overflow()` counts larger
 observations. `bucket_counts()` returns those two counts, and `summary()`
@@ -48,7 +61,7 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-The latest verified published package is 0.2.4. All four consumers' inspected local commits
+The latest verified published package is 0.2.5. All four consumers' inspected local commits
 have arithmetic-only 0.2 requirements. The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -72,6 +85,12 @@ cover IcyDB and Canic's borrowed-key changes. Their isolated IC fixtures show
 lower instruction work and cycle charges for repeated keys, but higher costs
 for first insertions. Use the recorded workload and artifact identities when
 assessing those consumer changes; upgrading ic-metrics alone does not apply them.
+
+The [two-bound histogram cost experiment](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/histogram-cost-026.md)
+compares Canic's source-copied recording path with count/total, summary and
+histogram storage. It measures IC instructions and actual cycle charges in
+Linux PocketIC, plus raw Wasm bytes and target-specific slot sizes. Its repeated-key,
+two-bound workload does not establish whole-application cost or histogram adoption.
 
 ## Development
 
@@ -109,11 +128,18 @@ make tools-check
 export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PATH"
 ```
 
-The setup installs jq and Mike Farah yq plus Quill, ICP CLI, didc, ic-wasm,
+The setup installs jq, Mike Farah yq, ripgrep with PCRE2 and cloc plus
+Quill, ICP CLI, didc, ic-wasm,
 PocketIC and Binaryen under this checkout's `.tools/`. It retains previous and
 failed candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
+
+The reviewed shared Make include also supplies `make cloc` for this workspace's
+Rust runtime/test report and `make cloc-tooling` for sibling tooling inventory.
+Reports use the prepared local tools. The tooling inventory separates matching
+shared snapshots from local code and supporting data; counts guide review and
+do not establish equivalent behavior or performance.
 
 `make check-pins` checks dependency and workflow declarations offline using
 Git and the prepared local parsers. Their single reviewed pin owner is

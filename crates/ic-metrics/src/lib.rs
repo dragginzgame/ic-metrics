@@ -5,10 +5,11 @@
 //! not read platform counters or manufacture measurements. The library is
 //! dependency-free and `no_std` on every target.
 
+#![doc = include_str!("application.md")]
 #![no_std]
 
 mod histogram;
 mod summary;
 
 pub use histogram::{HistogramBoundsError, MeasurementHistogram};
-pub use summary::{MeasurementSummary, record_sample};
+pub use summary::{MeasurementMeanError, MeasurementSummary, checked_mean, record_sample};

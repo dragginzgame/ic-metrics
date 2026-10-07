@@ -63,13 +63,12 @@ jobs:
           case "$(uname -s)" in
             Linux)
               sudo apt-get update
-              sudo apt-get install -y ripgrep xz-utils
+              sudo apt-get install -y xz-utils perl
               ;;
-            Darwin) brew install ripgrep xz ;;
+            Darwin) brew install xz ;;
             *) echo 'unsupported native host' >&2; exit 1 ;;
           esac
-          rg --version
-      - name: Install pinned local JSON, YAML and TOML parsers
+      - name: Install and verify the pinned local host tool set
         id: host_tools
         run: |
           make install-host-tools
@@ -86,12 +85,16 @@ jobs:
             uname -m
             rustc --version
             cargo --version
+            rg --version
+            cloc --version
           } > target/evidence/native-ci/inputs.txt
-          git ls-files Cargo.toml Cargo.lock Makefile .shared-tooling.snapshot \
+          git ls-files Cargo.toml Cargo.lock Makefile make/tools.mk .shared-tooling.snapshot \
             crates/ic-metrics .github/workflows/ci.yml ci/tool-versions.env ci/ic-tools.tsv \
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
+            scripts/ci/test-tool-commands.sh scripts/ci/test-cloc.sh \
+            scripts/ci/test-cloc-tooling.sh scripts/dev/cloc.sh scripts/dev/cloc-tooling.pl \
             'scripts/release/*.sh' scripts/dev/test-format-hook.sh \
             scripts/ci/check-release-commands.sh scripts/ci/check-documentation-links.pl \
             scripts/ci/check-formatting-hooks.sh \

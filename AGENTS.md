@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`25e7ce83149e081e4dcc52c55c33724e44153f2a` and file digests are recorded in
+`bfb50bd0884b5e6c5ee9592056531c6108f96d73` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -51,8 +51,9 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 - `make check-pins` requires prepared Git, jq and Mike Farah yq; consumer-selected
   tool versions/digests are in the reviewed `ci/tool-versions.env`. Explicit
-  `make install-host-tools` prepares the pair under `.tools/host/bin`;
-  `make host-tools-check` verifies it offline. IC executable pins live only in
+  `make install-host-tools` prepares jq, yq, ripgrep with PCRE2 and cloc under
+  `.tools/host/bin`; `make host-tools-check` verifies the complete set offline.
+  Shared `make/tools.mk` owns setup/check and LOC commands. IC executable pins live only in
   `ci/ic-tools.tsv`. The checker and release gates never install tools or unlock graphs.
 - Shared structural reviews use [the common methods](audits/README.md), with
   this overlay's allocation, units, counter identity and ownership constraints.

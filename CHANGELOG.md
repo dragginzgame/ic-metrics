@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.6]
+
+- Add constant-capable `checked_mean` and `MeasurementSummary::mean()` with
+  typed errors for saturated or inconsistent aggregates, preserving empty and
+  measured-zero results
+  ([#17](https://github.com/dragginzgame/ic-metrics/issues/17)).
+- Add a compiled application integration guide and source-bound two-bucket
+  histogram cost evidence for an isolated Canic recording path
+  ([#20](https://github.com/dragginzgame/ic-metrics/issues/20),
+  [#19](https://github.com/dragginzgame/ic-metrics/issues/19)).
+- Use shared Make commands to install and verify pinned jq, yq, ripgrep and cloc,
+  and add workspace Rust and sibling tooling reports
+  ([#16](https://github.com/dragginzgame/ic-metrics/issues/16)).
+
 ## [0.2.5] - 2026-10-07
 
 - Reject inherited Make modes that ignore failures or skip execution before

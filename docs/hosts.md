@@ -128,17 +128,19 @@ earlier Linux preparation or tagged host results.
 
 ## Prerequisites and focused checks
 
-- The a37771f Shared Tooling adoption provides `make install-tools` and offline
-  `make tools-check`. Host parser pins live in the reviewed `ci/tool-versions.env`;
+- The reviewed shared Make include provides `make install-tools` and offline
+  `make tools-check`. Host tool pins live in the reviewed `ci/tool-versions.env`;
   IC executable pins live in `ci/ic-tools.tsv`. Make selects `.tools/host/bin`
   and `.tools/ic/bin`. `make check-pins` and release validation never install tools.
-  Explicit CI setup installs the pinned parser pair and prepares ripgrep before
-  fixtures; the separate IC setup step verifies all six local executables before
-  reader execution. New hosted results must qualify this consumer wiring.
+  Explicit CI setup installs pinned jq, yq, ripgrep with PCRE2 and cloc before
+  fixtures; separate IC setup verifies all six local executables. New hosted
+  results must qualify this consumer wiring. `make cloc` reports this workspace;
+  `make cloc-tooling` inventories sibling tooling without running their commands.
 - rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.88.0 for MSRV checks.
 - Install the `wasm32-unknown-unknown` target for each checked toolchain.
 - Git, GNU Make (`make`), Bash 3.2 or newer, and standard Unix utilities.
-- curl, Perl, tar/gzip/xz and ripgrep for explicit local setup and tooling
+- curl, Perl and tar/gzip/xz for explicit local setup; pinned ripgrep and cloc
+  are supplied by `make install-host-tools` for tooling
   fixtures. Follow the [system bootstrap instructions](local-setup.md#bootstrap-prerequisites)
   for Linux Mint/Ubuntu or macOS; these packages are separate from pinned local tools.
 - cargo-sort 2.1.4, installed explicitly with
@@ -198,11 +200,23 @@ Its registry checksum, embedded source, Rust files, original manifest, license,
 README and lock match the release, as recorded in
 [the 0.2.4 release record](evidence/release-024.md).
 
-Pending 0.2.5 adopts reviewed Shared Tooling `25e7ce8` (0.1.14), including
+Prepared 0.2.5 adopted reviewed Shared Tooling `25e7ce8` (0.1.14), including
 the Make execution guard and complete caller dependency set. Focused Linux
 GNU Bash 3.2 release/logger/hook rejection, preservation and recovery checks pass
 in [the adoption record](evidence/adoption-025.md). Native upstream CI passes all
-three hosts; this uncommitted consumer update has no matching native CI run.
+three hosts; that preparation evidence does not qualify the later consumer release.
+
+Published 0.2.5 at `d8b3a46f24518a033cd36e40bf1f1895099b809f` matches
+the official registry archive. Its exact-source Linux, both native macOS hosts
+and MSRV jobs now pass in
+[CI run 37589261498](https://github.com/dragginzgame/ic-metrics/actions/runs/37589261498).
+See [the release record](evidence/release-025.md) for source and qualification scope.
+
+Pending 0.2.6 adopts Shared Tooling 0.1.15 at
+`bfb50bd0884b5e6c5ee9592056531c6108f96d73`, including the common Make
+commands and complete pinned host set. Upstream native CI passes all three hosts
+and lint/security; this uncommitted consumer wiring has no matching hosted run.
+See [the adoption record](evidence/adoption-026.md) for focused local evidence.
 
 Prepare tools explicitly before local validation:
 

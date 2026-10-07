@@ -6,8 +6,9 @@ RELEASE_REMOTE ?= origin
 RELEASE_BRANCH ?= main
 IC_TOOL_PINS ?= ci/ic-tools.tsv
 HOST_TOOL_VERSIONS ?= ci/tool-versions.env
-export PATH := $(CURDIR)/.tools/host/bin:$(CURDIR)/.tools/ic/bin:$(PATH)
 export YQ := $(CURDIR)/.tools/host/bin/yq
+
+include make/tools.mk
 
 ifneq ($(word 2,$(filter release-patch release-minor release-major release-resume,$(MAKECMDGOALS))),)
 $(error Select exactly one release target)
@@ -44,10 +45,11 @@ release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
 .PHONY: help publish publish-check install-hooks hook-check format-tools-check fmt fmt-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
-.PHONY: install-tools tools-check install-host-tools host-tools-check install-ic-tools ic-tools-check local-tools-test
+.PHONY: local-tools-test
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
+	@echo "Reports: cloc (this workspace); cloc-tooling (sibling tooling inventory)"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
@@ -67,30 +69,13 @@ publish-check:
 install-hooks:
 	bash scripts/dev/install-git-hooks.sh
 
-install-tools:
-	+$(MAKE) --no-print-directory install-host-tools
-	+$(MAKE) --no-print-directory install-ic-tools
-
-tools-check:
-	+$(MAKE) --no-print-directory host-tools-check
-	+$(MAKE) --no-print-directory ic-tools-check
-
-install-host-tools:
-	bash scripts/dev/install-host-tools.sh --versions "$(HOST_TOOL_VERSIONS)"
-
-host-tools-check:
-	bash scripts/dev/install-host-tools.sh --versions "$(HOST_TOOL_VERSIONS)" --check
-
-install-ic-tools:
-	bash scripts/dev/install-ic-tools.sh --pins "$(IC_TOOL_PINS)"
-
-ic-tools-check:
-	bash scripts/dev/install-ic-tools.sh --pins "$(IC_TOOL_PINS)" --check
-
 local-tools-test:
 	bash scripts/ci/test-host-tools.sh
 	bash scripts/ci/test-ic-tools.sh
 	bash scripts/ci/test-evidence-checksums.sh
+	bash scripts/ci/test-tool-commands.sh
+	bash scripts/ci/test-cloc.sh
+	bash scripts/ci/test-cloc-tooling.sh
 
 hook-check:
 	bash scripts/dev/test-format-hook.sh
@@ -124,6 +109,7 @@ check-doc-links:
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md
+	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" crates/ic-metrics/src/application.md
 
 test:
 	cargo test -p $(PACKAGE) --locked

@@ -18,12 +18,14 @@ cleanup() {
     exit "$status"
 }
 trap cleanup EXIT
-mkdir -p "$fixture/bin"
+mkdir -p "$fixture/bin" "$fixture/make"
+cp "$root/make/tools.mk" "$fixture/make/"
 real_bash="$(command -v bash)"
 export EVENTS="$fixture/events"
 cd "$fixture"
 real_make="$(command -v make)"
 TMPDIR="$fixture" "$real_bash" "$root/scripts/ci/check-release-commands.sh" "$root" \
+    make/tools.mk \
     > "$fixture/output" 2>&1
 
 # Publication remains a separate single-package Cargo operation, never a release.

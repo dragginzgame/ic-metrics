@@ -8,6 +8,15 @@ Histogram bounds and units are caller-selected; invalid bounds return a typed
 error. Bucket counts saturate independently. These primitives never read
 platform counters, allocate labels, persist data or claim endpoints.
 
+Pending 0.2.6 adds `checked_mean(samples, total)` for consumer-owned report
+fields and `MeasurementSummary::mean()` using that canonical projection.
+Empty `(0, 0)` is `None`; measured zero is `Some(0)`. Nonempty unsaturated
+means round down. A nonzero total without samples or either counter at
+`u64::MAX` returns `MeasurementMeanError`, including an exactly reached cap.
+It establishes no unit, snapshot identity or input provenance and adds no storage.
+The [packaged application guide](../crates/ic-metrics/src/application.md) shows
+consumer-owned named aggregates and their admission/reporting obligations.
+
 ## Canonical ownership
 
 Zero is a valid sample; empty has no latest or maximum. Count and total saturate
@@ -44,11 +53,13 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.4 is available in the registry; its source-bound qualification is recorded
+Release 0.2.5 is available in the registry; its source-bound qualification is recorded
 in the [current handoff](status/current.md). All four consumers' inspected local
-commits now require registry ic-metrics 0.2. Canic's newly committed migration
-and IC Backup's local 0.5.0 preparation have no matching owning CI runs;
-local commits, remote/publication state and complete owning qualification remain
+commits require registry ic-metrics 0.2. IC Timers 0.14.6 and IC Backup 0.5.0
+have passing owning native CI; IcyDB's full CI still fails, and Canic's local
+0.2 migration remains ahead of remote main. The separate prepared IC Backup
+custody correction has no matching committed native qualification.
+Local commits, remote/publication state and complete owning qualification remain
 separate, tracked in
 [#10](https://github.com/dragginzgame/ic-metrics/issues/10).
 IC Backup's integration began in release 0.3.7 at
