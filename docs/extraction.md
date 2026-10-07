@@ -27,10 +27,12 @@ There are no global consumer IDs or stable-memory allocations in this crate.
 
 | Known consumer | Local measurement policy | Shared arithmetic |
 | --- | --- | --- |
-| IcyDB | Inclusive overlapping spans; native zero substitute; maximum/report fields | `record_sample` |
+| IcyDB | Inclusive overlapping spans; native zero substitute; maximum/report fields and CLI mean projection | `record_sample`, `checked_mean` |
 | Canic | Exclusive endpoint accounting and invocation-owned async checkpoints; native zero substitute | `record_sample` |
 | IC Timers | Scheduler/work roles, registration epochs and sample admission; test-only fake counter | `MeasurementSummary` |
-| IC Backup | Guard-local host durations in nanoseconds and prepared chunk bytes; separate units | `MeasurementSummary` |
+| IC Backup | Guard-local host durations in nanoseconds and prepared chunk bytes; separate units | `MeasurementSummary`, `MeasurementHistogram<4>` for prepared bytes |
+| IC Blob Storage test probe | Restoration-operation instruction samples; test-canister attribution and reset | `record_sample` |
+| Toko Miner game shard | Production action-count cohorts with separate attempt/instruction totals | `record_sample` |
 
 IcyDB's journal debt and IC Backup's persistence/spending/receipt authority are
 outside resettable diagnostics. IcyDB-to-Canic application sampling belongs in
@@ -53,12 +55,14 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.5 is available in the registry; its source-bound qualification is recorded
-in the [current handoff](status/current.md). All four consumers' inspected local
-commits require registry ic-metrics 0.2. IC Timers 0.14.6 and IC Backup 0.5.0
-have passing owning native CI; IcyDB's full CI still fails, and Canic's local
-0.2 migration remains ahead of remote main. The separate prepared IC Backup
-custody correction has no matching committed native qualification.
+Release 0.2.7 is available in the registry and passes this repository's complete
+native matrix; the [release record](evidence/release-027.md) binds the source and archive.
+The six inspected callers select registry arithmetic-only 0.2 requirements.
+The [current handoff](status/current.md) separates their committed and working-tree
+lock identities. IC Blob Storage's direct caller is a restoration test probe,
+not production library instrumentation. Toko's action-count cohorts are domain
+categories, not instruction-value histogram buckets. Package publication and a
+lock update do not establish complete owning runtime/native qualification.
 Local commits, remote/publication state and complete owning qualification remain
 separate, tracked in
 [#10](https://github.com/dragginzgame/ic-metrics/issues/10).
@@ -76,6 +80,8 @@ still require a consistent dependency identity in applications combining crates.
 | Canic | Exclusive nesting, async call-context identity, checkpoint ownership, measured zero, saturation and report ordering. |
 | IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/saturated projections. |
 | IC Backup | Nanosecond/byte separation, success/rejection samples, zero/repeated chunks, duration clamping, copied views, Send + Sync and empty create/open state. |
+| IC Blob Storage test probe | Restoration-operation attribution, call-context identity, measured zero, saturation and bounded report/reset behavior. |
+| Toko Miner game shard | Action-count cohort admission, separate attempt/instruction units, trap/outcome policy, bounded reporting and window/reset identity. |
 
 Review all affected callers before arithmetic changes. Use released dependencies,
 no hidden sibling discovery or product coupling. Extraction is adopted when the
@@ -89,7 +95,11 @@ Histogram usage is investigated at the admitted-value producer in
 [Canic #475](https://github.com/dragginzgame/canic/issues/475),
 [IC Timers #22](https://github.com/dragginzgame/ic-timers/issues/22) and
 [IC Backup #15](https://github.com/dragginzgame/ic-backup/issues/15).
-The reviewed counter paths contain no existing measurement histogram to replace.
+The original counter-path review found no measurement histogram to replace.
+The subsequently inspected IC Backup implementation records prepared chunk
+bytes in four fixed disjoint buckets and overflow; its canonical summary derives
+from the same accumulator. Owning qualification remains in its linked issue.
+IC Timers retains summaries without a demonstrated distribution workload.
 Counts, maxima and totals cannot reconstruct an observation distribution;
 chronological histories and domain/category buckets retain their own contracts.
 The histogram API is published in 0.2.4; consumers using it need that released

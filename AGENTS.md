@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`88f1d70cdf671aefb9507d7a81411ed5daa358b3` and file digests are recorded in
+`a3430b34b32a60f3b245a2b4f7e2f5321556fe56` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -37,8 +37,9 @@ and [the extraction contract](docs/extraction.md) before implementation.
   Focused commands and host qualification are in [docs/hosts.md](docs/hosts.md).
   Full tests and `make ci` require an explicit request or configured CI.
 - Fix warnings in the selected Clippy gate before later validation.
-- When shared contracts change, review the IcyDB, Canic, `ic-timers` and
-  `ic-backup` callers under [the downstream contract checks](docs/extraction.md#downstream-contract-checks).
+- When shared contracts change, review the IcyDB, Canic, `ic-timers`,
+  `ic-backup`, IC Blob Storage test-probe and Toko Miner callers under
+  [the downstream contract checks](docs/extraction.md#downstream-contract-checks).
   Each consumer owns its qualification; review does not authorize sibling edits.
 - Do not patch snapshot-owned files. Refresh through the upstream distribution
   helper from a clean checkout of a reviewed revision, then verify the snapshot.
@@ -53,6 +54,9 @@ and [the extraction contract](docs/extraction.md) before implementation.
   tool versions/digests are in the reviewed `ci/tool-versions.env`. Explicit
   `make install-host-tools` prepares jq, yq, ripgrep with PCRE2 and cloc under
   `.tools/host/bin`; `make host-tools-check` verifies the complete set offline.
+  Explicit `make install-rust-tools` prepares the pinned Cargo tools under
+  `.tools/rust/bin`; `make rust-tools-check` verifies their reported versions
+  offline. Rust setup is attached to `install-tools` and `tools-check`.
   Shared `make/tools.mk` owns setup/check and LOC commands. IC executable pins live only in
   `ci/ic-tools.tsv`. The checker and release gates never install tools or unlock graphs.
 - Shared structural reviews use [the common methods](audits/README.md), with

@@ -10,6 +10,10 @@ export YQ := $(CURDIR)/.tools/host/bin/yq
 
 include make/tools.mk
 
+# Rust setup stays explicit; checks only inspect the prepared local set.
+install-tools: install-rust-tools
+tools-check: rust-tools-check
+
 ifneq ($(word 2,$(filter release-patch release-minor release-major release-resume,$(MAKECMDGOALS))),)
 $(error Select exactly one release target)
 endif
@@ -53,7 +57,8 @@ help:
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
-	@echo "Clone setup: install-hooks (requires prepared cargo-sort 2.1.4 and rustfmt)"
+	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
+	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
 	@echo "Tooling fixtures: hook-check, release-tools-check, pin-tools-check (no release Git effects)"
 	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
@@ -71,6 +76,7 @@ install-hooks:
 
 local-tools-test:
 	bash scripts/ci/test-host-tools.sh
+	bash scripts/ci/test-rust-tools.sh
 	bash scripts/ci/test-ic-tools.sh
 	bash scripts/ci/test-evidence-checksums.sh
 	bash scripts/ci/test-tool-commands.sh
@@ -140,6 +146,7 @@ ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
 	+$(MAKE) --no-print-directory check-doc-links
 	+$(MAKE) --no-print-directory host-tools-check
+	+$(MAKE) --no-print-directory rust-tools-check
 	+$(MAKE) --no-print-directory check-pins
 	+$(MAKE) --no-print-directory pin-tools-check
 	+$(MAKE) --no-print-directory local-tools-test

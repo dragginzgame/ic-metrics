@@ -6,22 +6,22 @@ endpoints. See [the extraction contract](../extraction.md).
 
 ## Released source
 
-Published 0.2.6, tag `v0.2.6`, local HEAD and remote main identify
-`df8fd43b95673360bcc6740624c8c361745f58d1`. The official registry package is
-non-yanked, dependency-free and feature-free, with checksum
-`9ac61152c3645ba0cad34331301db14ca096ced6ace6fc7d2cbbd4f4fe511f63`.
-The downloaded archive matches its checksum, embedded Git identity, Rust source,
-packaged guide, original manifest, README, license and lock. Cargo versions stay
-0.2.6. The [0.2.6 release record](../evidence/release-026.md) binds those observations.
+The latest verified published release is 0.2.7, tag `v0.2.7`, at
+`09c6786c3b68759ea0ead4d1b987b5a9b472bdbb`. The non-yanked registry archive
+matches its checksum, embedded Git identity and maintained package files.
+[The release record](../evidence/release-027.md) binds publication and the complete
+passing Linux, macOS 15 Intel, macOS 15 Apple Silicon and Linux MSRV matrix.
+Cargo package/workspace and lock versions remain 0.2.7.
 
-`checked_mean(samples, total)` and `MeasurementSummary::mean()` are available
-from this release: empty `(0, 0)` is `None`, observed zero is `Some(0)` and valid
-nonempty means round down. Inconsistent empty pairs and either counter at
-`u64::MAX` return typed errors, including an exactly reached cap. Recording,
-storage and ownership contracts are unchanged. The
+Histograms are available from 0.2.4; checked means are available from 0.2.6.
+`checked_mean(samples, total)` and `MeasurementSummary::mean()` return `None`
+for empty `(0, 0)`, `Some(0)` for measured zero and floor division for valid
+nonempty aggregates. Inconsistent empty pairs and either counter at `u64::MAX`
+return typed errors, including an exactly reached cap. Recording, storage and
+ownership contracts are unchanged. The
 [application guide](../../crates/ic-metrics/src/application.md) is packaged and
-compiled. [Arithmetic evidence](../evidence/arithmetic-026.md) retains focused
-host/Wasm, MSRV, tests and documentation results at their original source.
+compiled; [arithmetic evidence](../evidence/arithmetic-026.md) retains its
+original source, host/Wasm, MSRV and documentation scope.
 
 The [histogram experiment](../evidence/histogram-cost-026.md) measures an isolated
 Canic recording source-copy on Linux PocketIC 16.0.0, with 138 validated calls.
@@ -30,65 +30,66 @@ instructions, 42,035–75,035 observed whole-update cycles and 208 raw Wasm byte
 over count/total; slots use 72 versus 16 bytes. This does not qualify a full
 consumer, other bound counts/cardinalities, timer admission, mainnet or macOS.
 
-## Tooling adoption and qualification
+## Pending 0.2.8
 
-The 65-file snapshot now records reviewed committed Shared Tooling
-`88f1d70cdf671aefb9507d7a81411ed5daa358b3` (the 0.1.16 tooling plus its
-committed LOC fixture correction), refreshed through its
-canonical helper from a separate clean detached checkout. The added canister
-audit guide completes the updated catalog; the distribution helper completes
-the tooling-inventory fixture dependency. Changelog heading whitespace,
-validation log retention and explicit independent-workspace reporting come from
-their canonical owners. No frontend formatter is activated in this Rust library.
+This compatible tooling/documentation batch adopts reviewed committed Shared
+Tooling 0.1.18 at `a3430b34b32a60f3b245a2b4f7e2f5321556fe56`, through its
+canonical helper from a clean detached checkout. All 67 declared files are
+recorded in `.shared-tooling.snapshot`; sibling dirty source is excluded.
+The [adoption record](../evidence/adoption-028.md) binds focused checks and
+propagation. No arithmetic API, Cargo package version or locked dependency changes.
 
-The [0.2.6 CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37598415861)
-passes MSRV but Linux fails in the LOC fixture before native Rust gates; both
-macOS jobs remain queued at the recorded inspection. Checkout-local TMPDIR lets
-the fixture discover the enclosing repository instead of its own manifest.
-[Shared Tooling #48](https://github.com/dragginzgame/shared-tooling/issues/48)
-owns that repair, distinct from inherited target-directory isolation in
-[#47](https://github.com/dragginzgame/shared-tooling/issues/47).
-The maintainer committed the authorized correction, which explicitly selects
-fixture manifests and clears only the inherited target selection. Its portable
-suite, ShellCheck and focused Bash 3.2/5.2 probes inside/outside the checkout pass.
-The corrected source is now distributed into this consumer through the clean
-reviewed checkout; the historical 0.1.16 source retains its failing fixture. The
-[adoption record](../evidence/adoption-027.md) retains the exact boundary and checks.
+The shared logger rejects Make options and assignments before validation effects.
+LOC reporting excludes physical target paths behind aliases; fixtures isolate
+enclosing Cargo configuration and qualify adopted working-tree bytes independently
+of the upstream exporter. Explicit `make install-rust-tools` prepares pinned
+Cargo tools in `.tools/rust/bin`, with offline `make rust-tools-check`; both attach
+to the aggregate setup/check commands. Native CI uses those same helpers and
+retains failed Rust installation output. Ordinary validation never installs tools.
 
-Pending 0.2.7 contains compatible tooling corrections from finalized 0.2.6;
-package versions and arithmetic source remain unchanged. Publication does not
-prove owning native CI. Feature qualification remains with
-[#17](https://github.com/dragginzgame/ic-metrics/issues/17),
-[#19](https://github.com/dragginzgame/ic-metrics/issues/19),
-[#20](https://github.com/dragginzgame/ic-metrics/issues/20) and tooling adoption
-[#16](https://github.com/dragginzgame/ic-metrics/issues/16),
-[#18](https://github.com/dragginzgame/ic-metrics/issues/18).
+[Upstream CI](https://github.com/dragginzgame/shared-tooling/actions/runs/37604299590)
+passes all three native hosts and lint/security at the adopted revision. This
+consumer's new committed native CI remains separate from local Linux/Bash 3.2
+checks and the released 0.2.7 matrix. The scope is recorded in
+[#21](https://github.com/dragginzgame/ic-metrics/issues/21) and
+[#22](https://github.com/dragginzgame/ic-metrics/issues/22).
 
 ## Downstream boundaries
 
-[IcyDB #313](https://github.com/dragginzgame/icydb/issues/313) owns the authorized
-CLI projection onto published 0.2.6. The local renderer uses `checked_mean`,
-keeps numeric zero and floor rounding, and displays `unavailable` for empty,
-inconsistent or saturated input. Its catalog and lock select 0.2.6. No DTO,
-Candid, span attribution, endpoint, storage or reset behavior changes. Its pending
-notes select 0.267.0 for the diagnostic CLI output change and carry the existing
-unpublished batch; Cargo package versions are unchanged. Other dirty IcyDB work
-is preserved. The owning issue records focused checks and release qualification.
+The 2026-10-07 read-only inspection found the following concrete callers. Source
+identities bind this observation; newer dirty work and remote publication require
+independent inspection. All selected locks below refer to the registry package.
 
-Histogram workload/bounds/storage decisions remain with
+| Caller | Inspected local HEAD | Metrics lock and scope |
+| --- | --- | --- |
+| IcyDB | `15e083e479129bb8a62aede0e768a2b5c40be23b` | Committed 0.2.7; inclusive spans and CLI `checked_mean` projection. |
+| Canic | `fb191848a728d00a0451fe604e31182ab0573376` | Committed 0.2.7; exclusive endpoint accounting and invocation-owned async checkpoints. |
+| IC Timers | `7e98cbc969b1e6d6098786a7f36ac3ba66d8165a` | Committed 0.2.7; scheduler/work summaries and consumer-owned sample admission. |
+| IC Backup | `7660b56c196d2af3d084524bc74bb9dd4982d1ad` | Committed 0.2.7; nanosecond summaries and four-bound prepared-byte histogram. |
+| IC Blob Storage | `aadfe16216ddfc20f8dd68de048b0846c54dcfb3` | Committed 0.2.7; restoration test probe uses `record_sample`, not production library instrumentation. |
+| Toko Miner | `9071b4cc9c1cf0d6d905f73592154b5108ab2147` | HEAD lock 0.2.2; working-tree lock 0.2.7. Production action-count cohorts use `record_sample`. |
+
+IcyDB's CLI projects empty, inconsistent or saturated aggregates as `unavailable`,
+while preserving numeric zero and floor rounding; its own output compatibility
+belongs to [IcyDB #313](https://github.com/dragginzgame/icydb/issues/313).
+Canic's async attribution stays with
+[Canic #99](https://github.com/dragginzgame/canic/issues/99).
+Histogram workload, bounds and storage decisions belong to
 [IcyDB #312](https://github.com/dragginzgame/icydb/issues/312),
-[Canic #475](https://github.com/dragginzgame/canic/issues/475),
-[IC Timers #22](https://github.com/dragginzgame/ic-timers/issues/22) and
+[Canic #475](https://github.com/dragginzgame/canic/issues/475) and
 [IC Backup #15](https://github.com/dragginzgame/ic-backup/issues/15).
-The prior audit found no existing measurement histogram to replace. Counts,
-chronological history and domain buckets have separate contracts. The histogram
-minimum is published 0.2.4; the checked-mean minimum is published 0.2.6.
+[IC Timers #22](https://github.com/dragginzgame/ic-timers/issues/22) records its
+summary-only decision without a demonstrated distribution workload. Toko's
+cohorts count actions, not instruction-value ranges; a future distribution must
+retain that separate contract. Blob probe and Toko application qualification
+belong to [Blob #19](https://github.com/dragginzgame/ic-blob-storage/issues/19) and
+[Toko #6](https://github.com/dragginzgame/toko-miner/issues/6).
 
-Existing consumer adoption and attribution qualification remain with
-[#4](https://github.com/dragginzgame/ic-metrics/issues/4),
-[#10](https://github.com/dragginzgame/ic-metrics/issues/10) and
-[Canic #99](https://github.com/dragginzgame/canic/issues/99). Other consumer
-repositories were not mutated by this batch. Historical source-bound evidence
+Consumer adoption and complete owning runtime/native qualification remain
+separate from root publication and local lock updates, tracked in
+[#4](https://github.com/dragginzgame/ic-metrics/issues/4) and
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10).
+No sibling files were mutated by this batch. Historical source-bound evidence
 stays under `docs/evidence/`; [the host record](../hosts.md) distinguishes focused
 Linux execution from owning native macOS CI. No full local CI/test gate,
 commit, push, tag, package version change or release command ran.

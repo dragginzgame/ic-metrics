@@ -53,11 +53,12 @@ jobs:
           toolchain: 1.99.0
           components: rustfmt, clippy
           targets: wasm32-unknown-unknown
-      - name: Install pinned manifest formatter
+      - name: Install and verify the pinned local Rust tool set
+        id: rust_tools
         run: |
-          source ci/tool-versions.env
-          cargo install cargo-sort --version "$SHARED_TOOLING_CARGO_SORT_VERSION" --locked
-          bash scripts/ci/check-format-tools.sh "$SHARED_TOOLING_CARGO_SORT_VERSION"
+          make install-rust-tools
+          make rust-tools-check
+          echo "$GITHUB_WORKSPACE/.tools/rust/bin" >> "$GITHUB_PATH"
       - name: Install native tooling prerequisites
         run: |
           case "$(uname -s)" in
@@ -85,12 +86,16 @@ jobs:
             uname -m
             rustc --version
             cargo --version
+            cargo-sort --version
+            cargo-sort-derives sort-derives --version
+            candid-extractor --version
             rg --version
             cloc --version
           } > target/evidence/native-ci/inputs.txt
           git ls-files Cargo.toml Cargo.lock Makefile make/tools.mk .shared-tooling.snapshot \
             crates/ic-metrics .github/workflows/ci.yml ci/tool-versions.env ci/ic-tools.tsv \
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
+            scripts/dev/install-rust-tools.sh scripts/ci/test-rust-tools.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
             scripts/ci/test-tool-commands.sh scripts/ci/test-cloc.sh \
@@ -160,13 +165,14 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload failed local tool candidates
-        if: failure() && (steps.host_tools.outcome == 'failure' || steps.ic_tools.outcome == 'failure')
+        if: failure() && (steps.rust_tools.outcome == 'failure' || steps.host_tools.outcome == 'failure' || steps.ic_tools.outcome == 'failure')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: tool-install-${{ matrix.runner }}-${{ github.run_attempt }}
           path: |
             .tools/host-set.*/
             .tools/ic-set.*/
+            .tools/rust/
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30

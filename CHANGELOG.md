@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.8]
+
+### Changed
+
+- Adopt Shared Tooling 0.1.18 and prepare pinned Cargo tools through the same
+  checkout-local setup and offline checks in Make and native CI
+  ([#22](https://github.com/dragginzgame/ic-metrics/issues/22)).
+- Refresh the verified release and downstream documentation, including Blob
+  Storage's test probe and Toko Miner's production action metrics
+  ([#21](https://github.com/dragginzgame/ic-metrics/issues/21)).
+
+### Fixed
+
+- Reject Make options and assignments before validation starts, isolate LOC
+  fixtures from enclosing Cargo configuration, and exclude physical build output
+  selected through symlinks. Consumer tooling-inventory fixtures now validate
+  adopted working-tree bytes without depending on the upstream exporter
+  ([#22](https://github.com/dragginzgame/ic-metrics/issues/22)).
+
 ## [0.2.7] - 2026-10-07
 
 ### Fixed

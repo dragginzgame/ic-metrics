@@ -131,7 +131,7 @@ earlier Linux preparation or tagged host results.
 - The reviewed shared Make include provides `make install-tools` and offline
   `make tools-check`. Host tool pins live in the reviewed `ci/tool-versions.env`;
   IC executable pins live in `ci/ic-tools.tsv`. Make selects `.tools/host/bin`
-  and `.tools/ic/bin`. `make check-pins` and release validation never install tools.
+  `.tools/ic/bin` and `.tools/rust/bin`. `make check-pins` and release validation never install tools.
   Explicit CI setup installs pinned jq, yq, ripgrep with PCRE2 and cloc before
   fixtures; separate IC setup verifies all six local executables. New hosted
   results must qualify this consumer wiring. `make cloc` reports this workspace;
@@ -143,8 +143,10 @@ earlier Linux preparation or tagged host results.
   are supplied by `make install-host-tools` for tooling
   fixtures. Follow the [system bootstrap instructions](local-setup.md#bootstrap-prerequisites)
   for Linux Mint/Ubuntu or macOS; these packages are separate from pinned local tools.
-- cargo-sort 2.1.4, installed explicitly with
-  `cargo install cargo-sort --version 2.1.4 --locked`. Formatting, CI and release
+- The pinned cargo-sort, cargo-sort-derives and candid-extractor set, installed
+  explicitly with `make install-rust-tools` and verified offline with
+  `make rust-tools-check`. Pins are owned by `ci/tool-versions.env`; interactive
+  commands select `.tools/rust/bin` on PATH. Formatting, CI and release
   validation check all workspace manifests before Rust formatting.
 - SHA-256 via `sha256sum` on Linux or `shasum -a 256` on macOS.
 - Library builds and named arithmetic tests have no third-party dependencies,
@@ -212,15 +214,19 @@ and MSRV jobs now pass in
 [CI run 37589261498](https://github.com/dragginzgame/ic-metrics/actions/runs/37589261498).
 See [the release record](evidence/release-025.md) for source and qualification scope.
 
-Published 0.2.6 passes MSRV, while its Linux CI fails in checkout-local LOC
-fixture discovery before native Rust gates; both macOS jobs remain queued at
-inspection. See [the release record](evidence/release-026.md). Pending 0.2.7
-adopts corrected committed Shared Tooling at
-`88f1d70cdf671aefb9507d7a81411ed5daa358b3`, including canonical independent
-LOC fixture selection and its distribution dependency.
-Focused Linux/Bash 3.2 evidence is recorded in
-[the adoption record](evidence/adoption-027.md), with native qualification kept
-separate.
+The recorded 0.2.6 inspection found a checkout-local LOC fixture failure before
+native Rust gates; [its release record](evidence/release-026.md) preserves that
+observation. The prepared repair is bound in [adoption-027.md](evidence/adoption-027.md).
+Published 0.2.7 at `09c6786c3b68759ea0ead4d1b987b5a9b472bdbb` now passes
+Linux, both native macOS hosts and MSRV in
+[CI run 37602306391](https://github.com/dragginzgame/ic-metrics/actions/runs/37602306391),
+as recorded in [release-027.md](evidence/release-027.md).
+
+Pending 0.2.8 adopts reviewed Shared Tooling 0.1.18, including target admission,
+LOC fixture isolation and common checkout-local Rust setup. Its focused Linux
+checks and exact source boundary are recorded in
+[adoption-028.md](evidence/adoption-028.md). Upstream native CI passes, while
+this consumer's new committed native qualification remains separate.
 
 Prepare tools explicitly before local validation:
 
@@ -228,6 +234,7 @@ Prepare tools explicitly before local validation:
 make install-tools
 make tools-check
 make check-pins
+export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/bin:$PATH"
 ```
 
 `make local-tools-test`, `make pin-tools-check`, `make release-tools-check` and `make hook-check` run

@@ -42,11 +42,12 @@ configured number of bounds, and every bucket saturates independently. Buckets
 describe ranges; they do not provide exact percentiles. Units, thresholds and
 cumulative export remain consumer-owned. The histogram API is published in 0.2.4.
 
-Known downstream consumers are IcyDB, Canic, ic-timers and ic-backup. Their
+Known callers are IcyDB, Canic, ic-timers, ic-backup, IC Blob Storage's
+restoration test probe and Toko Miner's production game-shard action metrics. Their
 attribution, registries, callback roles, replication, persistence and reporting
-remain local. ic-backup's released 0.3.7 host integration uses arithmetic-only summaries
-for local durations in nanoseconds and prepared chunk sizes in bytes; it enables
-no IC reader and its diagnostics establish no IC instruction or cycle cost.
+remain local. ic-backup's host integration measures local durations in nanoseconds
+and prepared chunk sizes in bytes, with a four-bound byte histogram in the
+inspected implementation. Its diagnostics establish no IC instruction or cycle cost.
 The crate has no global consumer registry, stable-memory allocation or endpoints.
 Consumers own their summary and histogram instances, labels and persistence policy.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
@@ -60,8 +61,9 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-The latest verified published package is 0.2.5. All four consumers' inspected local commits
-have arithmetic-only 0.2 requirements. The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
+The latest verified published package is 0.2.7; its archive identity and complete
+native CI are bound in the [release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-027.md).
+The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
 public APIs must coordinate their 0.2 dependency identity. Stored data, reports
@@ -98,10 +100,11 @@ toolchain is Rust 1.99.0 and the MSRV is 1.88.0. Install `wasm32-unknown-unknown
 for Wasm checks. `make help` lists focused commands; select named tests during
 implementation. Full `make ci` requires an explicit request outside configured CI.
 
-Install the pinned manifest formatter during developer setup:
+Prepare the pinned checkout-local Cargo tools during developer setup:
 
 ```bash
-cargo install cargo-sort --version 2.1.4 --locked
+make install-rust-tools
+make rust-tools-check
 make install-hooks
 ```
 
@@ -124,13 +127,16 @@ Prepare the reviewed local executables explicitly:
 ```sh
 make install-tools
 make tools-check
-export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PATH"
+export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/bin:$PATH"
 ```
 
 The setup installs jq, Mike Farah yq, ripgrep with PCRE2 and cloc plus
 Quill, ICP CLI, didc, ic-wasm,
-PocketIC and Binaryen under this checkout's `.tools/`. It retains previous and
-failed candidates. `tools-check` is offline; ordinary validation never installs
+PocketIC and Binaryen, plus cargo-sort, cargo-sort-derives and candid-extractor,
+under this checkout's `.tools/`. Rust tools use exact pins and locked Cargo
+installation; interrupted setup can leave earlier tools installed and retains
+build output for inspection. Archive installers retain previous and failed
+candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
 
@@ -155,14 +161,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.6`](https://crates.io/crates/ic-metrics/0.2.6)
-is published on crates.io with tag `v0.2.6`. Declare the published release
+tooling releases. [`ic-metrics 0.2.7`](https://crates.io/crates/ic-metrics/0.2.7)
+is published on crates.io with tag `v0.2.7`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.6"
+ic-metrics = "0.2.7"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using
@@ -179,7 +185,7 @@ Maintainer-owned `make release-patch`, `release-minor` and `release-major` use t
 [same reviewed workflow](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md),
 with `RELEASE_REMOTE=origin` and
 `RELEASE_BRANCH=main`. They require cargo-edit (`cargo set-version`) and
-cargo-sort 2.1.4, run the complete offline gate, prepare only Cargo metadata
+the prepared pinned Cargo tools and rustfmt, run the complete offline gate, prepare only Cargo metadata
 and release notes, commit,
 tag and atomically push. They do not publish the crate. Normal release targets
 reconcile an interrupted release at its saved commit. Newer committed fixes or
