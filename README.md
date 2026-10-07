@@ -4,6 +4,7 @@ Allocation-free, dependency-free measurement arithmetic.
 
 The `no_std` library exports `record_sample` for consumer-owned
 count/total fields and `MeasurementSummary` for samples, total, latest and maximum.
+`MeasurementHistogram` adds a fixed-size distribution with caller-selected bounds.
 Zero is a valid observation; an empty summary has no latest or maximum value.
 Count and total saturate independently. Consumers establish units, identity and
 reset boundaries before comparing observations; saturated totals cannot supply
@@ -19,13 +20,24 @@ assert_eq!(summary.samples(), 1);
 assert_eq!(summary.latest(), Some(0));
 ```
 
+For a distribution, construct `MeasurementHistogram::new([10, 100])`. Its
+disjoint buckets cover `0..=10` and `11..=100`; `overflow()` counts larger
+observations. `bucket_counts()` returns those two counts, and `summary()`
+includes every observation. Duplicate or descending bounds return a typed
+`HistogramBoundsError` identifying the invalid bound. Construction and recording
+support constant evaluation. Storage is fixed, recording searches at most the
+configured number of bounds, and every bucket saturates independently. Buckets
+describe ranges; they do not provide exact percentiles. Units, thresholds and
+cumulative export remain consumer-owned. This addition is prepared for 0.2.4
+and is absent from published 0.2.3.
+
 Known downstream consumers are IcyDB, Canic, ic-timers and ic-backup. Their
 attribution, registries, callback roles, replication, persistence and reporting
 remain local. ic-backup's released 0.3.7 host integration uses arithmetic-only summaries
 for local durations in nanoseconds and prepared chunk sizes in bytes; it enables
 no IC reader and its diagnostics establish no IC instruction or cycle cost.
 The crate has no global consumer registry, stable-memory allocation or endpoints.
-Consumers own their summary instances, labels and persistence policy.
+Consumers own their summary and histogram instances, labels and persistence policy.
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
 records scope and evidence.
 
@@ -37,14 +49,14 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-The latest published package is 0.2.0. IC Timers 0.14.0 uses the arithmetic-only
-registry package. IcyDB and Canic's current worktrees select that timer release
-and ic-metrics 0.2.0; their owning release/CI qualification remains separate.
-IC Backup 0.3.9 still selects arithmetic-only ic-metrics 0.1.9 and needs no reader
-change. Consumers exposing `MeasurementSummary` in public APIs must coordinate
-their 0.2 dependency identity. Stored data, reports and endpoints are unchanged.
+The latest published package is 0.2.3. All four consumers' inspected local commits
+have arithmetic-only 0.2 requirements. The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
+distinguishes local source, remote/publication state, locks and owning CI.
+Consumers exposing `MeasurementSummary` in
+public APIs must coordinate their 0.2 dependency identity. Stored data, reports
+and endpoints are unchanged.
 Historical reader execution remains in the source-bound
-[evidence](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md#released-019)
+[evidence](https://github.com/dragginzgame/ic-metrics/blob/v0.2.3/docs/status/current.md#released-019)
 and tagged releases; current CI qualifies arithmetic and repository tooling.
 
 ## Measuring cost

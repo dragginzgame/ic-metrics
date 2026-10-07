@@ -2,8 +2,11 @@
 
 ic-metrics owns only allocation-free, dependency-free `no_std` arithmetic:
 `record_sample` updates consumer-owned count/total fields, and
-`MeasurementSummary` owns samples, total, latest and maximum. Neither function
-reads platform counters, allocates labels, persists data or claims endpoints.
+`MeasurementSummary` owns samples, total, latest and maximum, and the separate
+`MeasurementHistogram` adds fixed disjoint buckets and overflow around that summary.
+Histogram bounds and units are caller-selected; invalid bounds return a typed
+error. Bucket counts saturate independently. These primitives never read
+platform counters, allocate labels, persist data or claim endpoints.
 
 ## Canonical ownership
 
@@ -41,15 +44,16 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.2 is available in the registry; its tagged native qualification is recorded
-in the [current handoff](status/current.md). IcyDB, IC Timers and IC Backup have
-committed registry requirements for ic-metrics 0.2. Canic's 0.2 migration remains
-in its working tree; committed Canic still requires 0.1.5. Lockfile observations
-and complete owning qualification remain separate, tracked in
+Release 0.2.3 is available in the registry; its source-bound qualification is recorded
+in the [current handoff](status/current.md). All four consumers' inspected local
+commits now require registry ic-metrics 0.2. Canic's newly committed migration
+and IC Backup's local 0.5.0 preparation have no matching owning CI runs;
+local commits, remote/publication state and complete owning qualification remain
+separate, tracked in
 [#10](https://github.com/dragginzgame/ic-metrics/issues/10).
 IC Backup's integration began in release 0.3.7 at
-`1a23d66dd65b1e36e986b8c7d13758cf3c92d193`; release 0.4.0 at
-`52532cca4d5276bb67810ffb346aba464d5a719a` selects ic-metrics 0.2 with a 0.2.0
+`1a23d66dd65b1e36e986b8c7d13758cf3c92d193`; release 0.4.2 at
+`654790f374f9923df9020f4812cec65e47cbe3af` selects ic-metrics 0.2 with a 0.2.2
 registry lock identity. It needed no reader changes. Public summary re-exports
 still require a consistent dependency identity in applications combining crates.
 
@@ -68,6 +72,16 @@ consumer explicitly uses the shared primitives, removes superseded arithmetic
 and passes focused checks for its own contracts. Focused local evidence and
 complete owning native release/CI qualification remain separate; see
 [#4](https://github.com/dragginzgame/ic-metrics/issues/4).
+
+Histogram usage is investigated at the admitted-value producer in
+[IcyDB #312](https://github.com/dragginzgame/icydb/issues/312),
+[Canic #475](https://github.com/dragginzgame/canic/issues/475),
+[IC Timers #22](https://github.com/dragginzgame/ic-timers/issues/22) and
+[IC Backup #15](https://github.com/dragginzgame/ic-backup/issues/15).
+The reviewed counter paths contain no existing measurement histogram to replace.
+Counts, maxima and totals cannot reconstruct an observation distribution;
+chronological histories and domain/category buckets retain their own contracts.
+No consumer adopts the unpublished histogram API in this batch.
 
 ## Historical evidence
 

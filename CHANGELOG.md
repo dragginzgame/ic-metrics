@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.4]
+
+- Add `MeasurementHistogram` with fixed caller-selected bounds, disjoint
+  saturating buckets, overflow and the existing summary semantics. Invalid
+  bounds return a typed `HistogramBoundsError`; construction and recording
+  support constant evaluation
+  ([#15](https://github.com/dragginzgame/ic-metrics/issues/15)).
+- Bind release validation and atomic push to the recorded destination URL,
+  rejecting changed or additional destinations before dispatch
+  ([#13](https://github.com/dragginzgame/ic-metrics/issues/13),
+  [Shared Tooling #25](https://github.com/dragginzgame/shared-tooling/issues/25)).
+- Verify snapshot files independently of their checksum helper
+  ([Shared Tooling #27](https://github.com/dragginzgame/shared-tooling/issues/27)).
+- Reject failed standalone yq version probes and directory destinations while
+  preserving installed tools and failed inputs through the common installer
+  ([Shared Tooling #26](https://github.com/dragginzgame/shared-tooling/issues/26)).
+- Include the complete governance file list for isolated consumer link checks
+  ([Shared Tooling #28](https://github.com/dragginzgame/shared-tooling/issues/28)).
+
 ## [0.2.3] - 2026-10-06
 
 - Preserve pending changelog notes when version components exceed floating-point

@@ -7,6 +7,8 @@
 
 #![no_std]
 
+mod histogram;
 mod summary;
 
+pub use histogram::{HistogramBoundsError, MeasurementHistogram};
 pub use summary::{MeasurementSummary, record_sample};

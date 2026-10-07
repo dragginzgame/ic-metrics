@@ -123,7 +123,7 @@ harness/server binary hashes remain distinct from downloaded binary proof.
 This establishes the adoption's native Linux, Intel macOS and Apple Silicon
 qualification. Recovery fixtures use explicit command substitutes and real Git;
 they do not claim live interrupted releases. Publication/archive evidence is recorded in
-[the current handoff](status/current.md#released-019), without relabelling the
+[the tagged handoff](https://github.com/dragginzgame/ic-metrics/blob/v0.2.3/docs/status/current.md#released-019), without relabelling the
 earlier Linux preparation or tagged host results.
 
 ## Prerequisites and focused checks
@@ -169,6 +169,27 @@ hosts and MSRV in
 Native retention and uploads pass, and the downloaded tarball/source receipts
 and retained fixture outcomes were verified in the
 [release record](evidence/release-022.md).
+
+Published 0.2.3 source `89f8c6947fb3253991c65479f04bf14acb676328` has passed
+all three native hosts and MSRV in
+[CI run 37502954597](https://github.com/dragginzgame/ic-metrics/actions/runs/37502954597).
+Its downloaded registry archive, embedded identity and maintained package files
+match the tag. All three native tarball receipts, tagged source hashes, retained
+fixture outcomes and hidden Git indexes verify, as recorded in the
+[0.2.3 release record](evidence/release-023.md).
+
+The pending 0.2.4 snapshot adopts Shared Tooling `e378671` through its clean
+committed export, including its workspace rule. Focused Bash 3.2 Linux release,
+snapshot-integrity and installer checks plus locked metadata and formatting
+pass in the [adoption record](evidence/adoption-024.md). The upstream native
+pass does not establish new consumer native qualification for this dirty batch.
+
+The same pending 0.2.4 adds a separate fixed-size histogram. Focused Linux
+host/Wasm Clippy, named histogram and sample-count saturation tests, the public
+histogram example, warning-denied documentation and Rust 1.88 host/Wasm checks
+pass in [the histogram record](evidence/histogram-024.md). Existing summary-only
+callers retain their current arithmetic. These local checks do not establish
+macOS execution or IC instruction, cycle or Wasm-size improvements.
 
 Prepare tools explicitly before local validation:
 
@@ -218,7 +239,7 @@ cargo-edit and does not implicitly publish or clean artifacts. Native release
 adapter execution remains unqualified on macOS; Linux stubs do not close that gap.
 The later formatter setup and packaging changes are covered by the tagged
 0.1.3 native CI evidence above; the earlier 0.1.1 run remains scoped to its tag.
-The pending 0.2.3 snapshot records 46c0277; 0.2.2 used b32d303,
+The released 0.2.3 snapshot records 46c0277; 0.2.2 used b32d303,
 0.1.9 used a37771f, 0.1.8 used a7efade
 and earlier tagged evidence used f52c0e2.
 Native CI includes a scratch hook
