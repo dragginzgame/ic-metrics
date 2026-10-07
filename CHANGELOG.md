@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.5]
+## [0.2.5] - 2026-10-07
 
 - Reject inherited Make modes that ignore failures or skip execution before
   release, validation and pre-commit formatting, while preserving release
