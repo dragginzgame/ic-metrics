@@ -8,7 +8,7 @@ Histogram bounds and units are caller-selected; invalid bounds return a typed
 error. Bucket counts saturate independently. These primitives never read
 platform counters, allocate labels, persist data or claim endpoints.
 
-Pending 0.2.6 adds `checked_mean(samples, total)` for consumer-owned report
+Published 0.2.6 adds `checked_mean(samples, total)` for consumer-owned report
 fields and `MeasurementSummary::mean()` using that canonical projection.
 Empty `(0, 0)` is `None`; measured zero is `Some(0)`. Nonempty unsaturated
 means round down. A nonzero total without samples or either counter at

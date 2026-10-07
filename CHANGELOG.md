@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.7]
+
+### Fixed
+
+- Adopt the corrected Shared Tooling revision: changelog finalization keeps notes attached to
+  headings with trailing whitespace, and validation can retain complete logs
+  and preserves Make failure status
+  ([#18](https://github.com/dragginzgame/ic-metrics/issues/18),
+  [Shared Tooling #37](https://github.com/dragginzgame/shared-tooling/issues/37)).
+
+- Keep LOC fixtures on their own workspace when CI retains temporary files in
+  the checkout, isolate inherited Cargo target settings, and export the
+  distribution helper required by the tooling-inventory fixture
+  ([Shared Tooling #48](https://github.com/dragginzgame/shared-tooling/issues/48),
+  [#47](https://github.com/dragginzgame/shared-tooling/issues/47)).
+
+### Changed
+
+- Refresh shared LOC reporting and audit guidance, including explicit workspace
+  selection and correct ownership for snapshots with custom manifest paths.
+
 ## [0.2.6] - 2026-10-07
 
 - Add constant-capable `checked_mean` and `MeasurementSummary::mean()` with

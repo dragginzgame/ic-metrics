@@ -212,11 +212,15 @@ and MSRV jobs now pass in
 [CI run 37589261498](https://github.com/dragginzgame/ic-metrics/actions/runs/37589261498).
 See [the release record](evidence/release-025.md) for source and qualification scope.
 
-Pending 0.2.6 adopts Shared Tooling 0.1.15 at
-`bfb50bd0884b5e6c5ee9592056531c6108f96d73`, including the common Make
-commands and complete pinned host set. Upstream native CI passes all three hosts
-and lint/security; this uncommitted consumer wiring has no matching hosted run.
-See [the adoption record](evidence/adoption-026.md) for focused local evidence.
+Published 0.2.6 passes MSRV, while its Linux CI fails in checkout-local LOC
+fixture discovery before native Rust gates; both macOS jobs remain queued at
+inspection. See [the release record](evidence/release-026.md). Pending 0.2.7
+adopts corrected committed Shared Tooling at
+`88f1d70cdf671aefb9507d7a81411ed5daa358b3`, including canonical independent
+LOC fixture selection and its distribution dependency.
+Focused Linux/Bash 3.2 evidence is recorded in
+[the adoption record](evidence/adoption-027.md), with native qualification kept
+separate.
 
 Prepare tools explicitly before local validation:
 

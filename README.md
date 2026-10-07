@@ -20,13 +20,12 @@ assert_eq!(summary.samples(), 1);
 assert_eq!(summary.latest(), Some(0));
 ```
 
-The pending 0.2.6 source adds `checked_mean(samples, total)` and
+Published 0.2.6 adds `checked_mean(samples, total)` and
 `MeasurementSummary::mean()`. Both return `Result<Option<u64>, MeasurementMeanError>`:
 empty data is `None`, measured zero is `Some(0)`, and nonempty unsaturated means
 use floor division. A nonzero total without samples or either counter at
 `u64::MAX` returns a typed error, including an exactly reached cap. The raw-field
 function supports consumer-owned report shapes without constructing an accumulator.
-These additions are not available in published 0.2.5.
 
 The [application guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md) is included in
 packaged crate documentation, with a compiled example of fixed named histograms,
@@ -156,19 +155,20 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.0`](https://crates.io/crates/ic-metrics/0.2.0)
-is published on crates.io with tag `v0.2.0`. Declare the published release
+tooling releases. [`ic-metrics 0.2.6`](https://crates.io/crates/ic-metrics/0.2.6)
+is published on crates.io with tag `v0.2.6`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2"
+ic-metrics = "0.2.6"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using
 `MeasurementHistogram` require `ic-metrics = "0.2.4"` or a later compatible
-published minimum in the root catalog. Published consumers
+published minimum in the root catalog. Either mean projection requires at least
+published 0.2.6. Published consumers
 must resolve the registry package rather than require a sibling checkout.
 [The adoption issue](https://github.com/dragginzgame/ic-metrics/issues/4)
 links each consumer's integration evidence. Native qualification is recorded
