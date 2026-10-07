@@ -96,6 +96,7 @@ jobs:
             scripts/ci/check-release-commands.sh scripts/ci/check-documentation-links.pl \
             scripts/ci/check-formatting-hooks.sh \
             scripts/ci/check-format-tools.sh scripts/ci/test-format-tools.sh \
+            scripts/ci/check-make-execution.sh \
             scripts/ci/read-cargo-workspace-version.sh \
             scripts/ci/rewrite-local-lock-versions.pl .githooks/pre-commit \
             scripts/dev/install-git-hooks.sh \

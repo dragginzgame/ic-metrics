@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5]
+
+- Reject inherited Make modes that ignore failures or skip execution before
+  release, validation and pre-commit formatting, while preserving release
+  selections and parallel-job controls
+  ([#14](https://github.com/dragginzgame/ic-metrics/issues/14),
+  [Shared Tooling #30](https://github.com/dragginzgame/shared-tooling/issues/30)).
+
 ## [0.2.4] - 2026-10-07
 
 - Add `MeasurementHistogram` with fixed caller-selected bounds, disjoint

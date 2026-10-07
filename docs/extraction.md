@@ -44,7 +44,7 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.3 is available in the registry; its source-bound qualification is recorded
+Release 0.2.4 is available in the registry; its source-bound qualification is recorded
 in the [current handoff](status/current.md). All four consumers' inspected local
 commits now require registry ic-metrics 0.2. Canic's newly committed migration
 and IC Backup's local 0.5.0 preparation have no matching owning CI runs;
@@ -81,7 +81,9 @@ Histogram usage is investigated at the admitted-value producer in
 The reviewed counter paths contain no existing measurement histogram to replace.
 Counts, maxima and totals cannot reconstruct an observation distribution;
 chronological histories and domain/category buckets retain their own contracts.
-No consumer adopts the unpublished histogram API in this batch.
+The histogram API is published in 0.2.4; consumers using it need that released
+minimum in their root dependency catalog. This repository's source review and
+publication do not establish consumer histogram adoption or IC cost qualification.
 
 ## Historical evidence
 

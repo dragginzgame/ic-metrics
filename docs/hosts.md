@@ -178,18 +178,31 @@ match the tag. All three native tarball receipts, tagged source hashes, retained
 fixture outcomes and hidden Git indexes verify, as recorded in the
 [0.2.3 release record](evidence/release-023.md).
 
-The pending 0.2.4 snapshot adopts Shared Tooling `e378671` through its clean
+The prepared 0.2.4 snapshot adopted Shared Tooling `e378671` through its clean
 committed export, including its workspace rule. Focused Bash 3.2 Linux release,
 snapshot-integrity and installer checks plus locked metadata and formatting
 pass in the [adoption record](evidence/adoption-024.md). The upstream native
 pass does not establish new consumer native qualification for this dirty batch.
 
-The same pending 0.2.4 adds a separate fixed-size histogram. Focused Linux
+The same prepared 0.2.4 added a separate fixed-size histogram. Focused Linux
 host/Wasm Clippy, named histogram and sample-count saturation tests, the public
 histogram example, warning-denied documentation and Rust 1.88 host/Wasm checks
 pass in [the histogram record](evidence/histogram-024.md). Existing summary-only
 callers retain their current arithmetic. These local checks do not establish
 macOS execution or IC instruction, cycle or Wasm-size improvements.
+
+Published 0.2.4 at `21e980b3ed4f1a8d9b6203079ef1e457a3fea588` now passes
+Linux, both native macOS hosts and MSRV in
+[CI run 37587072330](https://github.com/dragginzgame/ic-metrics/actions/runs/37587072330).
+Its registry checksum, embedded source, Rust files, original manifest, license,
+README and lock match the release, as recorded in
+[the 0.2.4 release record](evidence/release-024.md).
+
+Pending 0.2.5 adopts reviewed Shared Tooling `25e7ce8` (0.1.14), including
+the Make execution guard and complete caller dependency set. Focused Linux
+GNU Bash 3.2 release/logger/hook rejection, preservation and recovery checks pass
+in [the adoption record](evidence/adoption-025.md). Native upstream CI passes all
+three hosts; this uncommitted consumer update has no matching native CI run.
 
 Prepare tools explicitly before local validation:
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Real index/commit and actual Make/logger boundaries; no commits or releases.
-unset MAKEFLAGS MFLAGS MAKEOVERRIDES RELEASE_COMMIT
+unset MAKEFLAGS MFLAGS MAKEOVERRIDES GNUMAKEFLAGS MAKEFILES RELEASE_COMMIT
 unset VALIDATION_REPOSITORY_ROOT VALIDATION_RUNNER_SNAPSHOT_PATH
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-release-admission.XXXXXX")"
@@ -193,6 +193,7 @@ for scenario in retention fallback; do
     setup "logger-$scenario"
     mkdir -p scripts/ci "$worktree/tmp"
     cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
+    cp "$root/scripts/ci/check-make-execution.sh" scripts/ci/
     cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
@@ -230,10 +231,32 @@ MAKE
     for log in "${logs[@]}"; do grep -F retained-gate-failure "$log" >/dev/null; done
 done
 
+# Rejected Make modes cannot execute a gate or announce successful validation.
+# Use the current consumer logger directly; no release or real CI is dispatched.
+for mode in i n q t v --ignore-errors; do
+    setup "logger-make-mode-$mode"
+    cat > Makefile <<'MAKE'
+.PHONY: ci
+ci:
+	@echo reached >> gate-events
+	@exit 7
+MAKE
+    if MAKEFLAGS="$mode" VALIDATION_REPOSITORY_ROOT="$worktree" \
+        bash "$root/scripts/ci/run-validation-targets.sh" --fail-fast ci \
+        > "$fixture/result.log" 2>&1; then
+        echo 'consumer logger accepted an incompatible Make mode' >&2
+        exit 1
+    fi
+    grep -F 'requires recipe execution and failure propagation' "$fixture/result.log" >/dev/null
+    [[ ! -e gate-events ]]
+    if grep -F 'VALIDATION PASSED' "$fixture/result.log" >/dev/null; then exit 1; fi
+done
+
 # The second gate still runs after successful CI; its failures are retained too.
 setup logger-second-gate
 mkdir -p scripts/ci
 cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
+cp "$root/scripts/ci/check-make-execution.sh" scripts/ci/
 cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:

@@ -28,8 +28,7 @@ includes every observation. Duplicate or descending bounds return a typed
 support constant evaluation. Storage is fixed, recording searches at most the
 configured number of bounds, and every bucket saturates independently. Buckets
 describe ranges; they do not provide exact percentiles. Units, thresholds and
-cumulative export remain consumer-owned. This addition is prepared for 0.2.4
-and is absent from published 0.2.3.
+cumulative export remain consumer-owned. The histogram API is published in 0.2.4.
 
 Known downstream consumers are IcyDB, Canic, ic-timers and ic-backup. Their
 attribution, registries, callback roles, replication, persistence and reporting
@@ -49,7 +48,7 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-The latest published package is 0.2.3. All four consumers' inspected local commits
+The latest verified published package is 0.2.4. All four consumers' inspected local commits
 have arithmetic-only 0.2 requirements. The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -141,7 +140,9 @@ root dependency catalog:
 ic-metrics = "0.2"
 ```
 
-Members inherit with `ic-metrics = { workspace = true }`. Published consumers
+Members inherit with `ic-metrics = { workspace = true }`. Consumers using
+`MeasurementHistogram` require `ic-metrics = "0.2.4"` or a later compatible
+published minimum in the root catalog. Published consumers
 must resolve the registry package rather than require a sibling checkout.
 [The adoption issue](https://github.com/dragginzgame/ic-metrics/issues/4)
 links each consumer's integration evidence. Native qualification is recorded
