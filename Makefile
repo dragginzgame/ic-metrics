@@ -49,7 +49,7 @@ release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
 .PHONY: help publish publish-check install-hooks hook-check format-tools-check fmt fmt-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
-.PHONY: local-tools-test
+.PHONY: local-tools-test ci-evidence-check
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
@@ -62,6 +62,7 @@ help:
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
 	@echo "Tooling fixtures: hook-check, release-tools-check, pin-tools-check (no release Git effects)"
 	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
+	@echo "CI evidence fixture: ci-evidence-check (substitute Make effects, no hosted run)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Full gates (explicit request or configured CI): test, ci"
 
@@ -85,6 +86,9 @@ local-tools-test:
 
 hook-check:
 	bash scripts/dev/test-format-hook.sh
+
+ci-evidence-check:
+	bash scripts/ci/test-native-evidence.sh
 
 format-tools-check:
 	@. "$(HOST_TOOL_VERSIONS)" && bash scripts/ci/check-format-tools.sh "$${SHARED_TOOLING_CARGO_SORT_VERSION:?}"
@@ -150,6 +154,7 @@ ci:
 	+$(MAKE) --no-print-directory check-pins
 	+$(MAKE) --no-print-directory pin-tools-check
 	+$(MAKE) --no-print-directory local-tools-test
+	+$(MAKE) --no-print-directory ci-evidence-check
 	+$(MAKE) --no-print-directory release-tools-check
 	+$(MAKE) --no-print-directory hook-check
 	+$(MAKE) --no-print-directory fmt-check

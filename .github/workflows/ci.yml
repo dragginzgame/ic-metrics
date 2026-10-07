@@ -36,45 +36,7 @@ jobs:
     steps:
       # actions/checkout v6
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Verify native host
-        env:
-          EXPECTED_OS: ${{ matrix.os }}
-          EXPECTED_ARCHITECTURE: ${{ matrix.architecture }}
-        run: |
-          [[ "$(uname -s)" == "$EXPECTED_OS" ]]
-          [[ "$(uname -m)" == "$EXPECTED_ARCHITECTURE" ]]
-          if [[ "$EXPECTED_OS" == Darwin ]]; then
-            [[ "$(sw_vers -productVersion)" == 15.* ]]
-            echo /bin >> "$GITHUB_PATH"
-          fi
-      # dtolnay/rust-toolchain v1
-      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
-        with:
-          toolchain: 1.99.0
-          components: rustfmt, clippy
-          targets: wasm32-unknown-unknown
-      - name: Install and verify the pinned local Rust tool set
-        id: rust_tools
-        run: |
-          make install-rust-tools
-          make rust-tools-check
-          echo "$GITHUB_WORKSPACE/.tools/rust/bin" >> "$GITHUB_PATH"
-      - name: Install native tooling prerequisites
-        run: |
-          case "$(uname -s)" in
-            Linux)
-              sudo apt-get update
-              sudo apt-get install -y xz-utils perl
-              ;;
-            Darwin) brew install xz ;;
-            *) echo 'unsupported native host' >&2; exit 1 ;;
-          esac
-      - name: Install and verify the pinned local host tool set
-        id: host_tools
-        run: |
-          make install-host-tools
-          make host-tools-check
-          echo "$GITHUB_WORKSPACE/.tools/host/bin" >> "$GITHUB_PATH"
+        id: checkout
       - name: Record native qualification inputs
         id: native_inputs
         run: |
@@ -84,18 +46,12 @@ jobs:
             printf 'run=%s attempt=%s event=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_EVENT_NAME"
             uname -s
             uname -m
-            rustc --version
-            cargo --version
-            cargo-sort --version
-            cargo-sort-derives sort-derives --version
-            candid-extractor --version
-            rg --version
-            cloc --version
           } > target/evidence/native-ci/inputs.txt
           git ls-files Cargo.toml Cargo.lock Makefile make/tools.mk .shared-tooling.snapshot \
             crates/ic-metrics .github/workflows/ci.yml ci/tool-versions.env ci/ic-tools.tsv \
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/dev/install-rust-tools.sh scripts/ci/test-rust-tools.sh \
+            scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
             scripts/ci/test-tool-commands.sh scripts/ci/test-cloc.sh \
@@ -114,6 +70,59 @@ jobs:
           while IFS= read -r file; do
             shasum -a 256 "$file"
           done < target/evidence/native-ci/source-files.txt > target/evidence/native-ci/source-sha256.txt
+      - name: Verify native host
+        id: native_host
+        env:
+          EXPECTED_OS: ${{ matrix.os }}
+          EXPECTED_ARCHITECTURE: ${{ matrix.architecture }}
+        run: |
+          [[ "$(uname -s)" == "$EXPECTED_OS" ]]
+          [[ "$(uname -m)" == "$EXPECTED_ARCHITECTURE" ]]
+          if [[ "$EXPECTED_OS" == Darwin ]]; then
+            [[ "$(sw_vers -productVersion)" == 15.* ]]
+            echo /bin >> "$GITHUB_PATH"
+          fi
+      # dtolnay/rust-toolchain v1
+      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
+        id: toolchain
+        with:
+          toolchain: 1.99.0
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - name: Install and verify the pinned local Rust tool set
+        id: rust_tools
+        run: |
+          make install-rust-tools 2>&1 | tee target/evidence/native-ci/rust-tools.log
+          make rust-tools-check 2>&1 | tee -a target/evidence/native-ci/rust-tools.log
+          echo "$GITHUB_WORKSPACE/.tools/rust/bin" >> "$GITHUB_PATH"
+      - name: Install native tooling prerequisites
+        id: prerequisites
+        run: |
+          case "$(uname -s)" in
+            Linux)
+              sudo apt-get update && sudo apt-get install -y xz-utils perl
+              ;;
+            Darwin) brew install xz ;;
+            *) echo 'unsupported native host' >&2; exit 1 ;;
+          esac 2>&1 | tee target/evidence/native-ci/prerequisites.log
+      - name: Install and verify the pinned local host tool set
+        id: host_tools
+        run: |
+          make install-host-tools 2>&1 | tee target/evidence/native-ci/host-tools.log
+          make host-tools-check 2>&1 | tee -a target/evidence/native-ci/host-tools.log
+          echo "$GITHUB_WORKSPACE/.tools/host/bin" >> "$GITHUB_PATH"
+      - name: Record installed tool versions
+        id: tool_inputs
+        run: |
+          {
+            rustc --version
+            cargo --version
+            cargo-sort --version
+            cargo-sort-derives sort-derives --version
+            candid-extractor --version
+            rg --version
+            cloc --version
+          } > target/evidence/native-ci/tool-versions.txt
       - name: Provision and verify the pinned local IC tool set
         id: ic_tools
         run: |
@@ -128,23 +137,42 @@ jobs:
           mkdir -p "$TMPDIR"
           make ci 2>&1 | tee target/evidence/native-ci/native-ci.log
       - name: Retain native artifacts and outcome
-        if: always() && steps.native_inputs.outcome != 'skipped'
+        id: native_artifacts
+        if: always() && steps.checkout.outcome == 'success'
         env:
           NATIVE_OUTCOME: ${{ steps.native_ci.outcome }}
           INPUT_OUTCOME: ${{ steps.native_inputs.outcome }}
           PROVISION_OUTCOME: ${{ steps.ic_tools.outcome }}
+          HOST_OUTCOME: ${{ steps.native_host.outcome }}
+          TOOLCHAIN_OUTCOME: ${{ steps.toolchain.outcome }}
+          RUST_OUTCOME: ${{ steps.rust_tools.outcome }}
+          PREREQUISITES_OUTCOME: ${{ steps.prerequisites.outcome }}
+          HOST_TOOLS_OUTCOME: ${{ steps.host_tools.outcome }}
+          TOOL_INPUT_OUTCOME: ${{ steps.tool_inputs.outcome }}
         run: |
           mkdir -p target/evidence/native-ci
           git rev-parse HEAD > target/evidence/native-ci/source-commit.txt
-          printf 'native=%s\ninputs=%s\nprovision=%s\n' \
-            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" > target/evidence/native-ci/outcome.txt
+          printf 'native=%s\ninputs=%s\nprovision=%s\nhost=%s\ntoolchain=%s\nrust=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s\n' \
+            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" \
+            "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" "$RUST_OUTCOME" \
+            "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME" \
+            > target/evidence/native-ci/outcome.txt
           if [[ -f .tools/ic/files.sha256 ]]; then
             cp .tools/ic/files.sha256 target/evidence/native-ci/ic-tool-files.sha256
             cp .tools/ic/pins.tsv target/evidence/native-ci/ic-tool-pins.tsv
             cp .tools/ic/host target/evidence/native-ci/ic-tool-host.txt
           fi
-          for file in target/evidence/native-ci/*.log; do
-            if [[ -f "$file" ]]; then
+          if [[ "$RUST_OUTCOME" == failure || "$HOST_TOOLS_OUTCOME" == failure || "$PROVISION_OUTCOME" == failure ]]; then
+            candidates=()
+            for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust; do
+              if [[ -d "$candidate" ]]; then candidates+=("$candidate"); fi
+            done
+            if [[ ${#candidates[@]} != 0 ]]; then
+              tar -czf target/evidence/native-ci/tool-candidates.tar.gz "${candidates[@]}"
+            fi
+          fi
+          for file in target/evidence/native-ci/*; do
+            if [[ -f "$file" && "$file" != target/evidence/native-ci/artifact-sha256.txt ]]; then
               shasum -a 256 "$file"
             fi
           done > target/evidence/native-ci/artifact-sha256.txt
@@ -154,7 +182,7 @@ jobs:
           shasum -a 256 target/evidence/native-ci.tar.gz > target/evidence/native-ci.tar.gz.sha256
       # actions/upload-artifact v7
       - name: Upload native evidence
-        if: always() && steps.native_inputs.outcome != 'skipped'
+        if: always() && steps.checkout.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-${{ matrix.runner }}-${{ github.run_attempt }}
@@ -163,18 +191,6 @@ jobs:
             target/evidence/native-ci.tar.gz.sha256
           include-hidden-files: true
           if-no-files-found: error
-          retention-days: 30
-      - name: Upload failed local tool candidates
-        if: failure() && (steps.rust_tools.outcome == 'failure' || steps.host_tools.outcome == 'failure' || steps.ic_tools.outcome == 'failure')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: tool-install-${{ matrix.runner }}-${{ github.run_attempt }}
-          path: |
-            .tools/host-set.*/
-            .tools/ic-set.*/
-            .tools/rust/
-          include-hidden-files: true
-          if-no-files-found: warn
           retention-days: 30
 
   msrv:

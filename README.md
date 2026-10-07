@@ -61,8 +61,8 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-The latest verified published package is 0.2.7; its archive identity and complete
-native CI are bound in the [release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-027.md).
+Verified 0.2.8 publication and complete native CI are bound in the
+[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-028.md).
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -92,6 +92,11 @@ compares Canic's source-copied recording path with count/total, summary and
 histogram storage. It measures IC instructions and actual cycle charges in
 Linux PocketIC, plus raw Wasm bytes and target-specific slot sizes. Its repeated-key,
 two-bound workload does not establish whole-application cost or histogram adoption.
+Its original replay inputs are unavailable. The separate
+[durable arithmetic replay](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/histogram-replay-029.md)
+provides a checksum-bound bundle of new fixture sources, locks, raw results and
+measured Wasms. It measures direct arithmetic without Canic lookup or attribution;
+its observations have their own source and workload identity.
 
 ## Development
 
@@ -161,14 +166,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.7`](https://crates.io/crates/ic-metrics/0.2.7)
-is published on crates.io with tag `v0.2.7`. Declare the published release
+tooling releases. [`ic-metrics 0.2.8`](https://crates.io/crates/ic-metrics/0.2.8)
+is published on crates.io with tag `v0.2.8`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.7"
+ic-metrics = "0.2.8"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

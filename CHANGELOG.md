@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.9]
+
+### Fixed
+
+- Adopt Shared Tooling 0.1.19: reject redirected Rust-tool installation paths,
+  handle macOS temporary-directory aliases in tooling fixtures, and preserve
+  historical changelog bytes while rejecting ambiguously dated release targets
+  ([#23](https://github.com/dragginzgame/ic-metrics/issues/23),
+  [Shared Tooling #54](https://github.com/dragginzgame/shared-tooling/issues/54),
+  [#55](https://github.com/dragginzgame/shared-tooling/issues/55),
+  [#56](https://github.com/dragginzgame/shared-tooling/issues/56)).
+- Preserve source receipts, setup logs, outcomes and failed tool candidates when
+  native CI setup fails before the library gates
+  ([#25](https://github.com/dragginzgame/ic-metrics/issues/25)).
+- Supply a checksum-bound histogram replay bundle with locked sources, raw
+  measurements and Wasms; retain the unavailable earlier experiment as distinct
+  historical evidence ([#26](https://github.com/dragginzgame/ic-metrics/issues/26)).
+
 ## [0.2.8] - 2026-10-07
 
 ### Changed

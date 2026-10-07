@@ -100,7 +100,7 @@ for invalid in duplicate noncanonical; do
     [[ ! -s "$invalid.stdout" ]]
 done
 
-for scenario in prepared undated-history sort metadata lock conflicting-notes version-before version-after restore-failure; do
+for scenario in prepared undated-history history-no-lf dated-notes conflicting-date sort metadata lock conflicting-notes version-before version-after restore-failure; do
     worktree="$fixture/$scenario"
     mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
     cp "$root/scripts/ci/finalize-release-changelog.awk" "$worktree/scripts/ci/"
@@ -142,6 +142,16 @@ NOTES
         sed 's/## \[0.1.1\] - 2026-10-05/## [0.1.1]/' CHANGELOG.md > history.fixture
         mv history.fixture CHANGELOG.md
     fi
+    if [[ "$scenario" == history-no-lf ]]; then
+        # The consumer's write boundary must retain the canonical producer's EOF.
+        perl -0pi -e 's/\n\z//' CHANGELOG.md
+    fi
+    if [[ "$scenario" == dated-notes || "$scenario" == conflicting-date ]]; then
+        note_date="$RELEASE_DATE"
+        if [[ "$scenario" == conflicting-date ]]; then note_date=2026-10-04; fi
+        sed "s/## \[0.1.2\]/## [0.1.2]   - $note_date   /" CHANGELOG.md > dated.fixture
+        mv dated.fixture CHANGELOG.md
+    fi
     cargo generate-lockfile --offline > setup.log 2>&1
     cargo sort --workspace >> setup.log 2>&1
     if [[ "$scenario" == lock ]]; then
@@ -158,7 +168,7 @@ NOTES
         version-after) export FIXTURE_FAIL_VERSION="$RELEASE_VERSION" ;;
         restore-failure) export FIXTURE_FAIL_STEP=metadata FIXTURE_FAIL_RESTORE=yes ;;
     esac
-    if [[ "$scenario" == prepared || "$scenario" == undated-history ]]; then
+    if [[ "$scenario" == prepared || "$scenario" == undated-history || "$scenario" == history-no-lf ]]; then
         bash "$root/scripts/release/metadata.sh" preflight > preflight.log 2>&1
         bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1
         status=0
@@ -174,8 +184,14 @@ NOTES
         awk '/^## \[0.1.1\]/ { history=1 } history' originals/CHANGELOG.md > history-before
         cmp history-before history-after
         awk '$0 == "- Preserve the pending note." { found=1 } END { exit !found }' CHANGELOG.md
+        if [[ "$scenario" == history-no-lf ]]; then
+            # Compare bytes, since line-oriented history checks add a final LF.
+            sed "s/## \[0.1.2\]/## [0.1.2] - $RELEASE_DATE/" originals/CHANGELOG.md > expected-notes
+            perl -0pi -e 's/\n\z//' expected-notes
+            cmp expected-notes CHANGELOG.md
+        fi
     else
-        if [[ "$scenario" == version-before ]]; then
+        if [[ "$scenario" == version-before || "$scenario" == dated-notes || "$scenario" == conflicting-date ]]; then
             status=0
             bash "$root/scripts/release/metadata.sh" preflight > failed-preflight.log 2>&1 || status=$?
             [[ "$status" == 1 ]]

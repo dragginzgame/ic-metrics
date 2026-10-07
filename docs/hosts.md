@@ -222,11 +222,20 @@ Linux, both native macOS hosts and MSRV in
 [CI run 37602306391](https://github.com/dragginzgame/ic-metrics/actions/runs/37602306391),
 as recorded in [release-027.md](evidence/release-027.md).
 
-Pending 0.2.8 adopts reviewed Shared Tooling 0.1.18, including target admission,
+Prepared 0.2.8 adopted reviewed Shared Tooling 0.1.18, including target admission,
 LOC fixture isolation and common checkout-local Rust setup. Its focused Linux
-checks and exact source boundary are recorded in
-[adoption-028.md](evidence/adoption-028.md). Upstream native CI passes, while
-this consumer's new committed native qualification remains separate.
+checks and original source boundary are recorded in
+[adoption-028.md](evidence/adoption-028.md). Published 0.2.8 at
+`0eac2b0baa9d03b8f2430a24dfe596d93f5bfc16` now passes Linux, both macOS
+architectures and MSRV in
+[CI run 37617053341](https://github.com/dragginzgame/ic-metrics/actions/runs/37617053341);
+[release-028.md](evidence/release-028.md) binds that separate released observation.
+
+Pending 0.2.9 adopts committed Shared Tooling 0.1.19 to reject redirected Rust
+installation paths, normalize temporary-directory aliases and preserve changelog
+admission/history. Focused source-bound checks and the new IC pin-parser export
+are recorded in [adoption-029.md](evidence/adoption-029.md). The new working tree
+still requires its own committed native matrix.
 
 Prepare tools explicitly before local validation:
 
@@ -255,6 +264,15 @@ Native CI also puts ordinary fixture TMPDIR scratch under
 index and configuration evidence survive the job. Success cleanup stays
 invocation-owned. Bash 3.2 execution on Linux is shell-portability evidence;
 supported native macOS qualification still requires the owning CI jobs.
+`make ci-evidence-check` runs the consumer workflow's actual shell bodies using
+substitute Make effects, proving source-first capture and setup failure/archive
+IO under Linux Bash 5.2/3.2. It does not install tools, compile product Rust or
+execute hosted CI. Native collection follows successful checkout even when setup
+fails; raw setup logs, source receipts and every setup outcome remain in the
+archive. Failed tool candidates are inside `tool-candidates.tar.gz` in that same
+archive, replacing the separate direct candidate upload. The new workflow still
+requires its own committed native matrix, tracked in
+[#25](https://github.com/dragginzgame/ic-metrics/issues/25).
 Native uploads contain `native-ci.tar.gz` and its checksum; unpack the tarball
 to inspect the complete evidence tree, including filenames rejected by direct
 artifact uploads. `make format-tools-check` verifies the reviewed cargo-sort pin
@@ -269,6 +287,9 @@ attribution checks. The old `make reader-check` and its CI artifacts qualify
 only the tagged pre-0.2 reader; they are not arithmetic-only qualification.
 Current native CI explicitly verifies the common pinned IC tool setup without
 running a reader canister, retaining source hashes, outcomes and logs for 30 days.
+The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate
+Linux PocketIC execution and durable inputs. It is not a CI gate, product reader
+or native macOS measurement claim; ordinary library qualification stays separate.
 
 The configured CI runs `make ci` natively on every declared host and
 `make msrv` on Linux. Full `make test`/`make ci` gates remain user-owned
