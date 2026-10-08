@@ -2,6 +2,12 @@
 
 ## [0.2.15]
 
+### Added
+
+- Add a private host Wasm inspector with explicit input budgets and digest-bound
+  size/structure reports, using IC Host libraries while keeping the arithmetic
+  crate dependency-free ([#36](https://github.com/dragginzgame/ic-metrics/issues/36)).
+
 ### Fixed
 
 - Resolve relative tool-setup consumer and IC pin paths correctly with inherited

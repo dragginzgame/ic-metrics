@@ -13,6 +13,16 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 reader="$root/scripts/ci/read-cargo-workspace-version.sh"
+local_lock_packages() {
+    # This repository permits only workspace-owned local packages. Cargo's
+    # source-less lock rows identify those packages without a second name list.
+    "${YQ:-yq}" -p toml -o json '.' "$1" | jq -er '
+        [.package[] | select(.source == null)] as $local |
+        if any($local[]; .name == "ic-metrics") and
+           all($local[]; .name | test("^[A-Za-z0-9][A-Za-z0-9_-]*$")) and
+           (($local | map(.name) | unique | length) == ($local | length))
+        then $local[].name else error("invalid workspace lock identities") end'
+}
 admit_files() (
     local paths path admitted=true
     paths="$(mktemp "${TMPDIR:-/tmp}/metrics-release-paths.XXXXXX")"
@@ -80,9 +90,12 @@ case "$operation" in
         cargo set-version --workspace --offline "${RELEASE_VERSION:?}"
         # Only root metadata changes; members were sorted by the validation gate.
         cargo sort
-        # Retain every dependency selection; change this one local package only.
+        # Retain registry selections; advance every workspace-owned local row.
+        packages=()
+        local_lock_packages "$backup/Cargo.lock" > "$backup/local-packages" || exit $?
+        while IFS= read -r package; do packages+=("$package"); done < "$backup/local-packages"
         perl scripts/ci/rewrite-local-lock-versions.pl "$backup/Cargo.lock" \
-            "$RELEASE_PREVIOUS" "$RELEASE_VERSION" ic-metrics > "$backup/candidate.lock" || exit $?
+            "$RELEASE_PREVIOUS" "$RELEASE_VERSION" "${packages[@]}" > "$backup/candidate.lock" || exit $?
         cp "$backup/candidate.lock" Cargo.lock
         awk -v version="$RELEASE_VERSION" -v previous="$RELEASE_PREVIOUS" -v date="${RELEASE_DATE:?}" \
             -f scripts/ci/finalize-release-changelog.awk "$backup/CHANGELOG.md" > CHANGELOG.md
@@ -116,15 +129,10 @@ case "$operation" in
         [[ "$current_version" == "${RELEASE_VERSION:?}" ]]
         awk -v heading="## [$RELEASE_VERSION] - ${RELEASE_DATE:?}" \
             '$0 == heading { count++ } END { if (count != 1) exit 1 }' "$metadata_root/CHANGELOG.md"
-        awk -v expected="$RELEASE_VERSION" '
-            /^\[\[package\]\]$/ { owned=0 }
-            /^name = "ic-metrics"$/ { owned=1 }
-            owned && /^version = / {
-                if ($0 != "version = \"" expected "\"") exit 1
-                count++
-            }
-            END { if (count != 1) exit 1 }
-        ' "$metadata_root/Cargo.lock"
+        local_lock_packages "$metadata_root/Cargo.lock" > /dev/null
+        "${YQ:-yq}" -p toml -o json '.' "$metadata_root/Cargo.lock" |
+            jq -e --arg version "$RELEASE_VERSION" \
+                'all(.package[] | select(.source == null); .version == $version)' > /dev/null
         # The runner seals prepared metadata in its staged tree. Late checks
         # inspect that selected commit, without resolving a newer HEAD's graph.
         if [[ "$metadata_root" == . ]]; then

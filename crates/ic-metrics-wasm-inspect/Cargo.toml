@@ -1,0 +1,19 @@
+[package]
+name = "ic-metrics-wasm-inspect"
+edition.workspace = true
+# Host dependencies require 1.88; the public arithmetic library stays on 1.85.
+rust-version = "1.88.0"
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Bounded host-side Wasm facts for IC Metrics cost evidence"
+readme = "README.md"
+publish = false
+
+[dependencies]
+ic-host-artifacts = { workspace = true, features = ["wasm"] }
+ic-host-fs.workspace = true
+
+[lints]
+workspace = true

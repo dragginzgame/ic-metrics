@@ -1,0 +1,2 @@
+sha256	raw_wasm_bytes	code_section_bytes	code_body_bytes	data_section_bytes	defined_functions	imported_functions	defined_globals	imported_globals	data_segments	exports	custom_sections
+e2c9c303d369db8e23b0afeff46cc1e882a48fad48c0daf0e41aa75b82bf99e5	358611	312175	312173	43472	1851	7	1	0	2	2	0

@@ -272,6 +272,11 @@ msrv:
 	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
 	@echo msrv >> gate-events
 	@if test "$(FAIL_MSRV)" = yes; then echo 'error: retained-msrv-failure'; exit 9; fi
+.PHONY: wasm-inspect-msrv
+wasm-inspect-msrv:
+	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
+	@echo wasm-inspect-msrv >> gate-events
+	@if test "$(FAIL_HOST_MSRV)" = yes; then echo 'error: retained-host-msrv-failure'; exit 9; fi
 MAKE
 if make --no-print-directory -f "$root/Makefile" release-verify \
     RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=yes \
@@ -285,9 +290,22 @@ second_logs=(.git/release-state/validation-failures/*-1-msrv.log)
 [[ "${#second_logs[@]}" == 1 ]]
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
 : > gate-events
+if make --no-print-directory -f "$root/Makefile" release-verify \
+    RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=no FAIL_HOST_MSRV=yes \
+    > "$fixture/result.log" 2>&1; then
+    echo 'release-verify unexpectedly passed failed host minimum gate' >&2
+    exit 1
+fi
+printf 'ci\nmsrv\nwasm-inspect-msrv\n' > "$fixture/expected-gates"
+cmp gate-events "$fixture/expected-gates"
+host_logs=(.git/release-state/validation-failures/*-2-wasm-inspect-msrv.log)
+[[ "${#host_logs[@]}" == 1 ]]
+grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
+: > gate-events
 make --no-print-directory -f "$root/Makefile" release-verify \
     RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=no \
     > "$fixture/result.log" 2>&1
 cmp gate-events "$fixture/expected-gates"
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
+grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
 echo 'release admission, selected-commit metadata and actual Make/logger retention passed (real Git; Cargo and gates substituted)'

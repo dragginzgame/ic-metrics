@@ -118,14 +118,14 @@ done
 
 for scenario in prepared undated-history history-no-lf dated-notes conflicting-date sort metadata lock conflicting-notes version-before version-after restore-failure; do
     worktree="$fixture/$scenario"
-    mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
+    mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/crates/ic-metrics-wasm-inspect/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
     cp "$root/scripts/ci/finalize-release-changelog.awk" "$worktree/scripts/ci/"
     cp "$root/scripts/ci/rewrite-local-lock-versions.pl" "$worktree/scripts/ci/"
     cd "$worktree"
     export CARGO_TARGET_DIR="$worktree/target" FIXTURE_FAIL_STEP="" FIXTURE_FAIL_VERSION="" FIXTURE_FAIL_RESTORE="" TMPDIR="$worktree/attempts"
     cat > Cargo.toml <<'TOML'
 [workspace]
-members = ["crates/ic-metrics"]
+members = ["crates/ic-metrics", "crates/ic-metrics-wasm-inspect"]
 resolver = "3"
 
 [workspace.package]
@@ -139,6 +139,14 @@ version.workspace = true
 edition.workspace = true
 TOML
     printf '#![no_std]\n' > crates/ic-metrics/src/lib.rs
+    cat > crates/ic-metrics-wasm-inspect/Cargo.toml <<'TOML'
+[package]
+name = "ic-metrics-wasm-inspect"
+version.workspace = true
+edition.workspace = true
+publish = false
+TOML
+    printf 'fn main() {}\n' > crates/ic-metrics-wasm-inspect/src/main.rs
     cat > CHANGELOG.md <<'NOTES'
 # Changelog
 
@@ -192,6 +200,19 @@ NOTES
             > failed-check.log 2>&1 || status=$?
         [[ "$status" == 1 ]] # The shared reader rejects the failed parser.
         bash "$root/scripts/release/metadata.sh" check >> result.log 2>&1
+        # A current arithmetic row must not conceal a stale private package.
+        cp Cargo.lock prepared.lock
+        awk -v previous="$RELEASE_PREVIOUS" '
+            /^\[\[package\]\]$/ { host=0 }
+            /^name = "ic-metrics-wasm-inspect"$/ { host=1 }
+            host && /^version = / { $0="version = \"" previous "\"" }
+            { print }
+        ' prepared.lock > Cargo.lock
+        status=0
+        FIXTURE_FAIL_STEP=metadata bash "$root/scripts/release/metadata.sh" check \
+            > stale-host-check.log 2>&1 || status=$?
+        [[ "$status" == 1 ]] # Refused before dispatching Cargo metadata (status 9).
+        cp prepared.lock Cargo.lock
         cargo sort --workspace --check >> result.log 2>&1
         [[ "$(bash "$root/scripts/release/metadata.sh" version)" == "$RELEASE_VERSION" ]]
         awk -v heading="## [$RELEASE_VERSION] - $RELEASE_DATE" \

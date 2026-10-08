@@ -10,6 +10,11 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 - Own small, allocation-free measurement arithmetic. Keep the library
   dependency-free and `no_std`; consumers own platform counter reads.
+- The private `ic-metrics-wasm-inspect` host binary owns bounded structural
+  evidence inspection through IC Host libraries, outside the arithmetic graph.
+  Its explicit Rust 1.88 floor is separate from the arithmetic Rust 1.85 floor.
+  Source-less lock packages must be workspace-owned; external path dependencies
+  are not permitted. Release metadata advances all local workspace rows together.
 - Consumer code owns measurement attribution, registries, labels, replication
   policy, reset/restart identity, persistence, lifecycle hooks, and endpoints.
   Do not add dependencies on IcyDB, Canic, `ic-timers`, or `ic-backup`.

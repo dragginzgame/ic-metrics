@@ -2,6 +2,7 @@
 
 PACKAGE := ic-metrics
 MSRV ?= 1.85.0
+WASM_INSPECT_MSRV ?= 1.88.0
 RELEASE_REMOTE ?= origin
 RELEASE_BRANCH ?= main
 export RELEASE_DELIVERY ?= direct
@@ -44,7 +45,7 @@ release-preflight:
 
 release-verify:
 	+CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
-		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv
+		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv wasm-inspect-msrv
 
 release-prepare-version:
 	@bash scripts/release/metadata.sh prepare
@@ -60,6 +61,7 @@ release-files:
 
 .PHONY: help publish publish-check install-hooks hook-check format-tools-check fmt fmt-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 .PHONY: local-tools-test ci-evidence-check
+.PHONY: wasm-inspect-check wasm-inspect-msrv
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
@@ -74,6 +76,7 @@ help:
 	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute Make effects, no hosted run)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
+	@echo "Wasm evidence tool: wasm-inspect-check; separate host minimum: wasm-inspect-msrv"
 	@echo "Full gates (explicit request or configured CI): test, ci"
 
 publish:
@@ -130,14 +133,28 @@ check-doc-links:
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md
-	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" crates/ic-metrics/src/application.md
+	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
+		crates/ic-metrics/src/application.md crates/ic-metrics-wasm-inspect/README.md
 
 test:
 	cargo test -p $(PACKAGE) --locked
 
 msrv:
+	rustc +$(MSRV) --version
+	cargo +$(MSRV) --version
 	cargo +$(MSRV) check -p $(PACKAGE) --locked
 	cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
+
+wasm-inspect-check:
+	cargo check -p ic-metrics-wasm-inspect --all-targets --locked
+	cargo clippy -p ic-metrics-wasm-inspect --all-targets --locked -- -D warnings
+	cargo test -p ic-metrics-wasm-inspect --locked args::tests
+	cargo test -p ic-metrics-wasm-inspect --locked report::tests
+
+wasm-inspect-msrv:
+	rustc +$(WASM_INSPECT_MSRV) --version
+	cargo +$(WASM_INSPECT_MSRV) --version
+	cargo +$(WASM_INSPECT_MSRV) check -p ic-metrics-wasm-inspect --all-targets --locked
 
 shared-tooling-check:
 	bash scripts/ci/verify-shared-tooling-snapshot.sh
@@ -172,5 +189,6 @@ ci:
 	+$(MAKE) --no-print-directory check
 	+$(MAKE) --no-print-directory check-wasm
 	+$(MAKE) --no-print-directory clippy
+	+$(MAKE) --no-print-directory wasm-inspect-check
 	+$(MAKE) --no-print-directory docs-check
 	+$(MAKE) --no-print-directory test

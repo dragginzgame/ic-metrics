@@ -136,7 +136,8 @@ earlier Linux preparation or tagged host results.
   fixtures; separate IC setup verifies all six local executables. New hosted
   results must qualify this consumer wiring. `make cloc` reports this workspace;
   `make cloc-tooling` inventories sibling tooling without running their commands.
-- rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.85.0 for MSRV checks.
+- rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.85.0 for arithmetic
+  MSRV checks and Rust 1.88.0 for the private host inspector.
 - Install the `wasm32-unknown-unknown` target for each checked toolchain.
 - Git, GNU Make (`make`), Bash 3.2 or newer, and standard Unix utilities.
 - curl, Perl and tar/gzip/xz for explicit local setup; pinned ripgrep and cloc
@@ -157,6 +158,17 @@ Run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
 `make msrv` checks the declared floor on host and Wasm. Select
 named tests relevant to the change rather than running the full suite by default.
+The separate `make wasm-inspect-check` checks and lints the private host package
+and runs its named argument/report tests. `make wasm-inspect-msrv` checks its
+Rust 1.88 dependency path; both minimum-version commands log compiler/Cargo
+identities. Native CI includes the host checks on all three hosts, and Linux
+checks both package floors. Bare Cargo commands select arithmetic only.
+The explicitly requested release gate also checks both floors after native CI;
+ordinary development runs the focused commands separately.
+[The inspector guide](../crates/ic-metrics-wasm-inspect/README.md) explains input
+admission and output units; [the inspection record](evidence/wasm-inspection-0215.md)
+binds local Linux results separately from future committed native acceptance in
+[#36](https://github.com/dragginzgame/ic-metrics/issues/36).
 The pending 0.2.15 batch qualifies Rust 1.85 for native/Wasm compilation,
 selected unit tests and public doctests on Linux while keeping Rust 1.99 as the
 development compiler. [The minimum-version record](evidence/msrv-0215.md) binds

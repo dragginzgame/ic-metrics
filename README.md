@@ -101,9 +101,15 @@ its observations have their own source and workload identity.
 ## Development
 
 Install rustup, Git, GNU Make, Bash 3.2 or newer and a SHA-256 utility. The pinned
-toolchain is Rust 1.99.0 and the MSRV is 1.85.0. Install `wasm32-unknown-unknown`
+toolchain is Rust 1.99.0 and the arithmetic MSRV is 1.85.0. Install `wasm32-unknown-unknown`
 for Wasm checks. `make help` lists focused commands; select named tests during
 implementation. Full `make ci` requires an explicit request outside configured CI.
+
+The private [Wasm evidence inspector](crates/ic-metrics-wasm-inspect/README.md)
+uses the IC Host libraries to inspect explicitly supplied Wasms with caller-selected
+bounds. It needs Rust 1.88 and reports raw/encoded bytes and structural counts,
+without executing a canister. Bare Cargo commands select the arithmetic package;
+its dependency-free `no_std` graph and consumer contracts remain unchanged.
 
 Prepare the pinned checkout-local Cargo tools during developer setup:
 

@@ -227,11 +227,26 @@ commands and unchanged arithmetic/lock bytes for
 compiler qualification; committed hosted qualification of the complete pending
 batch remains separate. Published 0.2.14 still declares Rust 1.88.
 
-The release-test split and CI-budget changes remain dirty upstream source and
-are not adopted. The committed installer active-link byte defect remains in
-[Shared Tooling #75](https://github.com/dragginzgame/shared-tooling/issues/75);
-this snapshot does not fix it. No arithmetic or downstream ownership contract
-changes, sibling edits, commits or release effects are part of preparation.
+The same compatible draft adds the private `ic-metrics-wasm-inspect` host binary,
+using registry IC Host 0.8.1 packages with explicit input budgets and digest-bound
+TSV facts. Arithmetic remains dependency-free and `no_std`, with default Cargo
+commands selecting that package. The host floor is Rust 1.88; the release adapter
+advances both inherited local lock versions while retaining registry selections.
+[The inspection record](../evidence/wasm-inspection-0215.md) binds local focused
+checks and new structural facts about the unchanged historical replay Wasms.
+[#36](https://github.com/dragginzgame/ic-metrics/issues/36) retains future committed
+native acceptance. No downstream arithmetic contract changes require caller edits.
+
+A read-only recheck found committed Shared Tooling 0.1.28
+`1872ed2c20f6c70689bb2249050b1d673c60bfa0`. It fixes the active-link byte defect
+in [Shared Tooling #75](https://github.com/dragginzgame/shared-tooling/issues/75),
+splits release simulation/tracking fixtures, adjusts CI budgets, documents separate
+package MSRVs and adds an opt-in maintenance catalog. Its native workflow passes
+Linux and lint/security; both macOS jobs remain queued at inspection. The current consumer snapshot remains db039; these new
+source-owned changes are reviewed, not distributed into this checkout. The
+sibling also has uncommitted policy edits restricting standing issue permission
+to `dragginzgame/*`; those edits are separate from the committed revision. No
+sibling files, schedules, commits or release effects are changed by this review.
 
 ## Downstream boundaries
 
