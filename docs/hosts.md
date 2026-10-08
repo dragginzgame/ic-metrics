@@ -238,15 +238,23 @@ are recorded in [adoption-029.md](evidence/adoption-029.md). The subsequent
 source-matching CI observation is recorded separately in
 [release-029.md](evidence/release-029.md).
 
-Pending 0.2.10 adopts committed Shared Tooling 0.1.20 contribution authority.
+Released 0.2.10 adopts committed Shared Tooling 0.1.20 contribution authority.
 [adoption-0210.md](evidence/adoption-0210.md) binds the documentation review and
 focused checks for that initial adoption. The subsequent
 [0.1.22 release-tooling adoption](evidence/adoption-0210-shared022.md) refreshes
 the runner while retaining direct-only delivery. Its focused Linux/Bash checks
-do not qualify the pending consumer source on native macOS. Arithmetic and
-supported hosts remain unchanged.
+retain their preparation scope. The subsequent
+[0.2.10 release record](evidence/release-0210.md) verifies the actual release's
+complete native/MSRV matrix and all three native source/payload receipts.
+Arithmetic and supported hosts remain unchanged.
 The upstream's real Prettier and failure-upload qualification does not impose
 Node/npm or another hosted failure-injection gate on this arithmetic library.
+
+Pending 0.2.11 adopts Shared Tooling 0.1.23's release-integrity corrections.
+[Its adoption record](evidence/adoption-0211.md) binds passing focused Linux
+Bash 5/3.2 release fixtures and static checks to the selected bytes. Upstream
+0.1.23 passes all native hosts; this uncommitted consumer batch still needs
+source-matching native CI under [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
 
 Prepare tools explicitly before local validation:
 
@@ -306,7 +314,9 @@ The configured CI runs `make ci` natively on every declared host and
 `make msrv` on Linux. Full `make test`/`make ci` gates remain user-owned
 outside configured CI unless explicitly requested. Release command stubs run in native CI. Maintainer release preparation requires
 cargo-edit and does not implicitly publish or clean artifacts. Native release
-adapter execution remains unqualified on macOS; Linux stubs do not close that gap.
+command-substitute and metadata/admission/retention fixtures pass on both macOS
+architectures at released 0.2.10. Actual interrupted-release execution remains
+distinct; substitute fixtures do not demonstrate live GitHub effects.
 The later formatter setup and packaging changes are covered by the tagged
 0.1.3 native CI evidence above; the earlier 0.1.1 run remains scoped to its tag.
 The released 0.2.3 snapshot records 46c0277; 0.2.2 used b32d303,

@@ -1,7 +1,7 @@
 # Shared Tooling snapshot v1
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	2687f26317952c43c685f7f799ed09288dc10a67
+revision	0ba0ad00ed94848e54ecc82629b6b7873b7284c0
 file	05838a36f21bb4299617ae8965687791062c94d768181f5f97676cc577382153	-	rules/contributions.md
 file	fe90530851fed47985442343664b5f5f44fde396d78a0d6f489cc1562c61592d	-	DRAGGINZGAME.md
 file	59f6cb0b47fcfa698396776bbb391737292ebf34457ad7c65803fe7b36961499	-	docs/principles/README.md
@@ -14,11 +14,11 @@ file	f90027f7a23a763a40d192ed2d8d5a88c182289b32e7b82b05285fd5fcad8259	-	docs/sup
 file	4c981184847462ab3c01cac087e28309f8e054253fd95c7bbe56f643877aa708	x	scripts/ci/verify-file-checksum.sh
 file	b6764190803118331d7441233bcd6a3031c99c0c5219cc4a5c29dfb1a1040e41	x	scripts/ci/verify-shared-tooling-snapshot.sh
 file	b5a6e8fb723a861b722834675e27b4b16f3d296112622c1b40cdc8714f575404	-	rules/changelogs.md
-file	aae1eccb19c8e789c41f9feb6faeadebb220311bbabddf256e4ec4518ae6fba5	-	docs/releases.md
-file	c6409aed359942eccb58534d69adc136a08e6018c26d3035247380494cc665e3	x	scripts/ci/run-release.sh
+file	be3638eecab7925f3a3fe054bb4db667a409101404ceba6a69d9750ce8c6f919	-	docs/releases.md
+file	f9df53d57b569e02c23ce97cebefd79471ba353b9b6910e30c9a0c9845398823	x	scripts/ci/run-release.sh
 file	37e028e2d9fee271ffdc06d06fc15d7a148ec524def3d9ed2afcd9910c0ec642	x	scripts/ci/next-release-version.sh
 file	e7f4c82566858b89b50c5c2f929097bdde85345a2c0c1bf553bb1170cc4f5960	-	scripts/ci/finalize-release-changelog.awk
-file	71308ad28237a6cd1239bf036c06b69ef8938e4d67d3d52ba56d5f7f2dc87cce	x	scripts/ci/test-release-runner.sh
+file	34329b2a30af902ca5cecc9e578693d5cddb621e9be59d6f256de997209622a0	x	scripts/ci/test-release-runner.sh
 file	a1c172a7bfca31497e383f485b63fae4c22e39aa2b4bbe76c07059d28ba03eee	-	rules/cargo-dependencies.md
 file	25485770b77ce6c537e5ded883fce3db58c1ebcb3b3796e236bbc22c291308ef	-	rules/git-hooks.md
 file	222ccd4193f017ebef6396affa9a55dcae98a28ffbd8c6864570b397d2a3bb02	x	.githooks/pre-commit
@@ -71,4 +71,4 @@ file	d7592af0089cc2a012e4dfb0ae2c62b5b56e0189c334b5184740859685a18823	x	scripts/
 file	66f23e9de66c63c0e47456bd76dd5898b5965f2b9a831ecbb0e8e530769629d3	x	scripts/dev/install-rust-tools.sh
 file	502d20283b758ad3f72f94118af3d1c8bbb28ed06bfff57ec83b0acbcffc5806	x	scripts/ci/test-rust-tools.sh
 file	49e5c54defd9330aacf2635fd36803f3ea469ea278a2628f63dbd82458dfd5a9	-	scripts/ci/ic-tool-pins.awk
-file	477aadab8f7ee2cf794c6e9f3727fcb3013849d6e0a662d7b5cd18f173f39d37	-	scripts/ci/release-pr.sh
+file	fc40c8ad1c4ab850fda0e60b8cb0b3201724d020966e4d7e5d07620781f5e814	-	scripts/ci/release-pr.sh

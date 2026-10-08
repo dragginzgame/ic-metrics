@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.11]
+
+### Fixed
+
+- Adopt Shared Tooling 0.1.23 to recheck release payloads and exact tags before
+  pushing, and verify published identity when resuming completed releases.
+  Conflicts stop without repeating release effects
+  ([#28](https://github.com/dragginzgame/ic-metrics/issues/28),
+  [Shared Tooling #58](https://github.com/dragginzgame/shared-tooling/issues/58)).
+
 ## [0.2.10] - 2026-10-08
 
 ### Changed

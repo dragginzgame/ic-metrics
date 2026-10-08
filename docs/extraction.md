@@ -55,9 +55,10 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.9 is available in the registry; the
-[release record](evidence/release-029.md) binds the source, archive and complete
-native matrix separately from the earlier complete 0.2.8 matrix.
+Release 0.2.10 is available in the registry; the
+[release record](evidence/release-0210.md) binds its source, archive and complete
+native matrix separately from earlier releases. Its tooling changes preserve
+the arithmetic-only contract.
 The six inspected callers select registry arithmetic-only 0.2 requirements.
 The [current handoff](status/current.md) separates their committed and working-tree
 lock identities. IC Blob Storage's direct caller is a restoration test probe,
