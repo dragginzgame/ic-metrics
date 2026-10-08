@@ -40,3 +40,15 @@ method or type was removed.
 [#32](https://github.com/dragginzgame/ic-metrics/issues/32) retains this
 distribution batch's exact committed consumer native acceptance, distinct from
 0.2.12's runner/collector qualification.
+
+## Subsequent committed observation
+
+The maintainer finalized this batch in release 0.2.13 at
+`4091366bcd97ddf4f31d5993c954f6f4a269bc63`. The
+[release observation](release-0213.md) independently verifies its published
+archive, all three native source/payload/outcome receipts and passing MSRV.
+This does not change the preparation identities above. Consumer acceptance is
+complete at this release; #32 is closed. The newer 0.2.14 preparation is separate.
+Upstream Intel's snapshot and complete portable suite pass before a step-budget
+timeout; subsequent native qualification is skipped. The owning budget repair
+is [Shared Tooling #71](https://github.com/dragginzgame/shared-tooling/issues/71).

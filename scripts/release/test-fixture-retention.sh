@@ -4,7 +4,10 @@ export RELEASE_DELIVERY=direct
 
 # Exercise real consumer fixtures through controlled executable failures.
 # Keep intentional failures under the native CI artifact owner, including inputs.
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+root="${BASH_SOURCE[0]}"
+[[ "$root" == /* ]] || root="$PWD/$root"
+root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
+root="${root%/.}"
 mkdir -p "$root/target/evidence/native-ci"
 evidence="$(mktemp -d "$root/target/evidence/native-ci/fixture-retention.XXXXXX")"
 cleanup() {

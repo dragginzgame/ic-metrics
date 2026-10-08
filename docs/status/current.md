@@ -6,20 +6,25 @@ See [the extraction contract](../extraction.md).
 
 ## Released source
 
-Verified published 0.2.12 source is `d16aa0aeb0e0f4fcbbc6962ba3f86c7348ecff88`.
+Verified published 0.2.13 source is `4091366bcd97ddf4f31d5993c954f6f4a269bc63`.
 Its non-yanked registry archive has SHA-256
-`7bab1fc806066a00dfd5984bbe6dcb74e836a51e8e4fb2f29026739216c5fa56`,
+`cf9bf6109539e8b956857f444a1d365b0205250405980c10bfdd905831f66fe3`,
 with no dependencies or features. The checksum, embedded Git identity, maintained
 Rust source, packaged guide, original manifest, README, license and lock verify.
-The [release record](../evidence/release-0212.md) binds passing MSRV and the
-Linux/MSRV pass and queued macOS native matrix. The completed Linux archive
-verifies source, payload and outcome receipts; macOS collector round trips
-remain pending in #30/#31. Publication is not complete native qualification.
+The [release record](../evidence/release-0213.md) binds passing Linux, Apple Silicon,
+Intel and MSRV. All three downloaded native archives verify source, payload and
+outcome receipts, completing consumer collector/distribution acceptance in
+[#30](https://github.com/dragginzgame/ic-metrics/issues/30) and
+[#32](https://github.com/dragginzgame/ic-metrics/issues/32).
+[#31](https://github.com/dragginzgame/ic-metrics/issues/31) retains its incomplete
+upstream native workflow requirement; this consumer's matrix is complete. The
+[0.2.12 record](../evidence/release-0212.md) retains its Linux/MSRV pass and
+cancelled macOS lanes without rebinding those results to the newer source.
 The [0.2.11 record](../evidence/release-0211.md) retains its complete three-host
 matrix and verified receipts, finishing [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
 Earlier complete matrices retain their own scope in
 [the 0.2.10 record](../evidence/release-0210.md) and historical records.
-Cargo workspace, package and lock versions remain 0.2.12.
+Cargo workspace, package and lock versions are 0.2.13.
 
 Histograms are available from 0.2.4; checked means are available from 0.2.6.
 `checked_mean(samples, total)` and `MeasurementSummary::mean()` return `None`
@@ -128,9 +133,9 @@ landed; its Linux pass does not supply missing macOS evidence. The subsequent
 and lint, with Intel queued at inspection. Consumer qualification remains bound
 to the exact 0.2.12 source in the release record.
 
-## Prepared 0.2.13 tooling
+## Released 0.2.13 tooling
 
-The current 72-file snapshot selects committed Shared Tooling 0.1.26
+The released 0.2.13 72-file snapshot selects committed Shared Tooling 0.1.26
 `75a8a60f49cec11d3f6aecab5c977029c42cc549`, refreshed canonically from a clean
 detached checkout. Its exporter can advance a verified unchanged uncommitted
 snapshot using the previous manifest and exact committed source. It refuses
@@ -138,14 +143,42 @@ consumer edits, unavailable prior provenance, staged conflicts and changed
 file/manifest identities. There is no force flag or implicit fetch; multi-file
 publication still requires selected-path editing/validation to stop.
 [The preparation record](../evidence/adoption-0213.md) binds source review and
-focused checks. The runner, archiver and baseline are unchanged. The compatible
-pending changelog is 0.2.13, while Cargo/package/lock stay at released 0.2.12.
+focused checks. The runner, archiver and baseline are unchanged. The maintainer
+finalized the compatible 0.2.13 release; Cargo/package/lock are now 0.2.13.
 Upstream native CI and exact consumer qualification remain separate from this
 local refresh; the sibling's dirty release-fixture follow-up is not adopted.
 [#32](https://github.com/dragginzgame/ic-metrics/issues/32) owns this new
 distribution qualification separately from the released runner/collector batch.
 Focused distribution fixtures pass under Bash 5.2 and 3.2.57, and repeat refresh
 verifies all 72 files. Static, documentation, pins and formatting checks pass.
+The upstream Intel job subsequently passed snapshot distribution and the full
+portable suite, then hit its 15-minute step deadline. Later native gates were
+skipped. [Shared Tooling #71](https://github.com/dragginzgame/shared-tooling/issues/71)
+owns that workflow-budget repair; no dirty upstream source is adopted.
+
+## Prepared 0.2.14 tooling
+
+The current 75-file snapshot selects committed Shared Tooling 0.1.27
+`b866d41041a1986eeec95bde9af4c6ba0853d2e3`, refreshed from a clean reviewed
+checkout through the canonical exporter. The three explicit additions are the
+tool-evidence selector, installer evidence fixture and composite action that
+fixture reads. The action is used by installer tests; the native workflow keeps
+its own collector and Git recovery-state policy. Its source receipts now include
+these new fixture inputs. Upstream's missing companion declarations remain in
+[Shared Tooling #73](https://github.com/dragginzgame/shared-tooling/issues/73).
+
+The local release adapter and fixture entry points now anchor physical paths
+without consuming CDPATH output or trimming trailing newlines. A read-only
+version request reproduced exit 127 before the correction; metadata fixtures
+exercise both relative and absolute entry points in a newline-ending checkout.
+The reviewed LOC reporter recognizes dotted snapshot names. The compatible
+pending heading is 0.2.14; package/lock versions remain 0.2.13. Arithmetic,
+dependency/tool pins and consumer attribution/storage contracts are unchanged.
+[The adoption record](../evidence/adoption-0214.md) binds focused evidence;
+[#33](https://github.com/dragginzgame/ic-metrics/issues/33) owns committed native
+acceptance. Upstream's exact 0.1.27 Linux workflow fails its compact-evidence
+verifier's stale log comparison; the prepared sibling correction in
+[#66](https://github.com/dragginzgame/shared-tooling/issues/66) is not adopted.
 
 ## Downstream boundaries
 
@@ -155,19 +188,27 @@ selected Metrics locks below refer to the registry package.
 
 | Caller | Inspected local HEAD | Committed Metrics lock and inspected working-tree selection |
 | --- | --- | --- |
-| IcyDB | `cb8cefca1d68c20025398eae6dfab18a2eb45883` | Committed 0.2.8; dirty selection 0.2.10. Inclusive spans and CLI checked means. |
+| IcyDB | `4d137f6078146574ad76ae28fbef1250608ffc61` | Public 0.267.2 commits Metrics 0.2.12. Inclusive spans and CLI checked means; current native acceptance remains incomplete. |
 | Canic | `4c51a87c6a32397196bb3f65d064641194df10a5` | Public 0.110.53 commits Metrics 0.2.9; subsequent dirty work remains separate. Exclusive endpoint accounting and invocation-owned async checkpoints. |
 | IC Timers | `7d3ef40c50e49b79a8e9e10fb7cb68cee244eb7b` | Committed Metrics lock 0.2.10. Scheduler/work summaries and local sample admission. The local commit advanced during inspection; earlier reads selected 0.2.9. |
 | IC Backup | `8a1152d0a510f34f8daed59f06632306f7cf134e` | Committed 0.2.9; dirty selection 0.2.10. Nanosecond summaries and four-bound prepared-byte histogram. |
 | IC Blob Storage | `704b8ebf6bea85a715e465e32e34758b601852ec` | Committed/clean Metrics lock 0.2.9. Restoration test probe, not production library instrumentation. |
 | Toko Miner | `aeed004b03b9b5d848de3750d77a42c5160c5fdf` | Committed/working Metrics lock 0.2.9; other lock edits remain separate. Production action-count cohorts use `record_sample`. |
 
-The 2026-10-08 remote recheck now finds IcyDB public 0.267.1 source
+The earlier 2026-10-08 recheck found IcyDB public 0.267.1 source
 `cb8cefca1d68c20025398eae6dfab18a2eb45883`, selecting Metrics 0.2.8. Its
 [CI](https://github.com/dragginzgame/icydb/actions/runs/37653174383) passes
 Rust/MSRV/static but both native macOS jobs fail the retained release-lock lookup.
-The owning explicit-template repair remains pending committed native acceptance
-in [IcyDB #309](https://github.com/dragginzgame/icydb/issues/309). The successful
+The later public 0.267.2 source `4d137f6078146574ad76ae28fbef1250608ffc61`
+now commits Metrics 0.2.12 and the explicit TMPDIR-rooted snapshot template.
+Its [exact CI](https://github.com/dragginzgame/icydb/actions/runs/37779266779)
+passes static/MSRV/Wasm-size at inspection, while native macOS remains queued.
+All four Rust lanes stop during tool setup: the offline PocketIC policy check
+needs the locked workspace cache, but the explicit fetch runs afterward.
+The owning setup-order correction is reported in
+[IcyDB #302](https://github.com/dragginzgame/icydb/issues/302); matching native
+helper acceptance remains in [#309](https://github.com/dragginzgame/icydb/issues/309).
+The successful
 scheduled SQL evidence workflow is a separate gate, not Metrics native closure.
 Canic's newer source is now public as 0.110.53
 `4c51a87c6a32397196bb3f65d064641194df10a5`. Its

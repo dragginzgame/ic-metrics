@@ -61,8 +61,8 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-Verified 0.2.12 publication is bound in the
-[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0212.md).
+Verified 0.2.13 publication is bound in the
+[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0213.md).
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -166,14 +166,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.12`](https://crates.io/crates/ic-metrics/0.2.12)
-is published on crates.io with tag `v0.2.12`. Declare the published release
+tooling releases. [`ic-metrics 0.2.13`](https://crates.io/crates/ic-metrics/0.2.13)
+is published on crates.io with tag `v0.2.13`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.12"
+ic-metrics = "0.2.13"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

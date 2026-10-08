@@ -4,7 +4,10 @@ set -euo pipefail
 # Execute the consumer workflow's source/setup/archive bodies with substitute
 # Make effects. This proves local IO and failure status, not hosted execution.
 unset MAKEFLAGS MFLAGS MAKEOVERRIDES GNUMAKEFLAGS MAKEFILES GIT_DIR GIT_WORK_TREE
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+root="${BASH_SOURCE[0]}"
+[[ "$root" == /* ]] || root="$PWD/$root"
+root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
+root="${root%/.}"
 yq="$root/.tools/host/bin/yq"
 jq="$root/.tools/host/bin/jq"
 git_dir="$(git -C "$root" rev-parse --absolute-git-dir)"

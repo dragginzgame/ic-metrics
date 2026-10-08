@@ -8,7 +8,10 @@ if [[ "${RELEASE_DELIVERY-direct}" != direct ]]; then
     echo 'ic-metrics supports RELEASE_DELIVERY=direct only' >&2
     exit 2
 fi
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+root="${BASH_SOURCE[0]}"
+[[ "$root" == /* ]] || root="$PWD/$root"
+root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
+root="${root%/.}"
 reader="$root/scripts/ci/read-cargo-workspace-version.sh"
 admit_files() (
     local paths path admitted=true

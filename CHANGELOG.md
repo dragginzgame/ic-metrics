@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.14]
+
+### Fixed
+
+- Keep release and tooling entry points working with inherited `CDPATH` and
+  literal newline checkout paths ([#33](https://github.com/dragginzgame/ic-metrics/issues/33),
+  [Shared Tooling #67](https://github.com/dragginzgame/shared-tooling/issues/67)).
+- Count dotted shared snapshot names correctly in tooling LOC reports
+  ([Shared Tooling #69](https://github.com/dragginzgame/shared-tooling/issues/69)).
+
+### Changed
+
+- Adopt Shared Tooling 0.1.27 with explicit installer evidence-fixture companions,
+  including their inputs in native source receipts while preserving the consumer's
+  archive and recovery-state policy ([#33](https://github.com/dragginzgame/ic-metrics/issues/33),
+  [Shared Tooling #73](https://github.com/dragginzgame/shared-tooling/issues/73)).
+
 ## [0.2.13] - 2026-10-08
 
 ### Fixed

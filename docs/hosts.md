@@ -300,8 +300,13 @@ names, modes and links while excluding candidate Git metadata. The outer archive
 retains failed release intent/index state. Partial writes and occupied candidate
 archives preserve inputs and recorded setup failure outcomes. The
 [preparation record](evidence/adoption-0212.md) binds passing focused Bash 5.2/3.2
-checks; this changed collector still needs its own committed native/download
-acceptance in [#30](https://github.com/dragginzgame/ic-metrics/issues/30).
+checks; this changed collector has committed native/download
+acceptance at 0.2.13 in
+[#30](https://github.com/dragginzgame/ic-metrics/issues/30) and
+[the release record](evidence/release-0213.md). Pending 0.2.14 records the added
+installer evidence-fixture inputs in source receipts; its locally expanded
+75-file snapshot retains separate committed native acceptance in
+[#33](https://github.com/dragginzgame/ic-metrics/issues/33).
 Native uploads contain `native-ci.tar.gz` and its checksum; unpack the tarball
 to inspect the complete evidence tree, including filenames rejected by direct
 artifact uploads. `make format-tools-check` verifies the reviewed cargo-sort pin

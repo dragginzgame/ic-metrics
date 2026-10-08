@@ -15,11 +15,14 @@ its subsequently downloaded archive verifies the outer/payload checksums, source
 hashes against the release commit, run/attempt/host and successful setup/native
 outcomes. Source receipts include both new shared archive files; the native log
 records the actual collector fixture and corrected tracking cases passing.
-Both macOS lanes remain queued. Their native outcomes/download verification remain
+Both macOS lanes were initially queued and later cancelled with the run after
+the newer release was pushed. Their native outcomes/download verification remain
 pending in [#31](https://github.com/dragginzgame/ic-metrics/issues/31) and
 [#30](https://github.com/dragginzgame/ic-metrics/issues/30). Registry publication
 and local focused preparation do not supply those missing gates. Downloads are
-retained under `target/evidence/release-0212/`.
+originally retained under `target/evidence/release-0212/`. The
+[0.2.13 record](release-0213.md) binds the subsequent source and downloads
+independently; it does not relabel this release's evidence.
 
 The released 72-file snapshot selects Shared Tooling 0.1.25
 `672ab4b8af50c75ed21a359ca5968682de83be94`. Its corrected runner, tooling LOC

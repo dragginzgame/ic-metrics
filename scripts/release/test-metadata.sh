@@ -8,7 +8,10 @@ export RELEASE_DELIVERY=direct
 
 # Exercise the consumer's preparation boundary without release or Git effects.
 # Cargo-edit is substituted; sorting and locked offline metadata use real Cargo.
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+root="${BASH_SOURCE[0]}"
+[[ "$root" == /* ]] || root="$PWD/$root"
+root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
+root="${root%/.}"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-metadata-test.XXXXXX")"
 cleanup() {
     local status=$?
@@ -88,6 +91,18 @@ cp Cargo.toml original.toml
 actual="$(bash "$root/scripts/release/metadata.sh" version)"
 [[ "$actual" == "$RELEASE_PREVIOUS" ]]
 cmp original.toml Cargo.toml
+# Resolve both relative and absolute entry points from a physical checkout
+# ending in a newline, without CDPATH output becoming part of the helper path.
+bootstrap="$fixture/checkout"$'\n'
+mkdir -p "$bootstrap/scripts/release" "$bootstrap/scripts/ci"
+cp "$root/scripts/release/metadata.sh" "$bootstrap/scripts/release/"
+cp "$root/scripts/ci/read-cargo-workspace-version.sh" "$bootstrap/scripts/ci/"
+cp original.toml "$bootstrap/Cargo.toml"
+for entry in scripts/release/metadata.sh "$bootstrap/scripts/release/metadata.sh"; do
+    actual="$(cd "$bootstrap"; CDPATH="$fixture:$root" bash "$entry" version)"
+    [[ "$actual" == "$RELEASE_PREVIOUS" ]]
+done
+cmp original.toml "$bootstrap/Cargo.toml"
 for invalid in duplicate noncanonical; do
     cp original.toml Cargo.toml
     if [[ "$invalid" == duplicate ]]; then
