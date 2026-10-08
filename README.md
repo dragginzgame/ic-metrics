@@ -101,7 +101,7 @@ its observations have their own source and workload identity.
 ## Development
 
 Install rustup, Git, GNU Make, Bash 3.2 or newer and a SHA-256 utility. The pinned
-toolchain is Rust 1.99.0 and the MSRV is 1.88.0. Install `wasm32-unknown-unknown`
+toolchain is Rust 1.99.0 and the MSRV is 1.85.0. Install `wasm32-unknown-unknown`
 for Wasm checks. `make help` lists focused commands; select named tests during
 implementation. Full `make ci` requires an explicit request outside configured CI.
 
@@ -166,14 +166,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.13`](https://crates.io/crates/ic-metrics/0.2.13)
-is published on crates.io with tag `v0.2.13`. Declare the published release
+tooling releases. [`ic-metrics 0.2.14`](https://crates.io/crates/ic-metrics/0.2.14)
+is published on crates.io with tag `v0.2.14`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.13"
+ic-metrics = "0.2.14"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

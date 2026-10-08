@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 PACKAGE := ic-metrics
-MSRV ?= 1.88.0
+MSRV ?= 1.85.0
 RELEASE_REMOTE ?= origin
 RELEASE_BRANCH ?= main
 export RELEASE_DELIVERY ?= direct

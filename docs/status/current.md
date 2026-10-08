@@ -6,7 +6,19 @@ See [the extraction contract](../extraction.md).
 
 ## Released source
 
-Verified published 0.2.13 source is `4091366bcd97ddf4f31d5993c954f6f4a269bc63`.
+Latest finalized source is 0.2.14
+`dee5ecdef3d811dcda930ddcaae48abf08acc951`, matching tag `v0.2.14`.
+Cargo workspace, package and lock versions are 0.2.14. The registry index reports
+non-yanked 0.2.14 with no dependencies/features, Rust 1.88 and checksum
+`0352d28c75d11f7350184586716aa10b415b6a3da8427186e1768a621546a290`.
+This index observation does not verify its archive payload. Its exact
+[CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37788551242)
+passes Linux native and MSRV; macOS jobs remain queued at inspection.
+[#33](https://github.com/dragginzgame/ic-metrics/issues/33) retains its native
+and downloaded-receipt acceptance. The separate pending 0.2.15 adoption below
+does not relabel this released source's evidence.
+
+Previously fully verified published 0.2.13 source is `4091366bcd97ddf4f31d5993c954f6f4a269bc63`.
 Its non-yanked registry archive has SHA-256
 `cf9bf6109539e8b956857f444a1d365b0205250405980c10bfdd905831f66fe3`,
 with no dependencies or features. The checksum, embedded Git identity, maintained
@@ -16,15 +28,16 @@ Intel and MSRV. All three downloaded native archives verify source, payload and
 outcome receipts, completing consumer collector/distribution acceptance in
 [#30](https://github.com/dragginzgame/ic-metrics/issues/30) and
 [#32](https://github.com/dragginzgame/ic-metrics/issues/32).
-[#31](https://github.com/dragginzgame/ic-metrics/issues/31) retains its incomplete
-upstream native workflow requirement; this consumer's matrix is complete. The
+[#31](https://github.com/dragginzgame/ic-metrics/issues/31) is now complete:
+corrected upstream `db039347` passes its entire native matrix, with all 19
+tracking cases and both evidence verifiers executed on each host. This consumer's
+original matrix remains bound to 0.2.13. The
 [0.2.12 record](../evidence/release-0212.md) retains its Linux/MSRV pass and
 cancelled macOS lanes without rebinding those results to the newer source.
 The [0.2.11 record](../evidence/release-0211.md) retains its complete three-host
 matrix and verified receipts, finishing [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
 Earlier complete matrices retain their own scope in
 [the 0.2.10 record](../evidence/release-0210.md) and historical records.
-Cargo workspace, package and lock versions are 0.2.13.
 
 Histograms are available from 0.2.4; checked means are available from 0.2.6.
 `checked_mean(samples, total)` and `MeasurementSummary::mean()` return `None`
@@ -156,9 +169,9 @@ portable suite, then hit its 15-minute step deadline. Later native gates were
 skipped. [Shared Tooling #71](https://github.com/dragginzgame/shared-tooling/issues/71)
 owns that workflow-budget repair; no dirty upstream source is adopted.
 
-## Prepared 0.2.14 tooling
+## Released 0.2.14 tooling
 
-The current 75-file snapshot selects committed Shared Tooling 0.1.27
+The released 75-file snapshot selects committed Shared Tooling 0.1.27
 `b866d41041a1986eeec95bde9af4c6ba0853d2e3`, refreshed from a clean reviewed
 checkout through the canonical exporter. The three explicit additions are the
 tool-evidence selector, installer evidence fixture and composite action that
@@ -171,14 +184,54 @@ The local release adapter and fixture entry points now anchor physical paths
 without consuming CDPATH output or trimming trailing newlines. A read-only
 version request reproduced exit 127 before the correction; metadata fixtures
 exercise both relative and absolute entry points in a newline-ending checkout.
-The reviewed LOC reporter recognizes dotted snapshot names. The compatible
-pending heading is 0.2.14; package/lock versions remain 0.2.13. Arithmetic,
+The reviewed LOC reporter recognizes dotted snapshot names. The maintainer
+finalized 0.2.14; package/lock versions are 0.2.14. Arithmetic,
 dependency/tool pins and consumer attribution/storage contracts are unchanged.
 [The adoption record](../evidence/adoption-0214.md) binds focused evidence;
 [#33](https://github.com/dragginzgame/ic-metrics/issues/33) owns committed native
 acceptance. Upstream's exact 0.1.27 Linux workflow fails its compact-evidence
 verifier's stale log comparison; the prepared sibling correction in
 [#66](https://github.com/dragginzgame/shared-tooling/issues/66) is not adopted.
+
+## Prepared 0.2.15 tooling
+
+The current 75-file snapshot selects reviewed committed Shared Tooling
+`db039347d2372b877c1c46dcdd2b5c3aa9412009`, still version 0.1.27, through the
+canonical exporter from a clean detached checkout. Relative consumer and IC pin
+operands now resolve physically without CDPATH output or trimmed directory bytes.
+The installer fixtures declare their evidence companions; the existing explicit
+selection is complete, so no selected path is added or removed. The baseline,
+release runner, pin selections and consumer native collector remain unchanged.
+
+The compatible pending changelog is 0.2.15; package/lock versions stay 0.2.14.
+[The adoption record](../evidence/adoption-0215.md) binds focused checks;
+installer and native-evidence fixtures pass on Linux Bash 5.2 and 3.2.57, as do
+offline tool, snapshot/pin, formatting, shell/workflow and documentation checks.
+Incomplete fixture exports refuse before creating consumer files; repeat refresh
+verifies all 75 digests and modes.
+[#34](https://github.com/dragginzgame/ic-metrics/issues/34) owns this batch's
+future committed native acceptance separately from #33. The corrected upstream
+[workflow](https://github.com/dragginzgame/shared-tooling/actions/runs/37787910279)
+now passes Linux, Intel and Apple Silicon, including full/compact evidence
+verification. This newer outcome completes #31's remaining upstream requirement.
+Its workflow is not imported into the consumer.
+
+The same compatible draft lowers the library MSRV from Rust 1.88 to 1.85.
+Workspace inheritance, the Make default and CI minimum compiler agree; edition
+2024 and the Rust 1.99 development toolchain remain unchanged. Actual Linux
+Rust 1.85 native/Wasm checks, six selected unit tests, three public doctests and
+warning-denied Wasm documentation pass. Development host/Wasm Clippy passes.
+[The qualification record](../evidence/msrv-0215.md) binds compiler identity,
+commands and unchanged arithmetic/lock bytes for
+[#35](https://github.com/dragginzgame/ic-metrics/issues/35). This is local minimum
+compiler qualification; committed hosted qualification of the complete pending
+batch remains separate. Published 0.2.14 still declares Rust 1.88.
+
+The release-test split and CI-budget changes remain dirty upstream source and
+are not adopted. The committed installer active-link byte defect remains in
+[Shared Tooling #75](https://github.com/dragginzgame/shared-tooling/issues/75);
+this snapshot does not fix it. No arithmetic or downstream ownership contract
+changes, sibling edits, commits or release effects are part of preparation.
 
 ## Downstream boundaries
 

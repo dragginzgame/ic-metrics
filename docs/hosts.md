@@ -136,7 +136,7 @@ earlier Linux preparation or tagged host results.
   fixtures; separate IC setup verifies all six local executables. New hosted
   results must qualify this consumer wiring. `make cloc` reports this workspace;
   `make cloc-tooling` inventories sibling tooling without running their commands.
-- rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.88.0 for MSRV checks.
+- rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.85.0 for MSRV checks.
 - Install the `wasm32-unknown-unknown` target for each checked toolchain.
 - Git, GNU Make (`make`), Bash 3.2 or newer, and standard Unix utilities.
 - curl, Perl and tar/gzip/xz for explicit local setup; pinned ripgrep and cloc
@@ -157,6 +157,10 @@ Run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
 `make msrv` checks the declared floor on host and Wasm. Select
 named tests relevant to the change rather than running the full suite by default.
+The pending 0.2.15 batch qualifies Rust 1.85 for native/Wasm compilation,
+selected unit tests and public doctests on Linux while keeping Rust 1.99 as the
+development compiler. [The minimum-version record](evidence/msrv-0215.md) binds
+that local evidence; published 0.2.14's declared minimum remains Rust 1.88.
 Published 0.2.0 source `8657c35e441a0f2e6add7f784892e85c9b5e1117` passed
 MSRV and all three native jobs in
 [CI run 37461297392](https://github.com/dragginzgame/ic-metrics/actions/runs/37461297392).

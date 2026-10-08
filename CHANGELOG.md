@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.15]
+
+### Fixed
+
+- Resolve relative tool-setup consumer and IC pin paths correctly with inherited
+  `CDPATH`, preserving literal directory names
+  ([#34](https://github.com/dragginzgame/ic-metrics/issues/34),
+  [Shared Tooling #67](https://github.com/dragginzgame/shared-tooling/issues/67)).
+- Adopt explicit installer-test companion declarations so incomplete tooling
+  snapshots are refused before replacement
+  ([Shared Tooling #73](https://github.com/dragginzgame/shared-tooling/issues/73)).
+
+### Changed
+
+- Lower the minimum supported Rust version from 1.88 to 1.85 while retaining
+  edition 2024 and the existing arithmetic APIs
+  ([#35](https://github.com/dragginzgame/ic-metrics/issues/35)).
+
 ## [0.2.14] - 2026-10-08
 
 ### Fixed
