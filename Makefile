@@ -77,6 +77,7 @@ help:
 	@echo "CI evidence fixture: ci-evidence-check (substitute Make effects, no hosted run)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Wasm evidence tool: wasm-inspect-check; separate host minimum: wasm-inspect-msrv"
+	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
 	@echo "Full gates (explicit request or configured CI): test, ci"
 
 publish:
@@ -132,7 +133,7 @@ docs-check:
 check-doc-links:
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
-		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md
+		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md tasks/*.md
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
 		crates/ic-metrics/src/application.md crates/ic-metrics-wasm-inspect/README.md
 
@@ -168,6 +169,7 @@ pin-tools-check:
 release-tools-check:
 	bash scripts/ci/test-format-tools.sh
 	bash scripts/ci/test-release-runner.sh
+	bash scripts/ci/test-release-tracking.sh
 	bash scripts/release/test-standard-release.sh
 	bash scripts/release/test-metadata.sh
 	bash scripts/release/test-release-admission.sh

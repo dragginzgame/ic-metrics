@@ -61,6 +61,7 @@ jobs:
             scripts/ci/test-cloc-tooling.sh scripts/dev/cloc.sh scripts/dev/cloc-tooling.pl \
             scripts/distribution/refresh-consumer.sh scripts/ci/run-validation-targets.sh \
             scripts/ci/run-release.sh scripts/ci/release-pr.sh scripts/ci/test-release-runner.sh \
+            scripts/ci/test-release-tracking.sh \
             scripts/ci/finalize-release-changelog.awk \
             'scripts/release/*.sh' scripts/dev/test-format-hook.sh \
             scripts/ci/check-release-commands.sh scripts/ci/check-documentation-links.pl \

@@ -26,7 +26,8 @@ selected_commit="$source_commit"
 source_objects="$(git -C "$root" rev-parse --git-path objects)"
 case "$source_objects" in /*) ;; *) source_objects="$root/$source_objects" ;; esac
 mkdir -p "$fixture/bin" "$fixture/templates"
-git -C "$root" show "$selected_commit:Cargo.toml" > "$fixture/Cargo.toml"
+git -C "$root" archive --format=tar "$selected_commit" Cargo.toml crates |
+    tar -xf - -C "$fixture"
 selected_version="$(cd "$fixture" && bash "$root/scripts/release/metadata.sh" version)"
 selected_date="$(git -C "$root" show "$selected_commit:CHANGELOG.md" | \
     awk -v heading="## [$selected_version] - " 'index($0, heading) == 1 { print $4; count++ } END { if (count != 1) exit 1 }')"
@@ -39,7 +40,7 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 set -euo pipefail
 case "${ADMISSION_FAIL_GIT:-}:$1" in
-    type:cat-file|export:show)
+    type:cat-file|export:archive)
         "$ADMISSION_REAL_GIT" "$@"
         exit 43 ;;
     *) exec "$ADMISSION_REAL_GIT" "$@" ;;

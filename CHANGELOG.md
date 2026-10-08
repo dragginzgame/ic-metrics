@@ -10,6 +10,9 @@
 
 ### Fixed
 
+- Validate complete committed workspaces during release checks, including the
+  private host package, instead of failing on missing member manifests
+  ([#36](https://github.com/dragginzgame/ic-metrics/issues/36)).
 - Resolve relative tool-setup consumer and IC pin paths correctly with inherited
   `CDPATH`, preserving literal directory names
   ([#34](https://github.com/dragginzgame/ic-metrics/issues/34),
@@ -17,12 +20,19 @@
 - Adopt explicit installer-test companion declarations so incomplete tooling
   snapshots are refused before replacement
   ([Shared Tooling #73](https://github.com/dragginzgame/shared-tooling/issues/73)).
+- Reject malformed active tool links before execution or downloads, preserving
+  literal link targets ([Shared Tooling #75](https://github.com/dragginzgame/shared-tooling/issues/75),
+  [#34](https://github.com/dragginzgame/ic-metrics/issues/34)).
 
 ### Changed
 
 - Lower the minimum supported Rust version from 1.88 to 1.85 while retaining
   edition 2024 and the existing arithmetic APIs
   ([#35](https://github.com/dragginzgame/ic-metrics/issues/35)).
+- Adopt Shared Tooling 0.1.28 with separate release simulation and real-Git
+  tracking fixtures, retaining both in the native gate
+  ([Shared Tooling #70](https://github.com/dragginzgame/shared-tooling/issues/70),
+  [#34](https://github.com/dragginzgame/ic-metrics/issues/34)).
 
 ## [0.2.14] - 2026-10-08
 

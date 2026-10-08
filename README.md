@@ -105,7 +105,7 @@ toolchain is Rust 1.99.0 and the arithmetic MSRV is 1.85.0. Install `wasm32-unkn
 for Wasm checks. `make help` lists focused commands; select named tests during
 implementation. Full `make ci` requires an explicit request outside configured CI.
 
-The private [Wasm evidence inspector](crates/ic-metrics-wasm-inspect/README.md)
+The private [Wasm evidence inspector](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics-wasm-inspect/README.md)
 uses the IC Host libraries to inspect explicitly supplied Wasms with caller-selected
 bounds. It needs Rust 1.88 and reports raw/encoded bytes and structural counts,
 without executing a canister. Bare Cargo commands select the arithmetic package;
@@ -130,6 +130,9 @@ contracts in scratch repositories without creating commits.
 See [agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md),
 [host support](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md) and
 [the current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md).
+The reviewed [maintenance task catalog](https://github.com/dragginzgame/ic-metrics/blob/main/tasks/README.md) supplies repeatable
+inspection procedures. Its optional coordinator is inactive until explicitly
+enabled; snapshot adoption starts no schedule or background agent.
 Reviewed shared tooling is vendored;
 normal checks and release scripts need no Shared Tooling sibling checkout.
 

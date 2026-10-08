@@ -11,11 +11,14 @@ Latest finalized source is 0.2.14
 Cargo workspace, package and lock versions are 0.2.14. The registry index reports
 non-yanked 0.2.14 with no dependencies/features, Rust 1.88 and checksum
 `0352d28c75d11f7350184586716aa10b415b6a3da8427186e1768a621546a290`.
-This index observation does not verify its archive payload. Its exact
+The checksum-verified cached registry archive matches the tag's maintained
+package files and embedded identity. Its exact
 [CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37788551242)
-passes Linux native and MSRV; macOS jobs remain queued at inspection.
-[#33](https://github.com/dragginzgame/ic-metrics/issues/33) retains its native
-and downloaded-receipt acceptance. The separate pending 0.2.15 adoption below
+passes Linux native, both macOS hosts and MSRV. All three downloaded native
+archives verify source/run/host identities, payload/source hashes and nine
+successful outcomes. [The release record](../evidence/release-0214.md) completes
+[#33](https://github.com/dragginzgame/ic-metrics/issues/33)'s native and receipt
+acceptance. The separate pending 0.2.15 adoption below
 does not relabel this released source's evidence.
 
 Previously fully verified published 0.2.13 source is `4091366bcd97ddf4f31d5993c954f6f4a269bc63`.
@@ -195,7 +198,7 @@ verifier's stale log comparison; the prepared sibling correction in
 
 ## Prepared 0.2.15 tooling
 
-The current 75-file snapshot selects reviewed committed Shared Tooling
+The earlier 75-file preparation selected reviewed committed Shared Tooling
 `db039347d2372b877c1c46dcdd2b5c3aa9412009`, still version 0.1.27, through the
 canonical exporter from a clean detached checkout. Relative consumer and IC pin
 operands now resolve physically without CDPATH output or trimmed directory bytes.
@@ -237,16 +240,29 @@ checks and new structural facts about the unchanged historical replay Wasms.
 [#36](https://github.com/dragginzgame/ic-metrics/issues/36) retains future committed
 native acceptance. No downstream arithmetic contract changes require caller edits.
 
-A read-only recheck found committed Shared Tooling 0.1.28
-`1872ed2c20f6c70689bb2249050b1d673c60bfa0`. It fixes the active-link byte defect
-in [Shared Tooling #75](https://github.com/dragginzgame/shared-tooling/issues/75),
-splits release simulation/tracking fixtures, adjusts CI budgets, documents separate
-package MSRVs and adds an opt-in maintenance catalog. Its native workflow passes
-Linux and lint/security; both macOS jobs remain queued at inspection. The current consumer snapshot remains db039; these new
-source-owned changes are reviewed, not distributed into this checkout. The
-sibling also has uncommitted policy edits restricting standing issue permission
-to `dragginzgame/*`; those edits are separate from the committed revision. No
-sibling files, schedules, commits or release effects are changed by this review.
+The maintainer's later release validation exposed an incomplete admission fixture:
+its initial version probe copied only the root manifest after HEAD acquired a
+second workspace member. The same root-only export could break late selected-commit
+checks. Both paths now export the selected commit's crate tree with its metadata
+before Cargo validates the workspace; they do not resolve a newer HEAD graph.
+[The regression record](../evidence/release-admission-0215.md) binds the reproduced
+failure and passing focused release-tool checks, including Bash 3.2 producer-failure
+and retention coverage. The original release failure logs remain intact. Full
+release validation, package versions and unrelated dirty lock changes are preserved.
+
+The issue-repair continuation now adopts committed Shared Tooling 0.1.28
+`1872ed2c20f6c70689bb2249050b1d673c60bfa0` through the canonical exporter from a
+clean detached source. Its 90-file selection fixes the active-link byte defect in
+[Shared Tooling #75](https://github.com/dragginzgame/shared-tooling/issues/75),
+splits release simulation/tracking fixtures while keeping both in the consumer
+gate, documents separate package MSRVs and includes the maintenance catalog and
+inactive coordinator. The preceding db039 preparation and its original evidence
+remain historical; [the new adoption record](../evidence/adoption-0215-028.md)
+binds this source and focused checks separately. #34 retains future exact committed
+consumer acceptance; #36 still owns the inspector's native qualification. The
+public remote remains released 0.2.14, so local commits have no matching CI yet.
+Newer uncommitted upstream policy/dashboard/release-source work is excluded.
+No sibling files, schedules, commits or release effects are changed by preparation.
 
 ## Downstream boundaries
 
@@ -270,12 +286,18 @@ Rust/MSRV/static but both native macOS jobs fail the retained release-lock looku
 The later public 0.267.2 source `4d137f6078146574ad76ae28fbef1250608ffc61`
 now commits Metrics 0.2.12 and the explicit TMPDIR-rooted snapshot template.
 Its [exact CI](https://github.com/dragginzgame/icydb/actions/runs/37779266779)
-passes static/MSRV/Wasm-size at inspection, while native macOS remains queued.
+passes static/MSRV/Wasm-size; its completed native macOS jobs now fail tool setup.
 All four Rust lanes stop during tool setup: the offline PocketIC policy check
 needs the locked workspace cache, but the explicit fetch runs afterward.
+The actual Apple Silicon setup log likewise rejects uncached `candid` before
+Metrics checks, through `install-dev`'s offline PocketIC alignment policy.
 The owning setup-order correction is reported in
 [IcyDB #302](https://github.com/dragginzgame/icydb/issues/302); matching native
 helper acceptance remains in [#309](https://github.com/dragginzgame/icydb/issues/309).
+The latest owning #302 comment records a local retirement of the extra product
+PocketIC equality gate in favor of IC Testkit admission. Its focused checks pass,
+but the owner explicitly retains the same failed public CI and a separate Testkit
+startup restriction; that dirty correction does not complete #298's native proof.
 The successful
 scheduled SQL evidence workflow is a separate gate, not Metrics native closure.
 Canic's newer source is now public as 0.110.53
@@ -288,6 +310,13 @@ actual held-HTTP metrics interleaving case does not execute. The ordinary lane
 also rejects a finalized changelog without a pending draft. Owning corrections
 remain in [Canic #450](https://github.com/dragginzgame/canic/issues/450);
 passing host cases do not close the missing native/IC acceptance.
+The later Canic [CI 37784481281](https://github.com/dragginzgame/canic/actions/runs/37784481281)
+selects source `b90cd3fc501aff682e32bbc685c4a91c932ff821` and registry Metrics
+0.2.12. Its preflight rejects duplicate `ic-certification` in the deployed
+`delegation_root_stub` and `canister_user_shard` closures; the retained lock has
+3.2.0 and 4.0.0. All later native/MSRV/ordinary/PocketIC lanes are skipped.
+[Canic #448](https://github.com/dragginzgame/canic/issues/448) owns that gate;
+the older passing perf cases are not qualification of this newer graph.
 Backup 0.6.0 and Blob
 0.18.0 public main match the inspected commits; their later graph's native/runtime
 outcomes were not requalified in this inventory. Toko has no matching hosted

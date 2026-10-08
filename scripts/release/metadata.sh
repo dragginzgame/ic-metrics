@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Consumer adapter. Dependencies: Cargo/cargo-edit/cargo-sort, jq, yq, Git, awk and Unix utilities.
+# Consumer adapter. Dependencies: Cargo/cargo-edit/cargo-sort, jq, yq, Git, tar, awk and Unix utilities.
 operation="${1:-}"
 [[ $# -eq 1 ]] || exit 2
 if [[ "${RELEASE_DELIVERY-direct}" != direct ]]; then
@@ -121,9 +121,10 @@ case "$operation" in
                 exit "$status"
             }
             trap cleanup_committed_metadata EXIT
-            for path in Cargo.toml Cargo.lock CHANGELOG.md; do
-                git show "$RELEASE_COMMIT:$path" > "$metadata_root/$path"
-            done
+            # Cargo's manifest validator needs the selected workspace members
+            # and targets. Export their committed tree, never newer HEAD files.
+            git archive --format=tar "$RELEASE_COMMIT" Cargo.toml Cargo.lock CHANGELOG.md crates |
+                tar -xf - -C "$metadata_root"
         fi
         current_version="$(bash "$reader" "$metadata_root/Cargo.toml")"
         [[ "$current_version" == "${RELEASE_VERSION:?}" ]]
