@@ -55,9 +55,9 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.10 is available in the registry; the
-[release record](evidence/release-0210.md) binds its source, archive and complete
-native matrix separately from earlier releases. Its tooling changes preserve
+Release 0.2.11 is available in the registry; the
+[release record](evidence/release-0211.md) binds its source, archive and observed
+native outcomes separately from earlier releases. Its tooling changes preserve
 the arithmetic-only contract.
 The six inspected callers select registry arithmetic-only 0.2 requirements.
 The [current handoff](status/current.md) separates their committed and working-tree

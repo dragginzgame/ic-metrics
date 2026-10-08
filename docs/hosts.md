@@ -250,11 +250,13 @@ Arithmetic and supported hosts remain unchanged.
 The upstream's real Prettier and failure-upload qualification does not impose
 Node/npm or another hosted failure-injection gate on this arithmetic library.
 
-Pending 0.2.11 adopts Shared Tooling 0.1.23's release-integrity corrections.
+Released 0.2.11 adopts Shared Tooling 0.1.23's release-integrity corrections.
 [Its adoption record](evidence/adoption-0211.md) binds passing focused Linux
 Bash 5/3.2 release fixtures and static checks to the selected bytes. Upstream
-0.1.23 passes all native hosts; this uncommitted consumer batch still needs
-source-matching native CI under [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
+0.1.23 passes all native hosts. The subsequent
+[consumer release observation](evidence/release-0211.md) binds the complete
+Linux, Intel, Apple Silicon and MSRV matrix and three verified native receipts,
+finishing [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
 
 Prepare tools explicitly before local validation:
 
@@ -283,7 +285,8 @@ Native CI also puts ordinary fixture TMPDIR scratch under
 index and configuration evidence survive the job. Success cleanup stays
 invocation-owned. Bash 3.2 execution on Linux is shell-portability evidence;
 supported native macOS qualification still requires the owning CI jobs.
-`make ci-evidence-check` runs the consumer workflow's actual shell bodies using
+`make ci-evidence-check` runs the shared evidence-archive fixture and the consumer
+workflow's actual shell bodies using
 substitute Make effects, proving source-first capture and setup failure/archive
 IO under Linux Bash 5.2/3.2. It does not install tools, compile product Rust or
 execute hosted CI. Native collection follows successful checkout even when setup
@@ -292,6 +295,13 @@ archive. Failed tool candidates are inside `tool-candidates.tar.gz` in that same
 archive, replacing the separate direct candidate upload. Committed qualification
 is recorded in [release-029.md](evidence/release-029.md) and tracked in
 [#25](https://github.com/dragginzgame/ic-metrics/issues/25).
+Prepared 0.2.12 uses the shared archiver for tool candidates, preserving literal
+names, modes and links while excluding candidate Git metadata. The outer archive
+retains failed release intent/index state. Partial writes and occupied candidate
+archives preserve inputs and recorded setup failure outcomes. The
+[preparation record](evidence/adoption-0212.md) binds passing focused Bash 5.2/3.2
+checks; this changed collector still needs its own committed native/download
+acceptance in [#30](https://github.com/dragginzgame/ic-metrics/issues/30).
 Native uploads contain `native-ci.tar.gz` and its checksum; unpack the tarball
 to inspect the complete evidence tree, including filenames rejected by direct
 artifact uploads. `make format-tools-check` verifies the reviewed cargo-sort pin

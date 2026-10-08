@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.12]
+
+### Changed
+
+- Adopt Shared Tooling 0.1.25 to refresh matching release tracking refs safely,
+  include `bin/` and unborn repositories in tooling LOC reports, and check
+  declared snapshot companions ([#31](https://github.com/dragginzgame/ic-metrics/issues/31),
+  [Shared Tooling #62](https://github.com/dragginzgame/shared-tooling/issues/62)).
+- Reuse the shared archiver for failed tool candidates while preserving Git
+  recovery state in the outer native evidence archive
+  ([#30](https://github.com/dragginzgame/ic-metrics/issues/30)).
+
 ## [0.2.11] - 2026-10-08
 
 ### Fixed

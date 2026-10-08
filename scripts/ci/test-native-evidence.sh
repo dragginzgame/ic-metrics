@@ -57,13 +57,20 @@ if [[ "$*" == "$FIXTURE_FAILURE" ]]; then
     if [[ -n "$candidate" && "$FIXTURE_ADMISSION" != yes ]]; then
         mkdir -p "$candidate"
         printf 'retained candidate\n' > "$candidate/failure:payload"
+        printf 'literal name\n' > "$candidate/"$'trailing\n'
+        chmod 640 "$candidate/failure:payload"
+        printf '#!/bin/sh\nexit 0\n' > "$candidate/executable"
+        chmod 755 "$candidate/executable"
+        ln -s failure:payload "$candidate/link"
+        mkdir -p "$candidate/.git"
+        printf 'candidate metadata excluded\n' > "$candidate/.git/config"
     fi
     exit 43
 fi
 MAKE
 chmod +x "$fixture/bin/make"
 real_bash="$(command -v bash)"
-for scenario in success rust-install rust-check rust-admission host-install host-check ic-install ic-check native; do (
+for scenario in success rust-install rust-check rust-admission host-install host-check ic-install ic-check native rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -76,7 +83,7 @@ for scenario in success rust-install rust-check rust-admission host-install host
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
     export RUST_OUTCOME=skipped HOST_TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped PROVISION_OUTCOME=skipped NATIVE_OUTCOME=skipped
     case "$scenario" in
-        rust-install|rust-admission) FIXTURE_FAILURE=install-rust-tools ;;
+        rust-install|rust-admission|rust-archive-write|rust-archive-conflict) FIXTURE_FAILURE=install-rust-tools ;;
         rust-check) FIXTURE_FAILURE=rust-tools-check ;;
         host-install) FIXTURE_FAILURE=install-host-tools ;;
         host-check) FIXTURE_FAILURE=host-tools-check ;;
@@ -104,6 +111,33 @@ for scenario in success rust-install rust-check rust-admission host-install host
     done
     printf '%s\n' "$status" > status.txt
     if [[ "$scenario" == success ]]; then [[ "$status" == 0 ]]; else [[ "$status" == 43 ]]; fi
+    # The outer archive owns full failed-release evidence, including Git state.
+    mkdir -p target/evidence/native-ci/scratch/release/.git/release-state
+    printf 'retained index\n' > target/evidence/native-ci/scratch/release/.git/index
+    printf 'retained intent\n' > target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan
+    if [[ "$scenario" == rust-archive-write || "$scenario" == rust-archive-conflict ]]; then
+        if [[ "$scenario" == rust-archive-write ]]; then
+            mkdir archive-bin
+            printf '#!%s\nprintf "partial candidate archive"\nexit 23\n' "$real_bash" > archive-bin/tar
+            chmod +x archive-bin/tar
+            export PATH="$worktree/archive-bin:$PATH"
+            expected_archive='partial candidate archive'
+        else
+            expected_archive='occupied candidate archive'
+            printf '%s' "$expected_archive" > target/evidence/native-ci/tool-candidates.tar.gz
+        fi
+        if "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1; then
+            echo 'candidate archive failure was accepted' >&2
+            exit 1
+        fi
+        [[ "$(cat target/evidence/native-ci/tool-candidates.tar.gz)" == "$expected_archive" ]]
+        [[ ! -e target/evidence/native-ci.tar.gz && "$(cat status.txt)" == 43 ]]
+        [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]]
+        [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]]
+        grep -Fx 'rust=failure' target/evidence/native-ci/outcome.txt > /dev/null
+        grep -Fx 'native=skipped' target/evidence/native-ci/outcome.txt > /dev/null
+        exit 0
+    fi
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1
     shasum -a 256 -c target/evidence/native-ci.tar.gz.sha256 > archive-check.log
     mkdir -p unpacked/target/evidence/native-ci
@@ -111,6 +145,10 @@ for scenario in success rust-install rust-check rust-admission host-install host
     (cd unpacked && shasum -a 256 -c target/evidence/native-ci/artifact-sha256.txt) > content-check.log
     for file in inputs.txt source-commit.txt source-files.txt source-sha256.txt outcome.txt; do
         cmp "target/evidence/native-ci/$file" "unpacked/target/evidence/native-ci/$file"
+    done
+    for file in index release-state/fixture.plan; do
+        cmp "target/evidence/native-ci/scratch/release/.git/$file" \
+            "unpacked/target/evidence/native-ci/scratch/release/.git/$file"
     done
     expected="$(printf 'native=%s\ninputs=%s\nprovision=%s\nhost=%s\ntoolchain=%s\nrust=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s' \
         "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
@@ -137,6 +175,18 @@ for scenario in success rust-install rust-check rust-admission host-install host
             for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust; do
                 if [[ -d "$candidate" ]]; then
                     cmp "$candidate/failure:payload" "recovered-candidates/$candidate/failure:payload"
+                    cmp "$candidate/"$'trailing\n' "recovered-candidates/$candidate/"$'trailing\n'
+                    cmp "$candidate/executable" "recovered-candidates/$candidate/executable"
+                    [[ -x "recovered-candidates/$candidate/executable" ]]
+                    [[ -L "recovered-candidates/$candidate/link" ]]
+                    [[ "$(readlink "recovered-candidates/$candidate/link")" == failure:payload ]]
+                    [[ ! -e "recovered-candidates/$candidate/.git" ]]
+                    # macOS and Linux expose permissions through different stat syntax.
+                    if [[ "$(uname -s)" == Darwin ]]; then
+                        [[ "$(stat -f %Lp "recovered-candidates/$candidate/failure:payload")" == 640 ]]
+                    else
+                        [[ "$(stat -c %a "recovered-candidates/$candidate/failure:payload")" == 640 ]]
+                    fi
                 fi
             done
         fi

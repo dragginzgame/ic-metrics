@@ -52,6 +52,7 @@ jobs:
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/dev/install-rust-tools.sh scripts/ci/test-rust-tools.sh \
             scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh \
+            scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
             scripts/ci/test-tool-commands.sh scripts/ci/test-cloc.sh \
@@ -166,10 +167,10 @@ jobs:
           if [[ "$RUST_OUTCOME" == failure || "$HOST_TOOLS_OUTCOME" == failure || "$PROVISION_OUTCOME" == failure ]]; then
             candidates=()
             for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust; do
-              if [[ -d "$candidate" ]]; then candidates+=("$candidate"); fi
+              if [[ -d "$candidate" ]]; then candidates+=("$PWD" "$candidate"); fi
             done
             if [[ ${#candidates[@]} != 0 ]]; then
-              tar -czf target/evidence/native-ci/tool-candidates.tar.gz "${candidates[@]}"
+              bash scripts/ci/archive-evidence.sh target/evidence/native-ci/tool-candidates.tar.gz "${candidates[@]}"
             fi
           fi
           for file in target/evidence/native-ci/*; do
@@ -179,6 +180,8 @@ jobs:
           done > target/evidence/native-ci/artifact-sha256.txt
           # Archive scratch names verbatim: upload-artifact rejects colons and
           # other valid fixture filenames when uploading an unpacked tree.
+          # Retained release fixtures include Git intent/index state. Keep it:
+          # the shared tool-candidate archiver deliberately excludes Git metadata.
           tar -czf target/evidence/native-ci.tar.gz -C target/evidence/native-ci .
           shasum -a 256 target/evidence/native-ci.tar.gz > target/evidence/native-ci.tar.gz.sha256
       # actions/upload-artifact v7
