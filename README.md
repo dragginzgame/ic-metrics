@@ -61,8 +61,8 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-Verified 0.2.11 publication and its observed native qualification are bound in the
-[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0211.md).
+Verified 0.2.12 publication is bound in the
+[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0212.md).
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -166,14 +166,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.11`](https://crates.io/crates/ic-metrics/0.2.11)
-is published on crates.io with tag `v0.2.11`. Declare the published release
+tooling releases. [`ic-metrics 0.2.12`](https://crates.io/crates/ic-metrics/0.2.12)
+is published on crates.io with tag `v0.2.12`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.11"
+ic-metrics = "0.2.12"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using
@@ -211,11 +211,11 @@ The 0.2.11 runner also rechecks the index, working payload and exact tag
 after the final consumer check. Completed direct recovery confirms local and
 remote tag identity and branch ancestry before reporting success; unavailable
 observations or conflicts stop without another push.
-The prepared Shared Tooling 0.1.25 snapshot also refreshes the matching local
+The released Shared Tooling 0.1.25 snapshot also refreshes the matching local
 tracking ref from confirmed delivery, checking its type under Git's update lock.
 Unrelated, newer or symbolic refs are preserved; an optional refresh failure
 reports a fetch remedy without repeating delivery. Native qualification of this
-consumer batch remains separate from released 0.2.11.
+consumer batch remains pending in the release record.
 
 For a subsequent committed package release, the maintainer can run:
 

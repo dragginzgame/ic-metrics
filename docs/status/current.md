@@ -6,18 +6,20 @@ See [the extraction contract](../extraction.md).
 
 ## Released source
 
-Verified published 0.2.11 source is `69b110b8fbefdac4773eac7631796f9dcb3f41a0`.
+Verified published 0.2.12 source is `d16aa0aeb0e0f4fcbbc6962ba3f86c7348ecff88`.
 Its non-yanked registry archive has SHA-256
-`dc75470aa6335a0b1f3dbefd30229e0ac10713f21193f21af3c03987afdfa0c9`,
+`7bab1fc806066a00dfd5984bbe6dcb74e836a51e8e4fb2f29026739216c5fa56`,
 with no dependencies or features. The checksum, embedded Git identity, maintained
 Rust source, packaged guide, original manifest, README, license and lock verify.
-The [release record](../evidence/release-0211.md) binds passing Linux native,
-macOS 15 Intel, macOS 15 Apple Silicon and Linux MSRV gates. All three completed
-native archives verify exact source and artifact hashes.
-This finishes [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
+The [release record](../evidence/release-0212.md) binds passing MSRV and the
+Linux/MSRV pass and queued macOS native matrix. The completed Linux archive
+verifies source, payload and outcome receipts; macOS collector round trips
+remain pending in #30/#31. Publication is not complete native qualification.
+The [0.2.11 record](../evidence/release-0211.md) retains its complete three-host
+matrix and verified receipts, finishing [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
 Earlier complete matrices retain their own scope in
 [the 0.2.10 record](../evidence/release-0210.md) and historical records.
-Cargo workspace, package and lock versions remain 0.2.11.
+Cargo workspace, package and lock versions remain 0.2.12.
 
 Histograms are available from 0.2.4; checked means are available from 0.2.6.
 `checked_mean(samples, total)` and `MeasurementSummary::mean()` return `None`
@@ -85,9 +87,9 @@ hosts; the release record above binds this consumer's complete source-matching
 native matrix. Arithmetic, consumer ownership and dependency selection
 are unchanged by the release-tooling adoption.
 
-## Prepared 0.2.12 tooling
+## Released 0.2.12 tooling
 
-The compatible pending 0.2.12 batch adopts committed Shared Tooling 0.1.25
+The compatible released 0.2.12 batch adopts committed Shared Tooling 0.1.25
 `672ab4b8af50c75ed21a359ca5968682de83be94` through the canonical exporter
 from a clean detached checkout. The verified snapshot explicitly adds the
 archiver and its fixture for 72 selected files. The runner prepares a Git ref
@@ -115,11 +117,35 @@ native pass does not qualify the corrected runner. Matching upstream
 [run 37767868576](https://github.com/dragginzgame/shared-tooling/actions/runs/37767868576)
 was queued at initial preparation. This local batch does not establish native
 consumer qualification or live interrupted release execution. Arithmetic,
-package/workspace/lock version 0.2.11 and dependency pins remain unchanged.
+package/workspace/lock version 0.2.12 and dependency pins remain unchanged by
+post-publication inspection.
 Focused release-tooling, native archive/setup and LOC fixtures pass under Linux
 Bash 5.2 and 3.2.57. ShellCheck, actionlint, documentation, pins, snapshot and
 formatting checks pass; finalized changelog history is preserved byte-for-byte.
-Upstream Linux and lint now pass; its macOS jobs were still queued at inspection.
+The original corrected-upstream run was later cancelled as a newer snapshot
+landed; its Linux pass does not supply missing macOS evidence. The subsequent
+0.1.26 source preserves identical runner bytes and now passes Linux, Apple Silicon
+and lint, with Intel queued at inspection. Consumer qualification remains bound
+to the exact 0.2.12 source in the release record.
+
+## Prepared 0.2.13 tooling
+
+The current 72-file snapshot selects committed Shared Tooling 0.1.26
+`75a8a60f49cec11d3f6aecab5c977029c42cc549`, refreshed canonically from a clean
+detached checkout. Its exporter can advance a verified unchanged uncommitted
+snapshot using the previous manifest and exact committed source. It refuses
+consumer edits, unavailable prior provenance, staged conflicts and changed
+file/manifest identities. There is no force flag or implicit fetch; multi-file
+publication still requires selected-path editing/validation to stop.
+[The preparation record](../evidence/adoption-0213.md) binds source review and
+focused checks. The runner, archiver and baseline are unchanged. The compatible
+pending changelog is 0.2.13, while Cargo/package/lock stay at released 0.2.12.
+Upstream native CI and exact consumer qualification remain separate from this
+local refresh; the sibling's dirty release-fixture follow-up is not adopted.
+[#32](https://github.com/dragginzgame/ic-metrics/issues/32) owns this new
+distribution qualification separately from the released runner/collector batch.
+Focused distribution fixtures pass under Bash 5.2 and 3.2.57, and repeat refresh
+verifies all 72 files. Static, documentation, pins and formatting checks pass.
 
 ## Downstream boundaries
 

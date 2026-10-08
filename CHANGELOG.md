@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.13]
+
+### Fixed
+
+- Refresh an unchanged verified tooling snapshot again before committing it,
+  while preserving consumer edits and refusing staged or concurrent conflicts
+  ([#32](https://github.com/dragginzgame/ic-metrics/issues/32),
+  [Shared Tooling #64](https://github.com/dragginzgame/shared-tooling/issues/64)).
+
 ## [0.2.12] - 2026-10-08
 
 ### Changed

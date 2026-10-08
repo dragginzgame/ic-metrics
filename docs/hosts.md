@@ -295,7 +295,7 @@ archive. Failed tool candidates are inside `tool-candidates.tar.gz` in that same
 archive, replacing the separate direct candidate upload. Committed qualification
 is recorded in [release-029.md](evidence/release-029.md) and tracked in
 [#25](https://github.com/dragginzgame/ic-metrics/issues/25).
-Prepared 0.2.12 uses the shared archiver for tool candidates, preserving literal
+Released 0.2.12 uses the shared archiver for tool candidates, preserving literal
 names, modes and links while excluding candidate Git metadata. The outer archive
 retains failed release intent/index state. Partial writes and occupied candidate
 archives preserve inputs and recorded setup failure outcomes. The

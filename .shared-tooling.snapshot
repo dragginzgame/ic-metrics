@@ -1,7 +1,7 @@
 # Shared Tooling snapshot v1
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	672ab4b8af50c75ed21a359ca5968682de83be94
+revision	75a8a60f49cec11d3f6aecab5c977029c42cc549
 file	05838a36f21bb4299617ae8965687791062c94d768181f5f97676cc577382153	-	rules/contributions.md
 file	fe90530851fed47985442343664b5f5f44fde396d78a0d6f489cc1562c61592d	-	DRAGGINZGAME.md
 file	59f6cb0b47fcfa698396776bbb391737292ebf34457ad7c65803fe7b36961499	-	docs/principles/README.md
@@ -9,7 +9,7 @@ file	9315c9faffa4f36cfab496342535bf49d728ddd2111e8e127cbc44b3fac89ce7	-	docs/pri
 file	ee68649246bad21f0f28df4ea3809d8e2c7bcf1cd2a3d68e44684b855badc1c2	-	docs/principles/reviewable-changes.md
 file	7e5fd8a3c3b1dc5a829a19ad1a4933fdc17792c8e923871da1e9f36586baff41	-	docs/principles/rust-code-hygiene.md
 file	457fd38e0073c91ba470b918d4facd9faac3c5200ebd38c97e9d6b76acdaea55	-	docs/principles/simplicity-and-maintainability.md
-file	23acdc20173ca0203278eaca7300b65ef27b51eba8d51c1a4aa41cdc45d745bf	-	docs/consuming-snapshots.md
+file	17da36b641e62f6885877fa0649919b7bb7292ef9b2d46edba11b09a6e1b859b	-	docs/consuming-snapshots.md
 file	63bf27dc6d719835928c6dd0e981c64ddcc17508c1215f2686d39604be06f271	-	docs/supported-hosts.md
 file	4c981184847462ab3c01cac087e28309f8e054253fd95c7bbe56f643877aa708	x	scripts/ci/verify-file-checksum.sh
 file	b6764190803118331d7441233bcd6a3031c99c0c5219cc4a5c29dfb1a1040e41	x	scripts/ci/verify-shared-tooling-snapshot.sh
@@ -67,7 +67,7 @@ file	dd96b258b21f9e6183c44408f80d0b3656605e16714415914485016a4b4acdfb	x	scripts/
 file	bc824902b230a603f7e2a1496fd2e759bedec3749fff478de03e43aac4f7c076	x	scripts/ci/test-cloc.sh
 file	07415a245a4e9eadd3e9e858e41248f163f0c3ff32ae899d8e9dc5f24b1bb728	x	scripts/ci/test-cloc-tooling.sh
 file	94a934651d5cb0c6f77fa429df277856dbda4c1a7441b2b8563e678c416258f6	-	audits/ic-canister-applications.md
-file	a1b1c4dc452c32144e2a3d0635fe9090683e950e7fc37ad1d3ca5f77a0a0fa88	x	scripts/distribution/refresh-consumer.sh
+file	f32482a4b6eaeaeeb4aefa2d19e9f33c0ea1c7368aa8cc52db0966e221ea47d2	x	scripts/distribution/refresh-consumer.sh
 file	66f23e9de66c63c0e47456bd76dd5898b5965f2b9a831ecbb0e8e530769629d3	x	scripts/dev/install-rust-tools.sh
 file	502d20283b758ad3f72f94118af3d1c8bbb28ed06bfff57ec83b0acbcffc5806	x	scripts/ci/test-rust-tools.sh
 file	49e5c54defd9330aacf2635fd36803f3ea469ea278a2628f63dbd82458dfd5a9	-	scripts/ci/ic-tool-pins.awk
