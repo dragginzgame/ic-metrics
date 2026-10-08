@@ -53,7 +53,7 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 set -euo pipefail
 case "$*" in
-    'diff --cached --name-only -z HEAD --'|'diff --name-only -z --'|'ls-files --others --exclude-standard -z') ;;
+    'rev-parse --show-prefix'|'status --porcelain=v1 -z --untracked-files=all') ;;
     *) echo 'unexpected fixture Git operation' >&2; exit 99 ;;
 esac
 GIT

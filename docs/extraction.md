@@ -60,9 +60,9 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.14 is available in the registry; the
-[current handoff](status/current.md#released-source) binds its tag and registry
-index observation separately from incomplete native/payload qualification. The
+Release 0.2.15 is available in the registry; the
+[release record](evidence/release-0215.md) verifies its published arithmetic-only
+payload and binds observed native CI separately from remaining qualification. The
 previous 0.2.13
 [release record](evidence/release-0213.md) binds its source, archive and observed
 native outcomes separately from earlier releases. Its tooling changes preserve

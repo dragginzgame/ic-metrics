@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.16]
+
+### Fixed
+
+- Report all staged, unstaged and untracked release-source blockers before
+  validation or version preparation, using the shared source checker
+  ([Shared Tooling #74](https://github.com/dragginzgame/shared-tooling/issues/74),
+  [#37](https://github.com/dragginzgame/ic-metrics/issues/37)).
+
+### Changed
+
+- Update the private Wasm inspector's locked IC Host dependencies to 0.8.4,
+  keeping the public arithmetic crate dependency-free
+  ([#37](https://github.com/dragginzgame/ic-metrics/issues/37)).
+- Adopt current Shared Tooling rules and pinned PocketIC 16.1.0 executables
+  ([Shared Tooling #76](https://github.com/dragginzgame/shared-tooling/issues/76),
+  [#37](https://github.com/dragginzgame/ic-metrics/issues/37)).
+
 ## [0.2.15] - 2026-10-08
 
 ### Added

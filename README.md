@@ -61,8 +61,9 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-Verified 0.2.13 publication is bound in the
-[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0213.md).
+Verified 0.2.15 publication is bound in the
+[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0215.md),
+which distinguishes publication from the remaining native CI qualification.
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -175,14 +176,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.14`](https://crates.io/crates/ic-metrics/0.2.14)
-is published on crates.io with tag `v0.2.14`. Declare the published release
+tooling releases. [`ic-metrics 0.2.15`](https://crates.io/crates/ic-metrics/0.2.15)
+is published on crates.io with tag `v0.2.15`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.14"
+ic-metrics = "0.2.15"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using
@@ -214,6 +215,10 @@ reconcile an interrupted release at its saved commit. Newer committed fixes or
 a different requested increment then receive fresh preflight and full validation
 before the next release is prepared. Failed validation logs remain under the
 Git directory's `release-state/validation-failures/`; earlier attempts are retained.
+Source refusals list every staged, unstaged and untracked path outside
+`Cargo.toml`, `Cargo.lock` and `CHANGELOG.md`, before this attempt starts validation
+or version preparation. Resolve those paths through the ordinary contribution
+workflow; the checker preserves files and index bytes.
 `make release-resume VERSION=X.Y.Z` remains available for explicit selection;
 identity, payload and destination conflicts stop recovery.
 The 0.2.11 runner also rechecks the index, working payload and exact tag

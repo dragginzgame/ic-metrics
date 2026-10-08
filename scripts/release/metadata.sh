@@ -23,27 +23,16 @@ local_lock_packages() {
            (($local | map(.name) | unique | length) == ($local | length))
         then $local[].name else error("invalid workspace lock identities") end'
 }
-admit_files() (
-    local paths path admitted=true
-    paths="$(mktemp "${TMPDIR:-/tmp}/metrics-release-paths.XXXXXX")"
-    trap 'rm -f "$paths"' EXIT
-    # Staged content can differ even when working bytes have returned to HEAD.
-    git diff --cached --name-only -z HEAD -- > "$paths"
-    git diff --name-only -z -- >> "$paths"
-    git ls-files --others --exclude-standard -z >> "$paths"
-    while IFS= read -r -d '' path; do
-        case "$path" in Cargo.toml|Cargo.lock|CHANGELOG.md) ;;
-            *) printf 'uncommitted non-release path: %q\n' "$path" >&2; admitted=false; break ;;
-        esac
-    done < "$paths"
-    [[ "$admitted" == true ]]
-)
 case "$operation" in
     version) bash "$reader" Cargo.toml ;;
     preflight)
+        if ! bash "$root/scripts/ci/check-release-source.sh" \
+            --allow Cargo.toml --allow Cargo.lock --allow CHANGELOG.md; then
+            echo 'release preflight refused; this attempt has not started validation or version preparation' >&2
+            exit 1
+        fi
         current_version="$(bash "$reader" Cargo.toml)"
         [[ "$current_version" == "${RELEASE_PREVIOUS:?}" ]]
-        admit_files
         for path in Cargo.toml Cargo.lock CHANGELOG.md; do
             [[ -f "$path" && ! -L "$path" ]]
         done
@@ -139,7 +128,8 @@ case "$operation" in
         if [[ "$metadata_root" == . ]]; then
             cargo metadata --locked --offline --format-version 1 >/dev/null
         fi
-        admit_files
+        bash "$root/scripts/ci/check-release-source.sh" \
+            --allow Cargo.toml --allow Cargo.lock --allow CHANGELOG.md
         if [[ "$operation" == commit-check ]]; then
             [[ -z "${RELEASE_COMMIT:-}" ]]
             git diff --quiet -- Cargo.toml Cargo.lock CHANGELOG.md

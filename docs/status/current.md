@@ -6,20 +6,27 @@ See [the extraction contract](../extraction.md).
 
 ## Released source
 
-Latest finalized source is 0.2.14
-`dee5ecdef3d811dcda930ddcaae48abf08acc951`, matching tag `v0.2.14`.
-Cargo workspace, package and lock versions are 0.2.14. The registry index reports
-non-yanked 0.2.14 with no dependencies/features, Rust 1.88 and checksum
-`0352d28c75d11f7350184586716aa10b415b6a3da8427186e1768a621546a290`.
-The checksum-verified cached registry archive matches the tag's maintained
-package files and embedded identity. Its exact
-[CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37788551242)
-passes Linux native, both macOS hosts and MSRV. All three downloaded native
-archives verify source/run/host identities, payload/source hashes and nine
-successful outcomes. [The release record](../evidence/release-0214.md) completes
-[#33](https://github.com/dragginzgame/ic-metrics/issues/33)'s native and receipt
-acceptance. The separate pending 0.2.15 adoption below
-does not relabel this released source's evidence.
+Latest finalized source is 0.2.15
+`287251eb51412852a58cabd9de5b3c28e207e705`, matching tag `v0.2.15`.
+Cargo workspace, packages and local lock versions are 0.2.15. The official index
+reports a non-yanked, dependency-free package with Rust 1.85.0 and checksum
+`15dd6475ed0173a63cb35215032d499e239596d6f23163602688399e41002a54`.
+The newly downloaded archive verifies that digest, embedded identity and maintained
+package bytes. Its packaged lock excludes the private host graph.
+[Exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37808287051)
+passes Linux, Intel and Apple Silicon native and both package MSRV checks.
+Downloaded evidence from all three native hosts verifies source, payload, archive
+and all nine successful outcomes. [The release record](../evidence/release-0215.md)
+completes the released-source native acceptance in
+[#34](https://github.com/dragginzgame/ic-metrics/issues/34) and
+[#36](https://github.com/dragginzgame/ic-metrics/issues/36).
+
+Previously fully verified 0.2.14 source is
+`dee5ecdef3d811dcda930ddcaae48abf08acc951`.
+[Its release record](../evidence/release-0214.md) binds the complete native matrix
+and downloaded receipts, completing
+[#33](https://github.com/dragginzgame/ic-metrics/issues/33). Those results do not
+qualify the newer host graph or pending Shared Tooling adoption.
 
 Previously fully verified published 0.2.13 source is `4091366bcd97ddf4f31d5993c954f6f4a269bc63`.
 Its non-yanked registry archive has SHA-256
@@ -196,7 +203,13 @@ acceptance. Upstream's exact 0.1.27 Linux workflow fails its compact-evidence
 verifier's stale log comparison; the prepared sibling correction in
 [#66](https://github.com/dragginzgame/shared-tooling/issues/66) is not adopted.
 
-## Prepared 0.2.15 tooling
+## Released 0.2.15 tooling preparation history
+
+The following preparation observations retain their original source identities.
+The maintainer subsequently released 0.2.15 with Shared Tooling 0.1.28 and locked
+IC Host 0.8.2. Current publication and qualification are recorded above; earlier
+statements about pending versions, the public remote and dirty upstream work
+describe preparation at that time.
 
 The earlier 75-file preparation selected reviewed committed Shared Tooling
 `db039347d2372b877c1c46dcdd2b5c3aa9412009`, still version 0.1.27, through the
@@ -263,6 +276,38 @@ consumer acceptance; #36 still owns the inspector's native qualification. The
 public remote remains released 0.2.14, so local commits have no matching CI yet.
 Newer uncommitted upstream policy/dashboard/release-source work is excluded.
 No sibling files, schedules, commits or release effects are changed by preparation.
+
+## Pending 0.2.16 tooling
+
+The canonical 91-file snapshot now selects reviewed committed Shared Tooling
+`4e274a2219c0b0cc3af68ec65658b373253518fb`: 0.1.29 rules and the subsequent
+committed Cargo-assessment documentation. The consumer release adapter
+uses its canonical source checker with the same three metadata allowances,
+reporting all blockers before preparation. Native source receipts include the new
+source checker.
+Snapshot-owned PocketIC pins advance to 16.1.0. Cargo manifests and arithmetic
+source remain unchanged; existing IC executable installations are not requalified
+or silently replaced.
+
+The maintainer's current lock also selects published IC Host 0.8.4 for the private
+inspector, advancing only its two direct host packages from released 0.8.2.
+[The dependency review](../evidence/host-dependencies-0216.md) binds checksum/source
+verification, Linux checks, Rust 1.88 host and Rust 1.85 core host/Wasm qualification,
+and actual reports matching the original frozen Wasm TSVs byte-for-byte. The
+new lock bytes are preserved. No new lock/process API is needed by this inspector.
+The upstream 0.8.4 Linux/MSRV jobs pass; both native macOS lanes remain queued at
+review. #37's future exact consumer matrix must qualify this newer graph together
+with the tooling batch; released 0.2.15 receipts retain IC Host 0.8.2.
+
+The pending changelog is 0.2.16 because this complete batch adds compatible
+maintained tooling without changing the arithmetic or consumer contracts.
+[The adoption record](../evidence/adoption-0216.md) binds focused Linux Bash 5.2
+and genuine Bash 3.2 checks, source/index preservation, snapshots/pins and lint.
+[#37](https://github.com/dragginzgame/ic-metrics/issues/37) retains future exact
+committed native acceptance. The new upstream assessment workflow/script are
+not selected; uncommitted upstream version preparation is excluded.
+No package version change, release, commit, sibling edit or schedule
+is part of this continuation.
 
 ## Downstream boundaries
 

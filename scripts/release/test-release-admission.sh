@@ -40,7 +40,7 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 set -euo pipefail
 case "${ADMISSION_FAIL_GIT:-}:$1" in
-    type:cat-file|export:archive)
+    type:cat-file|export:archive|status:status)
         "$ADMISSION_REAL_GIT" "$@"
         exit 43 ;;
     *) exec "$ADMISSION_REAL_GIT" "$@" ;;
@@ -113,6 +113,46 @@ for scenario in unstaged staged-hidden untracked; do
     reject preflight
     [[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
 done
+
+setup preflight-all-blockers
+printf '\nHidden staged edit.\n' >> README.md
+git add -- README.md
+git show HEAD:README.md > README.md
+printf '\n# Unstaged edit.\n' >> Makefile
+untracked=$'source name\nwith newline.rs'
+printf 'Untracked input.\n' > "$untracked"
+printf '\n# Allowed lock-only work.\n' >> Cargo.lock
+cp .git/index "$fixture/index-before"
+for path in README.md Makefile "$untracked" Cargo.lock; do
+    cp "$path" "$fixture/$(printf '%s' "$path" | shasum -a 256 | cut -d ' ' -f 1)"
+done
+reject preflight
+[[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+grep -F 'staged: README.md' "$fixture/result.log" >/dev/null
+grep -F 'unstaged: Makefile' "$fixture/result.log" >/dev/null
+printf 'untracked: %q\n' "$untracked" > "$fixture/expected-path"
+grep -F -f "$fixture/expected-path" "$fixture/result.log" >/dev/null
+grep -F 'has not started validation or version preparation' "$fixture/result.log" >/dev/null
+cmp .git/index "$fixture/index-before"
+for path in README.md Makefile "$untracked" Cargo.lock; do
+    cmp "$path" "$fixture/$(printf '%s' "$path" | shasum -a 256 | cut -d ' ' -f 1)"
+done
+
+setup preflight-allowed-lock
+printf '\n# Allowed lock-only work.\n' >> Cargo.lock
+cp Cargo.lock "$fixture/lock-before"
+cp .git/index "$fixture/index-before"
+bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1
+cmp Cargo.lock "$fixture/lock-before"
+cmp .git/index "$fixture/index-before"
+
+setup preflight-failed-status
+cp .git/index "$fixture/index-before"
+export ADMISSION_FAIL_GIT=status
+reject preflight
+[[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+grep -F 'cannot inspect' "$fixture/result.log" >/dev/null
+cmp .git/index "$fixture/index-before"
 
 setup conflicting-pending-notes
 { printf '# Changelog\n\n## [0.9.9]\n\n- Conflicting draft.\n\n'; cat CHANGELOG.md; } > notes.fixture
