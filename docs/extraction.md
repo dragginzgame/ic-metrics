@@ -55,8 +55,9 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.8 is available in the registry and passes this repository's complete
-native matrix; the [release record](evidence/release-028.md) binds the source and archive.
+Release 0.2.9 is available in the registry; the
+[release record](evidence/release-029.md) binds the source, archive and complete
+native matrix separately from the earlier complete 0.2.8 matrix.
 The six inspected callers select registry arithmetic-only 0.2 requirements.
 The [current handoff](status/current.md) separates their committed and working-tree
 lock identities. IC Blob Storage's direct caller is a restoration test probe,
@@ -88,7 +89,10 @@ no hidden sibling discovery or product coupling. Extraction is adopted when the
 consumer explicitly uses the shared primitives, removes superseded arithmetic
 and passes focused checks for its own contracts. Focused local evidence and
 complete owning native release/CI qualification remain separate; see
-[#4](https://github.com/dragginzgame/ic-metrics/issues/4).
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10).
+The earlier publication/path tracker
+[#4](https://github.com/dragginzgame/ic-metrics/issues/4) is consolidated there;
+its unfinished owning qualification is retained, not declared complete.
 
 Histogram usage is investigated at the admitted-value producer in
 [IcyDB #312](https://github.com/dragginzgame/icydb/issues/312),
@@ -98,7 +102,11 @@ Histogram usage is investigated at the admitted-value producer in
 The original counter-path review found no measurement histogram to replace.
 The subsequently inspected IC Backup implementation records prepared chunk
 bytes in four fixed disjoint buckets and overflow; its canonical summary derives
-from the same accumulator. Owning qualification remains in its linked issue.
+from the same accumulator. [IC Backup #15](https://github.com/dragginzgame/ic-backup/issues/15)
+is complete at its released 0.5.2 source and native matrix; later graphs remain
+separate. [The consumer review](evidence/consumer-closeout-0210.md) also verifies
+Blob's actual restoration-metrics probe on all three native hosts. Neither result
+establishes adoption of a different application workload.
 IC Timers retains summaries without a demonstrated distribution workload.
 Counts, maxima and totals cannot reconstruct an observation distribution;
 chronological histories and domain/category buckets retain their own contracts.

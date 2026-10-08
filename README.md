@@ -61,8 +61,8 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-Verified 0.2.8 publication and complete native CI are bound in the
-[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-028.md).
+Verified 0.2.9 publication and its observed native qualification are bound in the
+[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-029.md).
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -166,14 +166,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.8`](https://crates.io/crates/ic-metrics/0.2.8)
-is published on crates.io with tag `v0.2.8`. Declare the published release
+tooling releases. [`ic-metrics 0.2.9`](https://crates.io/crates/ic-metrics/0.2.9)
+is published on crates.io with tag `v0.2.9`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.8"
+ic-metrics = "0.2.9"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using
@@ -181,15 +181,23 @@ Members inherit with `ic-metrics = { workspace = true }`. Consumers using
 published minimum in the root catalog. Either mean projection requires at least
 published 0.2.6. Published consumers
 must resolve the registry package rather than require a sibling checkout.
-[The adoption issue](https://github.com/dragginzgame/ic-metrics/issues/4)
+[The qualification issue](https://github.com/dragginzgame/ic-metrics/issues/10)
 links each consumer's integration evidence. Native qualification is recorded
 against its actual revision in
 [the host record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md).
 
-Maintainer-owned `make release-patch`, `release-minor` and `release-major` use the
+People and agents contribute through topic branches and pull requests under the
+[contribution rules](https://github.com/dragginzgame/ic-metrics/blob/main/rules/contributions.md).
+An explicit PR request includes the agent's scoped commits, branch push and PR
+creation. Ordinary fixes and continuation authorize local work. Merging and
+direct integration-branch pushes require separate authority and required checks.
+
+Explicitly requested `make release-patch`, `release-minor` and `release-major` use the
 [same reviewed workflow](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md),
 with `RELEASE_REMOTE=origin` and
-`RELEASE_BRANCH=main`. They require cargo-edit (`cargo set-version`) and
+`RELEASE_BRANCH=main` and `RELEASE_DELIVERY=direct`. This repo rejects PR release
+delivery before dispatch; adopting it requires merged-checkout adapters and their
+own qualification. They require cargo-edit (`cargo set-version`) and
 the prepared pinned Cargo tools and rustfmt, run the complete offline gate, prepare only Cargo metadata
 and release notes, commit,
 tag and atomically push. They do not publish the crate. Normal release targets

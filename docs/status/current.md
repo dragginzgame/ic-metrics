@@ -6,14 +6,18 @@ See [the extraction contract](../extraction.md).
 
 ## Released source
 
-Verified published 0.2.8 source is `0eac2b0baa9d03b8f2430a24dfe596d93f5bfc16`.
+Verified published 0.2.9 source is `ec6c25018d859acfcdf1e400bc7bbb1e19d734f0`.
 Its non-yanked registry archive has SHA-256
-`2ff922721253a9e6d921203809d99e871128edfc5b0613661c64d094d58343d6`,
+`cf016e1f1a34a25b8941522f9745dcc358f19787588efdbe53b97f509d2456e5`,
 with no dependencies or features. The checksum, embedded Git identity, maintained
 Rust source, packaged guide, original manifest, README, license and lock verify.
-The [release record](../evidence/release-028.md) binds the complete passing Linux,
-macOS 15 Intel, macOS 15 Apple Silicon and Linux MSRV matrix. Cargo workspace,
-package and lock versions remain 0.2.8.
+The [release record](../evidence/release-029.md) binds passing Linux native,
+macOS 15 Intel, macOS 15 Apple Silicon and Linux MSRV gates. All three downloaded
+native archives verify exact source and artifact hashes. This completes the
+owning qualification in [#23](https://github.com/dragginzgame/ic-metrics/issues/23)
+and [#25](https://github.com/dragginzgame/ic-metrics/issues/25).
+The previous complete 0.2.8 matrix is separate historical
+evidence. Cargo workspace, package and lock versions remain 0.2.9.
 
 Histograms are available from 0.2.4; checked means are available from 0.2.6.
 `checked_mean(samples, total)` and `MeasurementSummary::mean()` return `None`
@@ -37,53 +41,33 @@ backup. The historical report and identities remain unchanged. A separate
 checksum-bound source/lock/result/Wasm inputs; it does not reproduce the old
 Canic experiment or extend its qualification.
 
-## Pending 0.2.9
+Released 0.2.9 includes the canonical path/date repairs and source-first native
+CI evidence collection. Their preparation and controlled failure checks remain
+in [the adoption record](../evidence/adoption-029.md), with committed native
+qualification in [the release record](../evidence/release-029.md).
+The public frozen histogram bundle matches its checksum and all payload hashes;
+[#26](https://github.com/dragginzgame/ic-metrics/issues/26) is complete. Its
+138 measured/six admission replies, rebuilt identical Wasms and repeat replay
+remain bound to the separate direct-arithmetic experiment. Missing historical
+Canic inputs are not recovered or relabelled.
 
-This compatible repair batch adopts committed Shared Tooling 0.1.19 at
-`a06e4719e3839b8eefcfb88ec8923aa88eb63ccc` through the canonical distribution
-helper from a clean detached checkout. The snapshot records all 68 files,
-including the new IC pin parser required by the updated installer. Pins, Cargo
-versions, lockfiles and arithmetic source stay unchanged. The
-[adoption record](../evidence/adoption-029.md) binds the scope and focused checks.
+## Pending 0.2.10
 
-The Rust installer rejects redirected routes, executables and receipts before
-probing or installation; the tooling fixture normalizes temporary-directory
-aliases; the changelog finalizer preserves historical EOF bytes and rejects
-already-dated targets with varied whitespace. The shared logger also retains a
-combined failed-target view without changing its last-target log. No private
-consumer engine or arithmetic API is added. Ordinary checks never install tools.
-
-This implements the source repair in
-[#23](https://github.com/dragginzgame/ic-metrics/issues/23). New committed consumer
-native CI remains separate from focused Linux/Bash 3.2 qualification and the
-released 0.2.8 matrix. The earlier source adoption/native obligation in
-[#22](https://github.com/dragginzgame/ic-metrics/issues/22) is complete; its green
-matrix does not prove the subsequently added path/date-boundary cases.
-
-The consumer-owned workflow now records source/run/host identity before fallible
-setup, retains raw Rust/host/prerequisite setup logs, and records every setup
-outcome. Final collection is tied to successful checkout rather than successful
-setup. Failed tool candidates use an inner tarball in the one native evidence
-archive, preserving valid filenames that direct uploads reject. The separate
-candidate uploader is replaced by that archive owner. `make ci-evidence-check`
-executes the actual workflow source/setup/archive bodies with substitute Make
-effects and verifies success, install/check/admission failures, raw bytes, exit
-status, outcomes and extracted checksums. Linux Bash 5.2/3.2 pass; new committed
-native workflow qualification remains in
-[#25](https://github.com/dragginzgame/ic-metrics/issues/25).
-
-The new frozen histogram bundle addresses
-[#26](https://github.com/dragginzgame/ic-metrics/issues/26) independently of the
-missing old inputs: 138 actual measured replies and six refusal/state checks
-pass in Linux PocketIC 16.0.0. All 276 external package identities match the
-captured seed, with locked offline preparation/builds and no dependency upgrade.
-Fresh extraction verifies every payload hash; all three source-built Wasms and
-a second actual IC replay's CSV/sizes match the reference bytes. Sources, locks,
-raw results and measured Wasms are supplied under `docs/evidence/`, with commands
-in the extracted README. This is direct two-bound arithmetic, without Canic
-lookup, application attribution, generic-N or native macOS qualification.
-The original historical report remains intact; bundle public delivery requires
-the maintainer's commit/push.
+This compatible contribution/release-tooling batch adopts committed Shared Tooling
+0.1.22 at `2687f26317952c43c685f7f799ed09288dc10a67` through the canonical
+helper from a clean detached checkout. The 70-file snapshot explicitly adds
+the contribution rules and PR release helper and refreshes linked guidance. Local AGENTS.md and
+README now allow an explicitly requested PR to include scoped commits and a
+topic-branch push. Ordinary continuation remains local work; merges, direct
+integration-branch pushes and releases retain separate explicit authority.
+Required protections/checks are preserved. The
+[adoption review](../evidence/adoption-0210.md) binds interpretation and focused
+checks. The [release-tooling review](../evidence/adoption-0210-shared022.md)
+binds the subsequent runner refresh and direct-only delivery guard. Unsupported
+PR delivery fails before release dispatch or metadata effects. Ordinary PR
+contributions remain supported. Arithmetic, pins, package versions and locks are
+unchanged. Later uncommitted upstream fixes are excluded; local focused tooling
+evidence does not qualify this pending source on native macOS.
 
 ## Downstream boundaries
 
@@ -93,21 +77,34 @@ selected Metrics locks below refer to the registry package.
 
 | Caller | Inspected local HEAD | Committed Metrics lock and inspected working-tree selection |
 | --- | --- | --- |
-| IcyDB | `b72e0b3226671f32b471e0755be0deff1c998543` | 0.2.8 in both; other lock edits remain dirty. Inclusive spans and CLI checked means. |
-| Canic | `b420704efd60835583871e1b98d072c5f5e45c92` | 0.2.8 in both. Exclusive endpoint accounting and invocation-owned async checkpoints. |
-| IC Timers | `479c4b8c8b6412babf7c98ea17c948eacdaeadc3` | Committed 0.2.7; dirty selection 0.2.8. Scheduler/work summaries and local sample admission. |
-| IC Backup | `7660b56c196d2af3d084524bc74bb9dd4982d1ad` | Committed 0.2.7; dirty selection 0.2.8. Nanosecond summaries and four-bound prepared-byte histogram. |
-| IC Blob Storage | `790649b36ce1da95cb2d41f99facb3afe8280b4d` | 0.2.8 in both; other graph edits remain dirty. Restoration test probe, not production library instrumentation. |
-| Toko Miner | `9071b4cc9c1cf0d6d905f73592154b5108ab2147` | Committed 0.2.2; dirty selection 0.2.7. Production action-count cohorts use `record_sample`. |
+| IcyDB | `8a5d094c9f9057b47d467d790b6a3871fd7c1561` | Committed/clean 0.2.8. Local preparation under active maintainer release validation at inspection; inclusive spans and CLI checked means. |
+| Canic | `4bee0f8f69c80825e41d6100bde7575c5002980d` | Committed 0.2.8; dirty selection 0.2.9. Exclusive endpoint accounting and invocation-owned async checkpoints. |
+| IC Timers | `72e8f5d9769d00fbe165b16cd6eb2d81cf1b0a67` | Committed 0.2.8; dirty selection 0.2.9. Scheduler/work summaries and local sample admission. |
+| IC Backup | `a388d4185073853eda9113456deae2b4bdd2685b` | Committed/clean 0.2.9. Local preparation; nanosecond summaries and four-bound prepared-byte histogram. |
+| IC Blob Storage | `7c41e3a90996157312aa40985a9861f4c03ca35e` | Committed 0.2.8; dirty selection 0.2.9. Restoration test probe, not production library instrumentation. |
+| Toko Miner | `aeed004b03b9b5d848de3750d77a42c5160c5fdf` | Committed/clean 0.2.9. Local preparation; production action-count cohorts use `record_sample`. |
 
-At inspection, IcyDB's latest owning source CI is queued. Canic's newer local
-source has no matching hosted run in the inspected inventory; remote CI remains
-bound to older source. IC Timers and IC Backup have successful source-matching
-runs; their actual native versus tag-check lanes retain their own scope. Blob's
-successful workflow qualifies release/formatting tooling, not restoration probe
-execution. Toko's old hosted graph failure is not repaired by its dirty lock
-selection. Queued, absent, tooling-only or older-source results do not establish
-complete consumer runtime qualification.
+IcyDB's public source remains `b72e0b3226671f32b471e0755be0deff1c998543`:
+its CI passes Rust/MSRV but fails static ShellCheck and both macOS automation
+steps. The newer local preparation has no source-matching hosted run at
+inspection. Canic's public source remains older `071a9c64d7ff71ba7a0a695d24a66de11b651aed`;
+the newer local source still has no matching hosted run. New local Backup/Toko
+sources likewise have no matching hosted run. Local commits and active release
+validation are not publication or completed native qualification.
+
+Timers' arithmetic-only adoption is already qualified at 0.14.6 on all three
+native hosts and MSRV. Its later 0.14.12 main CI passes Linux/MSRV/Apple Silicon
+but lacks Intel execution because GitHub could not acquire a runner; tag truth
+passes separately. Backup's selected metrics integration is qualified at 0.5.2.
+These completed source-bound adoptions do not automatically qualify later graphs
+or reopen merely because another release has unrelated outstanding work.
+
+Blob 0.17.1's workflow also executes the actual restoration-metrics PocketIC
+case, despite its tooling-oriented name. All three native logs confirm the
+named case passes. The earlier tooling-only description was incorrect;
+[the consumer review](../evidence/consumer-closeout-0210.md) binds the correction
+to actual commands, source and downloaded logs. Its scope remains a test probe,
+not production instrumentation. No sibling source, graph or validation is changed.
 
 IcyDB's CLI output compatibility belongs to
 [IcyDB #313](https://github.com/dragginzgame/icydb/issues/313); Canic's async
@@ -119,14 +116,19 @@ Histogram workload, bounds and storage decisions belong to
 [IC Timers #22](https://github.com/dragginzgame/ic-timers/issues/22) records the
 summary-only decision without a demonstrated distribution workload. Toko's
 cohorts count actions, not instruction-value ranges; Blob probe and Toko
-application qualification belong to
-[Blob #19](https://github.com/dragginzgame/ic-blob-storage/issues/19) and
+application qualification belong to completed source-bound
+[Blob #19](https://github.com/dragginzgame/ic-blob-storage/issues/19) and open
 [Toko #6](https://github.com/dragginzgame/toko-miner/issues/6).
 
-Consumer integration and complete owning runtime/native qualification remain
-separate from root publication and lock updates, tracked in
-[#4](https://github.com/dragginzgame/ic-metrics/issues/4) and
-[#10](https://github.com/dragginzgame/ic-metrics/issues/10).
+Remaining original extraction qualification is consolidated in
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10): IcyDB's adopting-source
+focused/native acceptance and Canic's adopting-source actual interleaving/native
+acceptance. [#4](https://github.com/dragginzgame/ic-metrics/issues/4) closes as a
+duplicate tracker; its outstanding obligations remain in #10. Timers, Backup
+and Blob retain their completed adoption scopes. Toko application follow-up
+is separate from the original reader-cut closure criteria. Histogram
+investigators now have the published mean API and checksum-bound public replay
+feedback in their existing issues; no new instrumentation is requested.
 No sibling files were edited. Historical evidence stays under `docs/evidence/`;
 [the host record](../hosts.md) separates focused Linux checks from native CI.
 No full local CI/product-test gate, dependency upgrade, package version change,

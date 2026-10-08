@@ -4,6 +4,7 @@ PACKAGE := ic-metrics
 MSRV ?= 1.88.0
 RELEASE_REMOTE ?= origin
 RELEASE_BRANCH ?= main
+export RELEASE_DELIVERY ?= direct
 IC_TOOL_PINS ?= ci/ic-tools.tsv
 HOST_TOOL_VERSIONS ?= ci/tool-versions.env
 export YQ := $(CURDIR)/.tools/host/bin/yq
@@ -18,7 +19,16 @@ ifneq ($(word 2,$(filter release-patch release-minor release-major release-resum
 $(error Select exactly one release target)
 endif
 
-.PHONY: release-patch release-minor release-major release-resume release-version release-preflight release-verify release-prepare-version release-prepared-check release-files release-commit-check release-committed-check release-tagged-check release-push-check
+# PR delivery requires merged-checkout adapters and qualification we do not own.
+# Refuse it before dispatching any release runner or metadata operation.
+_release_targets := release-patch release-minor release-major release-resume release-version release-preflight release-verify release-prepare-version release-prepared-check release-files release-commit-check release-committed-check release-tagged-check release-push-check
+ifneq ($(filter $(_release_targets),$(MAKECMDGOALS)),)
+ifneq ($(RELEASE_DELIVERY),direct)
+$(error ic-metrics supports RELEASE_DELIVERY=direct only)
+endif
+endif
+
+.PHONY: $(_release_targets)
 
 release-patch release-minor release-major:
 	+@bash scripts/ci/run-release.sh "$(@:release-%=%)" "$(RELEASE_REMOTE)" "$(RELEASE_BRANCH)"

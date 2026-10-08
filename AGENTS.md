@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`a06e4719e3839b8eefcfb88ec8923aa88eb63ccc` and file digests are recorded in
+`2687f26317952c43c685f7f799ed09288dc10a67` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -25,9 +25,19 @@ and [the extraction contract](docs/extraction.md) before implementation.
 ## Work and validation
 
 - Mutate only this repository unless exact sibling targets are explicitly
-  authorized. Never commit or push. Preserve unrelated dirty work.
-- Do not edit existing Cargo package/workspace versions. Initial metadata is not
-  a release selection; version changes and publication remain maintainer-owned.
+  authorized. Preserve unrelated dirty work. Follow the shared
+  [contribution rules](rules/contributions.md): an explicit PR request includes
+  its topic branch, scoped commits, branch push and PR creation/update. Ordinary
+  fixes and continuation authorize local work. Merges, direct integration-branch
+  pushes and shared-history rewrites require their own explicit authorization.
+- Cargo package/workspace version changes and releases require explicit authority.
+  Initial metadata is not a release selection; an ordinary PR does not authorize
+  a version bump, tag, release or publication. An explicitly requested standard
+  release includes its documented gate, commit, tag and atomic push; publication
+  remains a separate effect. Preserve branch protections and required checks.
+- This consumer supports `RELEASE_DELIVERY=direct` only. PR release delivery
+  needs separately adopted merged-checkout adapters and qualification; ordinary
+  contribution PRs retain the shared contribution rules.
 - Use Rust edition 2024 and ordinary directory modules. Public APIs need docs;
   invalid input and recoverable failures need typed errors. No string matching
   on errors, production panics, or committed Python tooling.

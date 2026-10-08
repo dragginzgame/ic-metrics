@@ -4,6 +4,7 @@ set -euo pipefail
 # This independent fixture owns its release and logger selections.
 unset MAKEFLAGS MFLAGS MAKEOVERRIDES GNUMAKEFLAGS MAKEFILES RELEASE_COMMIT
 unset VALIDATION_REPOSITORY_ROOT VALIDATION_RUNNER_SNAPSHOT_PATH
+export RELEASE_DELIVERY=direct
 
 # Exercise the consumer's preparation boundary without release or Git effects.
 # Cargo-edit is substituted; sorting and locked offline metadata use real Cargo.

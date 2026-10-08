@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RELEASE_DELIVERY=direct
 
 # Exercise real consumer fixtures through controlled executable failures.
 # Keep intentional failures under the native CI artifact owner, including inputs.

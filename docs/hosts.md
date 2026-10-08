@@ -231,11 +231,22 @@ architectures and MSRV in
 [CI run 37617053341](https://github.com/dragginzgame/ic-metrics/actions/runs/37617053341);
 [release-028.md](evidence/release-028.md) binds that separate released observation.
 
-Pending 0.2.9 adopts committed Shared Tooling 0.1.19 to reject redirected Rust
+Released 0.2.9 adopts committed Shared Tooling 0.1.19 to reject redirected Rust
 installation paths, normalize temporary-directory aliases and preserve changelog
 admission/history. Focused source-bound checks and the new IC pin-parser export
-are recorded in [adoption-029.md](evidence/adoption-029.md). The new working tree
-still requires its own committed native matrix.
+are recorded in [adoption-029.md](evidence/adoption-029.md). The subsequent
+source-matching CI observation is recorded separately in
+[release-029.md](evidence/release-029.md).
+
+Pending 0.2.10 adopts committed Shared Tooling 0.1.20 contribution authority.
+[adoption-0210.md](evidence/adoption-0210.md) binds the documentation review and
+focused checks for that initial adoption. The subsequent
+[0.1.22 release-tooling adoption](evidence/adoption-0210-shared022.md) refreshes
+the runner while retaining direct-only delivery. Its focused Linux/Bash checks
+do not qualify the pending consumer source on native macOS. Arithmetic and
+supported hosts remain unchanged.
+The upstream's real Prettier and failure-upload qualification does not impose
+Node/npm or another hosted failure-injection gate on this arithmetic library.
 
 Prepare tools explicitly before local validation:
 
@@ -270,8 +281,8 @@ IO under Linux Bash 5.2/3.2. It does not install tools, compile product Rust or
 execute hosted CI. Native collection follows successful checkout even when setup
 fails; raw setup logs, source receipts and every setup outcome remain in the
 archive. Failed tool candidates are inside `tool-candidates.tar.gz` in that same
-archive, replacing the separate direct candidate upload. The new workflow still
-requires its own committed native matrix, tracked in
+archive, replacing the separate direct candidate upload. Committed qualification
+is recorded in [release-029.md](evidence/release-029.md) and tracked in
 [#25](https://github.com/dragginzgame/ic-metrics/issues/25).
 Native uploads contain `native-ci.tar.gz` and its checksum; unpack the tarball
 to inspect the complete evidence tree, including filenames rejected by direct

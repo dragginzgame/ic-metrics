@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.10]
+
+### Changed
+
+- Adopt Shared Tooling 0.1.20 contribution rules: an explicit PR request includes
+  scoped commits and the topic-branch push; merges and releases retain separate
+  authorization ([#24](https://github.com/dragginzgame/ic-metrics/issues/24)).
+- Refresh to Shared Tooling 0.1.22 release tooling and explicitly retain direct
+  delivery. Unsupported PR delivery is rejected before release effects
+  ([#27](https://github.com/dragginzgame/ic-metrics/issues/27)).
+
 ## [0.2.9] - 2026-10-07
 
 ### Fixed
