@@ -9,8 +9,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Preserve running and queued qualification for every pushed source.
+  # PR updates may replace validation of an older review revision.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
@@ -58,7 +60,7 @@ jobs:
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
             scripts/ci/test-tool-commands.sh scripts/ci/test-cloc.sh \
-            scripts/ci/test-cloc-tooling.sh scripts/dev/cloc.sh scripts/dev/cloc-tooling.pl \
+            scripts/dev/cloc.sh \
             scripts/distribution/refresh-consumer.sh scripts/ci/run-validation-targets.sh \
             scripts/ci/run-release.sh scripts/ci/release-pr.sh scripts/ci/test-release-runner.sh \
             scripts/ci/test-release-tracking.sh \

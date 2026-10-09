@@ -135,7 +135,7 @@ earlier Linux preparation or tagged host results.
   Explicit CI setup installs pinned jq, yq, ripgrep with PCRE2 and cloc before
   fixtures; separate IC setup verifies all six local executables. New hosted
   results must qualify this consumer wiring. `make cloc` reports this workspace;
-  `make cloc-tooling` inventories sibling tooling without running their commands.
+  fleet tooling inventories run centrally from Shared Tooling.
 - rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.85.0 for arithmetic
   MSRV checks and Rust 1.88.0 for the private host inspector.
 - Install the `wasm32-unknown-unknown` target for each checked toolchain.

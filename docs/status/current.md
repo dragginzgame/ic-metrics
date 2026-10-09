@@ -4,40 +4,52 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.2.17 reporting projections
+## Pending 0.2.18 tooling cleanup
 
-The maintainer accepted the [sibling measurement-needs audit](../reports/audits/2026/10/09/measurement-needs/01/report.md).
-The compatible next draft is 0.2.17 because the batch adds reporting APIs without
-changing existing arithmetic, retained state, CLI or consumer report contracts.
-Manifests and package/local lock versions remain 0.2.16; the existing private
-Host 0.8.5 lock selection is preserved. No commit, tag, push or publication runs.
+The next draft is compatible 0.2.18: optional fleet copies are retired from this
+consumer, while the arithmetic, setup/check and local workspace LOC contracts
+remain intact. The 89-file snapshot adopts reviewed Shared Tooling
+`3d33cd250fcae7dbe5cabe44b2abd6b2c91a1822` from a clean committed clone. Its IC
+installer reuses equivalent pin catalogs without downloads or receipt rewriting.
+The owned CI groups preserve every pushed source's running/queued qualification
+and cancel only superseded PR runs.
 
-`cumulative_count(index)` reports a finite-bound prefix without requiring unrelated
-bucket or value-total availability. `quantile_bucket(numerator, denominator)`
-uses exact nearest rank and returns a `HistogramRange`, including unbounded
-overflow. It requires unsaturated sample/bucket counts, distinguishes empty and
-measured zero, and accepts an independently saturated value total.
-`checked_scaled_ratio` supplies exact floor-rounded scaled ratios with a u128
-numerator and u64 denominator/scale. It avoids transient product overflow,
-reports typed zero-denominator/result-overflow errors, and delegates exact-input
-provenance to the caller. It does not silently change `checked_mean` or Testkit
-floating-point outputs. Recording state and measurement ownership are unchanged.
+Focused local tool fixtures pass under Bash 5 and genuine Bash 3.2, along with
+snapshot/pin checks, local LOC, ShellCheck, actionlint and documentation links.
+[The selection record](../evidence/adoption-0218.md) retains the removed-symbol
+inventory and scoped evidence. [#38](https://github.com/dragginzgame/ic-metrics/issues/38)
+awaits exact committed native qualification of these changed consumer callers.
+Shared Tooling's selected upstream CI passes Linux/lint with both macOS jobs
+still running at inspection; upstream CI does not replace consumer qualification.
 
-Focused Linux warning-denied host/Wasm Clippy, named histogram/ratio/summary
-tests and actual Rust 1.85 host/Wasm checks pass. Named histogram/ratio tests and
-all documentation examples also pass on Rust 1.85. [The focused record](../evidence/reporting-0217.md)
-binds the commands and retained source/log identities. The packaged guide demonstrates
-Backup's existing configured chunk bounds and exact fractional reporting.
-The six known consumers plus Testkit's wide aggregate path were reviewed read-only;
-no sibling code, graph or tests change. Queries are local/unpublished, and the
-future exact committed native matrix and owning instrumentation/format decisions
-remain separate. No new IC cost or raw Wasm improvement is claimed.
+Workspace/package versions remain 0.2.17. The pre-existing independent private
+Host 0.8.8 lock update is preserved byte-for-byte and is not qualified by this
+tooling batch. No Rust edit, broad local gate, commit, push or release runs.
 
 ## Released source
 
-Latest finalized source is 0.2.16
+Latest finalized and published source is 0.2.17
+`52be29e4bc2433b3d2912a0c09538be993dfb1b2`, matching tag `v0.2.17` and
+workspace/package versions. [The release verification](../evidence/release-0217.md)
+binds the official archive and source. Linux native and both package floors pass
+on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37900937307);
+Apple Silicon is running and Intel remains queued at inspection. Complete native receipt
+review remains separate from publication.
+
+The released reporting APIs add checked finite-bound cumulative counts,
+nearest-rank quantile ranges and exact scaled ratios without changing recording
+state or attribution. [Their preparation](../evidence/reporting-0217.md) preserves
+the focused Linux/MSRV evidence, and the
+[sibling audit](../reports/audits/2026/10/09/measurement-needs/01/report.md) retains
+the read-only caller review. Consumers still own instrumentation and formats.
+[Testkit #40](https://github.com/dragginzgame/ic-testkit/issues/40#issuecomment-6076486649)
+records its maintainer's choice of explicitly approximate f64 means, preserving
+exact totals and sample counts as authoritative. Its local docs/integration
+checks do not adopt Metrics or change formats; maintainer delivery is pending.
+
+Previously fully verified source is 0.2.16
 `d8276daa3ae8603a5b4e196d0bb5369de54c1216`, matching tag `v0.2.16`.
-Cargo workspace, packages and local lock versions are 0.2.16. The official index
+That release's workspace, packages and local lock versions are 0.2.16. The official index
 reports a non-yanked, dependency-free package with Rust 1.85.0 and checksum
 `44b447757f583aa5e5145e34bbd6d8b75004614d90ef33544252c9e496178155`.
 The newly downloaded archive verifies that digest, embedded identity and maintained
@@ -48,34 +60,11 @@ Downloaded evidence from all three native hosts verifies source, payload, archiv
 and all nine successful outcomes, with IC Host 0.8.4 and PocketIC 16.1.0.
 [The release record](../evidence/release-0216.md) completes
 [#37](https://github.com/dragginzgame/ic-metrics/issues/37).
-Shared Tooling and Host's exact selected upstream matrices now also pass all
-native hosts. These released receipts do not qualify the new pending reporting APIs.
-
-The subsequent upstream review finds committed Shared Tooling 0.1.31
-`9af82393c620e486578febed74a648523725c234`. Its relevant compatible installer
-fix reuses verified IC bundles across comment-only or reordered pin catalogs,
-while retaining complete matrix admission and original installation receipts.
-Its baseline explicitly keeps fleet reports in Shared Tooling. The current
-91-file selection already excludes the sibling issue dashboard and the separate
-Cargo-install assessment implementation. No IC pins or Cargo dependencies change
-in this upstream revision. At review,
-[normal CI](https://github.com/dragginzgame/shared-tooling/actions/runs/37891841317)
-now passes Linux, both native macOS architectures and lint. The
-[separate Cargo assessment](https://github.com/dragginzgame/shared-tooling/actions/runs/37891957851)
-passes Linux, fails Apple Silicon and is running on Intel; it is not a consumer
-installer qualification. This revision is reviewed but not adopted here; the
-recorded snapshot remains `4e274a2219c0b0cc3af68ec65658b373253518fb`.
-
-The maintainer's subsequent dirty lock selects published IC Host 0.8.5 for both
-private inspector dependencies. [The focused dependency review](../evidence/host-dependencies-085.md)
-verifies package checksums, committed source, warning-denied Linux host checks,
-both package floors and byte-identical reports for all three frozen Wasms.
-The consumed artifact and filesystem crate trees are unchanged from Host 0.8.4;
-the new upstream release changes shared installer tooling, not library behavior.
-Its exact upstream matrix passes all native hosts and MSRV. This is local
-qualification of the dirty graph, separate from Metrics 0.2.16's completed
-Host 0.8.4 release receipts. That dependency review introduced no arithmetic
-feature; manifests and the recorded snapshot remain preserved.
+Its Shared Tooling and Host selected upstream matrices also pass all native
+hosts. These receipts retain their original scope and do not qualify 0.2.17 or
+the current tooling cleanup. The separate
+[Host 0.8.5 review](../evidence/host-dependencies-085.md) preserves that graph's
+focused checks and byte-identical frozen-Wasm reports before its 0.2.17 delivery.
 
 Previously verified 0.2.15 source is
 `287251eb51412852a58cabd9de5b3c28e207e705`.

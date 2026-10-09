@@ -65,7 +65,7 @@ release-files:
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
-	@echo "Reports: cloc (this workspace); cloc-tooling (sibling tooling inventory)"
+	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
@@ -96,7 +96,6 @@ local-tools-test:
 	bash scripts/ci/test-evidence-checksums.sh
 	bash scripts/ci/test-tool-commands.sh
 	bash scripts/ci/test-cloc.sh
-	bash scripts/ci/test-cloc-tooling.sh
 
 hook-check:
 	bash scripts/dev/test-format-hook.sh

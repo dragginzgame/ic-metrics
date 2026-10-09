@@ -42,14 +42,14 @@ configured number of bounds, and every bucket saturates independently. Buckets
 describe ranges; they do not provide exact percentiles. Units, thresholds and
 cumulative export remain consumer-owned. The histogram API is published in 0.2.4.
 
-Pending 0.2.17 adds `cumulative_count(index)` for exact counts through a configured
+Published 0.2.17 adds `cumulative_count(index)` for exact counts through a configured
 bound and `quantile_bucket(numerator, denominator)` for nearest-rank ranges, such
 as p95 with `(95, 100)`. Empty quantiles are `None`; required count saturation
 returns `HistogramQueryError`. Overflow has no configured ceiling. The new
 `checked_scaled_ratio(numerator, denominator, scale)` floors an exact scaled
 integer ratio from a `u128` numerator, without floating point or overflowing
 intermediate multiplication. Callers establish exact inputs and handle empty or
-saturated diagnostics before using it. These APIs are not yet published.
+saturated diagnostics before using it. Consumer adoption remains separately qualified.
 
 Known callers are IcyDB, Canic, ic-timers, ic-backup, IC Blob Storage's
 restoration test probe and Toko Miner's production game-shard action metrics. Their
@@ -163,11 +163,11 @@ candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
 
-The reviewed shared Make include also supplies `make cloc` for this workspace's
-Rust runtime/test report and `make cloc-tooling` for sibling tooling inventory.
-Reports use the prepared local tools. The tooling inventory separates matching
-shared snapshots from local code and supporting data; counts guide review and
-do not establish equivalent behavior or performance.
+The reviewed shared Make include supplies `make cloc` for this workspace's
+Rust runtime/test report using the prepared local tools. Fleet tooling inventory
+runs from Shared Tooling; this repository does not vendor that reporter or its
+dedicated regression suite. Counts guide review and do not establish equivalent
+behavior or performance.
 
 `make check-pins` checks dependency and workflow declarations offline using
 Git and the prepared local parsers. Their single reviewed pin owner is

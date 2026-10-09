@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.18]
+
+### Changed
+
+- Run fleet tooling reports centrally in Shared Tooling, removing unused consumer
+  copies and their dedicated CI fixture while retaining local setup and workspace
+  LOC reporting ([#38](https://github.com/dragginzgame/ic-metrics/issues/38),
+  [Shared Tooling #83](https://github.com/dragginzgame/shared-tooling/issues/83)).
+
+### Fixed
+
+- Reuse verified IC tool bundles across comment-only or reordered pin catalogs
+  without downloads or receipt changes
+  ([Shared Tooling #79](https://github.com/dragginzgame/shared-tooling/issues/79)).
+- Preserve running and queued CI for each pushed source while allowing newer PR
+  revisions to replace older review runs
+  ([Shared Tooling #80](https://github.com/dragginzgame/shared-tooling/issues/80)).
+
 ## [0.2.17] - 2026-10-09
 
 ### Added

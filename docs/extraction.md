@@ -13,7 +13,7 @@ uses IC Host libraries for bounded artifact inspection. It is a separate workspa
 package, not an arithmetic dependency or platform reader. It establishes no
 consumer attribution, runtime qualification or instruction/cycle measurement.
 
-Pending compatible 0.2.17 adds checked finite-bound cumulative counts and
+Published compatible 0.2.17 adds checked finite-bound cumulative counts and
 nearest-rank quantile bucket ranges to the existing histogram, with no new
 recording state or change to bucket attribution. A rational quantile identifies
 a range, not an exact observed percentile. Required count saturation is rejected;
@@ -22,8 +22,8 @@ It also adds `checked_scaled_ratio` for exact scaled fractional means/proportion
 from admitted `u128` totals and `u64` denominators/scales. This arithmetic does not
 admit identity, saturation provenance or empty samples and does not replace
 `checked_mean`'s availability checks. Existing caller formats, recording and
-public projections remain consumer-owned and unchanged by this local addition.
-The pending APIs are not a published dependency or completed consumer adoption.
+public projections remain consumer-owned and unchanged by this addition.
+Publication does not establish completed consumer adoption.
 
 Published 0.2.6 adds `checked_mean(samples, total)` for consumer-owned report
 fields and `MeasurementSummary::mean()` using that canonical projection.
@@ -72,7 +72,10 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.16 is available in the registry; the
+Release 0.2.17 is available in the registry; its
+[verification](evidence/release-0217.md) binds the published reporting APIs and
+partial exact-source hosted checks. Complete native receipt review remains
+separate. The earlier 0.2.16
 [release record](evidence/release-0216.md) verifies its published arithmetic-only
 payload and complete source-matching native/MSRV receipts. The
 previous 0.2.13
