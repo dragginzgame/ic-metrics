@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.4]
+
+### Fixed
+
+- Reject Make modes that hide failed release or formatting commands
+  ([Shared #30](https://github.com/dragginzgame/shared-tooling/issues/30)).
+- Keep release qualification inside its disposable checkout despite inherited
+  tooling-root settings ([Shared #7](https://github.com/dragginzgame/shared-tooling/issues/7)).
+- Qualify formatting hooks in checkout paths ending in newlines
+  ([Shared #90](https://github.com/dragginzgame/shared-tooling/issues/90)).
+
 ## [0.3.3] - 2026-10-09
 
 ### Changed

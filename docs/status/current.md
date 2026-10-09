@@ -4,43 +4,52 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.3.3 tooling maintenance
+## Pending 0.3.4 Make and qualification fixes
 
-The compatible next draft is 0.3.3, adopting published Shared Tooling 0.2.6
-`ce13a5314916891fd239d9b199b4a91b04775054` through its clean committed exporter.
-The 91-file selection preserves literal newline-ending hook paths and
-checkout roots, and failed Git observations stop setup without changing config.
-The included 0.2.4 fixture companion declarations are already satisfied; optional
-owner suites stay unselected. Two newly selected includes own standard release
-entrypoints and root-workspace formatting. The local duplicate recipes are removed;
-direct-only delivery, target-specific cache preparation, metadata and validation
-adapters remain local. All affected scratch exporters and native source receipts
-carry the includes. [#44](https://github.com/dragginzgame/ic-metrics/issues/44)
-retains delivery and exact-source native acceptance.
+The compatible next draft is 0.3.4, adopting committed Shared Tooling 0.2.7
+`47d6ae6488b8007323fa7c2e22a6efa11d77ae63` through its clean canonical exporter.
+The 92-file selection adds the Make execution companion; every scratch export and
+native source receipt carries it. Direct and inherited unsafe Make modes reject
+before runner/formatter dispatch, while direct-only delivery, cache preparation
+and local adapters remain intact. Release smoke checks cannot follow an inherited
+external tooling root. The actual newline-root formatting qualifier now passes,
+including Git object access and preservation of index, source, lock and other edits.
 
-The independently incoming lock edit now selects Host 0.9.4; this work does not
-resolve another dependency update. Focused inspector Clippy, argument/report and
-actual CLI tests and Rust 1.88 compilation pass for that graph. Its
-[separate review](../evidence/host-dependencies-094.md) binds the source and limits.
-IC pins, product Rust, package versions and live hook configuration are unchanged;
-no release runs.
+Focused Linux Bash 5/3.2 release, admission, formatting, real hook and retention
+checks pass in [the adoption record](../evidence/adoption-034.md). Those checks
+preserved the then-selected Host 0.9.4 graph. An independently incoming lock edit
+now selects Host 0.9.5 and needs its own focused qualification; it is not covered
+by the preceding graph-preservation result. Product Rust and pins remain unchanged;
+package versions stay 0.3.3. This fixes
+the locally observed Shared #90 limitation; its earlier failures remain historical.
+Upstream Linux and lint pass, with macOS queued. #44/#43 retain delivered-source
+native acceptance; no full local CI or release runs.
 
-Upstream hook regressions and the real consumer formatting adapter pass on Linux
-Bash 5 and genuine Bash 3.2. Actual Cargo formatting also passes in disposable
-newline-ending consumer roots, preserving selected staging, unrelated edits and
-locks. [The adoption record](../evidence/adoption-033.md) binds those checks and
-the retained evidence. [#43](https://github.com/dragginzgame/ic-metrics/issues/43)
-tracks delivery and exact-source native qualification. The distinct shared
-qualification helper still trims newline-ending roots; the reproduced limitation
-is reported in [Shared #90](https://github.com/dragginzgame/shared-tooling/issues/90).
-Its normal-path consumer adapter passes, and the production hook fix is qualified
-locally. No vendored helper is patched and no sibling files are changed.
+The earlier 0.3.0 five-tool hard cut now has complete native/MSRV and downloaded
+macOS receipt acceptance in [its supplemental record](../evidence/release-030.md#native-acceptance-complete),
+closing #41. The later #42/#43/#44 batches retain their own native criteria.
 
-The included release and formatting commands pass focused Linux Bash 5/3.2
-checks, including release refusal/failure propagation and real Cargo hook cases.
-Shared 0.2.6 CI passes Linux and lint/security; both macOS lanes remain queued.
-Metrics 0.3.0's Apple Silicon job now passes, while Intel remains queued; this
-observed job result does not complete #41 or qualify the dirty 0.3.3 batch.
+## Released 0.3.3 tooling maintenance
+
+Published 0.3.3 matches source/tag `b3ddfdf0406b54ef9a98ce48cbf5a9afe5fe406b`.
+[Its verification](../evidence/release-033.md) binds the registry archive,
+unchanged arithmetic, passing Linux/MSRV and downloaded Linux receipts, including
+both shared Make includes, real formatting hooks and actual CLI coverage. Both
+macOS lanes remain queued. The preparation evidence below retains its original scope.
+
+The 0.3.3 batch adopted Shared Tooling 0.2.6
+`ce13a5314916891fd239d9b199b4a91b04775054` with 91 selected files. Standard
+release and formatting recipes moved to their shared owners, preserving local
+release policy and adapters. Its [preparation record](../evidence/adoption-033.md)
+retains focused hook/release checks and the earlier newline-root qualifier failure.
+That helper limitation is corrected in pending 0.3.4 above.
+
+The released private graph selects Host 0.9.4. Its
+[separate review](../evidence/host-dependencies-094.md) binds unchanged upstream
+library source, package hashes, inspector Clippy, named/CLI tests and Rust 1.88.
+No arithmetic API, attribution or endpoint contract changes. Delivered-source
+native acceptance remains in [#44](https://github.com/dragginzgame/ic-metrics/issues/44)
+and [#43](https://github.com/dragginzgame/ic-metrics/issues/43).
 
 ## Released 0.3.2 maintenance
 

@@ -33,6 +33,6 @@ bash "$root/scripts/ci/check-format-tools.sh" "$SHARED_TOOLING_CARGO_SORT_VERSIO
 TMPDIR="$fixture" bash "$root/scripts/ci/check-formatting-hooks.sh" "$root" \
     crates/ic-metrics/src/lib.rs crates/ic-metrics/Cargo.toml \
     --no-dependency-tables Cargo.toml Cargo.lock crates/ic-metrics/LICENSE \
-    ci/tool-versions.env scripts/ci/check-format-tools.sh make/tools.mk make/release.mk make/rust-format.mk \
+    ci/tool-versions.env scripts/ci/check-format-tools.sh make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
     > "$fixture/hook.log" 2>&1
 cat "$fixture/hook.log"

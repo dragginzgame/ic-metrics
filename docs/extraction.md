@@ -80,7 +80,13 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.3.2 is available in the registry; its
+Release 0.3.3 is available in the registry; its
+[verification](evidence/release-033.md) binds unchanged arithmetic, the published
+archive and passing Linux/MSRV results. Downloaded Linux receipts cover the
+shared Make includes, actual formatting hooks and inspector CLI. Both macOS jobs
+remain queued; delivered tooling acceptance remains separate from publication.
+
+Earlier release 0.3.2's
 [verification](evidence/release-032.md) binds the unchanged arithmetic source,
 published archive and passing Linux/MSRV results, with the actual inspector CLI
 test confirmed in downloaded Linux receipts. Both macOS jobs remain queued.

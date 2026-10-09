@@ -194,14 +194,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.3.2`](https://crates.io/crates/ic-metrics/0.3.2)
-is published on crates.io with tag `v0.3.2`. Declare the published release
+tooling releases. [`ic-metrics 0.3.3`](https://crates.io/crates/ic-metrics/0.3.3)
+is published on crates.io with tag `v0.3.3`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.3.2"
+ic-metrics = "0.3.3"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

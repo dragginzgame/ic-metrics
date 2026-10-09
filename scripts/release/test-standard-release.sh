@@ -22,22 +22,52 @@ cleanup() {
     exit "$status"
 }
 trap cleanup EXIT
-mkdir -p "$fixture/bin" "$fixture/make"
-cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$fixture/make/"
+mkdir -p "$fixture/bin" "$fixture/make" "$fixture/scripts/ci"
+cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" "$fixture/make/"
+cp "$root/scripts/ci/check-make-execution.sh" "$fixture/scripts/ci/"
 real_bash="$(command -v bash)"
+export STANDARD_RELEASE_REAL_BASH="$real_bash"
 export EVENTS="$fixture/events"
 cd "$fixture"
 real_make="$(command -v make)"
 for selection in default direct; do
     if [[ "$selection" == default ]]; then unset RELEASE_DELIVERY; else export RELEASE_DELIVERY=direct; fi
     TMPDIR="$fixture" "$real_bash" "$root/scripts/ci/check-release-commands.sh" "$root" \
-        make/tools.mk make/release.mk make/rust-format.mk > "$fixture/output" 2>&1
+        make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
+        scripts/ci/check-make-execution.sh > "$fixture/output" 2>&1
 done
 
-# Unsupported inherited and command-line policies must fail before any tool
-# runs, including metadata-only entrypoints.
+# The smoke checker must bind this consumer's includes to its scratch snapshot,
+# even when invoked through a parent Make exporting another tooling root.
+mkdir -p "$fixture/external/scripts/ci"
+cat > "$fixture/external/scripts/ci/run-release.sh" <<'EXTERNAL'
+#!/usr/bin/env bash
+echo escaped >> "$EVENTS"
+exit 99
+EXTERNAL
+cat > "$fixture/root-parent.mk" <<'MAKE'
+export SHARED_TOOLING_ROOT := $(EXTERNAL_ROOT)
+check:
+	+@bash "$(CHECKER)" "$(CONSUMER)" make/tools.mk make/release.mk make/rust-format.mk make/execution.mk scripts/ci/check-make-execution.sh
+MAKE
+: > "$EVENTS"
+SHARED_TOOLING_ROOT="$fixture/external" TMPDIR="$fixture" "$real_bash" \
+    "$root/scripts/ci/check-release-commands.sh" "$root" \
+    make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
+    scripts/ci/check-make-execution.sh > "$fixture/output" 2>&1
+[[ ! -s "$EVENTS" ]]
+TMPDIR="$fixture" "$real_make" -j2 --no-print-directory -f "$fixture/root-parent.mk" check \
+    EXTERNAL_ROOT="$fixture/external" CHECKER="$root/scripts/ci/check-release-commands.sh" \
+    CONSUMER="$root" > "$fixture/output" 2>&1
+[[ ! -s "$EVENTS" ]]
+
+# Unsupported inherited and command-line policies must fail before runner or
+# metadata dispatch. The parse-time Make execution probe remains real.
 printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
 cat >> "$fixture/bin/bash" <<'BASH'
+case "${1:-}" in
+    */scripts/ci/check-make-execution.sh) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
+esac
 printf 'unexpected dispatch\n' >> "$EVENTS"
 exit 0
 BASH
@@ -66,6 +96,7 @@ for policy in pr invalid ''; do
         > "$fixture/output" 2>&1; then exit 1; fi
     [[ ! -s "$EVENTS" ]]
 done
+cp "$fixture/bin/bash" "$fixture/mode-bash"
 rm "$fixture/bin/bash"
 
 # Every standard entry selects preparation, retaining explicit caller offline mode.
@@ -91,6 +122,27 @@ for target in patch minor major resume; do
         cmp "$fixture/cache-entry-expected" "$EVENTS"
     done
 done
+
+# The actual consumer includes reject unsafe Make modes before any substituted
+# release/formatter operation, including an inherited marker claiming admission.
+cp "$fixture/mode-bash" "$fixture/bin/bash"
+for target in release-patch release-minor release-major release-resume fmt fmt-check; do
+    for mode in -i --ignore-errors -n -t -q; do
+        for selection in direct inherited; do
+            : > "$EVENTS"
+            status=0
+            if [[ "$selection" == direct ]]; then
+                PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -f "$root/Makefile" "$mode" "$target" \
+                    > "$fixture/output" 2>&1 || status=$?
+            else
+                PATH="$fixture/bin:$PATH" _shared_make_execution_checked=yes MAKEFLAGS="$mode" "$real_make" --no-print-directory \
+                    -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
+            fi
+            [[ "$status" == 2 && ! -s "$EVENTS" ]]
+        done
+    done
+done
+rm "$fixture/bin/bash"
 
 # Publication remains a separate single-package Cargo operation, never a release.
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
