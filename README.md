@@ -154,14 +154,22 @@ export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/bin:$PATH"
 ```
 
 The setup installs jq, Mike Farah yq, ripgrep with PCRE2 and cloc plus
-Quill, ICP CLI, didc, ic-wasm,
-PocketIC and Binaryen, plus cargo-sort, cargo-sort-derives and candid-extractor,
+Quill, ICP CLI, didc, ic-wasm and Binaryen, plus
+cargo-sort, cargo-sort-derives and candid-extractor,
 under this checkout's `.tools/`. Rust tools use exact pins and locked Cargo
 installation; interrupted setup can leave earlier tools installed and retains
 build output for inspection. Archive installers retain previous and failed
 candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
+
+Pending 0.3.0 changes the setup contract to five IC tools. Replace an older
+six-tool selection explicitly with `make install-ic-tools`, then run
+`make ic-tools-check`; previous bundles and evidence remain retained. PocketIC
+setup and admission belong to IC Testkit under the
+[ownership handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/ic-tools.md#pocketic-ownership-handoff).
+Metrics has no active server caller and adds no Testkit dependency. Arithmetic
+APIs and consumer data are unchanged; this tooling cut requires no data reset.
 
 The reviewed shared Make include supplies `make cloc` for this workspace's
 Rust runtime/test report using the prepared local tools. Fleet tooling inventory
@@ -184,14 +192,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.19`](https://crates.io/crates/ic-metrics/0.2.19)
-is published on crates.io with tag `v0.2.19`. Declare the published release
+tooling releases. [`ic-metrics 0.2.20`](https://crates.io/crates/ic-metrics/0.2.20)
+is published on crates.io with tag `v0.2.20`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.19"
+ic-metrics = "0.2.20"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

@@ -1,55 +1,13 @@
 //! Structural facts and exact input identity, without IC cost estimates.
 
-use std::{fmt, io, io::Write, num::ParseIntError};
+use std::io::Write;
 
 use ic_host_artifacts::{
-    artifact::{ArtifactError, Sha256Digest},
-    wasm::{InspectionError, InspectionLimits, inspect},
+    artifact::Sha256Digest,
+    wasm::{InspectionLimits, inspect},
 };
 
-#[derive(Debug)]
-pub enum Error {
-    MissingArgument(&'static str),
-    ExtraArgument,
-    NonUtf8Number(&'static str),
-    InvalidNumber {
-        name: &'static str,
-        source: ParseIntError,
-    },
-    Input(ArtifactError),
-    Inspection(InspectionError),
-    Output(io::Error),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::MissingArgument(name) => {
-                write!(formatter, "missing {name}; {}", crate::args::USAGE)
-            }
-            Self::ExtraArgument => write!(formatter, "unexpected argument; {}", crate::args::USAGE),
-            Self::NonUtf8Number(name) => {
-                write!(formatter, "{name} must be a UTF-8 unsigned integer")
-            }
-            Self::InvalidNumber { name, source } => write!(formatter, "invalid {name}: {source}"),
-            Self::Input(source) => write!(formatter, "input admission failed: {source}"),
-            Self::Inspection(source) => write!(formatter, "Wasm inspection failed: {source}"),
-            Self::Output(source) => write!(formatter, "report output failed: {source}"),
-        }
-    }
-}
-
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::InvalidNumber { source, .. } => Some(source),
-            Self::Input(source) => Some(source),
-            Self::Inspection(source) => Some(source),
-            Self::Output(source) => Some(source),
-            Self::MissingArgument(_) | Self::ExtraArgument | Self::NonUtf8Number(_) => None,
-        }
-    }
-}
+use crate::Error;
 
 pub fn write(bytes: &[u8], limits: InspectionLimits, output: &mut impl Write) -> Result<(), Error> {
     // Complete admission before publishing a header or an observed fact.
@@ -78,7 +36,8 @@ pub fn write(bytes: &[u8], limits: InspectionLimits, output: &mut impl Write) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ic_host_artifacts::wasm::InspectionResource;
+    use ic_host_artifacts::wasm::{InspectionError, InspectionResource};
+    use std::io;
 
     const MODULE: &[u8] = b"\0asm\x01\0\0\0\x01\x04\x01\x60\0\0\x03\x02\x01\0\x07\x05\x01\x01f\0\0\x0a\x04\x01\x02\0\x0b\0\x04\x01x\x07\x08";
     const LIMITS: InspectionLimits = InspectionLimits {

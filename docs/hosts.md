@@ -133,7 +133,7 @@ earlier Linux preparation or tagged host results.
   IC executable pins live in `ci/ic-tools.tsv`. Make selects `.tools/host/bin`
   `.tools/ic/bin` and `.tools/rust/bin`. `make check-pins` and release validation never install tools.
   Explicit CI setup installs pinned jq, yq, ripgrep with PCRE2 and cloc before
-  fixtures; separate IC setup verifies all six local executables. New hosted
+  fixtures; separate IC setup verifies all five local executables. New hosted
   results must qualify this consumer wiring. `make cloc` reports this workspace;
   fleet tooling inventories run centrally from Shared Tooling.
 - rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.85.0 for arithmetic

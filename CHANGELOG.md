@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0]
+
+### Breaking
+
+- Remove PocketIC from the shared IC tool bundle and transfer its setup/admission
+  ownership to IC Testkit. Run `make install-ic-tools` to select the five-tool
+  bundle; existing bundles and historical measurement evidence are retained.
+  Metrics has no active server caller and adds no Testkit dependency. Arithmetic
+  APIs and consumer state are unchanged; no data reset is required
+  ([#41](https://github.com/dragginzgame/ic-metrics/issues/41),
+  [Shared Tooling #76](https://github.com/dragginzgame/shared-tooling/issues/76)).
+
+### Changed
+
+- Move the private Wasm inspector's shared errors to the executable boundary,
+  removing the argument/report module dependency cycle without changing CLI
+  diagnostics or report output.
+
 ## [0.2.20] - 2026-10-09
 
 ### Fixed

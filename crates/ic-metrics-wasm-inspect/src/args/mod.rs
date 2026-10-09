@@ -4,7 +4,7 @@ use std::{ffi::OsString, num::ParseIntError, path::PathBuf, str::FromStr};
 
 use ic_host_artifacts::wasm::InspectionLimits;
 
-use crate::report::Error;
+use crate::Error;
 
 pub const USAGE: &str =
     "usage: ic-metrics-wasm-inspect PATH MAX_BYTES MAX_SECTIONS MAX_EXPORTS MAX_CUSTOM_SECTIONS";

@@ -4,16 +4,61 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.2.20 checker fix
+## Pending 0.3.0 tooling hard cut
 
-The compatible next draft is 0.2.20. The unchanged 89-file selection adopts
+The breaking next draft is 0.3.0: the 89-file snapshot adopts committed Shared
+Tooling `8140e3dd1b44409d682c721889ab702f438c6a17`, transferring PocketIC ownership
+to IC Testkit and requiring exactly five common IC tools. Existing six-tool
+bundles fail the new offline check; explicit `make install-ic-tools` activates
+the reviewed replacement. The real Linux setup/check and reuse pass, with all
+old receipt-covered bytes, pins and receipts unchanged. Bash 5/3.2 installer,
+common Make and evidence-collector fixtures pass.
+
+Metrics has no active server path, equality check, setup or runtime harness.
+The retired PocketIC checkers/fixture were never selected here; no Testkit
+dependency or new installer is needed. Arithmetic APIs and persisted consumer
+data are unchanged. No functions, methods or types are removed; the canonical
+installer loses only its PocketIC-specific branches and matrix rows.
+[The preparation record](../evidence/adoption-030.md) preserves proof scope and
+historical replay constraints. [#41](https://github.com/dragginzgame/ic-metrics/issues/41)
+tracks delivered-source native acceptance; upstream Linux/lint passes, while
+both upstream macOS lanes are queued. Package/workspace versions remain 0.2.20.
+The initial tooling checks preserved the independent Host 0.8.10 lock edit.
+Subsequent concurrent edits now select Host 0.9 in both requirements and lock;
+the focused inspector checks below use that selection without changing it.
+The original tooling evidence retains its initial dependency identity. No
+commit or release runs here.
+
+## Private inspector ownership cleanup
+
+The argument and report modules now share the executable-owned `Error`, removing
+their dependency cycle. `report::Error`, its `fmt::Display::fmt` implementation
+and its `std::error::Error::source` implementation move from
+`crates/ic-metrics-wasm-inspect/src/report/mod.rs` to the binary root in
+`crates/ic-metrics-wasm-inspect/src/main.rs`. No function, method or type is deleted;
+no arithmetic API, CLI diagnostic, failure status or report format changes.
+
+After `make fmt`, selected warning-denied host Clippy, the two argument tests,
+three report tests and actual Rust 1.88 all-target checks pass on Linux with the
+existing locked Host 0.9 graph. Actual binary help and missing-argument checks
+preserve their output/status, and fresh reports for all three checksum-verified
+frozen replay Wasms match the original TSVs byte-for-byte. Logs and checked
+source/binary hashes remain under `target/evidence/inspector-cleanup-030/`.
+This is focused worktree qualification, not a full CI gate or native release
+acceptance. The arithmetic and release recovery code were reviewed without
+finding another justified deletion.
+
+## Released 0.2.20 checker fix
+
+Released 0.2.20's unchanged 89-file selection adopts
 committed Shared Tooling `926a20606591214ab29faa236b0b584e4857439e` through its
 canonical distribution helper. Its dependency checker rejects exception catalogs
 containing multiple JSON documents, so admission and suppression use one validated
 array. Valid catalogs retain their contract. No dependency or public arithmetic
 API changes. [The focused record](../evidence/adoption-0220.md) binds passing
 Bash 5/3.2 fixtures, snapshot/pin checks and ShellCheck. Package/workspace versions
-remain 0.2.19; no release has run for this draft.
+are 0.2.20. No newer committed Shared Tooling or Host revision is available at
+inspection. This verification adds no implementation batch or pending changelog.
 
 ## Released 0.2.19 tooling fixes
 
@@ -66,14 +111,14 @@ No new code batch or pending changelog is needed for this verification.
 
 ## Released source
 
-Latest finalized and published source is 0.2.19
-`429748e4877fa799b164bd2df1d9a76bb0acecb6`, matching tag `v0.2.19` and
-workspace/package versions. [The release verification](../evidence/release-0219.md)
+Latest finalized and published source is 0.2.20
+`97064b0806699b60b475879ea7530135f1b540c8`, matching tag `v0.2.20` and
+workspace/package versions. [The release verification](../evidence/release-0220.md)
 binds the official archive and unchanged arithmetic source. Both package floors
-pass on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37912160949);
+pass on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37913368131);
 Linux native passes with verified source/payload/outcome receipts; both macOS
-native jobs remain queued at inspection. Earlier 0.2.18 Linux
-receipts retain their [original identity](../evidence/release-0218.md).
+native jobs remain queued at inspection. Earlier 0.2.19 Linux
+receipts retain their [original identity](../evidence/release-0219.md).
 Complete source-matching native receipts are still required for #38/#40. No broad
 local gate, dependency selection, package version change or release runs here.
 
@@ -537,12 +582,23 @@ by this observation. Existing Canic #450, #447 and #99 retain the owning repair
 and acceptance obligations. The previous description of the Dependabot PR as
 latest main was incorrect; its duplicate-package refusal is separate evidence.
 
-PocketIC-specific provisioning ownership is being coordinated in
+The subsequent public-main recheck advances IcyDB to 0.267.4
+`15174ec06c5a97c61317c9e205db4c0e86636dd8`, selecting Metrics 0.2.18.
+[Exact CI](https://github.com/dragginzgame/icydb/actions/runs/37910356751) passes
+static, core, workspace, tier-a, MSRV and Wasm-size jobs. The static ShellCheck
+repair is delivered. Both macOS lanes remain queued and tier-b fails; this review
+does not establish that failure's precise cause. IcyDB #298/#309 retain their
+remaining native/focused obligations, and Canic's public source is unchanged.
+
+PocketIC-specific provisioning ownership is coordinated in
 [Shared #76](https://github.com/dragginzgame/shared-tooling/issues/76) and
-[Testkit #38](https://github.com/dragginzgame/ic-testkit/issues/38). Metrics consumes
-the common tool bundle and has no server/runtime harness. Keep the current
-canonical selection until a reviewed supported owner handoff is available; this
-review adds no simulator dependency or private setup policy.
+[Testkit #38](https://github.com/dragginzgame/ic-testkit/issues/38). Published
+Testkit 0.25.4 setup/check and managed launch pass all three native hosts in
+[owner CI](https://github.com/dragginzgame/ic-testkit/actions/runs/37901828971).
+Metrics' pending 0.3.0 adoption selects the committed five-tool Shared revision
+above. It has no active server/runtime harness and adds no simulator dependency
+or private setup policy. Frozen replay inputs retain their historical server
+identity; current Testkit defaults are not substituted into that experiment.
 
 No sibling files were edited. Historical evidence stays under `docs/evidence/`;
 [the host record](../hosts.md) separates focused Linux checks from native CI.

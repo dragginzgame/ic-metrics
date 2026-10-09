@@ -81,6 +81,16 @@ authorization and application attribution are outside this experiment.
 
 ## Verification and replay
 
+The frozen README records the former shared PocketIC bundle check and
+`.tools/ic/bin/pocket-ic` path. Pending Metrics 0.3.0 removes that setup route;
+current `make ic-tools-check` admits five tools and supplies no server. The
+archive and its commands retain their historical identity. Exact replay still
+requires the original admitted PocketIC 16.0.0 executable/hash stated below,
+not the new Testkit owner's default server substituted into the frozen graph.
+New runtime experiments use IC Testkit's selected setup/check contract and bind
+their own source, lock, server and observations. The new tooling adoption neither
+replays nor relabels these measurements.
+
 The selected workspace lock has SHA-256
 `005ec0b991d4f71c500ab0d0e3482c32e8748cc62ce96f1b79a28fa46484fdd3`;
 the raw 138-row CSV has SHA-256

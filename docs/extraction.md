@@ -13,6 +13,14 @@ uses IC Host libraries for bounded artifact inspection. It is a separate workspa
 package, not an arithmetic dependency or platform reader. It establishes no
 consumer attribution, runtime qualification or instruction/cycle measurement.
 
+Pending 0.3.0 adopts the shared five-tool IC setup contract. PocketIC selection,
+provisioning, admission and lifecycle belong to IC Testkit. This workspace has
+no active server caller and adds no runtime dependency. Existing six-tool bundles
+require explicit `make install-ic-tools` replacement; old bundles and frozen
+measurement inputs are retained. The breaking change is developer tooling, with
+unchanged arithmetic APIs and no consumer data reset. Native adoption acceptance
+is tracked in [#41](https://github.com/dragginzgame/ic-metrics/issues/41).
+
 Published compatible 0.2.17 adds checked finite-bound cumulative counts and
 nearest-rank quantile bucket ranges to the existing histogram, with no new
 recording state or change to bucket attribution. A rational quantile identifies
@@ -72,9 +80,11 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.19 is available in the registry; its
-[verification](evidence/release-0219.md) binds the unchanged arithmetic and observed
-exact-source hosted state for the tooling fixes. The earlier 0.2.18
+Release 0.2.20 is available in the registry; its
+[verification](evidence/release-0220.md) binds the unchanged arithmetic and observed
+exact-source hosted state for the pinning fix. The earlier 0.2.19
+[verification](evidence/release-0219.md) retains its original Linux receipts.
+The earlier 0.2.18
 [verification](evidence/release-0218.md) retains its original Linux receipts.
 The reporting APIs are
 published from 0.2.17; their
