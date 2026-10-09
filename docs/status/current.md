@@ -4,26 +4,54 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.3.4 Make and qualification fixes
+## Pending 0.3.5 Make admission fix
 
-The compatible next draft is 0.3.4, adopting committed Shared Tooling 0.2.7
-`47d6ae6488b8007323fa7c2e22a6efa11d77ae63` through its clean canonical exporter.
-The 92-file selection adds the Make execution companion; every scratch export and
-native source receipt carries it. Direct and inherited unsafe Make modes reject
-before runner/formatter dispatch, while direct-only delivery, cache preparation
-and local adapters remain intact. Release smoke checks cannot follow an inherited
-external tooling root. The actual newline-root formatting qualifier now passes,
-including Git object access and preservation of index, source, lock and other edits.
+The compatible next draft is 0.3.5, adopting committed Shared Tooling 0.2.8
+`b2646cde9abbc8861857a4379c683a0c19eba43e` through its clean canonical exporter.
+The 92-file selection binds admission to the selected include despite an external
+tooling root, and supports recursive Make commands with additional arguments.
+Consumer release adapters and upstream fixtures pass on Linux Bash 5/3.2, along
+with admission, actual hooks, failure retention and focused snapshot/pin/tool/lint
+checks in [the adoption record](../evidence/adoption-035.md). Ordinary direct and
+inherited unsafe modes reject; command-line `MAKEFLAGS` overrides can still hide
+`-i` and yield false success. The actual consumer reproduction is reported to
+Shared #30; #44 remains open for a committed canonical fix and native acceptance.
+The selected snapshot is not patched. Direct-only delivery, cache preparation
+and local adapters are preserved.
 
-Focused Linux Bash 5/3.2 release, admission, formatting, real hook and retention
-checks pass in [the adoption record](../evidence/adoption-034.md). Those checks
-preserved the then-selected Host 0.9.4 graph. An independently incoming lock edit
-now selects Host 0.9.5 and needs its own focused qualification; it is not covered
-by the preceding graph-preservation result. Product Rust and pins remain unchanged;
-package versions stay 0.3.3. This fixes
-the locally observed Shared #90 limitation; its earlier failures remain historical.
-Upstream Linux and lint pass, with macOS queued. #44/#43 retain delivered-source
-native acceptance; no full local CI or release runs.
+An independently incoming lock edit first selected Host 0.9.6, qualified in
+[its separate review](../evidence/host-dependencies-096.md), and subsequently
+advanced to 0.9.7, qualified with the expanded CLI test below. Incoming manifest
+and lock edits now select Host 0.10.0, whose
+[separate review](../evidence/host-dependencies-0100.md) verifies official archives,
+unchanged consumed read/artifact source, inspector Clippy, named/CLI tests and
+Rust 1.88 compilation/execution. Host's durable writer/error hard cut has no
+Metrics caller; the private update preserves Metrics' API and output, so 0.3.5
+remains compatible. Manifest/lock and pin hashes remain unchanged during review.
+
+The existing CLI gate now executes all four distinct budget limits, invalid and
+surplus arguments against a valid input, and a closed-pipe output failure. Inputs
+remain intact and refused admission publishes no report. Development and actual
+Rust 1.88 execution pass in [the focused record](../evidence/inspector-cli-035.md),
+which retains the initial lint and invalid-descriptor fixture failures separately.
+Production Rust and pins remain unchanged; package/workspace versions stay 0.3.4.
+No full local CI, dependency resolution, commit or release runs.
+
+## Released 0.3.4 Make and qualification fixes
+
+Published 0.3.4 matches source/tag `5a5f1dab1f7ee3e1e5624c9d889148c39abf45f2`.
+[Its verification](../evidence/release-034.md) binds the dependency-free registry
+archive, unchanged arithmetic, passing Linux/MSRV and downloaded Linux receipts,
+including the execution companion and real CLI/hook coverage. Both macOS jobs
+remain queued; #42/#43/#44 retain their native acceptance criteria.
+
+The release adopts Shared 0.2.7 and fixes unsafe Make execution, inherited smoke
+roots and newline-root formatting qualification. Its
+[preparation record](../evidence/adoption-034.md) retains the original Host 0.9.4
+preservation scope. The released graph instead selects Host 0.9.5; its now-complete
+[separate review](../evidence/host-dependencies-095.md) binds unchanged upstream
+library source, package/source hashes, inspector Clippy, named/CLI tests and
+Rust 1.88 compilation. No arithmetic or consumer contract changes.
 
 The earlier 0.3.0 five-tool hard cut now has complete native/MSRV and downloaded
 macOS receipt acceptance in [its supplemental record](../evidence/release-030.md#native-acceptance-complete),
@@ -34,15 +62,17 @@ closing #41. The later #42/#43/#44 batches retain their own native criteria.
 Published 0.3.3 matches source/tag `b3ddfdf0406b54ef9a98ce48cbf5a9afe5fe406b`.
 [Its verification](../evidence/release-033.md) binds the registry archive,
 unchanged arithmetic, passing Linux/MSRV and downloaded Linux receipts, including
-both shared Make includes, real formatting hooks and actual CLI coverage. Both
-macOS lanes remain queued. The preparation evidence below retains its original scope.
+both shared Make includes, real formatting hooks and actual CLI coverage. Intel
+macOS now passes with independently verified source-bound receipts in the
+[supplement](../evidence/release-033.md#subsequent-intel-macos-acceptance); Apple
+Silicon remains queued. The preparation evidence below retains its original scope.
 
 The 0.3.3 batch adopted Shared Tooling 0.2.6
 `ce13a5314916891fd239d9b199b4a91b04775054` with 91 selected files. Standard
 release and formatting recipes moved to their shared owners, preserving local
 release policy and adapters. Its [preparation record](../evidence/adoption-033.md)
 retains focused hook/release checks and the earlier newline-root qualifier failure.
-That helper limitation is corrected in pending 0.3.4 above.
+That helper limitation is corrected in released 0.3.4 above.
 
 The released private graph selects Host 0.9.4. Its
 [separate review](../evidence/host-dependencies-094.md) binds unchanged upstream

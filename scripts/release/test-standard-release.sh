@@ -37,9 +37,28 @@ for selection in default direct; do
         scripts/ci/check-make-execution.sh > "$fixture/output" 2>&1
 done
 
+# Admission follows the selected include even when runtime routing is overridden.
+# No unselected execution probe may run during harmless help parsing.
+mkdir -p "$fixture/external/scripts/ci"
+cat > "$fixture/external/scripts/ci/check-make-execution.sh" <<'EXTERNAL'
+#!/usr/bin/env bash
+echo escaped >> "$EVENTS"
+exit 0
+EXTERNAL
+for selection in environment command; do
+    : > "$EVENTS"
+    if [[ "$selection" == command ]]; then
+        "$real_make" --no-print-directory -f "$root/Makefile" help \
+            "SHARED_TOOLING_ROOT=$fixture/external" > "$fixture/output" 2>&1
+    else
+        SHARED_TOOLING_ROOT="$fixture/external" "$real_make" --no-print-directory \
+            -f "$root/Makefile" help > "$fixture/output" 2>&1
+    fi
+    [[ ! -s "$EVENTS" ]]
+done
+
 # The smoke checker must bind this consumer's includes to its scratch snapshot,
 # even when invoked through a parent Make exporting another tooling root.
-mkdir -p "$fixture/external/scripts/ci"
 cat > "$fixture/external/scripts/ci/run-release.sh" <<'EXTERNAL'
 #!/usr/bin/env bash
 echo escaped >> "$EVENTS"
@@ -122,6 +141,20 @@ for target in patch minor major resume; do
         cmp "$fixture/cache-entry-expected" "$EVENTS"
     done
 done
+
+# Recursive MAKE arguments belong to the real invocation, not the admission probe.
+cat > "$fixture/recursive.mk" <<'MAKE'
+RELEASE_REMOTE := recursive
+recursive-entry:
+	+@$(MAKE) release-patch
+MAKE
+: > "$EVENTS"
+CARGO_NET_OFFLINE=true "$real_make" -j2 --no-print-directory \
+    -f "$root/Makefile" -f "$fixture/recursive.mk" recursive-entry \
+    "MAKE=$real_make --no-print-directory -f $root/Makefile -f $fixture/recursive.mk" \
+    RELEASE_BRANCH=main > "$fixture/output" 2>&1
+printf '%s\n' patch recursive main > "$fixture/cache-entry-expected"
+cmp "$fixture/cache-entry-expected" "$EVENTS"
 
 # The actual consumer includes reject unsafe Make modes before any substituted
 # release/formatter operation, including an inherited marker claiming admission.

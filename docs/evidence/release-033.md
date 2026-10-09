@@ -30,3 +30,27 @@ and owner-format verification pass. These were inspection failures, not CI failu
 This records publication and Linux acceptance, not complete native macOS
 qualification or IC cost measurements. No release rerun or publication occurs
 during verification.
+
+## Subsequent Intel macOS acceptance
+
+The same exact run now completes Intel macOS native CI successfully at source
+`b3ddfdf0406b54ef9a98ce48cbf5a9afe5fe406b`. Downloaded artifact `11632091162`
+verifies API ZIP digest
+`0a62549a4155ed71dd470d0b7f151500df3ebb7a3756725656f0337bff88bdb9`
+and inner archive digest
+`927c417c9374ab95d4c540cc57f23b63add5fb01dcadcc04a939e1186330270b`.
+All 14 payload hashes, 68 released-source hashes and nine successful outcomes
+verify, with exact run/attempt 1/push/Darwin/x86_64 identity, released IC pins
+and `darwin-x86_64` tool receipt. Both shared Make includes are covered. The log
+confirms actual CLI/hook checks and substituted release/admission/installer cases.
+
+Apple Silicon remains queued; Linux, Intel and MSRV acceptance is not a completed
+three-host matrix. Source review also confirms the installer helpers and consumer
+IC/host fixtures are byte-identical between released 0.3.1 and 0.3.3. The original
+0.3.1 macOS jobs now report cancellation with no recorded steps; they supply no
+native execution evidence and are not relabeled as passing.
+
+New inputs and verified receipts are retained under
+`target/evidence/issues-latest-035/`. The current pending Host 0.10.0 graph and
+expanded CLI test retain their separate local qualification. No CI rerun, source
+repair or release effect was used to obtain this new hosted observation.

@@ -80,10 +80,11 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.3.3 is available in the registry; its
-[verification](evidence/release-033.md) binds unchanged arithmetic, the published
+Release 0.3.4 is available in the registry; its
+[verification](evidence/release-034.md) binds unchanged arithmetic, the published
 archive and passing Linux/MSRV results. Downloaded Linux receipts cover the
-shared Make includes, actual formatting hooks and inspector CLI. Both macOS jobs
+shared Make includes and execution companion, actual formatting hooks and
+inspector CLI. Both macOS jobs
 remain queued; delivered tooling acceptance remains separate from publication.
 
 Earlier release 0.3.2's
@@ -102,7 +103,9 @@ the installer acceptance in #42 remains separate.
 Earlier release 0.3.0's
 [verification](evidence/release-030.md) binds the unchanged arithmetic source,
 published archive and passing Linux/MSRV results. Both macOS native jobs remain
-queued; #41's native acceptance remains separate. Earlier release 0.2.20's
+queued in the initial observation. Later downloaded Intel/Apple Silicon receipts
+complete [the supplemental acceptance](evidence/release-030.md#native-acceptance-complete),
+closing #41 without relabeling earlier observations. Earlier release 0.2.20's
 [verification](evidence/release-0220.md) binds the unchanged arithmetic and observed
 exact-source hosted state for the pinning fix. The earlier 0.2.19
 [verification](evidence/release-0219.md) retains its original Linux receipts.

@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.5]
+
+### Fixed
+
+- Bind Make admission to the selected Shared Tooling snapshot when a tooling root
+  is inherited or overridden, and support recursive Make commands with additional
+  arguments while retaining rejection of ordinary direct and inherited unsafe modes
+  ([Shared #30](https://github.com/dragginzgame/shared-tooling/issues/30)).
+
+### Changed
+
+- Use IC Host 0.10.0 in the private Wasm inspector;
+  arithmetic APIs and report output remain unchanged.
+
+### Testing
+
+- Exercise all four inspector budgets, invalid arguments and closed-pipe output
+  through the actual CLI, preserving input bytes and refusal-before-report behavior.
+
 ## [0.3.4] - 2026-10-09
 
 ### Fixed

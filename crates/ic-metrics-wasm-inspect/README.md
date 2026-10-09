@@ -39,8 +39,9 @@ structural reports describe those exact artifact bytes under this tool's separat
 recorded source and lock. See [the inspection record](../../docs/evidence/wasm-inspection-0215.md).
 
 `make wasm-inspect-check` runs focused host checks and named argument/report tests,
-plus an actual CLI test covering admitted input, byte-limit refusal, malformed,
-missing and non-file inputs, failure status and report publication. Its inputs
+plus an actual CLI test covering admitted input, all four budget limits, invalid
+or surplus arguments, malformed, missing and non-file inputs, closed-pipe output
+failure, exit status and report publication. Its inputs
 remain under `target/evidence/wasm-inspect-cli/` on success or failure.
 `make wasm-inspect-msrv` checks this package's explicit Rust 1.88 dependency path.
 Native CI includes these checks; the arithmetic host/Wasm targets remain separate.
