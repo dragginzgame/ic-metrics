@@ -72,7 +72,10 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.17 is available in the registry; its
+Release 0.2.18 is available in the registry; its
+[verification](evidence/release-0218.md) binds the unchanged arithmetic and partial
+exact-source hosted checks for the tooling cleanup. The reporting APIs are
+published from 0.2.17; their
 [verification](evidence/release-0217.md) binds the published reporting APIs and
 partial exact-source hosted checks. Complete native receipt review remains
 separate. The earlier 0.2.16

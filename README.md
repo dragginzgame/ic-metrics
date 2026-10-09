@@ -184,20 +184,21 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.16`](https://crates.io/crates/ic-metrics/0.2.16)
-is published on crates.io with tag `v0.2.16`. Declare the published release
+tooling releases. [`ic-metrics 0.2.18`](https://crates.io/crates/ic-metrics/0.2.18)
+is published on crates.io with tag `v0.2.18`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.16"
+ic-metrics = "0.2.18"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using
 `MeasurementHistogram` require `ic-metrics = "0.2.4"` or a later compatible
 published minimum in the root catalog. Either mean projection requires at least
-published 0.2.6. Published consumers
+published 0.2.6. Checked histogram queries and scaled ratios require published
+0.2.17 or later. Published consumers
 must resolve the registry package rather than require a sibling checkout.
 [The qualification issue](https://github.com/dragginzgame/ic-metrics/issues/10)
 links each consumer's integration evidence. Native qualification is recorded
@@ -216,7 +217,15 @@ with `RELEASE_REMOTE=origin` and
 `RELEASE_BRANCH=main` and `RELEASE_DELIVERY=direct`. This repo rejects PR release
 delivery before dispatch; adopting it requires merged-checkout adapters and their
 own qualification. They require cargo-edit (`cargo set-version`) and
-the prepared pinned Cargo tools and rustfmt, run the complete offline gate, prepare only Cargo metadata
+the prepared pinned Cargo tools and rustfmt. After source/candidate admission and
+recovery selection, they run `cargo fetch --locked` for the complete workspace
+before the offline gate. This prepares missing dependencies without updating
+the lock; caller-selected Cargo offline environment/configuration stays effective.
+A fetch failure stops this attempt before validation or metadata changes.
+Standalone `make release-preflight` stays offline. The standard entrypoints pass
+an internal cache-preparation selection, consumed before helper/Cargo dispatch and
+removed from validation children. Validation remains `CARGO_NET_OFFLINE=true`.
+They then prepare only Cargo metadata
 and release notes, commit,
 tag and atomically push. They do not publish the crate. Normal release targets
 reconcile an interrupted release at its saved commit. Newer committed fixes or

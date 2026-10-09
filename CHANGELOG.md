@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.2.19]
+
+### Fixed
+
+- Prepare missing locked dependencies during standard releases before offline
+  validation, honouring explicitly selected offline mode and stopping on fetch
+  failures before validation or metadata changes
+  ([#40](https://github.com/dragginzgame/ic-metrics/issues/40),
+  [Shared Tooling #84](https://github.com/dragginzgame/shared-tooling/issues/84)).
+- Find prepared checkout-local tools when formatting isolated staged inputs,
+  without requiring an interactive PATH export
+  ([Shared Tooling #85](https://github.com/dragginzgame/shared-tooling/issues/85)).
+
+### Added
+
+- Adopt shared Cargo binary/example setup with explicit package/profile selection,
+  single-document offline receipt and byte checks, retained failed builds and
+  original Cargo failure statuses
+  ([Shared Tooling #65](https://github.com/dragginzgame/shared-tooling/issues/65)).
+
+### Changed
+
+- Qualify the private Wasm inspector's existing Host 0.8.9 lock selection with
+  unchanged structural reports, keeping the arithmetic crate dependency-free.
+
 ## [0.2.18] - 2026-10-09
 
 ### Changed

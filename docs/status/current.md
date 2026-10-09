@@ -4,9 +4,33 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.2.18 tooling cleanup
+## Pending 0.2.19 release preparation
 
-The next draft is compatible 0.2.18: optional fleet copies are retired from this
+The compatible next draft is 0.2.19: standard release entrypoints now prepare the
+selected locked workspace cache before offline validation, preserving explicit
+Cargo offline settings, source/candidate admission and exact-version recovery.
+Standalone preflight remains offline. The internal preparation selection is
+consumed before helper/Cargo dispatch and removed from validation children.
+
+The 89-file snapshot adopts reviewed Shared Tooling
+`dc4fdf0f78928d75b69bbf43b37c690c53a04d1e` (0.1.37). It supplies explicit selected
+Cargo binary/example setup with single-document receipts and original failure
+statuses, plus checkout-local tool lookup for isolated staged formatting. No
+additional tool package or profile is selected by this repository.
+[The focused record](../evidence/adoption-0219.md) separates the initial 0.1.35
+cache/refusal checks from the later 0.1.37 installer/hook qualification, including
+actual formatting without a checkout-local caller PATH export.
+[#40](https://github.com/dragginzgame/ic-metrics/issues/40) retains delivery and
+changed-caller native acceptance. Package/workspace versions remain 0.2.18.
+The pre-existing Host 0.8.9 lock selection is preserved and now has its own
+[focused qualification](../evidence/host-dependencies-089.md): package/source
+identity, warning-denied inspector checks, actual Rust 1.88 and unchanged frozen
+Wasm reports pass on Linux. Host library source is unchanged from 0.8.8. Neither
+these checks nor upstream CI replace exact committed consumer native acceptance.
+
+## Released 0.2.18 tooling cleanup
+
+Released 0.2.18 retires optional fleet copies from this
 consumer, while the arithmetic, setup/check and local workspace LOC contracts
 remain intact. The 89-file snapshot adopts reviewed Shared Tooling
 `3d33cd250fcae7dbe5cabe44b2abd6b2c91a1822` from a clean committed clone. Its IC
@@ -19,21 +43,34 @@ snapshot/pin checks, local LOC, ShellCheck, actionlint and documentation links.
 [The selection record](../evidence/adoption-0218.md) retains the removed-symbol
 inventory and scoped evidence. [#38](https://github.com/dragginzgame/ic-metrics/issues/38)
 awaits exact committed native qualification of these changed consumer callers.
-Shared Tooling's selected upstream CI passes Linux/lint with both macOS jobs
-still running at inspection; upstream CI does not replace consumer qualification.
+Shared Tooling's selected upstream CI now passes all three native hosts and
+lint/security; upstream CI does not replace consumer qualification.
 
-Workspace/package versions remain 0.2.17. The pre-existing independent private
-Host 0.8.8 lock update is preserved byte-for-byte and is not qualified by this
-tooling batch. No Rust edit, broad local gate, commit, push or release runs.
+Workspace/package versions are 0.2.18. Its committed private Host 0.8.8 graph
+passes an [independent focused review](../evidence/host-dependencies-088.md):
+warning-denied Linux host checks, named tests, actual Rust 1.88 and byte-identical
+reports for the three frozen Wasms. New Host streaming hashing does not replace
+the bytes required for Wasm inspection; existing read/report behavior is retained.
+No new code batch or pending changelog is needed for this verification.
 
 ## Released source
 
-Latest finalized and published source is 0.2.17
+Latest finalized and published source is 0.2.18
+`3b1f461ed9aacce6c3d04d391178fecb9ce283dd`, matching tag `v0.2.18` and
+workspace/package versions. [The release verification](../evidence/release-0218.md)
+binds the official archive and unchanged arithmetic source. Both package floors
+pass on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37903242506);
+Linux native passes with verified source/payload/outcome receipts; both macOS
+native jobs remain queued at inspection.
+Complete source-matching native receipts are still required for #38. No broad
+local gate, dependency selection, package version change or release runs here.
+
+The preceding published source is 0.2.17
 `52be29e4bc2433b3d2912a0c09538be993dfb1b2`, matching tag `v0.2.17` and
 workspace/package versions. [The release verification](../evidence/release-0217.md)
 binds the official archive and source. Linux native and both package floors pass
 on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37900937307);
-Apple Silicon is running and Intel remains queued at inspection. Complete native receipt
+Apple Silicon now passes and Intel is running at reinspection. Complete native receipt
 review remains separate from publication.
 
 The released reporting APIs add checked finite-bound cumulative counts,

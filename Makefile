@@ -32,10 +32,10 @@ endif
 .PHONY: $(_release_targets)
 
 release-patch release-minor release-major:
-	+@bash scripts/ci/run-release.sh "$(@:release-%=%)" "$(RELEASE_REMOTE)" "$(RELEASE_BRANCH)"
+	+@IC_METRICS_RELEASE_CACHE_PREPARE=1 bash scripts/ci/run-release.sh "$(@:release-%=%)" "$(RELEASE_REMOTE)" "$(RELEASE_BRANCH)"
 
 release-resume:
-	+@bash scripts/ci/run-release.sh resume "$(VERSION)" "$(RELEASE_REMOTE)" "$(RELEASE_BRANCH)"
+	+@IC_METRICS_RELEASE_CACHE_PREPARE=1 bash scripts/ci/run-release.sh resume "$(VERSION)" "$(RELEASE_REMOTE)" "$(RELEASE_BRANCH)"
 
 release-version:
 	@bash scripts/release/metadata.sh version
@@ -44,7 +44,7 @@ release-preflight:
 	@bash scripts/release/metadata.sh preflight
 
 release-verify:
-	+CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
+	+env -u IC_METRICS_RELEASE_CACHE_PREPARE CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
 		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv wasm-inspect-msrv
 
 release-prepare-version:

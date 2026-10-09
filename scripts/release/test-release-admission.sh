@@ -22,6 +22,8 @@ cleanup() {
 }
 trap cleanup EXIT
 source_commit="$(git -C "$root" rev-parse HEAD)"
+original_cargo_home="${CARGO_HOME-}"
+original_cargo_home_set="${CARGO_HOME+x}"
 selected_commit="$source_commit"
 source_objects="$(git -C "$root" rev-parse --git-path objects)"
 case "$source_objects" in /*) ;; *) source_objects="$root/$source_objects" ;; esac
@@ -50,11 +52,24 @@ chmod +x "$fixture/bin/git"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'
 set -euo pipefail
+# Permission for preparation must not leak to Cargo or standalone helper reads.
+[[ -z "${IC_METRICS_RELEASE_CACHE_PREPARE+x}" ]]
 # Manifest parsing is read-only; keep it real while substituting effectful gates.
 if [[ "${1:-}" == locate-project ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
 printf '%s\n' "$*" >> "$ADMISSION_CARGO_EVENTS"
 case "$*" in
-    'set-version --help'|'sort --help'|'fetch --locked --offline'|'metadata --locked --offline --format-version 1') ;;
+    'set-version --help'|'sort --help'|'metadata --locked --offline --format-version 1') ;;
+    'fetch --locked'|'fetch --locked --offline')
+        if [[ "${ADMISSION_REAL_FETCH:-0}" == 1 ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
+        if [[ ! -e "$ADMISSION_CACHE/input" ]]; then
+            if [[ "$*" == *' --offline' || "${CARGO_NET_OFFLINE:-false}" == true ||
+                  "${ADMISSION_CONFIG_OFFLINE:-false}" == true ]]; then
+                echo 'controlled missing cache under explicit offline policy' >&2
+                exit 43
+            fi
+            [[ "${ADMISSION_FETCH_FAILURE:-0}" == 0 ]] || exit "$ADMISSION_FETCH_FAILURE"
+            printf 'prepared selected locked input\n' > "$ADMISSION_CACHE/input"
+        fi ;;
     *) echo 'unexpected admission fixture Cargo command' >&2; exit 99 ;;
 esac
 CARGO
@@ -83,7 +98,14 @@ TOML
     printf '# Changelog\n\n## [0.1.1] - 2026-10-06\n\n- Prepared fixture.\n' > CHANGELOG.md
     git add -- Cargo.toml Cargo.lock CHANGELOG.md
     : > "$ADMISSION_CARGO_EVENTS"
-    unset RELEASE_COMMIT ADMISSION_FAIL_GIT
+    unset RELEASE_COMMIT ADMISSION_FAIL_GIT IC_METRICS_RELEASE_CACHE_PREPARE
+    unset CARGO_NET_OFFLINE ADMISSION_CONFIG_OFFLINE ADMISSION_FETCH_FAILURE ADMISSION_REAL_FETCH
+    if [[ -n "$original_cargo_home_set" ]]; then export CARGO_HOME="$original_cargo_home";
+    else unset CARGO_HOME; fi
+    export ADMISSION_CACHE="$fixture/cache/$name"
+    mkdir -p "$ADMISSION_CACHE"
+    # Existing admission scenarios have prepared inputs; new cache cases start cold.
+    printf 'prepared selected locked input\n' > "$ADMISSION_CACHE/input"
     export TMPDIR="$fixture/attempts/$name"
     export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-06
 }
@@ -96,10 +118,111 @@ reject() {
 
 setup preflight-clean
 bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1
-grep -F 'fetch --locked --offline' "$ADMISSION_CARGO_EVENTS" >/dev/null
+
+# Locked preparation can fill a cold cache without touching release inputs.
+# Offline environment/configuration and network errors are authoritative refusals.
+for scenario in cold standalone-offline environment-offline config-offline network-failure warm-offline; do
+    setup "cache-$scenario"
+    mkdir "$fixture/originals-$scenario"
+    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cp "$path" "$fixture/originals-$scenario/$path"; done
+    cp .git/index "$fixture/originals-$scenario/index"
+    export IC_METRICS_RELEASE_CACHE_PREPARE=1
+    if [[ "$scenario" != warm-offline ]]; then rm "$ADMISSION_CACHE/input"; fi
+    expected_status=0
+    expected_fetch='fetch --locked'
+    case "$scenario" in
+        standalone-offline) unset IC_METRICS_RELEASE_CACHE_PREPARE; expected_status=43; expected_fetch='fetch --locked --offline' ;;
+        environment-offline) export CARGO_NET_OFFLINE=true; expected_status=43 ;;
+        config-offline) export ADMISSION_CONFIG_OFFLINE=true; expected_status=43 ;;
+        network-failure) export ADMISSION_FETCH_FAILURE=47; expected_status=47 ;;
+        warm-offline) export CARGO_NET_OFFLINE=true ;;
+    esac
+    status=0
+    bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
+    [[ "$status" == "$expected_status" ]]
+    printf '%s\n' 'set-version --help' 'sort --help' "$expected_fetch" > "$fixture/expected-cache-events"
+    cmp "$fixture/expected-cache-events" "$ADMISSION_CARGO_EVENTS"
+    if [[ "$expected_status" == 0 ]]; then [[ -f "$ADMISSION_CACHE/input" ]];
+    else [[ ! -e "$ADMISSION_CACHE/input" ]]; fi
+    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$fixture/originals-$scenario/$path"; done
+    cmp .git/index "$fixture/originals-$scenario/index"
+    [[ ! -e .git/release-state ]]
+done
+
+# Cargo itself admits explicit offline configuration/environment with an empty
+# cache. Only tool probes are substituted; fetch executes the committed graph.
+for policy in environment config; do
+    setup "actual-offline-$policy"
+    for path in Cargo.toml Cargo.lock CHANGELOG.md; do git show "$source_commit:$path" > "$path"; done
+    export RELEASE_PREVIOUS="$selected_version"
+    export RELEASE_VERSION="${selected_version%.*}.$((${selected_version##*.} + 1))"
+    export IC_METRICS_RELEASE_CACHE_PREPARE=1 ADMISSION_REAL_FETCH=1
+    export CARGO_HOME="$fixture/actual-cargo-home-$policy"
+    mkdir "$CARGO_HOME"
+    if [[ "$policy" == environment ]]; then export CARGO_NET_OFFLINE=true;
+    else printf '[net]\noffline = true\n' > "$CARGO_HOME/config.toml"; fi
+    cp Cargo.lock "$fixture/actual-lock-before"
+    status=0
+    bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
+    [[ "$status" == 101 ]]
+    printf '%s\n' 'set-version --help' 'sort --help' 'fetch --locked' > "$fixture/actual-events"
+    cmp "$fixture/actual-events" "$ADMISSION_CARGO_EVENTS"
+    cmp Cargo.lock "$fixture/actual-lock-before"
+    [[ ! -e .git/release-state ]]
+done
+
+## The actual runner must stop on fetch refusal before validation or preparation.
+# Only Make dispatch is adapted: consumer preflight/version stay real, and a
+# successful cold fetch reaches a deliberately failing substitute validation.
+ADMISSION_REAL_MAKE="$(command -v make)"
+export ADMISSION_REAL_MAKE ADMISSION_METADATA="$root/scripts/release/metadata.sh"
+cat > "$fixture/bin/release-make" <<'MAKE'
+#!/usr/bin/env bash
+set -euo pipefail
+target=''
+for argument in "$@"; do
+    case "$argument" in
+        RELEASE_*=*) export "$argument" ;;
+        release-*) target="$argument" ;;
+    esac
+done
+case "$target" in
+    release-version) exec bash "$ADMISSION_METADATA" version ;;
+    release-preflight) exec bash "$ADMISSION_METADATA" preflight ;;
+    release-verify) printf 'validation\n' >> "$ADMISSION_CARGO_EVENTS"; exit 83 ;;
+    '') exec "$ADMISSION_REAL_MAKE" "$@" ;;
+    *) echo "unexpected release phase: $target" >&2; exit 99 ;;
+esac
+MAKE
+chmod +x "$fixture/bin/release-make"
+git init --bare --quiet "$fixture/destination.git"
+for scenario in cold offline network-failure; do
+    setup "runner-cache-$scenario"
+    git remote add origin "$fixture/destination.git"
+    branch="$(git symbolic-ref --quiet --short HEAD)"
+    export IC_METRICS_RELEASE_CACHE_PREPARE=1
+    rm "$ADMISSION_CACHE/input"
+    case "$scenario" in
+        offline) export CARGO_NET_OFFLINE=true ;;
+        network-failure) export ADMISSION_FETCH_FAILURE=47 ;;
+    esac
+    cp Cargo.lock "$fixture/runner-lock-before"
+    status=0
+    RELEASE_MAKE="$fixture/bin/release-make" bash "$root/scripts/ci/run-release.sh" patch origin "$branch" \
+        > "$fixture/result.log" 2>&1 || status=$?
+    printf '%s\n' 'set-version --help' 'sort --help' 'fetch --locked' > "$fixture/runner-cache-events"
+    if [[ "$scenario" == cold ]]; then
+        [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]]
+        printf 'validation\n' >> "$fixture/runner-cache-events"
+    else [[ "$status" == 1 && ! -e "$ADMISSION_CACHE/input" ]]; fi
+    cmp "$fixture/runner-cache-events" "$ADMISSION_CARGO_EVENTS"
+    cmp Cargo.lock "$fixture/runner-lock-before"
+    for plan in .git/release-state/*.plan; do [[ ! -e "$plan" ]]; done
+done
 
 for scenario in unstaged staged-hidden untracked; do
     setup "preflight-$scenario"
+    export IC_METRICS_RELEASE_CACHE_PREPARE=1
     case "$scenario" in
         unstaged) printf '\nUnrelated edit.\n' >> README.md ;;
         staged-hidden)
@@ -115,6 +238,7 @@ for scenario in unstaged staged-hidden untracked; do
 done
 
 setup preflight-all-blockers
+export IC_METRICS_RELEASE_CACHE_PREPARE=1
 printf '\nHidden staged edit.\n' >> README.md
 git add -- README.md
 git show HEAD:README.md > README.md
@@ -155,6 +279,7 @@ grep -F 'cannot inspect' "$fixture/result.log" >/dev/null
 cmp .git/index "$fixture/index-before"
 
 setup conflicting-pending-notes
+export IC_METRICS_RELEASE_CACHE_PREPARE=1
 { printf '# Changelog\n\n## [0.9.9]\n\n- Conflicting draft.\n\n'; cat CHANGELOG.md; } > notes.fixture
 mv notes.fixture CHANGELOG.md
 reject preflight
@@ -243,6 +368,8 @@ for scenario in retention fallback; do
     cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
+	@test -z "$${IC_METRICS_RELEASE_CACHE_PREPARE+x}"
+	@test "$${CARGO_NET_OFFLINE:-false}" = true
 	@test "$(RELEASE_VERSION)" = 9.8.7
 	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
 	@echo "error: retained-gate-failure"
@@ -258,7 +385,7 @@ MAKE
     fi
     for attempt in 1 2; do
         printf '%s\n' "$attempt" > attempt
-        if TMPDIR="$worktree/tmp" make --no-print-directory -f "$root/Makefile" release-verify \
+        if IC_METRICS_RELEASE_CACHE_PREPARE=1 TMPDIR="$worktree/tmp" make --no-print-directory -f "$root/Makefile" release-verify \
             RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit \
             > "$fixture/result.log" 2>&1; then
             echo 'release-verify unexpectedly passed failed gate' >&2
@@ -349,4 +476,4 @@ make --no-print-directory -f "$root/Makefile" release-verify \
 cmp gate-events "$fixture/expected-gates"
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
 grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
-echo 'release admission, selected-commit metadata and actual Make/logger retention passed (real Git; Cargo and gates substituted)'
+echo 'release admission, cache preparation, selected-commit metadata and Make/logger retention passed (real Git/offline fetch; remaining Cargo effects and gates substituted)'

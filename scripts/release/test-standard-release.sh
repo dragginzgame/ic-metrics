@@ -68,6 +68,24 @@ for policy in pr invalid ''; do
 done
 rm "$fixture/bin/bash"
 
+# Every standard entry selects preparation, retaining explicit caller offline mode.
+mkdir -p scripts/ci
+cat > scripts/ci/run-release.sh <<'RUNNER'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "${IC_METRICS_RELEASE_CACHE_PREPARE:-}" == 1 ]]
+[[ "${CARGO_NET_OFFLINE:-}" == true ]]
+printf '%s\n' "$@" > "$EVENTS"
+RUNNER
+for target in patch minor major resume; do
+    : > "$EVENTS"
+    CARGO_NET_OFFLINE=true "$real_make" --no-print-directory -f "$root/Makefile" "release-$target" \
+        VERSION=0.1.2 RELEASE_REMOTE=review RELEASE_BRANCH=main > "$fixture/output" 2>&1
+    if [[ "$target" == resume ]]; then printf '%s\n' resume 0.1.2 review main > "$fixture/cache-entry-expected";
+    else printf '%s\n' "$target" review main > "$fixture/cache-entry-expected"; fi
+    cmp "$fixture/cache-entry-expected" "$EVENTS"
+done
+
 # Publication remains a separate single-package Cargo operation, never a release.
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'

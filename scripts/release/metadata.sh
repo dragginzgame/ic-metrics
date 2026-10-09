@@ -4,6 +4,10 @@ set -euo pipefail
 # Consumer adapter. Dependencies: Cargo/cargo-edit/cargo-sort, jq, yq, Git, tar, awk and Unix utilities.
 operation="${1:-}"
 [[ $# -eq 1 ]] || exit 2
+# Standard entrypoints select cache preparation only after runner recovery/source
+# admission. Consume the internal selection before any helper or Cargo child.
+release_cache_prepare="${IC_METRICS_RELEASE_CACHE_PREPARE:-0}"
+unset IC_METRICS_RELEASE_CACHE_PREPARE
 if [[ "${RELEASE_DELIVERY-direct}" != direct ]]; then
     echo 'ic-metrics supports RELEASE_DELIVERY=direct only' >&2
     exit 2
@@ -41,7 +45,11 @@ case "$operation" in
             -f scripts/ci/finalize-release-changelog.awk CHANGELOG.md > /dev/null
         cargo set-version --help >/dev/null
         cargo sort --help >/dev/null
-        cargo fetch --locked --offline
+        case "$release_cache_prepare" in
+            1) cargo fetch --locked ;;
+            0) cargo fetch --locked --offline ;;
+            *) echo 'invalid release cache preparation selection' >&2; exit 2 ;;
+        esac
         ;;
     prepare)
         current_version="$(bash "$reader" Cargo.toml)"
