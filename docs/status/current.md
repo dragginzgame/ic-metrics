@@ -29,6 +29,24 @@ the focused inspector checks below use that selection without changing it.
 The original tooling evidence retains its initial dependency identity. No
 commit or release runs here.
 
+## Release admission fixture repair
+
+The maintainer's CI failure at source
+`e1363524f5be6b4c47b9a49e21230d969aef5e1f` came from the real offline-cache
+fixture copying pending 0.3.0 notes while requesting a 0.2.21 patch candidate.
+The release guard correctly rejected the mismatch before Cargo dispatch. The
+fixture now owns its notes while retaining the exact committed manifests,
+workspace sources and lock graph. Both real offline-policy cases verify Cargo's
+failure status and unchanged manifest, lock, notes and index. Production
+candidate admission remains unchanged; the pending batch stays 0.3.0.
+
+`make release-tools-check`, the admission fixture under genuine Bash 3.2.57,
+ShellCheck and maintained documentation links pass on Linux. Logs and checked
+source hashes remain under `target/evidence/release-admission-030/`; the original
+CI log and `/tmp/metrics-release-admission.qEG6SX` failure are retained. These are
+focused fixtures with the declared Git/Cargo/Make substitutions, not a rerun of
+full CI or release execution. No package version or dependency changes.
+
 ## Private inspector ownership cleanup
 
 The argument and report modules now share the executable-owned `Error`, removing

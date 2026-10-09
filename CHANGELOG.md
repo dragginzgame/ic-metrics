@@ -18,6 +18,11 @@
   removing the argument/report module dependency cycle without changing CLI
   diagnostics or report output.
 
+### Fixed
+
+- Keep offline-cache release fixtures independent of the repository's pending
+  release notes, so a minor-release draft does not block their CI checks.
+
 ## [0.2.20] - 2026-10-09
 
 ### Fixed

@@ -153,7 +153,11 @@ done
 # cache. Only tool probes are substituted; fetch executes the committed graph.
 for policy in environment config; do
     setup "actual-offline-$policy"
-    for path in Cargo.toml Cargo.lock CHANGELOG.md; do git show "$source_commit:$path" > "$path"; done
+    for path in Cargo.toml Cargo.lock; do git show "$source_commit:$path" > "$path"; done
+    # Keep the real committed Cargo graph, but own the cache fixture's notes.
+    # A repository draft may select a minor release instead of this test's patch.
+    printf '# Changelog\n\n## [%s] - %s\n\n- Offline cache fixture.\n' \
+        "$selected_version" "$selected_date" > CHANGELOG.md
     export RELEASE_PREVIOUS="$selected_version"
     export RELEASE_VERSION="${selected_version%.*}.$((${selected_version##*.} + 1))"
     export IC_METRICS_RELEASE_CACHE_PREPARE=1 ADMISSION_REAL_FETCH=1
@@ -161,13 +165,17 @@ for policy in environment config; do
     mkdir "$CARGO_HOME"
     if [[ "$policy" == environment ]]; then export CARGO_NET_OFFLINE=true;
     else printf '[net]\noffline = true\n' > "$CARGO_HOME/config.toml"; fi
-    cp Cargo.lock "$fixture/actual-lock-before"
+    originals="$fixture/actual-originals-$policy"
+    mkdir "$originals"
+    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cp "$path" "$originals/$path"; done
+    cp .git/index "$originals/index"
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
     [[ "$status" == 101 ]]
     printf '%s\n' 'set-version --help' 'sort --help' 'fetch --locked' > "$fixture/actual-events"
     cmp "$fixture/actual-events" "$ADMISSION_CARGO_EVENTS"
-    cmp Cargo.lock "$fixture/actual-lock-before"
+    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
+    cmp .git/index "$originals/index"
     [[ ! -e .git/release-state ]]
 done
 
