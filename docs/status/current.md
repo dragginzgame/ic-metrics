@@ -4,17 +4,49 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.3.1 installer fixes
+## Pending 0.3.2 maintenance
 
-The compatible next draft is 0.3.1. The unchanged 89-file selection adopts
+The compatible next draft is 0.3.2. The unchanged 89-file selection adopts
+reviewed Shared Tooling `ac4549c5ebde497f7db0da5d05d32835112e51de`, clarifying
+optional installer-fixture companions and CI queue/duplicate-run diagnosis.
+The optional all-installer suite remains unselected; this snapshot refresh leaves
+production helper bytes, installer Make/CI callers and tool pins unchanged.
+[The adoption record](../evidence/adoption-032.md)
+binds the canonical refresh and focused snapshot/pin/offline checks.
+
+The batch also includes the independently prepared Host 0.9.2 lock selection.
+[Its review](../evidence/host-dependencies-092.md) verifies package/source hashes,
+unchanged library source, inspector Clippy and named tests, actual Rust 1.88 and
+byte-identical frozen reports. The core remains dependency-free. No arithmetic
+API or data contract changes; package/workspace versions remain 0.3.1. No commit,
+release, publication or cleanup runs during preparation.
+
+The inspector's focused gate now executes an actual CLI admission/publication
+test alongside its existing argument/report tests. Accepted bytes produce the
+matching digest and report; oversized, malformed, missing and directory inputs
+fail with empty stdout and leave inputs intact. Linux formatting, warning-denied
+all-target Clippy, the named tests and actual Rust 1.88 check/execution pass.
+[The CLI record](../evidence/inspector-cli-032.md) retains commands, initial lint
+failure and source/lock identities. Configured native CI inherits the test through
+the existing gate; this local result does not establish macOS acceptance.
+Production arithmetic/inspector source and CLI contracts are unchanged.
+
+## Released 0.3.1 installer fixes
+
+Released 0.3.1's unchanged 89-file selection adopts
 reviewed Shared Tooling `ee48bb37c98c771e77b92fd891f0757d8c1c8b99`: IC setup/check
 consumes a final pin row without a newline, and CI tools publish to the exact
 destination without redirecting through a late directory or symlink. The
 existing yq caller keeps its version/checksum; Perl admission precedes setup.
 [The focused record](../evidence/adoption-031.md) binds passing Bash 5/3.2 fixtures,
 snapshot/pin checks and actual offline IC admission. Arithmetic source, Cargo
-selection and IC pins are unchanged; versions remain 0.3.0. No release runs here.
-[#42](https://github.com/dragginzgame/ic-metrics/issues/42) owns delivery and
+selection and IC pins were unchanged during that preparation. Published 0.3.1
+now verifies with Linux/native and both package floors passing;
+[the release record](../evidence/release-031.md) retains the exact source and limits.
+The later downloaded Linux artifact verifies its GitHub ZIP digest, inner archive,
+14 payload hashes, 65 release-source hashes and nine successful setup/native
+outcomes. Both macOS jobs remain queued.
+[#42](https://github.com/dragginzgame/ic-metrics/issues/42) owns
 exact-source native acceptance of the changed installer callers.
 
 ## Released 0.3.0 tooling hard cut
@@ -109,7 +141,10 @@ additional tool package or profile is selected by this repository.
 cache/refusal checks from the later 0.1.37 installer/hook qualification, including
 actual formatting without a checkout-local caller PATH export.
 [#40](https://github.com/dragginzgame/ic-metrics/issues/40) is delivered and retains
-changed-caller native acceptance.
+changed-caller Intel native acceptance. Apple Silicon now passes on the exact
+released source, with its downloaded artifact, source/payload hashes, run/host
+identity and changed release fixtures verified in the release record. Intel
+remains queued; no local gate or older source is substituted for that result.
 The pre-existing Host 0.8.9 lock selection is preserved and now has its own
 [focused qualification](../evidence/host-dependencies-089.md): package/source
 identity, warning-denied inspector checks, actual Rust 1.88 and unchanged frozen
@@ -143,7 +178,14 @@ No new code batch or pending changelog is needed for this verification.
 
 ## Released source
 
-Latest finalized and published source is 0.3.0
+Latest finalized and published source is 0.3.1
+`2383dc0d684800b1610e3eb727449b0a87d562bb`, matching tag `v0.3.1` and
+workspace/package versions. [Its verification](../evidence/release-031.md) binds
+the dependency-free archive, unchanged arithmetic source and passing Linux/native
+and both package floors. Both macOS jobs remain queued, so #42 stays open.
+The independently prepared Host 0.9.2 lock edit belongs to pending 0.3.2.
+
+Earlier finalized and published source is 0.3.0
 `070c768de881a6e966b93651e242e16e4f9f1111`, matching tag `v0.3.0` and
 workspace/package versions. [Its verification](../evidence/release-030.md) binds
 the dependency-free registry archive, unchanged arithmetic source and passing

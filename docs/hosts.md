@@ -159,7 +159,11 @@ Run `make shared-tooling-check`, `make fmt`, `make check`,
 `make msrv` checks the declared floor on host and Wasm. Select
 named tests relevant to the change rather than running the full suite by default.
 The separate `make wasm-inspect-check` checks and lints the private host package
-and runs its named argument/report tests. `make wasm-inspect-msrv` checks its
+and runs its named argument/report tests plus the actual CLI admission/publication
+test. That executable test checks an accepted file's digest/report, byte-limit
+refusal, malformed/missing/non-file inputs, failure status and empty stdout on
+rejection. Inputs are retained under `target/evidence/wasm-inspect-cli/`.
+`make wasm-inspect-msrv` checks its
 Rust 1.88 dependency path; both minimum-version commands log compiler/Cargo
 identities. Native CI includes the host checks on all three hosts, and Linux
 checks both package floors. Bare Cargo commands select arithmetic only.

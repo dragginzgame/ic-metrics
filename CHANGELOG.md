@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.2]
+
+### Changed
+
+- Update the private Wasm inspector's locked IC Host dependencies to 0.9.2,
+  preserving structural report output and the dependency-free arithmetic crate.
+
+### Testing
+
+- Exercise the Wasm inspector's actual command-line file admission and report
+  publication in focused checks and native CI.
+
 ## [0.3.1] - 2026-10-09
 
 ### Fixed

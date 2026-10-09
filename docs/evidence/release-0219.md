@@ -30,3 +30,23 @@ Later snapshot adoption cannot relabel those checks or the released CI source.
 Publication inputs and verified Linux receipts remain under
 `target/evidence/release-0219/`. Verification
 runs no build, dependency update, package version change, commit, push or release.
+
+## Apple Silicon native receipt supplement
+
+The same run's Apple Silicon job `113759634677` subsequently succeeds, finishing
+at `2026-10-09T11:55:27Z`. Artifact `11614202718` verifies GitHub's ZIP digest
+`451b70ca8f34623c334e8fe65d7ca4336a4300b00eeddd5433d7a4dbe84fcfb8`
+and inner archive digest
+`5915a151368e20713a2e30e7c2cdeba700a814a464df5e438013cec8ca0dfb61`.
+All 14 top-level payload hashes and 65 selected-source hashes verify against
+the released commit. Source/run/attempt 1/push/Darwin/arm64 identities, all nine
+successful setup/native outcomes and the released IC pin catalog agree.
+Every job step succeeds. The native log confirms the changed release admission,
+cache preparation, restoration/recovery and retained-failure fixtures pass,
+with the declared substitutions rather than live release effects.
+
+Inputs, verified payloads and comparison results remain under
+`target/evidence/release-0219/apple-silicon-download/`. Intel native remains
+queued, so #40 stays open for that acceptance. This supplements the original
+observation without relabelling historical Linux evidence or reopening completed
+#38 qualification. No workflow dispatch, rerun or cancellation occurs.

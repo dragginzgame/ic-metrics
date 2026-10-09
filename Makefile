@@ -148,8 +148,9 @@ msrv:
 wasm-inspect-check:
 	cargo check -p ic-metrics-wasm-inspect --all-targets --locked
 	cargo clippy -p ic-metrics-wasm-inspect --all-targets --locked -- -D warnings
-	cargo test -p ic-metrics-wasm-inspect --locked args::tests
-	cargo test -p ic-metrics-wasm-inspect --locked report::tests
+	cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect args::tests
+	cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect report::tests
+	cargo test -p ic-metrics-wasm-inspect --locked --test cli input_admission_controls_exit_and_report_publication -- --exact
 
 wasm-inspect-msrv:
 	rustc +$(WASM_INSPECT_MSRV) --version
