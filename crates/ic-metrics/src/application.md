@@ -94,12 +94,53 @@ work in several aggregates requires an explicit attribution reason.
 
 ### Reporting and resets
 
+Use checked histogram projections when reporting a distribution. A cumulative
+count applies to a configured upper bound; a nearest-rank quantile locates a
+bucket range rather than interpolating an exact observed value. For example:
+
+```rust
+use ic_metrics::{MeasurementHistogram, checked_scaled_ratio};
+
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+let mut bytes = MeasurementHistogram::new([0, 32_768, 262_144, 1_048_576])?;
+for value in [0, 16_384, 32_768, 65_536] { bytes.record(value); }
+let small_chunks = bytes.cumulative_count(1)?; // at most 32 KiB
+assert_eq!(small_chunks, 3);
+let p95 = bytes.quantile_bucket(95, 100)?.unwrap();
+assert_eq!(p95.lower_exclusive(), Some(32_768));
+assert_eq!(p95.upper_inclusive(), Some(262_144));
+// Check exact count/total availability before projecting ratios from summaries.
+let summary = bytes.summary();
+let mean_tenths = match summary.mean()? {
+    Some(_) => Some(checked_scaled_ratio(u128::from(summary.total()), summary.samples(), 10)?),
+    None => None,
+};
+assert_eq!(mean_tenths, Some(286_720)); // 28,672.0 bytes, in tenths
+assert_eq!(checked_scaled_ratio(u128::from(small_chunks), summary.samples(), 10_000)?, 7_500);
+# Ok(())
+# }
+```
+
+[`checked_scaled_ratio`] floors the scaled result using exact integer arithmetic.
+It accepts exact `u128` totals and does not infer saturation from their numeric
+value. Callers must admit count/total provenance first, choose the scale and
+unit, and handle empty data before supplying a denominator. It neither formats
+decimals nor replaces the stricter availability contract of [`checked_mean`].
+For the histogram example, the proportion's denominator also must be known exact;
+the summary availability check above establishes that before using it.
+
 An empty aggregate differs from measured zero. [`checked_mean`] and
 [`MeasurementSummary::mean`] return `None` when empty, floor the mean of
 unsaturated observations, and return a typed error when exact inputs are
 unavailable. Display that unavailability rather than substituting zero.
 Latest and maximum remain individual observations after saturation. Bucket
 counts saturate independently; they need not sum to a saturated sample count.
+[`MeasurementHistogram::cumulative_count`] needs only its selected bucket prefix
+to remain exact; [`MeasurementHistogram::quantile_bucket`] requires an exact
+sample count and all buckets. A saturated value total alone does not invalidate
+quantile ranges. Overflow has no configured upper bound, and a zero-bound-count
+histogram covers all unsigned values. Invalid indices/fractions and required
+saturation produce [`HistogramQueryError`].
 
 The application owns window/reset identity. Reset an accumulator by replacing
 it with a newly constructed empty one and update its window identity at the

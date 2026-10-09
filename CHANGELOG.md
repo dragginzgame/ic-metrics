@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.17]
+
+### Added
+
+- Add checked cumulative histogram counts and nearest-rank quantile bucket
+  ranges, preserving empty/zero and saturation distinctions without extra
+  recording state ([#39](https://github.com/dragginzgame/ic-metrics/issues/39)).
+- Add exact scaled integer ratios for fractional means and proportions from
+  wide totals, rejecting zero denominators and unrepresentable results
+  ([Testkit #40](https://github.com/dragginzgame/ic-testkit/issues/40)).
+
+### Changed
+
+- Update the private Wasm inspector's locked IC Host dependencies to 0.8.5,
+  keeping the public arithmetic crate dependency-free.
+
 ## [0.2.16] - 2026-10-08
 
 ### Fixed

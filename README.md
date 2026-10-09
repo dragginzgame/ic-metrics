@@ -42,6 +42,15 @@ configured number of bounds, and every bucket saturates independently. Buckets
 describe ranges; they do not provide exact percentiles. Units, thresholds and
 cumulative export remain consumer-owned. The histogram API is published in 0.2.4.
 
+Pending 0.2.17 adds `cumulative_count(index)` for exact counts through a configured
+bound and `quantile_bucket(numerator, denominator)` for nearest-rank ranges, such
+as p95 with `(95, 100)`. Empty quantiles are `None`; required count saturation
+returns `HistogramQueryError`. Overflow has no configured ceiling. The new
+`checked_scaled_ratio(numerator, denominator, scale)` floors an exact scaled
+integer ratio from a `u128` numerator, without floating point or overflowing
+intermediate multiplication. Callers establish exact inputs and handle empty or
+saturated diagnostics before using it. These APIs are not yet published.
+
 Known callers are IcyDB, Canic, ic-timers, ic-backup, IC Blob Storage's
 restoration test probe and Toko Miner's production game-shard action metrics. Their
 attribution, registries, callback roles, replication, persistence and reporting
@@ -61,9 +70,8 @@ Consumers own target gating, native handling, call-context identity and attribut
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
 
-Verified 0.2.15 publication is bound in the
-[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0215.md),
-which distinguishes publication from the remaining native CI qualification.
+Verified 0.2.16 publication and complete native qualification are bound in the
+[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0216.md).
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
@@ -176,14 +184,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.15`](https://crates.io/crates/ic-metrics/0.2.15)
-is published on crates.io with tag `v0.2.15`. Declare the published release
+tooling releases. [`ic-metrics 0.2.16`](https://crates.io/crates/ic-metrics/0.2.16)
+is published on crates.io with tag `v0.2.16`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.15"
+ic-metrics = "0.2.16"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

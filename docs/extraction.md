@@ -13,6 +13,18 @@ uses IC Host libraries for bounded artifact inspection. It is a separate workspa
 package, not an arithmetic dependency or platform reader. It establishes no
 consumer attribution, runtime qualification or instruction/cycle measurement.
 
+Pending compatible 0.2.17 adds checked finite-bound cumulative counts and
+nearest-rank quantile bucket ranges to the existing histogram, with no new
+recording state or change to bucket attribution. A rational quantile identifies
+a range, not an exact observed percentile. Required count saturation is rejected;
+saturated value totals alone do not invalidate exact distribution counts.
+It also adds `checked_scaled_ratio` for exact scaled fractional means/proportions
+from admitted `u128` totals and `u64` denominators/scales. This arithmetic does not
+admit identity, saturation provenance or empty samples and does not replace
+`checked_mean`'s availability checks. Existing caller formats, recording and
+public projections remain consumer-owned and unchanged by this local addition.
+The pending APIs are not a published dependency or completed consumer adoption.
+
 Published 0.2.6 adds `checked_mean(samples, total)` for consumer-owned report
 fields and `MeasurementSummary::mean()` using that canonical projection.
 Empty `(0, 0)` is `None`; measured zero is `Some(0)`. Nonempty unsaturated
@@ -60,9 +72,9 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.15 is available in the registry; the
-[release record](evidence/release-0215.md) verifies its published arithmetic-only
-payload and binds observed native CI separately from remaining qualification. The
+Release 0.2.16 is available in the registry; the
+[release record](evidence/release-0216.md) verifies its published arithmetic-only
+payload and complete source-matching native/MSRV receipts. The
 previous 0.2.13
 [release record](evidence/release-0213.md) binds its source, archive and observed
 native outcomes separately from earlier releases. Its tooling changes preserve

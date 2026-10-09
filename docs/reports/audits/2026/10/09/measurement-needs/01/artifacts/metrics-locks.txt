@@ -1,0 +1,24 @@
+
+icydb
+Committed lock: version = "0.2.15"
+Working lock: version = "0.2.16"
+
+canic
+Committed lock: version = "0.2.12"
+Working lock: version = "0.2.16"
+
+ic-timers
+Committed lock: version = "0.2.16"
+Working lock: version = "0.2.16"
+
+ic-backup
+Committed lock: version = "0.2.16"
+Working lock: version = "0.2.16"
+
+ic-blob-storage
+Committed lock: version = "0.2.16"
+Working lock: version = "0.2.16"
+
+toko-miner
+Committed lock: version = "0.2.16"
+Working lock: version = "0.2.16"

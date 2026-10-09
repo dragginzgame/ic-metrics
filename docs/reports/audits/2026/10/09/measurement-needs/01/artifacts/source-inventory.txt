@@ -1,0 +1,262 @@
+Source inventory captured at 2026-10-09T07:14:11Z
+
+Repository: ic-metrics
+d8276daa3ae8603a5b4e196d0bb5369de54c1216 Release 0.2.16
+ M Cargo.lock
+ M README.md
+ M docs/extraction.md
+ M docs/status/current.md
+?? docs/evidence/host-dependencies-085.md
+?? docs/evidence/release-0216.md
+?? docs/reports/
+
+Repository: icydb
+145250b8ca7ce36cda240d4ff8fa47f254527877 Release 0.267.3
+ M .github/workflows/ci.yml
+ M .github/workflows/sql-correctness.yml
+ M .shared-tooling.snapshot
+ M AGENTS.md
+ M CHANGELOG.md
+ M Cargo.lock
+ M DRAGGINZGAME.md
+ M crates/icydb-core/src/db/session/tests/tier_c_reference.rs
+ M crates/icydb/src/lib.rs
+ M crates/icydb/tests/fail-endpoints/duplicate_block.stderr
+ M docs/changelog/0.267.md
+ M docs/governance/shared-tooling.md
+ M docs/ic-tools.md
+ M docs/local-setup.md
+ M docs/supported-hosts.md
+ M docs/verification-helpers.md
+ M scripts/ci/check-public-msrv.sh
+ M scripts/ci/ci-workflow-invariants.jq
+ M scripts/ci/ic-tool-pins.awk
+ M scripts/ci/test-ci-workflow-invariants.sh
+ M scripts/dev/install-ic-tools.sh
+ M testing/integration/tests/sql_correctness_support/coverage_manifest/obligations.rs
+ M testing/sql-generator/src/coverage.rs
+ M testing/sql-generator/src/generator.rs
+ M testing/sql-generator/src/model.rs
+ M testing/sql-generator/src/structure.rs
+ M testing/sql-generator/src/tests.rs
+ M testing/sqlite-reference/src/profile.rs
+ M testing/sqlite-reference/src/tests.rs
+?? crates/icydb/tests/pass/endpoint_msrv.rs
+
+Repository: canic
+c4c046f947b2b28f4342cbf6efe9221ba1ed5f70 Release 0.110.54
+ M .github/workflows/ci.yml
+ M .github/workflows/security.yml
+ M .shared-tooling.snapshot
+ M CHANGELOG.md
+ M Cargo.lock
+ M Cargo.toml
+ M Makefile
+ M TESTING.md
+ M ci/dependency-pinning-exceptions.json
+ M crates/canic-backup/Cargo.toml
+ M crates/canic-backup/src/persistence/json.rs
+ M crates/canic-control-plane/src/storage/stable/component_registry/mod.rs
+ M crates/canic-control-plane/src/storage/stable/fleet_admission/mod.rs
+ M crates/canic-host/src/observatory/ops/transport/mod.rs
+ M crates/canic-host/src/observatory/ops/transport/process/mod.rs
+ M crates/canic-host/src/observatory/tests.rs
+ M crates/canic-host/tests/ci_authority.rs
+ M crates/canic/src/testing/managed_component_group/fixture/sharding_root_stub.wasm
+ M docs/audits/method-fingerprints-v1.md
+ M docs/changelog/0.110.md
+ M docs/features/blob-storage/README.md
+ M docs/features/operations/fleet-observatory.md
+ M docs/status/current.md
+ M integrations/blob-service/Cargo.lock
+ M integrations/blob-service/Cargo.toml
+ M integrations/blob-service/README.md
+ M integrations/blob-service/consumer/Cargo.lock
+ M integrations/blob-service/consumer/Cargo.toml
+ M integrations/blob-service/embedded-consumer/Cargo.lock
+ M integrations/blob-service/embedded-consumer/Cargo.toml
+ M integrations/blob-service/src/endpoints/mod.rs
+ M integrations/blob-service/src/lib.rs
+ M integrations/blob-service/src/lifecycle/mod.rs
+ M integrations/blob-service/src/ops/mod.rs
+ M integrations/blob-service/src/workflow/mod.rs
+ M scripts/ci/check-pocketic-version-alignment.sh
+ M scripts/ci/publish-workspace.sh
+ M scripts/ci/test-publish-workspace.sh
+ M scripts/ci/test-wasm-ablation-report.sh
+ M scripts/ci/test-wasm-capability-size-report.sh
+ M scripts/ci/wasm-ablation-report.sh
+ M scripts/ci/wasm-audit-report.sh
+ M scripts/ci/wasm-capability-size-report.sh
+ M scripts/dev/managed-root-fixture.json
+?? integrations/blob-service/tests/
+?? scripts/ci/check-crates-io-version.sh
+?? scripts/ci/test-crates-io-version.sh
+
+Repository: ic-timers
+7d2a30f8a94efd55ef0e4e413c37d6209ccb4cc1 0.14.22
+ M CHANGELOG.md
+ M Cargo.lock
+ M docs/status/current.md
+ M scripts/release/test-release-gate.sh
+
+Repository: ic-backup
+f7868ce3f672da5ea1489172fd97e83699fe4f99 Release 0.9.2
+
+Repository: ic-blob-storage
+5f2d171b1b01e0dc3b0047f00c194a9afe874642 Release 0.19.1
+ M .github/workflows/tooling.yml
+ M .shared-tooling.snapshot
+ M CHANGELOG.md
+ M docs/completion-verifier.md
+ M docs/ic-tools.md
+ M docs/local-setup.md
+ M docs/multi-user-upload-authority.md
+ M docs/status/current.md
+ M docs/supported-hosts.md
+ M docs/verification-helpers.md
+ M tests/browser/standalone.js
+ M tests/browser/standalone.mjs
+ M tests/pocketic/tests/standalone_browser/client/mod.rs
+ M tests/pocketic/tests/standalone_browser/mod.rs
+?? docs/evidence/caffeine-probes/local/2026-10-09-multi-user-browser0192-01/
+?? docs/evidence/multi-user-browser0192.md
+?? tests/pocketic/tests/standalone_browser/multi_user/
+
+Repository: toko-miner
+637bf9b828dbe7c11f27231f714f2a63be205ed3 0.20
+
+Repository: ic-jobs
+2a00cf5f09949719c2df15a5edf36f26255ed2d8 Release 0.2.0
+ M CHANGELOG.md
+ M SAFETY.md
+ M crates/ic-jobs/src/job.rs
+ M crates/ic-jobs/tests/jobs.rs
+ M docs/status/current.md
+
+Repository: ic-query
+edd68020d9ef8e76a241e89daf77e51155a92f57 Release 0.50.3
+M  .shared-tooling.snapshot
+M  AGENTS.md
+MM CHANGELOG.md
+ M Cargo.lock
+ M Cargo.toml
+M  DRAGGINZGAME.md
+ M Makefile
+ M crates/ic-query-cli/Cargo.toml
+ D crates/ic-query-cli/examples/governance_artifact.rs
+ D crates/ic-query-cli/examples/governance_process.rs
+ M crates/ic-query-cli/src/cloud_engine/mod.rs
+ M crates/ic-query-cli/src/nns/data_center/mod.rs
+ M crates/ic-query-cli/src/nns/data_center/reports.rs
+ M crates/ic-query-cli/src/nns/leaf/model.rs
+ M crates/ic-query-cli/src/nns/leaf/run.rs
+ M crates/ic-query-cli/src/nns/macros/reports.rs
+ M crates/ic-query-cli/src/nns/node/run/info.rs
+ M crates/ic-query-cli/src/nns/node/run/list.rs
+ M crates/ic-query-cli/src/nns/node/run/mod.rs
+ M crates/ic-query-cli/src/nns/node_operator/mod.rs
+ M crates/ic-query-cli/src/nns/node_operator/reports.rs
+ M crates/ic-query-cli/src/nns/node_provider/mod.rs
+ M crates/ic-query-cli/src/nns/node_provider/reports.rs
+ M crates/ic-query-cli/src/nns/subnet/run/info.rs
+ M crates/ic-query-cli/src/nns/subnet/run/list.rs
+ M crates/ic-query-cli/src/nns/subnet/run/mod.rs
+ M crates/ic-query-cli/src/progress.rs
+ M crates/ic-query/src/cloud_engine/list.rs
+ M crates/ic-query/src/cloud_engine/mod.rs
+ M crates/ic-query/src/lib.rs
+ M crates/ic-query/src/nns/data_center/mod.rs
+ M crates/ic-query/src/nns/data_center/report/build.rs
+ M crates/ic-query/src/nns/data_center/report/mod.rs
+ M crates/ic-query/src/nns/inventory.rs
+ M crates/ic-query/src/nns/node/mod.rs
+ M crates/ic-query/src/nns/node/report/build.rs
+ M crates/ic-query/src/nns/node/report/mod.rs
+ M crates/ic-query/src/nns/node/report/tests.rs
+ M crates/ic-query/src/nns/node_operator/mod.rs
+ M crates/ic-query/src/nns/node_operator/report/build.rs
+ M crates/ic-query/src/nns/node_operator/report/mod.rs
+ M crates/ic-query/src/nns/node_provider/mod.rs
+ M crates/ic-query/src/nns/node_provider/report/build.rs
+ M crates/ic-query/src/nns/node_provider/report/mod.rs
+ M crates/ic-query/src/progress.rs
+ M crates/ic-query/src/subnet_catalog/host/cache.rs
+ M crates/ic-query/src/subnet_catalog/host/mod.rs
+ M crates/ic-query/src/subnet_catalog/host/refresh.rs
+ M crates/ic-query/src/subnet_catalog/mod.rs
+ M crates/ic-query/src/subnet_catalog/report/info.rs
+ M crates/ic-query/src/subnet_catalog/report/list.rs
+ M crates/ic-query/src/subnet_catalog/report/mod.rs
+ M crates/ic-query/src/subnet_catalog/tests/fixtures.rs
+ M crates/ic-query/src/subnet_catalog/tests/list.rs
+ M docs/canister-smoke.md
+M  docs/changelog/0.50.md
+M  docs/ic-tools.md
+M  docs/release-workflow.md
+ M docs/supported-hosts.md
+ D scripts/canister/smoke.py
+ D scripts/canister/test_smoke.py
+M  scripts/ci/ic-tool-pins.awk
+M  scripts/dev/install-ic-tools.sh
+ M tests/canister/icp.yaml
+?? crates/ic-query-cli/examples/governance_smoke/
+?? docs/changelog/0.51.md
+?? docs/reports/audits/2026/10/09/
+
+Repository: ic-auth
+4fef99163ff848d791e03a4db1ae7a726b88d557 Release 0.1.11
+
+Repository: ic-memory
+6343f62a36636cb999fa404e4b8769159ca9f4cb Release 0.31.9
+ M .github/workflows/ci.yml
+ M .shared-tooling.snapshot
+ M AGENTS.md
+ M CHANGELOG.md
+ M Cargo.lock
+ M Makefile
+ M docs/changelog/0.31.md
+ M docs/host-support.md
+ M docs/release-workflow-qualification.md
+ D scripts/ci/test-cloc-fixture-contexts.sh
+ D scripts/ci/test-cloc-siblings.sh
+ D scripts/ci/test-cloc-tooling.sh
+
+Repository: ic-testkit
+a27967101b68e111f9a717e27977fb41c2fd1818 Release 0.25.3
+ M .github/workflows/ci.yml
+ M .shared-tooling.snapshot
+ M CHANGELOG.md
+ M Cargo.lock
+ M Cargo.toml
+ M DRAGGINZGAME.md
+ M README.md
+ M crates/ic-testkit/CHANGELOG.md
+ M crates/ic-testkit/README.md
+ M crates/ic-testkit/src/artifacts/cache_fs.rs
+ M crates/ic-testkit/src/bin/ic-testkit-server.rs
+ M crates/ic-testkit/src/bin/native/mod.rs
+ M crates/ic-testkit/src/pic/mod.rs
+ M crates/ic-testkit/src/pic/startup.rs
+ M crates/ic-testkit/tests/server_runner.rs
+ M docs/hosts.md
+ M docs/ic-tools.md
+ M docs/local-setup.md
+ M docs/supported-hosts.md
+ M docs/verification-helpers.md
+ M scripts/ci/ic-tool-pins.awk
+ M scripts/ci/test-ic-tools.sh
+ M scripts/dev/install-ic-tools.sh
+?? crates/ic-testkit/src/bin/native/provisioning.rs
+?? crates/ic-testkit/src/pic/server.rs
+
+Repository: ic-host-tooling
+9f3d9a83def91030056c78e44c9efaa489be7d12 Release 0.8.6
+ M CHANGELOG.md
+ M README.md
+ M crates/ic-host-fs/src/read/mod.rs
+ M crates/ic-host-fs/src/read/no_follow/mod.rs
+ M crates/ic-host-fs/src/read/no_follow/tests.rs
+ M docs/changelog/0.8.md
+ M docs/extraction.md
+ M docs/status/current.md

@@ -9,7 +9,11 @@
 #![no_std]
 
 mod histogram;
+mod ratio;
 mod summary;
 
-pub use histogram::{HistogramBoundsError, MeasurementHistogram};
+pub use histogram::{
+    HistogramBoundsError, HistogramQueryError, HistogramRange, MeasurementHistogram,
+};
+pub use ratio::{MeasurementRatioError, checked_scaled_ratio};
 pub use summary::{MeasurementMeanError, MeasurementSummary, checked_mean, record_sample};

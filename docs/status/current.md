@@ -4,20 +4,82 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
+## Pending 0.2.17 reporting projections
+
+The maintainer accepted the [sibling measurement-needs audit](../reports/audits/2026/10/09/measurement-needs/01/report.md).
+The compatible next draft is 0.2.17 because the batch adds reporting APIs without
+changing existing arithmetic, retained state, CLI or consumer report contracts.
+Manifests and package/local lock versions remain 0.2.16; the existing private
+Host 0.8.5 lock selection is preserved. No commit, tag, push or publication runs.
+
+`cumulative_count(index)` reports a finite-bound prefix without requiring unrelated
+bucket or value-total availability. `quantile_bucket(numerator, denominator)`
+uses exact nearest rank and returns a `HistogramRange`, including unbounded
+overflow. It requires unsaturated sample/bucket counts, distinguishes empty and
+measured zero, and accepts an independently saturated value total.
+`checked_scaled_ratio` supplies exact floor-rounded scaled ratios with a u128
+numerator and u64 denominator/scale. It avoids transient product overflow,
+reports typed zero-denominator/result-overflow errors, and delegates exact-input
+provenance to the caller. It does not silently change `checked_mean` or Testkit
+floating-point outputs. Recording state and measurement ownership are unchanged.
+
+Focused Linux warning-denied host/Wasm Clippy, named histogram/ratio/summary
+tests and actual Rust 1.85 host/Wasm checks pass. Named histogram/ratio tests and
+all documentation examples also pass on Rust 1.85. [The focused record](../evidence/reporting-0217.md)
+binds the commands and retained source/log identities. The packaged guide demonstrates
+Backup's existing configured chunk bounds and exact fractional reporting.
+The six known consumers plus Testkit's wide aggregate path were reviewed read-only;
+no sibling code, graph or tests change. Queries are local/unpublished, and the
+future exact committed native matrix and owning instrumentation/format decisions
+remain separate. No new IC cost or raw Wasm improvement is claimed.
+
 ## Released source
 
-Latest finalized source is 0.2.15
-`287251eb51412852a58cabd9de5b3c28e207e705`, matching tag `v0.2.15`.
-Cargo workspace, packages and local lock versions are 0.2.15. The official index
+Latest finalized source is 0.2.16
+`d8276daa3ae8603a5b4e196d0bb5369de54c1216`, matching tag `v0.2.16`.
+Cargo workspace, packages and local lock versions are 0.2.16. The official index
 reports a non-yanked, dependency-free package with Rust 1.85.0 and checksum
-`15dd6475ed0173a63cb35215032d499e239596d6f23163602688399e41002a54`.
+`44b447757f583aa5e5145e34bbd6d8b75004614d90ef33544252c9e496178155`.
 The newly downloaded archive verifies that digest, embedded identity and maintained
 package bytes. Its packaged lock excludes the private host graph.
-[Exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37808287051)
+[Exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37822463635)
 passes Linux, Intel and Apple Silicon native and both package MSRV checks.
 Downloaded evidence from all three native hosts verifies source, payload, archive
-and all nine successful outcomes. [The release record](../evidence/release-0215.md)
-completes the released-source native acceptance in
+and all nine successful outcomes, with IC Host 0.8.4 and PocketIC 16.1.0.
+[The release record](../evidence/release-0216.md) completes
+[#37](https://github.com/dragginzgame/ic-metrics/issues/37).
+Shared Tooling and Host's exact selected upstream matrices now also pass all
+native hosts. These released receipts do not qualify the new pending reporting APIs.
+
+The subsequent upstream review finds committed Shared Tooling 0.1.31
+`9af82393c620e486578febed74a648523725c234`. Its relevant compatible installer
+fix reuses verified IC bundles across comment-only or reordered pin catalogs,
+while retaining complete matrix admission and original installation receipts.
+Its baseline explicitly keeps fleet reports in Shared Tooling. The current
+91-file selection already excludes the sibling issue dashboard and the separate
+Cargo-install assessment implementation. No IC pins or Cargo dependencies change
+in this upstream revision. At review,
+[normal CI](https://github.com/dragginzgame/shared-tooling/actions/runs/37891841317)
+now passes Linux, both native macOS architectures and lint. The
+[separate Cargo assessment](https://github.com/dragginzgame/shared-tooling/actions/runs/37891957851)
+passes Linux, fails Apple Silicon and is running on Intel; it is not a consumer
+installer qualification. This revision is reviewed but not adopted here; the
+recorded snapshot remains `4e274a2219c0b0cc3af68ec65658b373253518fb`.
+
+The maintainer's subsequent dirty lock selects published IC Host 0.8.5 for both
+private inspector dependencies. [The focused dependency review](../evidence/host-dependencies-085.md)
+verifies package checksums, committed source, warning-denied Linux host checks,
+both package floors and byte-identical reports for all three frozen Wasms.
+The consumed artifact and filesystem crate trees are unchanged from Host 0.8.4;
+the new upstream release changes shared installer tooling, not library behavior.
+Its exact upstream matrix passes all native hosts and MSRV. This is local
+qualification of the dirty graph, separate from Metrics 0.2.16's completed
+Host 0.8.4 release receipts. That dependency review introduced no arithmetic
+feature; manifests and the recorded snapshot remain preserved.
+
+Previously verified 0.2.15 source is
+`287251eb51412852a58cabd9de5b3c28e207e705`.
+[Its release record](../evidence/release-0215.md) completes
 [#34](https://github.com/dragginzgame/ic-metrics/issues/34) and
 [#36](https://github.com/dragginzgame/ic-metrics/issues/36).
 
@@ -277,7 +339,11 @@ public remote remains released 0.2.14, so local commits have no matching CI yet.
 Newer uncommitted upstream policy/dashboard/release-source work is excluded.
 No sibling files, schedules, commits or release effects are changed by preparation.
 
-## Pending 0.2.16 tooling
+## Released 0.2.16 tooling preparation history
+
+The following observations describe preparation before the maintainer's release.
+Current publication and complete native acceptance are recorded above; the
+preparation records preserve the original local commands and pending observations.
 
 The canonical 91-file snapshot now selects reviewed committed Shared Tooling
 `4e274a2219c0b0cc3af68ec65658b373253518fb`: 0.1.29 rules and the subsequent
@@ -355,13 +421,14 @@ actual held-HTTP metrics interleaving case does not execute. The ordinary lane
 also rejects a finalized changelog without a pending draft. Owning corrections
 remain in [Canic #450](https://github.com/dragginzgame/canic/issues/450);
 passing host cases do not close the missing native/IC acceptance.
-The later Canic [CI 37784481281](https://github.com/dragginzgame/canic/actions/runs/37784481281)
+The later Canic Dependabot PR [CI 37784481281](https://github.com/dragginzgame/canic/actions/runs/37784481281)
 selects source `b90cd3fc501aff682e32bbc685c4a91c932ff821` and registry Metrics
 0.2.12. Its preflight rejects duplicate `ic-certification` in the deployed
 `delegation_root_stub` and `canister_user_shard` closures; the retained lock has
 3.2.0 and 4.0.0. All later native/MSRV/ordinary/PocketIC lanes are skipped.
 [Canic #448](https://github.com/dragginzgame/canic/issues/448) owns that gate;
-the older passing perf cases are not qualification of this newer graph.
+this PR graph is not public main, and the older passing perf cases are not
+qualification of this proposed graph.
 Backup 0.6.0 and Blob
 0.18.0 public main match the inspected commits; their later graph's native/runtime
 outcomes were not requalified in this inventory. Toko has no matching hosted
@@ -406,6 +473,39 @@ and Blob retain their completed adoption scopes. Toko application follow-up
 is separate from the original reader-cut closure criteria. Histogram
 investigators now have the published mean API and checksum-bound public replay
 feedback in their existing issues; no new instrumentation is requested.
+
+The 2026-10-09 public-main recheck advances IcyDB to 0.267.3
+`145250b8ca7ce36cda240d4ff8fa47f254527877`, selecting Metrics 0.2.15.
+[Exact CI](https://github.com/dragginzgame/icydb/actions/runs/37820158590) now passes
+core, workspace, tier-a, MSRV, Wasm-size and Apple Silicon host jobs. Static fails
+SC2015 in the shared checker under apt-installed ShellCheck 0.9.0-1; the same
+selected helper passes reviewed 0.11.0 here. Intel native is cancelled, and tier-b
+observes a clean PocketIC exit after 60.609 seconds during pre-client compilation.
+These findings are reported to existing IcyDB #309 and
+[Testkit #37](https://github.com/dragginzgame/ic-testkit/issues/37), retaining
+IcyDB's full acceptance in #298. That public lock selects Testkit 0.25.2; newer
+local graph preparation is not substituted.
+
+Canic's actual public main is release 0.110.54
+`c4c046f947b2b28f4342cbf6efe9221ba1ed5f70`, selecting registry Metrics 0.2.12.
+[Its push CI](https://github.com/dragginzgame/canic/actions/runs/37784109345)
+passes security, preflight, checks, MSRV and release build. Downloaded ordinary
+test logs confirm all eight Core perf host cases pass, but the lane fails because
+the changelog guard demands a pending release on finalized source. Both macOS
+jobs fail the test-worker failure/cancellation cleanup step; the serial PocketIC
+step also fails. Individual downloads for those three jobs return empty logs at
+review, so their precise causes and actual held-HTTP execution are not established
+by this observation. Existing Canic #450, #447 and #99 retain the owning repair
+and acceptance obligations. The previous description of the Dependabot PR as
+latest main was incorrect; its duplicate-package refusal is separate evidence.
+
+PocketIC-specific provisioning ownership is being coordinated in
+[Shared #76](https://github.com/dragginzgame/shared-tooling/issues/76) and
+[Testkit #38](https://github.com/dragginzgame/ic-testkit/issues/38). Metrics consumes
+the common tool bundle and has no server/runtime harness. Keep the current
+canonical selection until a reviewed supported owner handoff is available; this
+review adds no simulator dependency or private setup policy.
+
 No sibling files were edited. Historical evidence stays under `docs/evidence/`;
 [the host record](../hosts.md) separates focused Linux checks from native CI.
 No full local CI/product-test gate, dependency upgrade, package version change,
