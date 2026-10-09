@@ -3,22 +3,18 @@
 PACKAGE := ic-metrics
 MSRV ?= 1.85.0
 WASM_INSPECT_MSRV ?= 1.88.0
-RELEASE_REMOTE ?= origin
-RELEASE_BRANCH ?= main
 export RELEASE_DELIVERY ?= direct
 IC_TOOL_PINS ?= ci/ic-tools.tsv
 HOST_TOOL_VERSIONS ?= ci/tool-versions.env
 export YQ := $(CURDIR)/.tools/host/bin/yq
 
 include make/tools.mk
+include make/release.mk
+include make/rust-format.mk
 
 # Rust setup stays explicit; checks only inspect the prepared local set.
 install-tools: install-rust-tools
 tools-check: rust-tools-check
-
-ifneq ($(word 2,$(filter release-patch release-minor release-major release-resume,$(MAKECMDGOALS))),)
-$(error Select exactly one release target)
-endif
 
 # PR delivery requires merged-checkout adapters and qualification we do not own.
 # Refuse it before dispatching any release runner or metadata operation.
@@ -31,11 +27,7 @@ endif
 
 .PHONY: $(_release_targets)
 
-release-patch release-minor release-major:
-	+@IC_METRICS_RELEASE_CACHE_PREPARE=1 bash scripts/ci/run-release.sh "$(@:release-%=%)" "$(RELEASE_REMOTE)" "$(RELEASE_BRANCH)"
-
-release-resume:
-	+@IC_METRICS_RELEASE_CACHE_PREPARE=1 bash scripts/ci/run-release.sh resume "$(VERSION)" "$(RELEASE_REMOTE)" "$(RELEASE_BRANCH)"
+release-patch release-minor release-major release-resume: export IC_METRICS_RELEASE_CACHE_PREPARE := 1
 
 release-version:
 	@bash scripts/release/metadata.sh version
@@ -59,7 +51,7 @@ release-prepared-check release-committed-check release-tagged-check release-push
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
 
-.PHONY: help publish publish-check install-hooks hook-check format-tools-check fmt fmt-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
+.PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 .PHONY: local-tools-test ci-evidence-check
 .PHONY: wasm-inspect-check wasm-inspect-msrv
 
@@ -103,17 +95,6 @@ hook-check:
 ci-evidence-check:
 	bash scripts/ci/test-evidence-archive.sh
 	bash scripts/ci/test-native-evidence.sh
-
-format-tools-check:
-	@. "$(HOST_TOOL_VERSIONS)" && bash scripts/ci/check-format-tools.sh "$${SHARED_TOOLING_CARGO_SORT_VERSION:?}"
-
-fmt: format-tools-check
-	cargo sort --workspace
-	cargo fmt --all
-
-fmt-check: format-tools-check
-	cargo sort --workspace --check
-	cargo fmt --all -- --check
 
 check:
 	cargo check -p $(PACKAGE) --locked

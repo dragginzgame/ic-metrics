@@ -4,9 +4,52 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.3.2 maintenance
+## Pending 0.3.3 tooling maintenance
 
-The compatible next draft is 0.3.2. The unchanged 89-file selection adopts
+The compatible next draft is 0.3.3, adopting published Shared Tooling 0.2.6
+`ce13a5314916891fd239d9b199b4a91b04775054` through its clean committed exporter.
+The 91-file selection preserves literal newline-ending hook paths and
+checkout roots, and failed Git observations stop setup without changing config.
+The included 0.2.4 fixture companion declarations are already satisfied; optional
+owner suites stay unselected. Two newly selected includes own standard release
+entrypoints and root-workspace formatting. The local duplicate recipes are removed;
+direct-only delivery, target-specific cache preparation, metadata and validation
+adapters remain local. All affected scratch exporters and native source receipts
+carry the includes. [#44](https://github.com/dragginzgame/ic-metrics/issues/44)
+retains delivery and exact-source native acceptance.
+
+The independently incoming lock edit now selects Host 0.9.4; this work does not
+resolve another dependency update. Focused inspector Clippy, argument/report and
+actual CLI tests and Rust 1.88 compilation pass for that graph. Its
+[separate review](../evidence/host-dependencies-094.md) binds the source and limits.
+IC pins, product Rust, package versions and live hook configuration are unchanged;
+no release runs.
+
+Upstream hook regressions and the real consumer formatting adapter pass on Linux
+Bash 5 and genuine Bash 3.2. Actual Cargo formatting also passes in disposable
+newline-ending consumer roots, preserving selected staging, unrelated edits and
+locks. [The adoption record](../evidence/adoption-033.md) binds those checks and
+the retained evidence. [#43](https://github.com/dragginzgame/ic-metrics/issues/43)
+tracks delivery and exact-source native qualification. The distinct shared
+qualification helper still trims newline-ending roots; the reproduced limitation
+is reported in [Shared #90](https://github.com/dragginzgame/shared-tooling/issues/90).
+Its normal-path consumer adapter passes, and the production hook fix is qualified
+locally. No vendored helper is patched and no sibling files are changed.
+
+The included release and formatting commands pass focused Linux Bash 5/3.2
+checks, including release refusal/failure propagation and real Cargo hook cases.
+Shared 0.2.6 CI passes Linux and lint/security; both macOS lanes remain queued.
+Metrics 0.3.0's Apple Silicon job now passes, while Intel remains queued; this
+observed job result does not complete #41 or qualify the dirty 0.3.3 batch.
+
+## Released 0.3.2 maintenance
+
+Published 0.3.2 matches source/tag `f903c664c395c47485dbedc0f1919c97b9ce72d0`.
+[Its verification](../evidence/release-032.md) binds the dependency-free registry
+archive, unchanged arithmetic, passing Linux/MSRV jobs and downloaded Linux
+receipts, including actual CLI admission coverage. Both macOS jobs remain queued.
+
+The compatible 0.3.2 batch's unchanged 89-file selection adopts
 reviewed Shared Tooling `ac4549c5ebde497f7db0da5d05d32835112e51de`, clarifying
 optional installer-fixture companions and CI queue/duplicate-run diagnosis.
 The optional all-installer suite remains unselected; this snapshot refresh leaves
@@ -18,8 +61,8 @@ The batch also includes the independently prepared Host 0.9.2 lock selection.
 [Its review](../evidence/host-dependencies-092.md) verifies package/source hashes,
 unchanged library source, inspector Clippy and named tests, actual Rust 1.88 and
 byte-identical frozen reports. The core remains dependency-free. No arithmetic
-API or data contract changes; package/workspace versions remain 0.3.1. No commit,
-release, publication or cleanup runs during preparation.
+API or data contract changes; package/workspace versions remained 0.3.1 during
+preparation. No commit, release, publication or cleanup ran during preparation.
 
 The inspector's focused gate now executes an actual CLI admission/publication
 test alongside its existing argument/report tests. Accepted bytes produce the
@@ -141,10 +184,10 @@ additional tool package or profile is selected by this repository.
 cache/refusal checks from the later 0.1.37 installer/hook qualification, including
 actual formatting without a checkout-local caller PATH export.
 [#40](https://github.com/dragginzgame/ic-metrics/issues/40) is delivered and retains
-changed-caller Intel native acceptance. Apple Silicon now passes on the exact
-released source, with its downloaded artifact, source/payload hashes, run/host
-identity and changed release fixtures verified in the release record. Intel
-remains queued; no local gate or older source is substituted for that result.
+completed changed-caller native acceptance. All three native hosts and MSRV now
+pass on the exact released source, with downloaded source/payload hashes, run/host
+identity and changed release fixtures verified in the release record. The final
+Intel receipt completes #40; no local gate or older source replaces that result.
 The pre-existing Host 0.8.9 lock selection is preserved and now has its own
 [focused qualification](../evidence/host-dependencies-089.md): package/source
 identity, warning-denied inspector checks, actual Rust 1.88 and unchanged frozen
@@ -178,12 +221,18 @@ No new code batch or pending changelog is needed for this verification.
 
 ## Released source
 
-Latest finalized and published source is 0.3.1
+Latest finalized and published source is 0.3.2
+`f903c664c395c47485dbedc0f1919c97b9ce72d0`, matching tag `v0.3.2` and
+workspace/package versions. The release record above verifies Linux/MSRV and
+Linux native receipts; both macOS jobs remain queued. No further implementation
+batch or pending changelog is created by release verification.
+
+Earlier finalized and published source is 0.3.1
 `2383dc0d684800b1610e3eb727449b0a87d562bb`, matching tag `v0.3.1` and
 workspace/package versions. [Its verification](../evidence/release-031.md) binds
 the dependency-free archive, unchanged arithmetic source and passing Linux/native
 and both package floors. Both macOS jobs remain queued, so #42 stays open.
-The independently prepared Host 0.9.2 lock edit belongs to pending 0.3.2.
+The independently qualified Host 0.9.2 lock selection ships in 0.3.2.
 
 Earlier finalized and published source is 0.3.0
 `070c768de881a6e966b93651e242e16e4f9f1111`, matching tag `v0.3.0` and
@@ -195,7 +244,7 @@ so #41 stays open. The independent released private graph selects Host 0.9.1.
 The earlier fleet cleanup now has complete three-host receipts at released
 0.2.18, closing [#38](https://github.com/dragginzgame/ic-metrics/issues/38); see
 [its supplemental verification](../evidence/release-0218.md#subsequent-native-completion).
-#40 retains its own remaining native obligation.
+#40 now has complete released-source native/MSRV acceptance at 0.2.19.
 
 Earlier finalized and published source is 0.2.20
 `97064b0806699b60b475879ea7530135f1b540c8`, matching tag `v0.2.20` and
@@ -675,6 +724,18 @@ static, core, workspace, tier-a, MSRV and Wasm-size jobs. The static ShellCheck
 repair is delivered. Both macOS lanes remain queued and tier-b fails; this review
 does not establish that failure's precise cause. IcyDB #298/#309 retain their
 remaining native/focused obligations, and Canic's public source is unchanged.
+
+The subsequent public-main review advances IcyDB to released 0.268.0
+`059564d9af22558ffb80ee384bd698357f65154b`, selecting registry Metrics 0.2.20.
+[Exact CI](https://github.com/dragginzgame/icydb/actions/runs/37923831876) passes
+static, core, workspace, tier-a, MSRV and Wasm-size jobs. Intel remains queued,
+Apple Silicon is running and tier-b fails. Both run-level and completed-job log
+requests are unavailable while the run remains unfinished, so the tier-b cause
+is unverified. IcyDB #298/#309 and root #10 retain their owning qualification;
+Canic's public source and missing held-HTTP/native obligations are unchanged.
+Read-only inputs and observations are retained under
+`target/evidence/adoption-033/continuation/icydb-02680/`. No sibling execution or
+dependency update is performed.
 
 PocketIC-specific provisioning ownership is coordinated in
 [Shared #76](https://github.com/dragginzgame/shared-tooling/issues/76) and

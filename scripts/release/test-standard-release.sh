@@ -23,7 +23,7 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -p "$fixture/bin" "$fixture/make"
-cp "$root/make/tools.mk" "$fixture/make/"
+cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$fixture/make/"
 real_bash="$(command -v bash)"
 export EVENTS="$fixture/events"
 cd "$fixture"
@@ -31,7 +31,7 @@ real_make="$(command -v make)"
 for selection in default direct; do
     if [[ "$selection" == default ]]; then unset RELEASE_DELIVERY; else export RELEASE_DELIVERY=direct; fi
     TMPDIR="$fixture" "$real_bash" "$root/scripts/ci/check-release-commands.sh" "$root" \
-        make/tools.mk > "$fixture/output" 2>&1
+        make/tools.mk make/release.mk make/rust-format.mk > "$fixture/output" 2>&1
 done
 
 # Unsupported inherited and command-line policies must fail before any tool
@@ -76,14 +76,20 @@ set -euo pipefail
 [[ "${IC_METRICS_RELEASE_CACHE_PREPARE:-}" == 1 ]]
 [[ "${CARGO_NET_OFFLINE:-}" == true ]]
 printf '%s\n' "$@" > "$EVENTS"
+exit "${CACHE_ENTRY_RESULT:-0}"
 RUNNER
 for target in patch minor major resume; do
-    : > "$EVENTS"
-    CARGO_NET_OFFLINE=true "$real_make" --no-print-directory -f "$root/Makefile" "release-$target" \
-        VERSION=0.1.2 RELEASE_REMOTE=review RELEASE_BRANCH=main > "$fixture/output" 2>&1
-    if [[ "$target" == resume ]]; then printf '%s\n' resume 0.1.2 review main > "$fixture/cache-entry-expected";
-    else printf '%s\n' "$target" review main > "$fixture/cache-entry-expected"; fi
-    cmp "$fixture/cache-entry-expected" "$EVENTS"
+    for result in 0 17; do
+        : > "$EVENTS"
+        status=0
+        CACHE_ENTRY_RESULT="$result" CARGO_NET_OFFLINE=true "$real_make" --no-print-directory \
+            -f "$root/Makefile" "release-$target" VERSION=0.1.2 RELEASE_REMOTE=review \
+            RELEASE_BRANCH=main > "$fixture/output" 2>&1 || status=$?
+        if [[ "$result" == 0 ]]; then [[ "$status" == 0 ]]; else [[ "$status" != 0 ]]; fi
+        if [[ "$target" == resume ]]; then printf '%s\n' resume 0.1.2 review main > "$fixture/cache-entry-expected";
+        else printf '%s\n' "$target" review main > "$fixture/cache-entry-expected"; fi
+        cmp "$fixture/cache-entry-expected" "$EVENTS"
+    done
 done
 
 # Publication remains a separate single-package Cargo operation, never a release.

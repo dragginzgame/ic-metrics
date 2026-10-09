@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.3]
+
+### Changed
+
+- Use shared release and formatting commands while retaining direct-only delivery,
+  locked cache preparation and local validation gates
+  ([#44](https://github.com/dragginzgame/ic-metrics/issues/44)).
+- Update the private Wasm inspector's locked IC Host dependencies to 0.9.4;
+  the arithmetic crate remains dependency-free.
+
+### Fixed
+
+- Preserve literal hook paths and checkout names ending in newlines; failed Git
+  observations stop hook setup without changing configuration
+  ([Shared Tooling #89](https://github.com/dragginzgame/shared-tooling/issues/89)).
+
 ## [0.3.2] - 2026-10-09
 
 ### Changed

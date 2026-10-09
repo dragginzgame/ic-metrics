@@ -130,6 +130,8 @@ make install-hooks
 
 `make fmt` sorts every workspace manifest before Rust formatting. `make fmt-check`
 checks both without changing files; CI installs the same pinned formatter.
+Both targets use the reviewed shared Make include and prepared tools offline;
+they disable automatic Rustup installation.
 Run `make install-hooks` once per clone and after updating shared tooling. The
 repository-local pre-commit hook formats the staged snapshot, refreshes selected
 files, rejects partial staging and preserves unrelated working edits. It refuses
@@ -192,14 +194,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.3.1`](https://crates.io/crates/ic-metrics/0.3.1)
-is published on crates.io with tag `v0.3.1`. Declare the published release
+tooling releases. [`ic-metrics 0.3.2`](https://crates.io/crates/ic-metrics/0.3.2)
+is published on crates.io with tag `v0.3.2`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.3.1"
+ic-metrics = "0.3.2"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

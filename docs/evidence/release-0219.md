@@ -50,3 +50,22 @@ Inputs, verified payloads and comparison results remain under
 queued, so #40 stays open for that acceptance. This supplements the original
 observation without relabelling historical Linux evidence or reopening completed
 #38 qualification. No workflow dispatch, rerun or cancellation occurs.
+
+## Native acceptance complete
+
+The same run subsequently passes Intel job `113759634704`, completing native
+Linux, Intel macOS, Apple Silicon and both package floors at the released source.
+Artifact `11617817080` verifies GitHub ZIP digest
+`b6739b2402347312ce3d98163b198fc525e4fb04f58fc78cfa24a272d7ce925f`
+and inner archive digest
+`e64fe7ac661d17f47c761604481264c6c545022f06b57e63e0e3a610fb67df90`.
+Its 14 payload and 65 release-source hashes, exact source/run/attempt 1/push/
+Darwin/x86_64 identity, nine successful outcomes and released IC pins all verify.
+Every job step succeeds, and the retained native log confirms release cache
+admission, metadata restoration, recovery and failure-retention fixtures pass
+with their declared substitutions. This completes
+[#40](https://github.com/dragginzgame/ic-metrics/issues/40)'s final native obligation.
+
+Verified Intel inputs and results remain under
+`target/evidence/release-0219/intel-download/`. Prior Linux and Apple Silicon
+reviews retain their original identities. No release is rerun during acceptance.
