@@ -4,15 +4,26 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.2.19 release preparation
+## Pending 0.2.20 checker fix
 
-The compatible next draft is 0.2.19: standard release entrypoints now prepare the
+The compatible next draft is 0.2.20. The unchanged 89-file selection adopts
+committed Shared Tooling `926a20606591214ab29faa236b0b584e4857439e` through its
+canonical distribution helper. Its dependency checker rejects exception catalogs
+containing multiple JSON documents, so admission and suppression use one validated
+array. Valid catalogs retain their contract. No dependency or public arithmetic
+API changes. [The focused record](../evidence/adoption-0220.md) binds passing
+Bash 5/3.2 fixtures, snapshot/pin checks and ShellCheck. Package/workspace versions
+remain 0.2.19; no release has run for this draft.
+
+## Released 0.2.19 tooling fixes
+
+Released 0.2.19 standard release entrypoints prepare the
 selected locked workspace cache before offline validation, preserving explicit
 Cargo offline settings, source/candidate admission and exact-version recovery.
 Standalone preflight remains offline. The internal preparation selection is
 consumed before helper/Cargo dispatch and removed from validation children.
 
-The 89-file snapshot adopts reviewed Shared Tooling
+Its released 89-file snapshot adopts reviewed Shared Tooling
 `dc4fdf0f78928d75b69bbf43b37c690c53a04d1e` (0.1.37). It supplies explicit selected
 Cargo binary/example setup with single-document receipts and original failure
 statuses, plus checkout-local tool lookup for isolated staged formatting. No
@@ -20,8 +31,8 @@ additional tool package or profile is selected by this repository.
 [The focused record](../evidence/adoption-0219.md) separates the initial 0.1.35
 cache/refusal checks from the later 0.1.37 installer/hook qualification, including
 actual formatting without a checkout-local caller PATH export.
-[#40](https://github.com/dragginzgame/ic-metrics/issues/40) retains delivery and
-changed-caller native acceptance. Package/workspace versions remain 0.2.18.
+[#40](https://github.com/dragginzgame/ic-metrics/issues/40) is delivered and retains
+changed-caller native acceptance.
 The pre-existing Host 0.8.9 lock selection is preserved and now has its own
 [focused qualification](../evidence/host-dependencies-089.md): package/source
 identity, warning-denied inspector checks, actual Rust 1.88 and unchanged frozen
@@ -55,14 +66,15 @@ No new code batch or pending changelog is needed for this verification.
 
 ## Released source
 
-Latest finalized and published source is 0.2.18
-`3b1f461ed9aacce6c3d04d391178fecb9ce283dd`, matching tag `v0.2.18` and
-workspace/package versions. [The release verification](../evidence/release-0218.md)
+Latest finalized and published source is 0.2.19
+`429748e4877fa799b164bd2df1d9a76bb0acecb6`, matching tag `v0.2.19` and
+workspace/package versions. [The release verification](../evidence/release-0219.md)
 binds the official archive and unchanged arithmetic source. Both package floors
-pass on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37903242506);
+pass on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37912160949);
 Linux native passes with verified source/payload/outcome receipts; both macOS
-native jobs remain queued at inspection.
-Complete source-matching native receipts are still required for #38. No broad
+native jobs remain queued at inspection. Earlier 0.2.18 Linux
+receipts retain their [original identity](../evidence/release-0218.md).
+Complete source-matching native receipts are still required for #38/#40. No broad
 local gate, dependency selection, package version change or release runs here.
 
 The preceding published source is 0.2.17

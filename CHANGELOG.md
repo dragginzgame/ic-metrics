@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.20]
+
+### Fixed
+
+- Reject multi-document dependency-pinning exception files, keeping exception
+  admission and suppression bound to one validated catalog
+  ([Shared Tooling #86](https://github.com/dragginzgame/shared-tooling/issues/86)).
+
 ## [0.2.19] - 2026-10-09
 
 ### Fixed

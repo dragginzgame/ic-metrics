@@ -1,7 +1,7 @@
 # Shared Tooling snapshot v1
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	dc4fdf0f78928d75b69bbf43b37c690c53a04d1e
+revision	926a20606591214ab29faa236b0b584e4857439e
 file	05838a36f21bb4299617ae8965687791062c94d768181f5f97676cc577382153	-	rules/contributions.md
 file	108064112f1073695d43b69122db38174439dd67bdba9df640a84f6f686eef03	-	DRAGGINZGAME.md
 file	59f6cb0b47fcfa698396776bbb391737292ebf34457ad7c65803fe7b36961499	-	docs/principles/README.md
@@ -23,13 +23,13 @@ file	a7d6612e6c9cfea5f8e920f82109094851876d0dfc117ecc454f966cb50d7c66	-	rules/ca
 file	a6c686b7e789b8bdd4680e65c1031cf86f6b73a9feb1008fb553d033126ae978	-	rules/git-hooks.md
 file	643dbf5ebb54bc9c8768b77c8b88b288b4dd19a8719c67d8e89617e953271c7a	x	.githooks/pre-commit
 file	04314208858a3b8c6833aee30b8574741518b4ca36ed509c095424762a7be79e	x	scripts/dev/install-git-hooks.sh
-file	f114e128d2d3ab1cd4fae4c8eb89866990063cd5cd4a6dbafde49872f0a02af1	-	rules/dependency-pinning.md
+file	4692d760ea97861b52c183bb69e24c929d9baf7c292795c61d65ea3166368787	-	rules/dependency-pinning.md
 file	d0e3e07844d06f46ffe01d406ffb29624b31079c1402b899262aabb718cbb436	-	rules/agent-maintenance.md
-file	c50a0e7c23ad9bbace12c9e8fa9aa8e6c5bc97151a9c76cf5d371f18922a0b94	x	scripts/ci/check-dependency-pins.sh
+file	de68acd7ba25355c73fa3e9a32cbde5525debf081862c1f1a52eccb4a66c48de	x	scripts/ci/check-dependency-pins.sh
 file	3d56ca1b0c5952b9534ece61b6754ca39e6ec1980d929f09de3dbd967a0c4977	-	scripts/ci/dependency-pins.jq
 file	6c89bfb827c331cad10e22b7579ec35890398d6dc26004d95875b5ebc8749d01	x	scripts/ci/install-yq.sh
 file	49ec78ab63a587a2f74f0f7da3e06d9f9942f831129b9201cba5bcd0698548fe	x	scripts/ci/run-validation-targets.sh
-file	479cec75dff5f81705db3f10d63f494b6eca73d5a0714e648ab3174c645ca93d	x	scripts/ci/test-dependency-pins.sh
+file	70cc88ba522bb9069827d948c5708a6cc09e24d098d8f27f1f37ac12bc2a3ae4	x	scripts/ci/test-dependency-pins.sh
 file	faa9a62257ecdfd6532ac2225b3fd053012dfe9c35b8bc2ddc95288d8626a518	-	audits/README.md
 file	518d890bf485bef06c316b4cf26ac6bf357ed52bcce995e8d9b1232a103d0ea3	-	audits/code-hygiene.md
 file	35fd87d36a09ed0971841abf28535d43470c713a82581c2251b924da1ab8f484	-	audits/flow-convergence-and-duplication.md
