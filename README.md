@@ -163,7 +163,7 @@ candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
 
-Pending 0.3.0 changes the setup contract to five IC tools. Replace an older
+Release 0.3.0 changes the setup contract to five IC tools. Replace an older
 six-tool selection explicitly with `make install-ic-tools`, then run
 `make ic-tools-check`; previous bundles and evidence remain retained. PocketIC
 setup and admission belong to IC Testkit under the
@@ -192,14 +192,14 @@ release validation. Checks never upgrade dependencies or install tools implicitl
 The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
 The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.2.20`](https://crates.io/crates/ic-metrics/0.2.20)
-is published on crates.io with tag `v0.2.20`. Declare the published release
+tooling releases. [`ic-metrics 0.3.0`](https://crates.io/crates/ic-metrics/0.3.0)
+is published on crates.io with tag `v0.3.0`. Declare the published release
 in the consumer's
 root dependency catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.2.20"
+ic-metrics = "0.3.0"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Consumers using

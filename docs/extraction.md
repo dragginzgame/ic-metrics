@@ -13,7 +13,7 @@ uses IC Host libraries for bounded artifact inspection. It is a separate workspa
 package, not an arithmetic dependency or platform reader. It establishes no
 consumer attribution, runtime qualification or instruction/cycle measurement.
 
-Pending 0.3.0 adopts the shared five-tool IC setup contract. PocketIC selection,
+Release 0.3.0 adopts the shared five-tool IC setup contract. PocketIC selection,
 provisioning, admission and lifecycle belong to IC Testkit. This workspace has
 no active server caller and adds no runtime dependency. Existing six-tool bundles
 require explicit `make install-ic-tools` replacement; old bundles and frozen
@@ -80,7 +80,10 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.2.20 is available in the registry; its
+Release 0.3.0 is available in the registry; its
+[verification](evidence/release-030.md) binds the unchanged arithmetic source,
+published archive and passing Linux/MSRV results. Both macOS native jobs remain
+queued; #41's native acceptance remains separate. Earlier release 0.2.20's
 [verification](evidence/release-0220.md) binds the unchanged arithmetic and observed
 exact-source hosted state for the pinning fix. The earlier 0.2.19
 [verification](evidence/release-0219.md) retains its original Linux receipts.

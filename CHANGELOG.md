@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.1]
+
+### Fixed
+
+- Install and verify the final IC tool pin even when the catalog has no trailing
+  newline ([Shared Tooling #87](https://github.com/dragginzgame/shared-tooling/issues/87)).
+- Publish CI tools to the exact executable path, preserving existing contents
+  and failed candidates if a directory appears during setup; replace late
+  symlinks without following their targets
+  ([Shared Tooling #88](https://github.com/dragginzgame/shared-tooling/issues/88)).
+
 ## [0.3.0] - 2026-10-09
 
 ### Breaking

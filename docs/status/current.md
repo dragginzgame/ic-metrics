@@ -4,9 +4,22 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.3.0 tooling hard cut
+## Pending 0.3.1 installer fixes
 
-The breaking next draft is 0.3.0: the 89-file snapshot adopts committed Shared
+The compatible next draft is 0.3.1. The unchanged 89-file selection adopts
+reviewed Shared Tooling `ee48bb37c98c771e77b92fd891f0757d8c1c8b99`: IC setup/check
+consumes a final pin row without a newline, and CI tools publish to the exact
+destination without redirecting through a late directory or symlink. The
+existing yq caller keeps its version/checksum; Perl admission precedes setup.
+[The focused record](../evidence/adoption-031.md) binds passing Bash 5/3.2 fixtures,
+snapshot/pin checks and actual offline IC admission. Arithmetic source, Cargo
+selection and IC pins are unchanged; versions remain 0.3.0. No release runs here.
+[#42](https://github.com/dragginzgame/ic-metrics/issues/42) owns delivery and
+exact-source native acceptance of the changed installer callers.
+
+## Released 0.3.0 tooling hard cut
+
+Released 0.3.0's 89-file snapshot adopts committed Shared
 Tooling `8140e3dd1b44409d682c721889ab702f438c6a17`, transferring PocketIC ownership
 to IC Testkit and requiring exactly five common IC tools. Existing six-tool
 bundles fail the new offline check; explicit `make install-ic-tools` activates
@@ -21,8 +34,9 @@ data are unchanged. No functions, methods or types are removed; the canonical
 installer loses only its PocketIC-specific branches and matrix rows.
 [The preparation record](../evidence/adoption-030.md) preserves proof scope and
 historical replay constraints. [#41](https://github.com/dragginzgame/ic-metrics/issues/41)
-tracks delivered-source native acceptance; upstream Linux/lint passes, while
-both upstream macOS lanes are queued. Package/workspace versions remain 0.2.20.
+tracks delivered-source native acceptance. Published source and Linux/MSRV
+receipts now verify; both consumer macOS lanes remain queued. Package/workspace
+versions are 0.3.0.
 The initial tooling checks preserved the independent Host 0.8.10 lock edit.
 Subsequent concurrent edits now select Host 0.9 in both requirements and lock;
 the focused inspector checks below use that selection without changing it.
@@ -38,7 +52,7 @@ The release guard correctly rejected the mismatch before Cargo dispatch. The
 fixture now owns its notes while retaining the exact committed manifests,
 workspace sources and lock graph. Both real offline-policy cases verify Cargo's
 failure status and unchanged manifest, lock, notes and index. Production
-candidate admission remains unchanged; the pending batch stays 0.3.0.
+candidate admission remains unchanged; the fix ships in 0.3.0.
 
 `make release-tools-check`, the admission fixture under genuine Bash 3.2.57,
 ShellCheck and maintained documentation links pass on Linux. Logs and checked
@@ -129,7 +143,19 @@ No new code batch or pending changelog is needed for this verification.
 
 ## Released source
 
-Latest finalized and published source is 0.2.20
+Latest finalized and published source is 0.3.0
+`070c768de881a6e966b93651e242e16e4f9f1111`, matching tag `v0.3.0` and
+workspace/package versions. [Its verification](../evidence/release-030.md) binds
+the dependency-free registry archive, unchanged arithmetic source and passing
+Linux/native and both package floors. The Linux artifact verifies payload,
+selected source, run/host and all nine outcomes. Both macOS lanes remain queued,
+so #41 stays open. The independent released private graph selects Host 0.9.1.
+The earlier fleet cleanup now has complete three-host receipts at released
+0.2.18, closing [#38](https://github.com/dragginzgame/ic-metrics/issues/38); see
+[its supplemental verification](../evidence/release-0218.md#subsequent-native-completion).
+#40 retains its own remaining native obligation.
+
+Earlier finalized and published source is 0.2.20
 `97064b0806699b60b475879ea7530135f1b540c8`, matching tag `v0.2.20` and
 workspace/package versions. [The release verification](../evidence/release-0220.md)
 binds the official archive and unchanged arithmetic source. Both package floors
@@ -137,7 +163,7 @@ pass on [exact CI](https://github.com/dragginzgame/ic-metrics/actions/runs/37913
 Linux native passes with verified source/payload/outcome receipts; both macOS
 native jobs remain queued at inspection. Earlier 0.2.19 Linux
 receipts retain their [original identity](../evidence/release-0219.md).
-Complete source-matching native receipts are still required for #38/#40. No broad
+Complete source-matching native receipts are still required for #40. No broad
 local gate, dependency selection, package version change or release runs here.
 
 The preceding published source is 0.2.17
@@ -613,7 +639,7 @@ PocketIC-specific provisioning ownership is coordinated in
 [Testkit #38](https://github.com/dragginzgame/ic-testkit/issues/38). Published
 Testkit 0.25.4 setup/check and managed launch pass all three native hosts in
 [owner CI](https://github.com/dragginzgame/ic-testkit/actions/runs/37901828971).
-Metrics' pending 0.3.0 adoption selects the committed five-tool Shared revision
+Metrics' released 0.3.0 adoption selects the committed five-tool Shared revision
 above. It has no active server/runtime harness and adds no simulator dependency
 or private setup policy. Frozen replay inputs retain their historical server
 identity; current Testkit defaults are not substituted into that experiment.
