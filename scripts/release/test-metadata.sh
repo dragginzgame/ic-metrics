@@ -39,7 +39,7 @@ cat >> "$fixture/bin/cargo" <<'CARGO'
 set -euo pipefail
 if [[ "$*" == 'set-version --help' ]]; then exit 0; fi
 if [[ "${1:-}" == set-version ]]; then
-    [[ $# -eq 4 && "$2" == --workspace && "$3" == --offline && "$4" == "$RELEASE_VERSION" ]]
+    [[ $# -eq 4 && "$2" == --workspace && "$3" == --offline && "$4" == "$RELEASE_VERSION" ]] || exit 1
     awk -v version="$4" '/^version = / { $0="version = \"" version "\"" } { print }' Cargo.toml > Cargo.toml.fixture
     mv Cargo.toml.fixture Cargo.toml
 else
@@ -63,7 +63,7 @@ chmod +x "$fixture/bin/git"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/make"
 cat >> "$fixture/bin/make" <<'MAKE'
 set -euo pipefail
-[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$4" == rust-tools-check ]]
+[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$4" == rust-tools-check ]] || exit 1
 MAKE
 chmod +x "$fixture/bin/make"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/yq"
@@ -97,7 +97,7 @@ cd "$worktree"
 printf "[workspace.package]\nversion = '0.1.1' # inline comment\n" > Cargo.toml
 cp Cargo.toml original.toml
 actual="$(bash "$root/scripts/release/metadata.sh" version)"
-[[ "$actual" == "$RELEASE_PREVIOUS" ]]
+[[ "$actual" == "$RELEASE_PREVIOUS" ]] || exit 1
 cmp original.toml Cargo.toml
 # Resolve both relative and absolute entry points from a physical checkout
 # ending in a newline, without CDPATH output becoming part of the helper path.
@@ -108,7 +108,7 @@ cp "$root/scripts/ci/read-cargo-workspace-version.sh" "$bootstrap/scripts/ci/"
 cp original.toml "$bootstrap/Cargo.toml"
 for entry in scripts/release/metadata.sh "$bootstrap/scripts/release/metadata.sh"; do
     actual="$(cd "$bootstrap"; CDPATH="$fixture:$root" bash "$entry" version)"
-    [[ "$actual" == "$RELEASE_PREVIOUS" ]]
+    [[ "$actual" == "$RELEASE_PREVIOUS" ]] || exit 1
 done
 cmp original.toml "$bootstrap/Cargo.toml"
 for invalid in duplicate noncanonical; do
@@ -121,7 +121,7 @@ for invalid in duplicate noncanonical; do
     if bash "$root/scripts/release/metadata.sh" version > "$invalid.stdout" 2> "$invalid.stderr"; then
         echo "version reader unexpectedly accepted $invalid" >&2; exit 1
     fi
-    [[ ! -s "$invalid.stdout" ]]
+    [[ ! -s "$invalid.stdout" ]] || exit 1
 done
 
 for scenario in prepared undated-history history-no-lf dated-notes conflicting-date sort metadata lock conflicting-notes version-before version-after restore-failure; do
@@ -201,12 +201,23 @@ NOTES
         restore-failure) export FIXTURE_FAIL_STEP=metadata FIXTURE_FAIL_RESTORE=yes ;;
     esac
     if [[ "$scenario" == prepared || "$scenario" == undated-history || "$scenario" == history-no-lf ]]; then
+        # Refuse a different current version before fetching or preparation.
+        status=0
+        RELEASE_PREVIOUS=0.9.9 FIXTURE_FAIL_STEP=fetch bash "$root/scripts/release/metadata.sh" preflight \
+            > wrong-version-preflight.log 2>&1 || status=$?
+        [[ "$status" == 1 && ! -e failure-reached ]] || exit 1
+        status=0
+        RELEASE_PREVIOUS=0.9.9 bash "$root/scripts/release/metadata.sh" prepare \
+            > wrong-version-prepare.log 2>&1 || status=$?
+        [[ "$status" == 1 ]] || exit 1
+        for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$path"; done
+        for remaining in attempts/*; do [[ ! -e "$remaining" ]] || exit 1; done
         bash "$root/scripts/release/metadata.sh" preflight > preflight.log 2>&1
         bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1
         status=0
         FIXTURE_FAIL_VERSION="$RELEASE_VERSION" bash "$root/scripts/release/metadata.sh" check \
             > failed-check.log 2>&1 || status=$?
-        [[ "$status" == 1 ]] # The shared reader rejects the failed parser.
+        [[ "$status" == 1 ]] || exit 1 # The shared reader rejects the failed parser.
         bash "$root/scripts/release/metadata.sh" check >> result.log 2>&1
         # A current arithmetic row must not conceal a stale private package.
         cp Cargo.lock prepared.lock
@@ -219,10 +230,10 @@ NOTES
         status=0
         FIXTURE_FAIL_STEP=metadata bash "$root/scripts/release/metadata.sh" check \
             > stale-host-check.log 2>&1 || status=$?
-        [[ "$status" == 1 ]] # Refused before dispatching Cargo metadata (status 9).
+        [[ "$status" == 1 ]] || exit 1 # Refused before dispatching Cargo metadata (status 9).
         cp prepared.lock Cargo.lock
         cargo sort --workspace --check >> result.log 2>&1
-        [[ "$(bash "$root/scripts/release/metadata.sh" version)" == "$RELEASE_VERSION" ]]
+        [[ "$(bash "$root/scripts/release/metadata.sh" version)" == "$RELEASE_VERSION" ]] || exit 1
         awk -v heading="## [$RELEASE_VERSION] - $RELEASE_DATE" \
             '$0 == heading { found=1 } END { exit !found }' CHANGELOG.md
         awk '/^## \[0.1.1\]/ { history=1 } history' CHANGELOG.md > history-after
@@ -239,7 +250,7 @@ NOTES
         if [[ "$scenario" == version-before || "$scenario" == dated-notes || "$scenario" == conflicting-date ]]; then
             status=0
             bash "$root/scripts/release/metadata.sh" preflight > failed-preflight.log 2>&1 || status=$?
-            [[ "$status" == 1 ]]
+            [[ "$status" == 1 ]] || exit 1
         fi
         status=0
         bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1 || status=$?
@@ -247,9 +258,9 @@ NOTES
             echo "metadata fixture unexpectedly accepted $scenario" >&2
             exit 1
         fi
-        case "$scenario" in sort|metadata) [[ "$(cat failure-reached)" == "$scenario" ]] ;; esac
+        case "$scenario" in sort|metadata) [[ "$(cat failure-reached)" == "$scenario" ]] || exit 1 ;; esac
         if [[ "$scenario" == restore-failure ]]; then
-            [[ "$status" == 1 ]]
+            [[ "$status" == 1 ]] || exit 1
             cmp originals/Cargo.toml Cargo.toml
             cmp originals/CHANGELOG.md CHANGELOG.md
             # The failed file remains prepared; every original is still available.
@@ -258,7 +269,7 @@ NOTES
                 exit 1
             fi
             set -- "$TMPDIR"/metrics-release-backup.*
-            [[ $# == 1 && -f "$1/candidate.lock" ]]
+            [[ $# == 1 && -f "$1/candidate.lock" ]] || exit 1
             cmp "$1/candidate.lock" Cargo.lock
             for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$1/$path"; done
             grep -F "metadata restoration incomplete; originals retained: $1" result.log >/dev/null
@@ -266,19 +277,19 @@ NOTES
             for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$path"; done
         fi
         if [[ "$scenario" == version-* ]]; then
-            [[ "$status" == 1 ]]
+            [[ "$status" == 1 ]] || exit 1
             if [[ "$scenario" == version-before ]]; then
-                for remaining in attempts/*; do [[ ! -e "$remaining" ]]; done
+                for remaining in attempts/*; do [[ ! -e "$remaining" ]] || exit 1; done
             else
                 set -- attempts/metrics-release-backup.*
-                [[ $# == 1 && -f "$1/candidate.lock" ]]
+                [[ $# == 1 && -f "$1/candidate.lock" ]] || exit 1
                 for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$1/$path"; done
             fi
         fi
         if [[ "$scenario" == lock ]]; then
             grep -F 'local package version mismatch: ic-metrics' result.log >/dev/null
             set -- attempts/metrics-release-backup.*
-            [[ $# == 1 && -f "$1/Cargo.lock" && -f "$1/candidate.lock" && ! -s "$1/candidate.lock" ]]
+            [[ $# == 1 && -f "$1/Cargo.lock" && -f "$1/candidate.lock" && ! -s "$1/candidate.lock" ]] || exit 1
             cmp originals/Cargo.lock "$1/Cargo.lock"
         fi
     fi

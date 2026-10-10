@@ -40,9 +40,41 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(select(.uses != null and .with.name == "native-${{ matrix.runner }}-${{ github.run_attempt }}"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
-for step in native_inputs tools tool_inputs native_ci native_artifacts; do
+for step in native_inputs native_host tools tool_inputs native_ci native_artifacts; do
     # shellcheck disable=SC2016 # $step is bound by jq's --arg.
     "$jq" -er --arg step "$step" '.[] | select(.id == $step) | .run' "$fixture/steps.json" > "$fixture/commands/$step.sh"
+done
+# Execute the actual host gate with substituted platform observations. Failed
+# comparisons must refuse before writing PATH, including on Bash 3.2.
+mkdir -p "$fixture/host-bin"
+cat > "$fixture/host-bin/uname" <<'UNAME'
+#!/usr/bin/env bash
+case "$1" in -s) printf '%s\n' "$FIXTURE_HOST_OS" ;; -m) printf '%s\n' "$FIXTURE_HOST_ARCH" ;; *) exit 2 ;; esac
+UNAME
+cat > "$fixture/host-bin/sw_vers" <<'VERSION'
+#!/usr/bin/env bash
+[[ "$1" == -productVersion ]] || exit 2
+printf '%s\n' "$FIXTURE_HOST_VERSION"
+VERSION
+chmod +x "$fixture/host-bin/uname" "$fixture/host-bin/sw_vers"
+for scenario in success wrong-os wrong-architecture wrong-version; do
+    host_os=Darwin host_arch=arm64 host_version=15.0
+    case "$scenario" in
+        wrong-os) host_os=Linux ;;
+        wrong-architecture) host_arch=x86_64 ;;
+        wrong-version) host_version=14.0 ;;
+    esac
+    : > "$fixture/host-$scenario.path"
+    status=0
+    PATH="$fixture/host-bin:$PATH" EXPECTED_OS=Darwin EXPECTED_ARCHITECTURE=arm64 \
+        FIXTURE_HOST_OS="$host_os" FIXTURE_HOST_ARCH="$host_arch" FIXTURE_HOST_VERSION="$host_version" \
+        GITHUB_PATH="$fixture/host-$scenario.path" "$BASH" --noprofile --norc -e -o pipefail \
+        "$fixture/commands/native_host.sh" > "$fixture/host-$scenario.log" 2>&1 || status=$?
+    if [[ "$scenario" == success ]]; then
+        [[ "$status" == 0 && "$(cat "$fixture/host-$scenario.path")" == /bin ]] || exit 1
+    else
+        [[ "$status" == 1 && ! -s "$fixture/host-$scenario.path" ]] || exit 1
+    fi
 done
 # Read the real index but use copied current source as the independent worktree.
 # No Git write, release, installer, network or product compilation is dispatched.
@@ -159,9 +191,9 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
     done
     printf '%s\n' "$status" > status.txt
     case "$scenario" in
-        success) [[ "$status" == 0 ]] ;;
-        native|formatting) [[ "$status" == 43 ]] ;;
-        *) [[ "$status" == 2 ]] ;; # GNU Make preserves its failing aggregate status.
+        success) [[ "$status" == 0 ]] || exit 1 ;;
+        native|formatting) [[ "$status" == 43 ]] || exit 1 ;;
+        *) [[ "$status" == 2 ]] || exit 1 ;; # GNU Make preserves its failing aggregate status.
     esac
     # No later set/check/native effect can follow the first refused leaf.
     phases=(install-tools install-ic-tools-preflight install-rust-tools-preflight
@@ -192,10 +224,10 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
             echo 'candidate archive failure was accepted' >&2
             exit 1
         fi
-        [[ "$(cat target/evidence/native-ci/tool-candidates.tar.gz)" == "$expected_archive" ]]
-        [[ ! -e target/evidence/native-ci.tar.gz && "$(cat status.txt)" == 2 ]]
-        [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]]
-        [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]]
+        [[ "$(cat target/evidence/native-ci/tool-candidates.tar.gz)" == "$expected_archive" ]] || exit 1
+        [[ ! -e target/evidence/native-ci.tar.gz && "$(cat status.txt)" == 2 ]] || exit 1
+        [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]] || exit 1
+        [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
         grep -Fx 'tools=failure' target/evidence/native-ci/outcome.txt > /dev/null
         grep -Fx 'native=skipped' target/evidence/native-ci/outcome.txt > /dev/null
         exit 0
@@ -214,7 +246,7 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
     done
     if [[ "$scenario" == formatting ]]; then
         logs=("$RUNNER_TEMP"/formatting.*)
-        [[ ${#logs[@]} == 1 && -f "${logs[0]}" ]]
+        [[ ${#logs[@]} == 1 && -f "${logs[0]}" ]] || exit 1
         mkdir recovered-formatting
         tar -xzf unpacked/target/evidence/native-ci/formatting-logs.tar.gz -C recovered-formatting
         cmp "${logs[0]}" "recovered-formatting/${logs[0]##*/}"
@@ -222,15 +254,15 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
         grep -Fx formatter-stderr "recovered-formatting/${logs[0]##*/}" > /dev/null
         grep -Fx 'Checking formatting... FAILED (exit 43)' unpacked/target/evidence/native-ci/native-ci.log > /dev/null
     else
-        [[ ! -f unpacked/target/evidence/native-ci/formatting-logs.tar.gz ]]
+        [[ ! -f unpacked/target/evidence/native-ci/formatting-logs.tar.gz ]] || exit 1
     fi
     expected="$(printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\ntool_inputs=%s' \
         "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$TOOLS_OUTCOME" "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
         "$PREREQUISITES_OUTCOME" "$TOOL_INPUT_OUTCOME")"
-    [[ "$(cat unpacked/target/evidence/native-ci/outcome.txt)" == "$expected" ]]
+    [[ "$(cat unpacked/target/evidence/native-ci/outcome.txt)" == "$expected" ]] || exit 1
     if [[ "$scenario" == success ]]; then
-        [[ -s unpacked/target/evidence/native-ci/tool-versions.txt ]]
-        [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]]
+        [[ -s unpacked/target/evidence/native-ci/tool-versions.txt ]] || exit 1
+        [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]] || exit 1
     else
         case "$scenario" in
             *-check) failed_log=tools-check.log ;;
@@ -241,9 +273,9 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
         if [[ "$scenario" == *-admission ]]; then effect=preflight; fi
         grep -Fx "$effect stdout: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
         grep -Fx "$effect stderr: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
-        [[ "$(tail -1 commands.log)" == "$FIXTURE_FAILURE" ]]
+        [[ "$(tail -1 commands.log)" == "$FIXTURE_FAILURE" ]] || exit 1
         if [[ "$scenario" == *-admission || "$scenario" == native || "$scenario" == formatting ]]; then
-            [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]]
+            [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]] || exit 1
         else
             mkdir recovered-candidates
             tar -xzf unpacked/target/evidence/native-ci/tool-candidates.tar.gz -C recovered-candidates
@@ -252,15 +284,15 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
                     cmp "$candidate/failure:payload" "recovered-candidates/$candidate/failure:payload"
                     cmp "$candidate/"$'trailing\n' "recovered-candidates/$candidate/"$'trailing\n'
                     cmp "$candidate/executable" "recovered-candidates/$candidate/executable"
-                    [[ -x "recovered-candidates/$candidate/executable" ]]
-                    [[ -L "recovered-candidates/$candidate/link" ]]
-                    [[ "$(readlink "recovered-candidates/$candidate/link")" == failure:payload ]]
-                    [[ ! -e "recovered-candidates/$candidate/.git" ]]
+                    [[ -x "recovered-candidates/$candidate/executable" ]] || exit 1
+                    [[ -L "recovered-candidates/$candidate/link" ]] || exit 1
+                    [[ "$(readlink "recovered-candidates/$candidate/link")" == failure:payload ]] || exit 1
+                    [[ ! -e "recovered-candidates/$candidate/.git" ]] || exit 1
                     # macOS and Linux expose permissions through different stat syntax.
                     if [[ "$(uname -s)" == Darwin ]]; then
-                        [[ "$(stat -f %Lp "recovered-candidates/$candidate/failure:payload")" == 640 ]]
+                        [[ "$(stat -f %Lp "recovered-candidates/$candidate/failure:payload")" == 640 ]] || exit 1
                     else
-                        [[ "$(stat -c %a "recovered-candidates/$candidate/failure:payload")" == 640 ]]
+                        [[ "$(stat -c %a "recovered-candidates/$candidate/failure:payload")" == 640 ]] || exit 1
                     fi
                 fi
             done

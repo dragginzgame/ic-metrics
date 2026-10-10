@@ -4,7 +4,78 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.5.4 validation tooling
+## Pending 0.5.5 Shared Tooling 0.3.7
+
+Adopted reviewed `34e5ad7aac3599306c9572bb547f2239d09df1a3` through the clean
+canonical exporter, preserving the 94-file selection. Mandatory Bash comparisons
+now fail explicitly in the shared installer/fixtures and Metrics-owned release
+adapter, fixtures and native host gate. The actual old adapter reaches a Cargo
+child after a version mismatch; the old metadata fixture admits contradictory
+successful parser output on Bash 3.2. The corrected existing regressions reject
+both cases, retain evidence and preserve original metadata. Substituted host
+observations also prove the actual workflow rejects wrong OS, architecture and
+macOS version before writing PATH. [#55](https://github.com/dragginzgame/ic-metrics/issues/55)
+owns delivery/native acceptance of the local correction.
+
+The incoming workflow concurrency change is preserved and matches the new common
+workflow/ref policy: newer routine runs cancel older revisions while retaining
+the complete matrix. Cancelled sources remain unqualified. Incoming Host 0.12.6
+is [verified independently](../evidence/host-dependencies-0126.md); narrow requested
+updates and locked fetching leave the already selected graph unchanged. Product
+Rust is unchanged from 0.12.5; arithmetic remains dependency-free. Package/workspace
+versions remain 0.5.4 and the compatible pending changelog stays 0.5.5.
+
+Metadata, expanded retention, native evidence, shared Rust-tool and canonical
+hook checks pass on genuine Bash 3.2/Make 3.81; canonical hooks pass on the modern
+profile too. Selected ShellCheck/actionlint and complete offline tool admission
+pass. Complete `ci` (180 seconds), `msrv` and `wasm-inspect-msrv` pass with all
+81 frozen code/graph/pin/workflow inputs unchanged. Current complete delivery
+gates and preservation records belong under `target/evidence/adoption-055-current/`
+and [the adoption record](../evidence/adoption-055.md); earlier 0.3.6 qualification
+below does not qualify this changed snapshot/graph. [#54](https://github.com/dragginzgame/ic-metrics/issues/54)
+retains the shared adoption's delivered-source native acceptance.
+
+## Earlier 0.5.5 preparation with Shared Tooling 0.3.6
+
+Adopted reviewed `0604bfd730ec7ec288cd2cfdad217a0d42bf256b` through the canonical
+exporter from a clean detached checkout, preserving all 94 selected files.
+The pre-commit hook propagates failed Git tree observations; the formatting
+adoption checker requires completion. The existing retention regression now
+checks that actual checker cleanup for nounset, early success and completion.
+Lockfile-selected Cargo executables are available through the shared installer;
+Metrics adds no server or product executable extension.
+
+Explicit Binaryen 133 setup, repeated reuse and complete offline tool checking
+pass on Linux, with verified old 132 and new 133 bundle receipts retained.
+The unchanged owner optimization/execution smoke passes in the isolated clean
+checkout using prepared tools and Node 24.21.0; no producer frontend gate is
+added to Metrics. Canonical hook fixtures pass on both current and genuine
+Bash 3.2/Make 3.81 profiles; the selected Rust-tool and expanded retention
+fixtures pass on that legacy profile too. [The adoption record](../evidence/adoption-055.md)
+owns source identities, scope and validation evidence. Package/workspace
+versions remain 0.5.4; the compatible pending changelog is 0.5.5.
+[#54](https://github.com/dragginzgame/ic-metrics/issues/54) owns native acceptance.
+The incoming private Host 0.12.5 selection is preserved and
+[verified separately](../evidence/host-dependencies-0125.md); its changed durable
+writer is outside the inspector's unchanged read path. The first complete gate
+passes but detects the incoming lock change at final preservation. The repeat
+qualifies the updated graph: complete `ci` (238 seconds), `msrv` and
+`wasm-inspect-msrv` pass with all 81 frozen code/graph/pin/workflow inputs
+unchanged. Both runs and their preservation checks remain separately retained
+under `target/evidence/shared-054/`.
+
+## Finalized 0.5.4 validation tooling
+
+Release `1622e98a73f7bf7a42bae48a4266840e0f6726e0` matches public main and local
+tag `v0.5.4`. The preparation record below retains its original 0.5.3 metadata;
+finalization advances package/workspace versions to 0.5.4. Source-bound hosted
+acceptance remains with [#52](https://github.com/dragginzgame/ic-metrics/issues/52)
+and [#53](https://github.com/dragginzgame/ic-metrics/issues/53).
+[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38060740790)
+passes Linux and MSRV; both macOS jobs remain queued at this review. These
+results belong to finalized 0.5.4, not the pending Shared 0.3.6 batch.
+
+## 0.5.4 preparation record
 
 Native CI now allows 60 minutes for cold tool setup, the complete suite and
 evidence collection. GitHub explicitly reports that 0.5.0's Intel job exceeded
@@ -49,6 +120,12 @@ Publication and Linux receipt verification are recorded in
 [#51](https://github.com/dragginzgame/ic-metrics/issues/51); its remaining native
 acceptance stays separate from the pending budget repair.
 
+The subsequent issue review finds the run complete: Linux and both floors pass,
+while both macOS jobs are cancelled. GitHub's check annotations report maintainer
+cancellation for each. This replaces the earlier queued observation, not the
+missing native acceptance; raw jobs/annotations remain under
+`target/evidence/issues-055/`.
+
 ## 0.5.3 preparation record
 
 Adopted committed Shared Tooling 0.3.3
@@ -85,6 +162,12 @@ remain queued. Native acceptance remains incomplete in
 below retains its original package versions and graph identity; published
 release metadata advances package versions to 0.5.2. Later local qualification
 does not replace this source's hosted native acceptance.
+
+The subsequent issue review finds Apple Silicon successful and Intel cancelled,
+with Linux and both floors still successful. GitHub's Intel annotation reports
+maintainer cancellation. Its missing acceptance and the required native receipts
+remain open; jobs/annotation evidence is retained under
+`target/evidence/issues-055/`.
 
 ## 0.5.2 preparation record
 
@@ -124,9 +207,11 @@ Published 0.5.1 is `a2f8e6e5e3d57f2d9eaff61791230ac1efbbafb8`, matching the
 annotated tag, package/workspace versions and official non-yanked dependency-free
 registry archive. [Publication and Linux receipt verification](../evidence/release-051.md)
 bind the released source, payload/catalog/run/host/pins and successful outcomes.
-Linux and both package floors pass; macOS Intel and Apple Silicon remain queued.
-[#48](https://github.com/dragginzgame/ic-metrics/issues/48) retains those native
-acceptance obligations. The release delivers the
+At the initial inspection Linux and both package floors pass, with macOS Intel
+and Apple Silicon queued.
+A subsequent [complete native acceptance review](../evidence/release-051.md#complete-native-acceptance)
+verifies all three source-bound receipts and completes
+[#48](https://github.com/dragginzgame/ic-metrics/issues/48). The release delivers the
 [owned descriptor repair](../evidence/adoption-051-make.md) and separately
 [qualified private Host 0.12.1 graph](../evidence/host-dependencies-0121.md).
 Earlier preparation records keep their original package versions and graph

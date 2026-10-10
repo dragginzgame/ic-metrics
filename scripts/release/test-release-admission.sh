@@ -59,7 +59,7 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'
 set -euo pipefail
 # Permission for preparation must not leak to Cargo or standalone helper reads.
-[[ -z "${IC_METRICS_RELEASE_CACHE_PREPARE+x}" ]]
+[[ -z "${IC_METRICS_RELEASE_CACHE_PREPARE+x}" ]] || exit 1
 # Manifest parsing is read-only; keep it real while substituting effectful gates.
 if [[ "${1:-}" == locate-project ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
 printf '%s\n' "$*" >> "$ADMISSION_CARGO_EVENTS"
@@ -169,17 +169,17 @@ for scenario in cold standalone-offline environment-offline config-offline netwo
     esac
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
-    [[ "$status" == "$expected_status" ]]
+    [[ "$status" == "$expected_status" ]] || exit 1
     printf '%s\n' 'set-version --help' "$expected_fetch" > "$fixture/expected-cache-events"
     if [[ "$expected_status" == 0 ]]; then
         printf '%s\n' install-rust-tools rust-tools-check >> "$fixture/expected-cache-events"
     fi
     cmp "$fixture/expected-cache-events" "$ADMISSION_CARGO_EVENTS"
-    if [[ "$expected_status" == 0 ]]; then [[ -f "$ADMISSION_CACHE/input" ]];
-    else [[ ! -e "$ADMISSION_CACHE/input" ]]; fi
+    if [[ "$expected_status" == 0 ]]; then [[ -f "$ADMISSION_CACHE/input" ]] || exit 1;
+    else [[ ! -e "$ADMISSION_CACHE/input" ]] || exit 1; fi
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$fixture/originals-$scenario/$path"; done
     cmp .git/index "$fixture/originals-$scenario/index"
-    [[ ! -e .git/release-state ]]
+    [[ ! -e .git/release-state ]] || exit 1
 done
 
 # Cargo itself admits explicit offline configuration/environment with an empty
@@ -204,12 +204,12 @@ for policy in environment config; do
     cp .git/index "$originals/index"
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
-    [[ "$status" == 101 ]]
+    [[ "$status" == 101 ]] || exit 1
     printf '%s\n' 'set-version --help' 'fetch --locked' > "$fixture/actual-events"
     cmp "$fixture/actual-events" "$ADMISSION_CARGO_EVENTS"
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
     cmp .git/index "$originals/index"
-    [[ ! -e .git/release-state ]]
+    [[ ! -e .git/release-state ]] || exit 1
 done
 
 ## The actual runner must stop on fetch refusal before validation or preparation.
@@ -254,18 +254,18 @@ for scenario in cold offline network-failure tool-setup-failure tool-check-failu
         > "$fixture/result.log" 2>&1 || status=$?
     printf '%s\n' 'set-version --help' 'fetch --locked' > "$fixture/runner-cache-events"
     if [[ "$scenario" == cold ]]; then
-        [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]]
+        [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]] || exit 1
         printf '%s\n' install-rust-tools rust-tools-check validation >> "$fixture/runner-cache-events"
     elif [[ "$scenario" == tool-* ]]; then
-        [[ "$status" == 1 && -e "$ADMISSION_CACHE/input" ]]
+        [[ "$status" == 1 && -e "$ADMISSION_CACHE/input" ]] || exit 1
         printf '%s\n' install-rust-tools >> "$fixture/runner-cache-events"
         if [[ "$scenario" == tool-check-failure ]]; then
             printf '%s\n' rust-tools-check >> "$fixture/runner-cache-events"
         fi
-    else [[ "$status" == 1 && ! -e "$ADMISSION_CACHE/input" ]]; fi
+    else [[ "$status" == 1 && ! -e "$ADMISSION_CACHE/input" ]] || exit 1; fi
     cmp "$fixture/runner-cache-events" "$ADMISSION_CARGO_EVENTS"
     cmp Cargo.lock "$fixture/runner-lock-before"
-    for plan in .git/release-state/*.plan; do [[ ! -e "$plan" ]]; done
+    for plan in .git/release-state/*.plan; do [[ ! -e "$plan" ]] || exit 1; done
 done
 
 # Actual preflight/runner routing admits selected executables after source/cache
@@ -307,15 +307,15 @@ for scenario in cold reuse setup-failure check-failure standalone-missing offlin
     esac
     status=0
     bash "$ADMISSION_TOOL_ROOT/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
-    [[ "$status" == "$expected_status" ]]
+    [[ "$status" == "$expected_status" ]] || exit 1
     expected_fetch='fetch --locked'
     if [[ "$scenario" == standalone-missing ]]; then expected_fetch='fetch --locked --offline'; fi
     printf '%s\n' 'set-version --help' "$expected_fetch" "${expected_targets[@]}" > "$fixture/expected-tool-events"
     cmp "$fixture/expected-tool-events" "$ADMISSION_CARGO_EVENTS"
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
     cmp .git/index "$originals/index"
-    [[ "$(cat "$ADMISSION_CACHE/old-tool")" == 'old installed executable' ]]
-    [[ ! -e .git/release-state ]]
+    [[ "$(cat "$ADMISSION_CACHE/old-tool")" == 'old installed executable' ]] || exit 1
+    [[ ! -e .git/release-state ]] || exit 1
 done
 
 for scenario in unstaged staged-hidden untracked; do
@@ -332,7 +332,7 @@ for scenario in unstaged staged-hidden untracked; do
         untracked) printf 'Unrelated source.\n' > untracked.txt ;;
     esac
     reject preflight
-    [[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+    [[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
 done
 
 setup preflight-all-blockers
@@ -349,7 +349,7 @@ for path in README.md Makefile "$untracked" Cargo.lock; do
     cp "$path" "$fixture/$(printf '%s' "$path" | shasum -a 256 | cut -d ' ' -f 1)"
 done
 reject preflight
-[[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+[[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
 grep -F 'staged: README.md' "$fixture/result.log" >/dev/null
 grep -F 'unstaged: Makefile' "$fixture/result.log" >/dev/null
 printf 'untracked: %q\n' "$untracked" > "$fixture/expected-path"
@@ -372,7 +372,7 @@ setup preflight-failed-status
 cp .git/index "$fixture/index-before"
 export ADMISSION_FAIL_GIT=status
 reject preflight
-[[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+[[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
 grep -F 'cannot inspect' "$fixture/result.log" >/dev/null
 cmp .git/index "$fixture/index-before"
 
@@ -381,7 +381,7 @@ export IC_METRICS_RELEASE_CACHE_PREPARE=1
 { printf '# Changelog\n\n## [0.9.9]\n\n- Conflicting draft.\n\n'; cat CHANGELOG.md; } > notes.fixture
 mv notes.fixture CHANGELOG.md
 reject preflight
-[[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+[[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
 
 setup commit-clean
 export RELEASE_VERSION=0.1.1
@@ -406,19 +406,19 @@ awk '
 ' Cargo.lock > lock.fixture
 mv lock.fixture Cargo.lock
 reject commit-check
-[[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
+[[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
 
 # Older release checks use the selected commit, despite newer worktree metadata.
 setup selected-older-commit
 export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" RELEASE_DATE="$selected_date"
 printf 'Newer unrelated worktree metadata.\n' > Cargo.toml
 bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1
-[[ ! -s "$ADMISSION_CARGO_EVENTS" ]]
-for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]]; done
+[[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
+for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done
 export RELEASE_VERSION=9.8.7
 reject check
 set -- "$TMPDIR"/metrics-committed-metadata.*
-[[ $# == 1 && -d "$1" ]]
+[[ $# == 1 && -d "$1" ]] || exit 1
 grep -F "failed selected-commit metadata retained: $1" "$fixture/result.log" >/dev/null
 for path in Cargo.toml Cargo.lock CHANGELOG.md; do
     git show "$selected_commit:$path" > "$fixture/expected-metadata"
@@ -442,13 +442,13 @@ for scenario in type export; do
     export ADMISSION_FAIL_GIT="$scenario"
     status=0
     bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1 || status=$?
-    [[ "$status" == 43 && ! -s "$ADMISSION_CARGO_EVENTS" ]]
+    [[ "$status" == 43 && ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
     unset ADMISSION_FAIL_GIT
     if [[ "$scenario" == type ]]; then
-        for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]]; done
+        for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done
     else
         set -- "$TMPDIR"/metrics-committed-metadata.*
-        [[ $# == 1 && -f "$1/Cargo.toml" ]]
+        [[ $# == 1 && -f "$1/Cargo.toml" ]] || exit 1
         grep -F "failed selected-commit metadata retained: $1" "$fixture/result.log" >/dev/null
         git show "$selected_commit:Cargo.toml" > "$fixture/expected-metadata"
         cmp "$fixture/expected-metadata" "$1/Cargo.toml"
@@ -491,14 +491,14 @@ MAKE
         fi
         grep -F retained-gate-failure "$fixture/result.log" >/dev/null
     done
-    [[ ! -e incorrect-route ]]
+    [[ ! -e incorrect-route ]] || exit 1
     if [[ "$scenario" == retention ]]; then
         logs=(.git/release-state/validation-failures/*-0-ci.log)
     else
         logs=(tmp/validation.*/0.log)
         grep -F 'Validation logs retained at:' "$fixture/result.log" >/dev/null
     fi
-    [[ "${#logs[@]}" == 2 ]]
+    [[ "${#logs[@]}" == 2 ]] || exit 1
     for log in "${logs[@]}"; do grep -F retained-gate-failure "$log" >/dev/null; done
 done
 
@@ -519,7 +519,7 @@ MAKE
         exit 1
     fi
     grep -F 'requires recipe execution and failure propagation' "$fixture/result.log" >/dev/null
-    [[ ! -e gate-events ]]
+    [[ ! -e gate-events ]] || exit 1
     if grep -F 'VALIDATION PASSED' "$fixture/result.log" >/dev/null; then exit 1; fi
 done
 
@@ -553,7 +553,7 @@ fi
 printf 'ci\nmsrv\n' > "$fixture/expected-gates"
 cmp gate-events "$fixture/expected-gates"
 second_logs=(.git/release-state/validation-failures/*-1-msrv.log)
-[[ "${#second_logs[@]}" == 1 ]]
+[[ "${#second_logs[@]}" == 1 ]] || exit 1
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
 : > gate-events
 if make --no-print-directory -f "$root/Makefile" release-verify \
@@ -565,7 +565,7 @@ fi
 printf 'ci\nmsrv\nwasm-inspect-msrv\n' > "$fixture/expected-gates"
 cmp gate-events "$fixture/expected-gates"
 host_logs=(.git/release-state/validation-failures/*-2-wasm-inspect-msrv.log)
-[[ "${#host_logs[@]}" == 1 ]]
+[[ "${#host_logs[@]}" == 1 ]] || exit 1
 grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
 : > gate-events
 make --no-print-directory -f "$root/Makefile" release-verify \
@@ -589,13 +589,13 @@ for depth in SHARED_DEPTH_UNDEFINED 00 08 -1 '1+1' 18446744073709551616; do
         VALIDATION_LOG_DIR="$depth_consumer/refused-logs" \
         "$real_bash" "$root/scripts/ci/run-validation-targets.sh" check \
         > "$depth_consumer/refused.log" 2>&1 || status=$?
-    [[ "$status" == 2 && ! -e "$depth_consumer/dispatched" && ! -e "$depth_consumer/refused-logs" ]]
+    [[ "$status" == 2 && ! -e "$depth_consumer/dispatched" && ! -e "$depth_consumer/refused-logs" ]] || exit 1
 done
 for depth in '' 0 8 999999999999999999; do
     VALIDATION_REPOSITORY_ROOT="$depth_consumer" VALIDATION_RUNNER_DEPTH="$depth" \
         "$real_bash" "$root/scripts/ci/run-validation-targets.sh" check \
         > "$depth_consumer/admitted.log" 2>&1
-    [[ "$(cat "$depth_consumer/dispatched")" == "$((${depth:-0} + 1))" ]]
+    [[ "$(cat "$depth_consumer/dispatched")" == "$((${depth:-0} + 1))" ]] || exit 1
 done
 echo 'release admission, cache preparation, selected-commit metadata and Make/logger retention passed (real Git/offline fetch; remaining Cargo effects and gates substituted)'
 fixture_complete=true

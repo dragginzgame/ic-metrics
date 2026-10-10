@@ -56,7 +56,7 @@ for selection in environment command; do
         SHARED_TOOLING_ROOT="$fixture/external" "$real_make" --no-print-directory \
             -f "$root/Makefile" help > "$fixture/output" 2>&1
     fi
-    [[ ! -s "$EVENTS" ]]
+    [[ ! -s "$EVENTS" ]] || exit 1
 done
 
 # The smoke checker must bind this consumer's includes to its scratch snapshot,
@@ -76,11 +76,11 @@ SHARED_TOOLING_ROOT="$fixture/external" TMPDIR="$fixture" "$real_bash" \
     "$root/scripts/ci/check-release-commands.sh" "$root" \
     make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
     scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
-[[ ! -s "$EVENTS" ]]
+[[ ! -s "$EVENTS" ]] || exit 1
 TMPDIR="$fixture" "$real_make" -j2 --no-print-directory -f "$fixture/root-parent.mk" check \
     EXTERNAL_ROOT="$fixture/external" CHECKER="$root/scripts/ci/check-release-commands.sh" \
     CONSUMER="$root" > "$fixture/output" 2>&1
-[[ ! -s "$EVENTS" ]]
+[[ ! -s "$EVENTS" ]] || exit 1
 
 # Unsupported inherited and command-line policies must fail before runner or
 # metadata dispatch. The parse-time Make execution probe remains real.
@@ -115,13 +115,13 @@ for policy in pr invalid ''; do
                 echo 'unsupported delivery was accepted' >&2
                 exit 1
             fi
-            [[ ! -s "$EVENTS" ]]
+            [[ ! -s "$EVENTS" ]] || exit 1
         done
     done
     : > "$EVENTS"
     if PATH="$fixture/bin:$PATH" RELEASE_DELIVERY="$policy" "$real_bash" "$root/scripts/release/metadata.sh" preflight \
         > "$fixture/output" 2>&1; then exit 1; fi
-    [[ ! -s "$EVENTS" ]]
+    [[ ! -s "$EVENTS" ]] || exit 1
 done
 cp "$fixture/bin/bash" "$fixture/mode-bash"
 rm "$fixture/bin/bash"
@@ -131,8 +131,8 @@ mkdir -p scripts/ci
 cat > scripts/ci/run-release.sh <<'RUNNER'
 #!/usr/bin/env bash
 set -euo pipefail
-[[ "${IC_METRICS_RELEASE_CACHE_PREPARE:-}" == 1 ]]
-[[ "${CARGO_NET_OFFLINE:-}" == true ]]
+[[ "${IC_METRICS_RELEASE_CACHE_PREPARE:-}" == 1 ]] || exit 1
+[[ "${CARGO_NET_OFFLINE:-}" == true ]] || exit 1
 printf '%s\n' "$@" > "$EVENTS"
 exit "${CACHE_ENTRY_RESULT:-0}"
 RUNNER
@@ -143,7 +143,7 @@ for target in patch minor major resume; do
         CACHE_ENTRY_RESULT="$result" CARGO_NET_OFFLINE=true "$real_make" --no-print-directory \
             -f "$root/Makefile" "release-$target" VERSION=0.1.2 RELEASE_REMOTE=review \
             RELEASE_BRANCH=main > "$fixture/output" 2>&1 || status=$?
-        if [[ "$result" == 0 ]]; then [[ "$status" == 0 ]]; else [[ "$status" != 0 ]]; fi
+        if [[ "$result" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
         if [[ "$target" == resume ]]; then printf '%s\n' resume 0.1.2 review main > "$fixture/cache-entry-expected";
         else printf '%s\n' "$target" review main > "$fixture/cache-entry-expected"; fi
         cmp "$fixture/cache-entry-expected" "$EVENTS"
@@ -187,7 +187,7 @@ if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then
     perl "$JOBSERVER_PROBE"
 fi
 printf '%s\n' "$@" >> "$EVENTS"
-[[ "${FAIL_PUBLISH:-0}" == 0 ]]
+[[ "${FAIL_PUBLISH:-0}" == 0 ]] || exit 1
 CARGO
 chmod +x "$fixture/bin/cargo"
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
@@ -227,7 +227,7 @@ for assignment in 'MFLAGS :=' 'override MFLAGS :='; do
     PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -i \
         -f "$fixture/hidden-mflags.mk" -f "$root/Makefile" release-patch MAKEFLAGS= \
         > "$fixture/output" 2>&1 || status=$?
-    [[ "$status" == 2 && ! -s "$EVENTS" ]]
+    [[ "$status" == 2 && ! -s "$EVENTS" ]] || exit 1
 done
 rm "$fixture/bin/bash"
 
@@ -237,7 +237,7 @@ for target in "${cargo_targets[@]}"; do
     : > "$EVENTS"
     PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" -j4 --no-print-directory \
         -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
-    [[ -s "$EVENTS" ]]
+    [[ -s "$EVENTS" ]] || exit 1
 done
 # Metadata also dispatches Cargo, so its Bash entry must retain the descriptors.
 cp "$fixture/mode-bash" "$fixture/bin/bash"
@@ -245,7 +245,7 @@ for target in "${metadata_targets[@]}"; do
     : > "$EVENTS"
     PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" -j4 --no-print-directory \
         -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
-    [[ -s "$EVENTS" ]]
+    [[ -s "$EVENTS" ]] || exit 1
 done
 rm "$fixture/bin/bash"
 # A failure in a multi-command gate stops before any later Cargo command.
@@ -253,7 +253,7 @@ rm "$fixture/bin/bash"
 status=0
 PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 FAIL_PUBLISH=1 "$real_make" -j4 --no-print-directory \
     -f "$root/Makefile" clippy > "$fixture/output" 2>&1 || status=$?
-[[ "$status" == 2 ]]
+[[ "$status" == 2 ]] || exit 1
 printf '%s\n' clippy -p ic-metrics --all-targets --locked -- -D warnings > "$fixture/expected"
 cmp "$fixture/expected" "$EVENTS"
 
@@ -274,14 +274,14 @@ if PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -f "$root/Makefil
     release-patch RELEASE_DELIVERY=pr > "$fixture/output" 2>&1 && \
     PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -f "$root/Makefile" publish \
         >> "$fixture/output" 2>&1; then exit 1; fi
-[[ ! -s "$EVENTS" ]]
+[[ ! -s "$EVENTS" ]] || exit 1
 for target in publish publish-check; do
     for fail in 0 1; do
         : > "$EVENTS"
         status=0
         PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
             -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
-        if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]]; else [[ "$status" != 0 ]]; fi
+        if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
         printf '%s\n' publish -p ic-metrics --locked --registry crates-io > "$fixture/expected"
         if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
         cmp "$fixture/expected" "$EVENTS"

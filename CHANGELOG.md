@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.5.5]
+
+### Fixed
+
+- Reject failed release metadata, fixture and native-host assertions explicitly
+  on Bash 3.2, stopping before preparation or false success and retaining evidence
+  ([#55](https://github.com/dragginzgame/ic-metrics/issues/55),
+  [Shared #107](https://github.com/dragginzgame/shared-tooling/issues/107)).
+- Stop pre-commit formatting when Git cannot confirm the index tree, preserving
+  failed observations even if they print the expected tree ID. Formatting
+  adoption checks also require completed execution before reporting success
+  ([#54](https://github.com/dragginzgame/ic-metrics/issues/54),
+  [Shared #106](https://github.com/dragginzgame/shared-tooling/issues/106),
+  [Shared #103](https://github.com/dragginzgame/shared-tooling/issues/103)).
+
+### Changed
+
+- Adopt Shared Tooling 0.3.7 and Binaryen 133 for the common IC toolset. Run
+  `make install-ic-tools` to prepare the new selection; previous bundles remain
+  retained. Arithmetic APIs and frozen measurements are unchanged
+  ([#54](https://github.com/dragginzgame/ic-metrics/issues/54),
+  [Shared #102](https://github.com/dragginzgame/shared-tooling/issues/102)).
+- Use IC Host 0.12.6 for the private Wasm inspector; reports, input reads and the
+  arithmetic dependency graph remain unchanged.
+- Keep only the newest CI run per workflow and branch or PR, cancelling older
+  queued and running checks while retaining the existing host matrix and gates
+  ([Shared #108](https://github.com/dragginzgame/shared-tooling/issues/108)).
+
+### Added
+
+- Select consumer Cargo executables from an explicit lockfile through the shared
+  installer, with strict registry admission and selection-change refusal before
+  activation; offline checks use the same selection without resolving a graph
+  ([#54](https://github.com/dragginzgame/ic-metrics/issues/54),
+  [Shared #96](https://github.com/dragginzgame/shared-tooling/issues/96)).
+
 ## [0.5.4] - 2026-10-10
 
 ### Fixed

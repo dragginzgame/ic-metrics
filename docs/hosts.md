@@ -364,12 +364,13 @@ covers hidden unsafe modes through the actual consumer Makefile under GNU Make
 assignments are refused. [Its completed native acceptance](evidence/release-037.md)
 verifies source-bound receipts on all three hosts; the Linux profiles alone do
 not establish native macOS acceptance.
-The pending 0.5.1 [owned Cargo jobserver repair](evidence/adoption-051-make.md)
+The released 0.5.1 [owned Cargo jobserver repair](evidence/adoption-051-make.md)
 adds descriptor probes through the actual consumer Makefile on both Make/Bash
 profiles, preserving unsafe-mode refusal and first-failure routing. The direct
 Cargo and metadata effects in that fixture are substitutes. Actual parallel
-locked Cargo checks and full delivery validation have their own logs;
-changed-source native acceptance remains in
+locked Cargo checks and full delivery validation have their own logs.
+[Complete native acceptance](evidence/release-051.md#complete-native-acceptance)
+verifies all three released-source receipts and completes
 [#48](https://github.com/dragginzgame/ic-metrics/issues/48).
 `make check-doc-links` checks maintained Markdown references with the shared
 local-link helper; public URL availability and historical source scope are
@@ -380,6 +381,17 @@ attribution checks. The old `make reader-check` and its CI artifacts qualify
 only the tagged pre-0.2 reader; they are not arithmetic-only qualification.
 Current native CI explicitly verifies the common pinned IC tool setup without
 running a reader canister, retaining source hashes, outcomes and logs for 30 days.
+Pending 0.5.5 adopts Shared Tooling 0.3.7 and its Binaryen 133 selection.
+Prepare it explicitly with `make install-ic-tools` before offline checks;
+prior toolsets remain retained. [The adoption record](evidence/adoption-055.md)
+distinguishes the Linux optimizer smoke from hosted consumer qualification and
+the original frozen IC measurements. The existing retention gate also covers
+the completion-aware shared formatting checker.
+Mandatory comparisons in owned release fixtures/adapters and the native host
+gate explicitly refuse failures on Bash 3.2. Existing regressions execute actual
+wrong-version admission, contradictory parser output and host refusals; their
+substituted effects remain separate from hosted acceptance. Routine CI uses the
+common workflow/ref group to cancel superseded runs, retaining the full matrix.
 The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate
 Linux PocketIC execution and durable inputs. It is not a CI gate, product reader
 or native macOS measurement claim; ordinary library qualification stays separate.
