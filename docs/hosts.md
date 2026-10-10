@@ -381,7 +381,7 @@ attribution checks. The old `make reader-check` and its CI artifacts qualify
 only the tagged pre-0.2 reader; they are not arithmetic-only qualification.
 Current native CI explicitly verifies the common pinned IC tool setup without
 running a reader canister, retaining source hashes, outcomes and logs for 30 days.
-Pending 0.5.5 adopts Shared Tooling 0.3.7 and its Binaryen 133 selection.
+Released 0.5.5 adopts Shared Tooling 0.3.7 and its Binaryen 133 selection.
 Prepare it explicitly with `make install-ic-tools` before offline checks;
 prior toolsets remain retained. [The adoption record](evidence/adoption-055.md)
 distinguishes the Linux optimizer smoke from hosted consumer qualification and
@@ -392,6 +392,11 @@ gate explicitly refuse failures on Bash 3.2. Existing regressions execute actual
 wrong-version admission, contradictory parser output and host refusals; their
 substituted effects remain separate from hosted acceptance. Routine CI uses the
 common workflow/ref group to cancel superseded runs, retaining the full matrix.
+The [released-source Linux receipt](evidence/release-055.md) verifies these checks
+and the actual Host 0.12.7 graph; macOS acceptance remains separate. Pending
+0.5.6 also rejects incomplete preparation and selected-commit checks during EXIT cleanup;
+[its qualification](evidence/release-preparation-056.md) distinguishes genuine
+Bash 3.2 behavior from substituted release effects.
 The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate
 Linux PocketIC execution and durable inputs. It is not a CI gate, product reader
 or native macOS measurement claim; ordinary library qualification stays separate.
@@ -399,7 +404,8 @@ or native macOS measurement claim; ordinary library qualification stays separate
 Native jobs have a bounded 60-minute budget for cold tool setup, the complete
 suite and evidence collection. The earlier 30-minute budget expired on Intel
 at released 0.5.0; [#52](https://github.com/dragginzgame/ic-metrics/issues/52)
-owns correction and hosted qualification. The budget does not remove checks or
+is corrected and [qualified on all three hosts](evidence/release-054-native.md#complete-native-acceptance)
+at released 0.5.4. The budget does not remove checks or
 change the acceptance of cancelled outcomes.
 
 The configured CI runs `make ci` natively on every declared host and

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.6]
+
+### Fixed
+
+- Refuse incomplete release preparation and selected-commit metadata checks on
+  Bash 3.2 even when an aborted command enters cleanup with a success status.
+  Missing release inputs restore original metadata or retain the selected commit's
+  evidence without reporting success
+  ([#56](https://github.com/dragginzgame/ic-metrics/issues/56)).
+
+### Changed
+
+- Use IC Host 0.12.8 for the private Wasm inspector; reports, bounded input reads
+  and the arithmetic dependency graph remain unchanged.
+
 ## [0.5.5] - 2026-10-10
 
 ### Fixed

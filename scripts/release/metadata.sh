@@ -79,6 +79,9 @@ case "$operation" in
             local status=$? path restore_failed=false
             trap - EXIT
             if [[ "$complete" != true ]]; then
+                # Bash 3.2 may enter EXIT with status zero after nounset.
+                # Restoring originals does not complete release preparation.
+                [[ "$status" != 0 ]] || status=1
                 for path in "${files[@]}"; do
                     if ! cp -p "$backup/$path" "$path"; then
                         echo "metadata restore failed: $path" >&2
@@ -117,6 +120,7 @@ case "$operation" in
         ;;
     check|commit-check)
         metadata_root=.
+        metadata_check_complete=false
         if [[ -n "${RELEASE_COMMIT:-}" ]]; then
             [[ "$RELEASE_COMMIT" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ ]] || exit 1
             object_type="$(git cat-file -t "$RELEASE_COMMIT")"
@@ -124,6 +128,7 @@ case "$operation" in
             metadata_root="$(mktemp -d "${TMPDIR:-/tmp}/metrics-committed-metadata.XXXXXX")"
             cleanup_committed_metadata() {
                 local status=$?
+                [[ "$metadata_check_complete" == true || "$status" != 0 ]] || status=1
                 if [[ "$status" == 0 ]]; then
                     rm -rf "$metadata_root"
                 else
@@ -156,6 +161,7 @@ case "$operation" in
             [[ -z "${RELEASE_COMMIT:-}" ]] || exit 1
             git diff --quiet -- Cargo.toml Cargo.lock CHANGELOG.md
         fi
+        metadata_check_complete=true
         ;;
     *) echo 'usage: metadata.sh version|preflight|prepare|check|commit-check' >&2; exit 2 ;;
 esac

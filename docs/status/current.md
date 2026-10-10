@@ -4,7 +4,49 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.5.5 Shared Tooling 0.3.7
+## Released 0.5.5 and pending 0.5.6 metadata cleanup
+
+Published 0.5.5, tag and public main agree on
+`b995f787c8e08a6e2e8c18d99e223835f43f6e4e`.
+[Publication and Linux receipt verification](../evidence/release-055.md) binds
+the dependency-free package, passing Linux CI and both package floors. Apple
+Silicon now [passes with a verified receipt](../evidence/release-055.md#apple-silicon-acceptance)
+and Intel remains running; #54/#55 retain native acceptance.
+The actual released lock
+already selects [Host 0.12.7](../evidence/host-dependencies-0127.md); finalized
+notes name the earlier prepared 0.12.6 graph. Subsequent upstream revisions
+arrived during this review; the new local batch adopts reviewed Shared Tooling
+0.3.8 `67285b28a98b7c4211ad32de726709d4e87edea4` through a clean detached
+canonical exporter, preserving all 94 selected files. Its coordinated-package
+archive guidance does not require a packaging override here: only the
+dependency-free arithmetic crate is published. No fleet report is added.
+The separate [Host 0.12.8 selection](../evidence/host-dependencies-0128.md)
+changes only the two private package versions/checksums, with unchanged consumed
+Rust code. Dirty sibling work is excluded.
+
+The next compatible candidate is 0.5.6: release metadata operations now require
+completed execution before cleanup can return success. On genuine Bash 3.2, missing
+`RELEASE_DATE` after manifest/lock preparation previously restored originals but
+returned zero. Selected-commit checks also returned zero and discarded exported
+evidence after missing date/version expansion. The corrected existing metadata
+and admission fixtures cover both boundaries, original restoration, retained
+backups/selected inputs and ordinary failing-command status preservation.
+[#56](https://github.com/dragginzgame/ic-metrics/issues/56)
+owns the correction; [its evidence](../evidence/release-preparation-056.md) records
+the reproduction and delivery qualification. Package/workspace versions stay
+0.5.5; arithmetic APIs and downstream contracts are unchanged. The earlier
+prepare-only full gates remain bound to Host 0.12.7 and Shared 0.3.7; they do not
+qualify the completed source/graph.
+
+The completed batch passes `ci` (183 seconds), `msrv` and `wasm-inspect-msrv`
+with all 99 frozen code/graph/pin/workflow inputs unchanged. Selected ShellCheck,
+metadata and admission fixtures pass on modern Bash and genuine Bash 3.2/Make
+3.81. Snapshot and documentation-link verification pass; final logs and preservation
+are separately retained under `target/evidence/review-055/`. #56 remains open
+for eventual released-source native acceptance. No commit, release or publication
+is performed by this continuation.
+
+## 0.5.5 Shared Tooling 0.3.7 preparation history
 
 Adopted reviewed `34e5ad7aac3599306c9572bb547f2239d09df1a3` through the clean
 canonical exporter, preserving the 94-file selection. Mandatory Bash comparisons
@@ -72,8 +114,11 @@ finalization advances package/workspace versions to 0.5.4. Source-bound hosted
 acceptance remains with [#52](https://github.com/dragginzgame/ic-metrics/issues/52)
 and [#53](https://github.com/dragginzgame/ic-metrics/issues/53).
 [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38060740790)
-passes Linux and MSRV; both macOS jobs remain queued at this review. These
-results belong to finalized 0.5.4, not the pending Shared 0.3.6 batch.
+initially passes Linux and MSRV with macOS queued. A subsequent review verifies
+[Linux and Apple Silicon receipts](../evidence/release-054-native.md); Intel is
+initially still running. Later [complete native acceptance](../evidence/release-054-native.md#complete-native-acceptance)
+verifies all three receipts and closes #52/#53. These results belong to finalized
+0.5.4, not later batches.
 
 ## 0.5.4 preparation record
 

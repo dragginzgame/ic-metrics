@@ -434,15 +434,23 @@ RELEASE_COMMIT="$(git rev-parse "$source_commit:Cargo.toml")"
 export RELEASE_COMMIT
 reject check
 
-# Valid-looking output cannot override a failed Git producer. Export failures
-# retain the selected input and status; type failures stop before creating it.
-for scenario in type export; do
+# Valid-looking output cannot override a failed Git producer. Incomplete checks
+# also retain selected inputs; type failures stop before creating them.
+for scenario in type export missing-version missing-date; do
     setup "selected-failed-$scenario"
     export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" RELEASE_DATE="$selected_date"
-    export ADMISSION_FAIL_GIT="$scenario"
+    case "$scenario" in
+        type|export) export ADMISSION_FAIL_GIT="$scenario" ;;
+        missing-version) unset RELEASE_VERSION ;;
+        missing-date) unset RELEASE_DATE ;;
+    esac
     status=0
     bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1 || status=$?
-    [[ "$status" == 43 && ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
+    case "$scenario" in
+        type|export) [[ "$status" == 43 ]] || exit 1 ;;
+        *) [[ "$status" == 1 ]] || exit 1 ;;
+    esac
+    [[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
     unset ADMISSION_FAIL_GIT
     if [[ "$scenario" == type ]]; then
         for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done
@@ -450,8 +458,10 @@ for scenario in type export; do
         set -- "$TMPDIR"/metrics-committed-metadata.*
         [[ $# == 1 && -f "$1/Cargo.toml" ]] || exit 1
         grep -F "failed selected-commit metadata retained: $1" "$fixture/result.log" >/dev/null
-        git show "$selected_commit:Cargo.toml" > "$fixture/expected-metadata"
-        cmp "$fixture/expected-metadata" "$1/Cargo.toml"
+        for path in Cargo.toml Cargo.lock CHANGELOG.md; do
+            git show "$selected_commit:$path" > "$fixture/expected-metadata"
+            cmp "$fixture/expected-metadata" "$1/$path"
+        done
     fi
 done
 

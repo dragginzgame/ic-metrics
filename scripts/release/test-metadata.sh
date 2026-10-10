@@ -124,7 +124,7 @@ for invalid in duplicate noncanonical; do
     [[ ! -s "$invalid.stdout" ]] || exit 1
 done
 
-for scenario in prepared undated-history history-no-lf dated-notes conflicting-date sort metadata lock conflicting-notes version-before version-after restore-failure; do
+for scenario in prepared undated-history history-no-lf dated-notes conflicting-date sort metadata lock conflicting-notes version-before version-after restore-failure missing-date missing-version; do
     worktree="$fixture/$scenario"
     mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/crates/ic-metrics-wasm-inspect/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
     cp "$root/scripts/ci/finalize-release-changelog.awk" "$worktree/scripts/ci/"
@@ -253,12 +253,35 @@ NOTES
             [[ "$status" == 1 ]] || exit 1
         fi
         status=0
-        bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1 || status=$?
+        case "$scenario" in
+            missing-date) env -u RELEASE_DATE bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1 || status=$? ;;
+            missing-version) env -u RELEASE_VERSION bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1 || status=$? ;;
+            *) bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1 || status=$? ;;
+        esac
         if [[ "$status" == 0 ]]; then
             echo "metadata fixture unexpectedly accepted $scenario" >&2
             exit 1
         fi
-        case "$scenario" in sort|metadata) [[ "$(cat failure-reached)" == "$scenario" ]] || exit 1 ;; esac
+        case "$scenario" in
+            sort|metadata)
+                [[ "$status" == 9 && "$(cat failure-reached)" == "$scenario" ]] || exit 1
+                ;;
+            missing-date|missing-version)
+                [[ "$status" == 1 ]] || exit 1
+                set -- attempts/metrics-release-backup.*
+                [[ $# == 1 ]] || exit 1
+                for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$1/$path"; done
+                if [[ "$scenario" == missing-date ]]; then
+                    # The abort follows mutation of both manifest and lock.
+                    [[ -f "$1/candidate.lock" ]] || exit 1
+                    if cmp -s originals/Cargo.lock "$1/candidate.lock"; then
+                        echo 'missing-date fixture did not reach lock preparation' >&2; exit 1
+                    fi
+                else
+                    [[ ! -e "$1/candidate.lock" ]] || exit 1
+                fi
+                ;;
+        esac
         if [[ "$scenario" == restore-failure ]]; then
             [[ "$status" == 1 ]] || exit 1
             cmp originals/Cargo.toml Cargo.toml
