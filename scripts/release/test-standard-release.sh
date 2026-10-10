@@ -8,8 +8,10 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/standard-release-entry.XXXXXX")"
+fixture_complete=false
 cleanup() {
     local status=$?
+    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
     if [[ "$status" != 0 ]]; then
         if [[ -f "$fixture/output" ]]; then cat "$fixture/output" >&2 || :; fi
         for log in "$fixture"/release-commands.*/*.log; do
@@ -286,3 +288,4 @@ for target in publish publish-check; do
     done
 done
 echo 'release and publication Make adapters passed (command stubs; no Git or registry effects)'
+fixture_complete=true

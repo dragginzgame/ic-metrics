@@ -4,34 +4,53 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.5.1 Cargo jobserver repair
+## Pending 0.5.2 setup and fixture repairs
 
-The Metrics-owned parallel Cargo defect is fixed locally in
-[#48](https://github.com/dragginzgame/ic-metrics/issues/48). Recursive marking
-preserves jobserver descriptors in build/test/lint/docs, floor, publication and
-release-metadata recipes, with the existing unsafe-Make-mode admission intact.
-Command arguments and failure propagation are unchanged. The regression fails
-on the original Makefile and passes with the fix on GNU Make 4.3/Bash 5 and
-genuine GNU Make 3.81/Bash 3.2; selected ShellCheck passes. Full `ci` (196 seconds)
-and both package floors pass; actual parallel library/floor checks emit no
-jobserver warnings. All 81 frozen code/graph/pin/workflow inputs are preserved.
-[The evidence](../evidence/adoption-051-make.md) distinguishes actual
-parallel Cargo execution from substituted descriptor/publication/metadata cases.
+The compatible batch adopts committed Shared Tooling 0.3.2
+`c16444bf006f17c5bb4dda5ad070a0f345da9623` through a clean canonical refresh.
+The 94-file selection preserves all 93 earlier files and adds the advisory README
+review task. Setup admits platform/pins and Rust/Cargo before installation;
+authenticated host diagnostics identify the exact tool and repair command.
+Shared formatting/setup/check/LOC commands preserve Cargo descriptors and reject
+unsafe Make modes. Metrics' native workflow fixture distinguishes both read-only
+preflight phases from installation and retains early-refusal logs.
 
-The compatible repair selects sole pending 0.5.1; package versions stay 0.5.0.
-After the original gate, an incoming private Host 0.12.1 lock selection is
-preserved and [qualified separately](../evidence/host-dependencies-0121.md).
-Official archives/source verify; consumed Rust code is unchanged. Focused
-inspector checks pass; updated-graph full `ci` (193 seconds) and both floors pass,
-preserving its separate 81-file input record. The parallel inspector floor check
-also passes without jobserver warnings. The earlier
-196-second gate retains its Host 0.12.0 identity and initial preservation result;
-the later mismatch is retained. Pins, arithmetic, reports, consumer contracts
-and the 93-file Shared snapshot remain unchanged. Shared #99 owns its canonical
-formatting/installer boundaries; no vendored patch or sibling edit is made.
-Delivery/native acceptance stays in #48. Existing #47 waits for 0.5.0's Intel
-receipt, and #10 waits for Canic's owning qualification. No commit or release
-is performed.
+The same Bash 3.2 false-success defect is reproduced in Metrics' own release
+cleanup. All six owned fixtures now require explicit completion before accepting
+success, preserving prior failure statuses and evidence policy. The existing
+regression checks each actual cleanup body with nounset, early-zero and success
+cases. Focused modern Bash/Make and genuine Bash 3.2/Make 3.81 checks and selected
+ShellCheck pass; actual parallel complete toolset reuse, offline checking,
+formatting and LOC reporting pass without jobserver warnings. Complete `ci`
+(197 seconds), `msrv` and `wasm-inspect-msrv` pass, preserving all 81 frozen
+code/graph/pin/workflow inputs. [The adoption record](../evidence/adoption-052.md) owns the
+source/graph identities and retained failure records.
+
+The incoming private Host 0.12.2 lock is preserved and
+[qualified separately](../evidence/host-dependencies-0122.md): official registry,
+archives and source verify; consumed Rust is unchanged and focused inspector/floor
+checks pass. Arithmetic, reports, executable pins and all six consumer policies
+remain unchanged. Package/workspace versions stay 0.5.1; sole pending 0.5.2 is
+compatible and selects no release. Delivery/native acceptance remains in
+[#49](https://github.com/dragginzgame/ic-metrics/issues/49) and
+[#50](https://github.com/dragginzgame/ic-metrics/issues/50). Dirty newer Shared
+sibling work is excluded; no sibling edit, commit, push or release is performed.
+
+## Released 0.5.1 Cargo jobserver repair
+
+Published 0.5.1 is `a2f8e6e5e3d57f2d9eaff61791230ac1efbbafb8`, matching the
+annotated tag, package/workspace versions and official non-yanked dependency-free
+registry archive. [Publication and Linux receipt verification](../evidence/release-051.md)
+bind the released source, payload/catalog/run/host/pins and successful outcomes.
+Linux and both package floors pass; macOS Intel and Apple Silicon remain queued.
+[#48](https://github.com/dragginzgame/ic-metrics/issues/48) retains those native
+acceptance obligations. The release delivers the
+[owned descriptor repair](../evidence/adoption-051-make.md) and separately
+[qualified private Host 0.12.1 graph](../evidence/host-dependencies-0121.md).
+Earlier preparation records keep their original package versions and graph
+identities. Shared #99's canonical correction is adopted in the pending batch
+above. #47 still waits for 0.5.0's Intel receipt; #10 waits for Canic's owning
+qualification. Neither is closed by a newer local or Linux-only result.
 
 ## Released 0.5.0 common toolset
 
@@ -71,7 +90,7 @@ and completed 0.4.0 acceptance. Records: `target/evidence/review-050/` and
 `target/evidence/issues-051/`.
 No sibling edit, setup, build, graph update, commit, push or release is performed
 in that publication review. Subsequent compatible work is collected under the
-pending 0.5.1 heading above; finalized 0.5.0 remains unchanged.
+pending 0.5.2 heading above; finalized 0.5.0 remains unchanged.
 
 ## Released 0.4.0 tooling cut
 

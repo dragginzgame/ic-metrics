@@ -10,8 +10,10 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-release-admission.XXXXXX")"
+fixture_complete=false
 cleanup() {
     local status=$?
+    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
     if [[ "$status" != 0 ]]; then
         [[ ! -f "$fixture/result.log" ]] || cat "$fixture/result.log" >&2
         echo "failed admission fixture retained: $fixture" >&2
@@ -571,3 +573,4 @@ cmp gate-events "$fixture/expected-gates"
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
 grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
 echo 'release admission, cache preparation, selected-commit metadata and Make/logger retention passed (real Git/offline fetch; remaining Cargo effects and gates substituted)'
+fixture_complete=true

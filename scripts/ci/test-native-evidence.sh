@@ -14,7 +14,14 @@ git_dir="$(git -C "$root" rev-parse --absolute-git-dir)"
 mkdir -p "$root/target/evidence/native-ci"
 fixture="$(mktemp -d "${TMPDIR:-$root/target/evidence/native-ci}/native-evidence.XXXXXX")"
 fixture="$(cd "$fixture" && pwd -P)"
-trap 'printf "Native evidence fixture retained: %s\n" "$fixture"' EXIT
+fixture_complete=false
+cleanup() {
+    local status=$?
+    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
+    printf 'Native evidence fixture retained: %s\n' "$fixture"
+    exit "$status"
+}
+trap cleanup EXIT
 mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
 "$yq" -o=json '.jobs.native.steps' "$root/.github/workflows/ci.yml" > "$fixture/steps.json"
 # These are live workflow effect boundaries, not checks of display prose.
@@ -85,9 +92,29 @@ fi
 MAKE
 chmod +x "$fixture/bin/make"
 real_bash="$(command -v bash)"
+printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
+cat >> "$fixture/bin/bash" <<'BASH'
+set -euo pipefail
+if [[ "${!#}" == --preflight ]]; then
+    case "$1" in
+        */install-ic-tools.sh|*/install-rust-tools.sh)
+            phase="${1##*/}"
+            phase="${phase%.sh}-preflight"
+            printf '%s\n' "$phase" >> "$FIXTURE_COMMANDS"
+            printf 'preflight stdout: %s\n' "$phase"
+            printf 'preflight stderr: %s\n' "$phase" >&2
+            [[ "$phase" != "$FIXTURE_FAILURE" ]] || exit 43
+            exit 0 ;;
+    esac
+fi
+exec "$FIXTURE_REAL_BASH" "$@"
+BASH
+chmod +x "$fixture/bin/bash"
+FIXTURE_REAL_BASH="$real_bash"
+export FIXTURE_REAL_BASH
 FIXTURE_REAL_MAKE="$(command -v make)"
 export FIXTURE_REAL_MAKE
-for scenario in success rust-install rust-check rust-admission host-install host-check ic-install ic-check native formatting rust-archive-write rust-archive-conflict; do (
+for scenario in success rust-install rust-check rust-admission ic-admission host-install host-check ic-install ic-check native formatting rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -103,7 +130,9 @@ for scenario in success rust-install rust-check rust-admission host-install host
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
     export TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped NATIVE_OUTCOME=skipped
     case "$scenario" in
-        rust-install|rust-admission|rust-archive-write|rust-archive-conflict) FIXTURE_FAILURE=install-rust-tools ;;
+        rust-install|rust-archive-write|rust-archive-conflict) FIXTURE_FAILURE=install-rust-tools ;;
+        rust-admission) FIXTURE_FAILURE=install-rust-tools-preflight ;;
+        ic-admission) FIXTURE_FAILURE=install-ic-tools-preflight ;;
         rust-check) FIXTURE_FAILURE=rust-tools-check ;;
         host-install) FIXTURE_FAILURE=install-host-tools ;;
         host-check) FIXTURE_FAILURE=host-tools-check ;;
@@ -112,7 +141,7 @@ for scenario in success rust-install rust-check rust-admission host-install host
         native) FIXTURE_FAILURE=ci ;;
         formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
     esac
-    if [[ "$scenario" == rust-admission ]]; then FIXTURE_ADMISSION=yes; fi
+    if [[ "$scenario" == *-admission ]]; then FIXTURE_ADMISSION=yes; fi
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
     status=0
@@ -135,7 +164,8 @@ for scenario in success rust-install rust-check rust-admission host-install host
         *) [[ "$status" == 2 ]] ;; # GNU Make preserves its failing aggregate status.
     esac
     # No later set/check/native effect can follow the first refused leaf.
-    phases=(install-tools install-host-tools install-ic-tools install-rust-tools
+    phases=(install-tools install-ic-tools-preflight install-rust-tools-preflight
+            install-host-tools install-ic-tools install-rust-tools
             tools-check host-tools-check ic-tools-check rust-tools-check ci)
     : > expected-commands
     for phase in "${phases[@]}"; do
@@ -207,10 +237,12 @@ for scenario in success rust-install rust-check rust-admission host-install host
             rust-*|host-*|ic-*) failed_log=tools-setup.log ;;
             native|formatting) failed_log=native-ci.log ;;
         esac
-        grep -Fx "make stdout: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
-        grep -Fx "make stderr: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
+        effect='make'
+        if [[ "$scenario" == *-admission ]]; then effect=preflight; fi
+        grep -Fx "$effect stdout: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
+        grep -Fx "$effect stderr: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
         [[ "$(tail -1 commands.log)" == "$FIXTURE_FAILURE" ]]
-        if [[ "$scenario" == rust-admission || "$scenario" == native || "$scenario" == formatting ]]; then
+        if [[ "$scenario" == *-admission || "$scenario" == native || "$scenario" == formatting ]]; then
             [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]]
         else
             mkdir recovered-candidates
@@ -236,3 +268,4 @@ for scenario in success rust-install rust-check rust-admission host-install host
     fi
 ) done
 echo 'Native evidence source/setup/archive cases passed (Make effects substituted; no hosted CI claim)'
+fixture_complete=true

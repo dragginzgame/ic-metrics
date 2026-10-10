@@ -180,13 +180,15 @@ Quill, ICP CLI, didc, ic-wasm and Binaryen, plus
 cargo-sort, cargo-sort-derives and candid-extractor,
 under this checkout's `.tools/`. Rust tools use exact pins and locked Cargo
 installation. Setup/checks run host, IC and Rust sets in order, including under
-parallel Make. Interrupted setup can leave earlier tools installed and retains
+parallel Make. Setup first checks the supported platform, pins and selected
+Rust/Cargo toolchain without installing them. Host check failures identify the
+tool, selected path and repair command. Interrupted setup can leave earlier tools installed and retains
 build output for inspection. Archive installers retain previous and failed
 candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
 
-The pending 0.5.0 toolset cut removes the host installer's `--with-ripgrep` and
+The released 0.5.0 toolset cut removes the host installer's `--with-ripgrep` and
 `--with-cloc` flags; all four host tools are always required. Remove those flags
 from direct callers. Existing complete matching bundles are reused, while older
 bundles and evidence are preserved. Product tool targets extend the shared

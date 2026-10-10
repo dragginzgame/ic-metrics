@@ -13,8 +13,10 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-metadata-test.XXXXXX")"
+fixture_complete=false
 cleanup() {
     local status=$?
+    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
     if [[ "$status" != 0 ]]; then
         for log in "${worktree:-}/setup.log" "${worktree:-}/preflight.log" "${worktree:-}/result.log"; do
             if [[ -f "$log" ]]; then cat "$log" >&2 || :; fi
@@ -284,3 +286,4 @@ NOTES
     cmp originals/evidence target/evidence
 done
 echo 'release metadata preparation and failure restoration passed (Cargo-edit and Git substituted)'
+fixture_complete=true

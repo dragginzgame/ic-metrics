@@ -10,8 +10,10 @@ root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 mkdir -p "$root/target/evidence/native-ci"
 evidence="$(mktemp -d "$root/target/evidence/native-ci/fixture-retention.XXXXXX")"
+fixture_complete=false
 cleanup() {
     local status=$?
+    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
     if [[ "$status" != 0 ]]; then
         echo "fixture retention check failed; evidence retained: $evidence" >&2
     fi
@@ -140,4 +142,47 @@ FAIL
         esac
     done
 done
+# Execute the actual cleanup bodies independently of installer/compilation effects.
+# Bash 3.2's nounset trap status and an explicit early exit must never admit success.
+for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \
+    scripts/release/test-release-admission.sh scripts/dev/test-format-hook.sh \
+    scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh; do
+    name="${script##*/}"
+    for scenario in nounset early-zero success; do
+        run="$evidence/cleanup-${name%.sh}-$scenario"
+        mkdir -p "$run/tmp" "$run/target/evidence/native-ci"
+        awk '
+            /^(fixture|evidence)="\$\(mktemp / { copy=1 }
+            copy { print }
+            /^trap cleanup EXIT$/ && copy { exit }
+        ' "$root/$script" > "$run/cleanup.sh"
+        cat >> "$run/cleanup.sh" <<'CLEANUP'
+retained="${fixture:-$evidence}"
+printf '%s\n' "$retained" > "$root/selected.txt"
+printf 'retained diagnostic\n' > "$retained/result.log"
+case "$CLEANUP_SCENARIO" in
+    nounset) printf '%s\n' "${METRICS_INTENTIONALLY_UNSET?injected nounset}" ;;
+    early-zero) exit 0 ;;
+    success) fixture_complete=true ;;
+esac
+CLEANUP
+        status=0
+        env -u METRICS_INTENTIONALLY_UNSET root="$run" TMPDIR="$run/tmp" CLEANUP_SCENARIO="$scenario" \
+            "$real_bash" -eu "$run/cleanup.sh" > "$run/result.log" 2>&1 || status=$?
+        printf '%s\n' "$status" > "$run/status.txt"
+        retained="$(cat "$run/selected.txt")"
+        if [[ "$scenario" != success ]]; then
+            [[ "$status" != 0 && -f "$retained/result.log" ]]
+            grep -F 'retained diagnostic' "$retained/result.log" > /dev/null
+            if [[ "$scenario" == nounset ]]; then grep -F 'injected nounset' "$run/result.log" > /dev/null; fi
+        else
+            [[ "$status" == 0 ]]
+            case "$script" in
+                scripts/ci/test-native-evidence.sh|scripts/release/test-fixture-retention.sh) [[ -f "$retained/result.log" ]] ;;
+                *) [[ ! -e "$retained" ]] ;;
+            esac
+        fi
+    done
+done
 echo "fixture success cleanup and child/assertion failure retention passed; evidence: $evidence"
+fixture_complete=true

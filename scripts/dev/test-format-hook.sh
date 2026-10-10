@@ -10,8 +10,10 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-format-hook.XXXXXX")"
+fixture_complete=false
 cleanup() {
     local status=$?
+    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
     if [[ "$status" != 0 ]]; then
         if [[ -f "$fixture/format-tools.log" ]]; then cat "$fixture/format-tools.log" >&2 || :; fi
         if [[ -f "$fixture/hook.log" ]]; then cat "$fixture/hook.log" >&2 || :; fi
@@ -37,3 +39,4 @@ TMPDIR="$fixture" bash "$root/scripts/ci/check-formatting-hooks.sh" "$root" \
     make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
     > "$fixture/hook.log" 2>&1
 cat "$fixture/hook.log"
+fixture_complete=true

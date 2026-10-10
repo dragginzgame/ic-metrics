@@ -58,6 +58,14 @@ jobs queued at that initial inspection. Subsequent
 verifies that receipt; Intel remains queued. No consumer data reset or new IC
 reader is required.
 
+Published 0.5.1 repairs Metrics-owned Cargo jobserver handoff without changing
+arithmetic; [its verification](evidence/release-051.md) binds the registry archive
+and passing Linux receipt, with macOS acceptance remaining separate. Pending
+compatible 0.5.2 adopts Shared 0.3.2 setup admission, authenticated diagnostics,
+common jobserver handling and completion-aware fixtures through
+[the canonical adoption](evidence/adoption-052.md). Existing 12-tool ordering,
+consumer policies and arithmetic dependencies remain unchanged.
+
 Zero is a valid sample; empty has no latest or maximum. Count and total saturate
 independently; saturated totals cannot support exact interval arithmetic. Units,
 counter identity, sample admission, replication, reset/restart identity, registries,

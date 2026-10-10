@@ -179,7 +179,11 @@ Standard release preflight prepares the selected locked graph before invoking
 `make install-rust-tools` and then offline `make rust-tools-check`; it stops for
 setup/check failure or changed pins before the gate and version preparation.
 Standalone preflight fetches/checks offline and never installs tools. Full CI's
-ordered host/Rust tool admission already precedes dependent builds/tests.
+ordered complete tool admission already precedes dependent builds/tests.
+Common setup now checks platform/pins and Rust/Cargo availability before
+installation, with Rustup auto-installation disabled. The
+[0.5.2 fixture repair](evidence/adoption-052.md) qualifies early-refusal archive
+behavior and explicit fixture completion under both local Make/Bash profiles.
 [The inspector guide](../crates/ic-metrics-wasm-inspect/README.md) explains input
 admission and output units; [the inspection record](evidence/wasm-inspection-0215.md)
 binds local Linux results separately from future committed native acceptance in

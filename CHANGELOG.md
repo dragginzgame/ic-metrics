@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.2]
+
+### Fixed
+
+- Check platform and Rust/Cargo availability before tool installation starts,
+  and identify the exact failing host tool without executing unauthenticated
+  binaries ([#49](https://github.com/dragginzgame/ic-metrics/issues/49),
+  [Shared #101](https://github.com/dragginzgame/shared-tooling/issues/101)).
+- Preserve Cargo's job budget through shared formatting and tool commands,
+  retaining unsafe Make-mode refusal ([#49](https://github.com/dragginzgame/ic-metrics/issues/49),
+  [Shared #99](https://github.com/dragginzgame/shared-tooling/issues/99)).
+- Reject incomplete fixture runs before reporting success or deleting evidence,
+  including Bash 3.2 unset-variable failures
+  ([#50](https://github.com/dragginzgame/ic-metrics/issues/50),
+  [Shared #103](https://github.com/dragginzgame/shared-tooling/issues/103)).
+
+### Changed
+
+- Use IC Host 0.12.2 for the private Wasm inspector; consumed APIs, reports and
+  the arithmetic dependency graph are unchanged.
+
 ## [0.5.1] - 2026-10-10
 
 ### Fixed
