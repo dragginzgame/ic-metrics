@@ -87,13 +87,22 @@ receipts. It adopts Shared 0.2.9 and the separately qualified private Host 0.10.
 graph. Shared #30's Make-mode gap remains separate; no arithmetic, attribution
 or consumer endpoint contract changes.
 
-Pending compatible 0.3.7 adopts the canonical hidden-Make-mode repair, with
+Released 0.3.7 adopts the canonical hidden-Make-mode repair, with
 [focused local qualification](evidence/adoption-037-make.md) and separate delivery/
 native acceptance. [IcyDB's scoped closeout](evidence/consumer-closeout-037.md)
 now binds registry adoption, measurement-state tests and helper/native checks to
 0.269.1; Canic's held-HTTP/native obligation remains in
 [#10](https://github.com/dragginzgame/ic-metrics/issues/10). Neither tooling
 qualification nor native substitutes establish IC measurement costs.
+
+Pending 0.4.0 adopts the Shared Tooling directory-path restriction and selected
+executable preparation contract. This is a developer-tooling cut, with no change
+to sample arithmetic, consumer attribution/identity, endpoints, persisted state
+or report output. Operational LF/CR directories must be explicitly renamed;
+retained measurement evidence is not renamed or deleted. The private inspector's
+Host 0.11 selection retains unchanged consumed read/inspection APIs. See the
+[adoption record](evidence/adoption-040.md) and
+[separate Host qualification](evidence/host-dependencies-0110.md).
 
 Earlier release 0.3.5 is available in the registry; its
 [verification](evidence/release-035.md) binds unchanged arithmetic, the published
@@ -144,7 +153,8 @@ previous 0.2.13
 [release record](evidence/release-0213.md) binds its source, archive and observed
 native outcomes separately from earlier releases. Its tooling changes preserve
 the arithmetic-only contract.
-The six inspected callers select registry arithmetic-only 0.2 requirements.
+The six inspected callers select centralized registry arithmetic dependencies;
+their exact requirements and locks retain separate source identities.
 The [current handoff](status/current.md) separates their committed and working-tree
 lock identities. IC Blob Storage's direct caller is a restoration test probe,
 not production library instrumentation. Toko's action-count cohorts are domain

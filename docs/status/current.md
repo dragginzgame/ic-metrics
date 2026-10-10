@@ -4,9 +4,49 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending compatible 0.3.7
+## Pending 0.4.0 tooling cut
 
-The next draft is 0.3.7, adopting committed Shared Tooling 0.2.11
+The complete draft is now 0.4.0: adopting Shared Tooling 0.2.13
+`5864f468d39f8f9d1bd26fca1afe0e20f25f1b5e` removes previously supported
+newline-containing operational checkout paths. The maintainer selected this
+minor adoption; the provisional compatible 0.3.8 Host entry moves into this same
+batch. Supplied/resolved LF/CR snapshot directory paths refuse before a neighbor
+is selected. Affected operational directories need explicit renaming; existing
+evidence is retained. Arithmetic APIs, consumer state and report output are unchanged.
+
+The clean canonical refresh preserves all 93 selected files. Standard release
+preflight prepares pinned Rust tools after source/candidate and locked-cache
+admission, then checks offline before validation; standalone preflight never
+installs. Preparation refuses changed tool pins. Local validation guidance now
+requires the documented complete suite before delivery, with narrower inspection/
+documentation checks and separate release authority. Qualification is recorded in
+[the adoption evidence](../evidence/adoption-040.md).
+The complete Linux suite passes (`ci`, arithmetic MSRV and inspector MSRV), as
+do both local Make/Bash profiles, snapshot-path checks and preservation. Source-
+bound consumer native acceptance remains in #45/#46 after delivery; upstream
+0.2.13 passes its own full native matrix. No commit, push or release was performed.
+
+The batch also preserves the incoming private inspector Host 0.11.0 selection.
+[Its review](../evidence/host-dependencies-0110.md) binds non-yanked official index
+rows, cached archives, released source and passing locked inspector Clippy,
+argument/report/actual CLI tests and Rust 1.88 compilation. Consumed artifact/read
+source is unchanged; the Host process hard cut has no caller here. No arithmetic
+API, report or consumer contract changes, reset or reinstall are required by
+that private dependency update.
+Package/workspace versions remain 0.3.7. Incoming Cargo changes are preserved.
+
+## Released 0.3.7
+
+Release source is `7c9402eb8e0bc38fffa0db62be77ab314a88a0e2`; publication is
+maintainer-reported. [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38037875150)
+passes Linux, Apple Silicon and both package floors; Intel remains running at
+the final inspection.
+[#44](https://github.com/dragginzgame/ic-metrics/issues/44) retains changed-source
+native receipt acceptance. No workflow rerun was dispatched.
+
+### Preparation evidence
+
+The prepared 0.3.7 batch adopted committed Shared Tooling 0.2.11
 `83efac446348dea024798a331d77933b24b429dc` through its clean canonical exporter.
 The 93-file selection adds the formatting reporter. Success output is concise;
 failed commands retain full stdout/stderr and their failing status. Hook and
@@ -17,15 +57,15 @@ actual formatting/hooks, substituted release/collector effects and preservation.
 
 This is compatible developer presentation and evidence retention, with unchanged
 formatter selection/order, exit semantics, product APIs and report output.
-No consumer reset or reinstall is required. Versions remain 0.3.6; production Rust,
+No consumer reset or reinstall was required. Preparation retained versions 0.3.6; production Rust,
 Cargo selection and pins are unchanged. The canonical repair for
 [Shared #30](https://github.com/dragginzgame/shared-tooling/issues/30) now rejects
 unsafe modes even when `MAKEFLAGS` hides them; Make must generate `MFLAGS`.
 [Supplemental qualification](../evidence/adoption-037-make.md) covers the actual
 consumer's release, formatting and publication routes on GNU Make 4.3/Bash 5 and
 GNU Make 3.81/Bash 3.2, preserving safe replacement flags and parallel dispatch.
-[#44](https://github.com/dragginzgame/ic-metrics/issues/44) retains delivery and
-changed-source native acceptance. No full local CI, resolver, commit or release runs.
+Delivery is now complete; #44 retains changed-source native acceptance.
+No full local CI, resolver, commit or release ran during that preparation.
 
 [The scoped downstream closeout](../evidence/consumer-closeout-037.md) binds
 IcyDB 0.269.1's ten passing metrics-state tests and Linux/Intel/Apple Silicon

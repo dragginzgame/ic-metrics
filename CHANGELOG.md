@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.0]
+
+### Breaking
+
+- Reject LF/CR characters in supplied or resolved snapshot directory paths,
+  preventing verification or refresh of a neighboring checkout. Explicitly rename
+  affected operational directories before use; existing evidence is retained
+  ([Shared #95](https://github.com/dragginzgame/shared-tooling/issues/95),
+  [#45](https://github.com/dragginzgame/ic-metrics/issues/45)).
+
+### Changed
+
+- Update the private Wasm inspector's IC Host dependencies to 0.11.0; the
+  consumed inspection/read APIs, report output and arithmetic graph are unchanged.
+- Prepare the pinned Rust executable set in admitted release preflight, then
+  check it offline before validation. Standalone checks never install tools
+  ([Shared #96](https://github.com/dragginzgame/shared-tooling/issues/96),
+  [#46](https://github.com/dragginzgame/ic-metrics/issues/46)).
+
 ## [0.3.7] - 2026-10-10
 
 ### Changed

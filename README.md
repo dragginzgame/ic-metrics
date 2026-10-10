@@ -75,7 +75,7 @@ Verified 0.2.16 publication and complete native qualification are bound in the
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
-public APIs must coordinate their 0.2 dependency identity. Stored data, reports
+public APIs must coordinate the same released dependency identity. Stored data, reports
 and endpoints are unchanged.
 Historical reader execution remains in the source-bound
 [evidence](https://github.com/dragginzgame/ic-metrics/blob/v0.2.3/docs/status/current.md#released-019)
@@ -112,7 +112,15 @@ its observations have their own source and workload identity.
 Install rustup, Git, GNU Make, Bash 3.2 or newer and a SHA-256 utility. The pinned
 toolchain is Rust 1.99.0 and the arithmetic MSRV is 1.85.0. Install `wasm32-unknown-unknown`
 for Wasm checks. `make help` lists focused commands; select named tests during
-implementation. Full `make ci` requires an explicit request outside configured CI.
+implementation. Before delivering completed code, run `make ci`, `make msrv`
+and `make wasm-inspect-msrv`. Inspection alone does not authorize the full suite;
+documentation-only changes use link, consistency and diff checks.
+
+The pending 0.4.0 tooling cut forbids LF/CR characters in repository, tooling and
+operational directory names, including ancestors and resolved symlink destinations.
+Snapshot refresh/verification refuse these paths before selecting a neighbor.
+Rename affected operational directories explicitly; retained evidence is preserved.
+Spaces remain supported. Arithmetic APIs, stored data and report output are unchanged.
 
 The private [Wasm evidence inspector](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics-wasm-inspect/README.md)
 uses the IC Host libraries to inspect explicitly supplied Wasms with caller-selected
@@ -153,6 +161,11 @@ inspection procedures. Its optional coordinator is inactive until explicitly
 enabled; snapshot adoption starts no schedule or background agent.
 Reviewed shared tooling is vendored;
 normal checks and release scripts need no Shared Tooling sibling checkout.
+Standard release preflight prepares the selected locked cache and this checkout's
+pinned Rust tool set through `make install-rust-tools`, then runs offline
+`make rust-tools-check` before validation. Preparation follows source/candidate
+admission and saved-release reconciliation; explicit Cargo offline settings remain
+authoritative. Standalone preflight checks the existing set without installing it.
 
 Prepare the reviewed local executables explicitly:
 

@@ -58,6 +58,12 @@ case "$*" in
 esac
 GIT
 chmod +x "$fixture/bin/git"
+printf '#!%s\n' "$real_bash" > "$fixture/bin/make"
+cat >> "$fixture/bin/make" <<'MAKE'
+set -euo pipefail
+[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$4" == rust-tools-check ]]
+MAKE
+chmod +x "$fixture/bin/make"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/yq"
 cat >> "$fixture/bin/yq" <<'YQ'
 set -euo pipefail

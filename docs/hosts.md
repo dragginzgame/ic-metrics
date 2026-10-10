@@ -154,10 +154,14 @@ earlier Linux preparation or tagged host results.
   network services or external IC runtime requirements. There is no platform
   reader, IC feature, fixture or PocketIC harness in the current library graph.
 
-Run `make shared-tooling-check`, `make fmt`, `make check`,
+During implementation run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
 `make msrv` checks the declared floor on host and Wasm. Select
 named tests relevant to the change rather than running the full suite by default.
+Before delivering completed code, run the documented full suite `make ci`,
+`make msrv` and `make wasm-inspect-msrv`, reusing passing checks for unchanged
+inputs. Inspection-only and documentation-only work keep their narrower checks.
+Release and publication effects still require explicit authority.
 The separate `make wasm-inspect-check` checks and lints the private host package
 and runs its named argument/report tests plus the actual CLI admission/publication
 test. That executable test checks admitted files' digests/reports, each of the
@@ -170,6 +174,11 @@ identities. Native CI includes the host checks on all three hosts, and Linux
 checks both package floors. Bare Cargo commands select arithmetic only.
 The explicitly requested release gate also checks both floors after native CI;
 ordinary development runs the focused commands separately.
+Standard release preflight prepares the selected locked graph before invoking
+`make install-rust-tools` and then offline `make rust-tools-check`; it stops for
+setup/check failure or changed pins before the gate and version preparation.
+Standalone preflight fetches/checks offline and never installs tools. Full CI's
+ordered host/Rust tool admission already precedes dependent builds/tests.
 [The inspector guide](../crates/ic-metrics-wasm-inspect/README.md) explains input
 admission and output units; [the inspection record](evidence/wasm-inspection-0215.md)
 binds local Linux results separately from future committed native acceptance in

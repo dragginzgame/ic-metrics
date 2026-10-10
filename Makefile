@@ -33,7 +33,7 @@ release-version:
 	@bash scripts/release/metadata.sh version
 
 release-preflight:
-	@bash scripts/release/metadata.sh preflight
+	+@bash scripts/release/metadata.sh preflight
 
 release-verify:
 	+env -u IC_METRICS_RELEASE_CACHE_PREPARE CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
@@ -70,7 +70,7 @@ help:
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Wasm evidence tool: wasm-inspect-check; separate host minimum: wasm-inspect-msrv"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
-	@echo "Full gates (explicit request or configured CI): test, ci"
+	@echo "Full delivery validation: ci, msrv, wasm-inspect-msrv; release commands remain explicit"
 
 publish:
 	cargo publish -p $(PACKAGE) --locked --registry crates-io

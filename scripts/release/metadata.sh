@@ -44,12 +44,26 @@ case "$operation" in
         awk -v version="${RELEASE_VERSION:?}" -v previous="$RELEASE_PREVIOUS" -v date="${RELEASE_DATE:?}" \
             -f scripts/ci/finalize-release-changelog.awk CHANGELOG.md > /dev/null
         cargo set-version --help >/dev/null
-        cargo sort --help >/dev/null
+        tool_versions="$root/ci/tool-versions.env"
+        tool_versions_digest="$(bash "$root/scripts/ci/verify-file-checksum.sh" --print sha256 "$tool_versions")"
+        tool_targets=(rust-tools-check)
         case "$release_cache_prepare" in
-            1) cargo fetch --locked ;;
+            1)
+                cargo fetch --locked
+                tool_targets=(install-rust-tools rust-tools-check)
+                ;;
             0) cargo fetch --locked --offline ;;
             *) echo 'invalid release cache preparation selection' >&2; exit 2 ;;
         esac
+        # Source fetching does not install the pinned Cargo executables. Prepare
+        # only behind normal release admission; standalone preflight stays offline.
+        for target in "${tool_targets[@]}"; do
+            make --no-print-directory -C "$root" "$target"
+            if [[ "$(bash "$root/scripts/ci/verify-file-checksum.sh" --print sha256 "$tool_versions")" != "$tool_versions_digest" ]]; then
+                echo 'selected Rust tool pins changed during release preflight' >&2
+                exit 1
+            fi
+        done
         ;;
     prepare)
         current_version="$(bash "$reader" Cargo.toml)"

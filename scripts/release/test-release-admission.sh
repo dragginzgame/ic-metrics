@@ -37,7 +37,9 @@ export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TEMPLATE_DIR="$fixt
 real_bash="$(command -v bash)"
 ADMISSION_REAL_GIT="$(command -v git)"
 ADMISSION_REAL_CARGO="$(command -v cargo)"
-export ADMISSION_REAL_GIT ADMISSION_REAL_CARGO
+ADMISSION_REAL_MAKE="$(command -v make)"
+export ADMISSION_REAL_GIT ADMISSION_REAL_CARGO ADMISSION_REAL_MAKE
+export ADMISSION_TOOL_ROOT="$root"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 set -euo pipefail
@@ -74,6 +76,27 @@ case "$*" in
 esac
 CARGO
 chmod +x "$fixture/bin/cargo"
+printf '#!%s\n' "$real_bash" > "$fixture/bin/make"
+cat >> "$fixture/bin/make" <<'MAKE'
+set -euo pipefail
+if [[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$3" == "$ADMISSION_TOOL_ROOT" ]]; then
+    case "$4" in
+        install-rust-tools|rust-tools-check)
+            printf '%s\n' "$4" >> "$ADMISSION_CARGO_EVENTS"
+            [[ "${ADMISSION_TOOL_FAIL:-}" != "$4" ]] || exit 49
+            if [[ "$4" == install-rust-tools ]]; then
+                if [[ ! -f "$ADMISSION_CACHE/tool" && "${CARGO_NET_OFFLINE:-false}" == true ]]; then exit 57; fi
+                [[ "${ADMISSION_TOOL_CHANGE:-no}" != yes ]] || printf '\n# changed selection\n' >> "$ADMISSION_TOOL_ROOT/ci/tool-versions.env"
+                printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
+            else
+                [[ -f "$ADMISSION_CACHE/tool" ]] || exit 53
+            fi
+            exit 0 ;;
+    esac
+fi
+exec "$ADMISSION_REAL_MAKE" "$@"
+MAKE
+chmod +x "$fixture/bin/make"
 export PATH="$fixture/bin:$PATH" ADMISSION_CARGO_EVENTS="$fixture/cargo-events"
 setup() {
     local name="$1"
@@ -100,12 +123,15 @@ TOML
     : > "$ADMISSION_CARGO_EVENTS"
     unset RELEASE_COMMIT ADMISSION_FAIL_GIT IC_METRICS_RELEASE_CACHE_PREPARE
     unset CARGO_NET_OFFLINE ADMISSION_CONFIG_OFFLINE ADMISSION_FETCH_FAILURE ADMISSION_REAL_FETCH
+    unset ADMISSION_TOOL_FAIL ADMISSION_TOOL_CHANGE
+    export ADMISSION_TOOL_ROOT="$root"
     if [[ -n "$original_cargo_home_set" ]]; then export CARGO_HOME="$original_cargo_home";
     else unset CARGO_HOME; fi
     export ADMISSION_CACHE="$fixture/cache/$name"
     mkdir -p "$ADMISSION_CACHE"
     # Existing admission scenarios have prepared inputs; new cache cases start cold.
     printf 'prepared selected locked input\n' > "$ADMISSION_CACHE/input"
+    printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
     export TMPDIR="$fixture/attempts/$name"
     export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-06
 }
@@ -140,7 +166,10 @@ for scenario in cold standalone-offline environment-offline config-offline netwo
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
     [[ "$status" == "$expected_status" ]]
-    printf '%s\n' 'set-version --help' 'sort --help' "$expected_fetch" > "$fixture/expected-cache-events"
+    printf '%s\n' 'set-version --help' "$expected_fetch" > "$fixture/expected-cache-events"
+    if [[ "$expected_status" == 0 ]]; then
+        printf '%s\n' install-rust-tools rust-tools-check >> "$fixture/expected-cache-events"
+    fi
     cmp "$fixture/expected-cache-events" "$ADMISSION_CARGO_EVENTS"
     if [[ "$expected_status" == 0 ]]; then [[ -f "$ADMISSION_CACHE/input" ]];
     else [[ ! -e "$ADMISSION_CACHE/input" ]]; fi
@@ -172,7 +201,7 @@ for policy in environment config; do
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
     [[ "$status" == 101 ]]
-    printf '%s\n' 'set-version --help' 'sort --help' 'fetch --locked' > "$fixture/actual-events"
+    printf '%s\n' 'set-version --help' 'fetch --locked' > "$fixture/actual-events"
     cmp "$fixture/actual-events" "$ADMISSION_CARGO_EVENTS"
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
     cmp .git/index "$originals/index"
@@ -182,7 +211,6 @@ done
 ## The actual runner must stop on fetch refusal before validation or preparation.
 # Only Make dispatch is adapted: consumer preflight/version stay real, and a
 # successful cold fetch reaches a deliberately failing substitute validation.
-ADMISSION_REAL_MAKE="$(command -v make)"
 export ADMISSION_REAL_MAKE ADMISSION_METADATA="$root/scripts/release/metadata.sh"
 cat > "$fixture/bin/release-make" <<'MAKE'
 #!/usr/bin/env bash
@@ -204,7 +232,7 @@ esac
 MAKE
 chmod +x "$fixture/bin/release-make"
 git init --bare --quiet "$fixture/destination.git"
-for scenario in cold offline network-failure; do
+for scenario in cold offline network-failure tool-setup-failure tool-check-failure; do
     setup "runner-cache-$scenario"
     git remote add origin "$fixture/destination.git"
     branch="$(git symbolic-ref --quiet --short HEAD)"
@@ -213,19 +241,77 @@ for scenario in cold offline network-failure; do
     case "$scenario" in
         offline) export CARGO_NET_OFFLINE=true ;;
         network-failure) export ADMISSION_FETCH_FAILURE=47 ;;
+        tool-setup-failure) export ADMISSION_TOOL_FAIL=install-rust-tools ;;
+        tool-check-failure) export ADMISSION_TOOL_FAIL=rust-tools-check ;;
     esac
     cp Cargo.lock "$fixture/runner-lock-before"
     status=0
     RELEASE_MAKE="$fixture/bin/release-make" bash "$root/scripts/ci/run-release.sh" patch origin "$branch" \
         > "$fixture/result.log" 2>&1 || status=$?
-    printf '%s\n' 'set-version --help' 'sort --help' 'fetch --locked' > "$fixture/runner-cache-events"
+    printf '%s\n' 'set-version --help' 'fetch --locked' > "$fixture/runner-cache-events"
     if [[ "$scenario" == cold ]]; then
         [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]]
-        printf 'validation\n' >> "$fixture/runner-cache-events"
+        printf '%s\n' install-rust-tools rust-tools-check validation >> "$fixture/runner-cache-events"
+    elif [[ "$scenario" == tool-* ]]; then
+        [[ "$status" == 1 && -e "$ADMISSION_CACHE/input" ]]
+        printf '%s\n' install-rust-tools >> "$fixture/runner-cache-events"
+        if [[ "$scenario" == tool-check-failure ]]; then
+            printf '%s\n' rust-tools-check >> "$fixture/runner-cache-events"
+        fi
     else [[ "$status" == 1 && ! -e "$ADMISSION_CACHE/input" ]]; fi
     cmp "$fixture/runner-cache-events" "$ADMISSION_CARGO_EVENTS"
     cmp Cargo.lock "$fixture/runner-lock-before"
     for plan in .git/release-state/*.plan; do [[ ! -e "$plan" ]]; done
+done
+
+# Actual preflight/runner routing admits selected executables after source/cache
+# admission and before the gate. Setup/check effects remain substituted.
+for scenario in cold reuse setup-failure check-failure standalone-missing offline-missing pins-changed; do
+    setup "tool-$scenario"
+    originals="$fixture/tool-originals-$scenario"
+    mkdir "$originals"
+    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cp "$path" "$originals/$path"; done
+    cp .git/index "$originals/index"
+    printf 'old installed executable\n' > "$ADMISSION_CACHE/old-tool"
+    export IC_METRICS_RELEASE_CACHE_PREPARE=1
+    expected_status=0
+    expected_targets=(install-rust-tools rust-tools-check)
+    case "$scenario" in
+        cold) rm "$ADMISSION_CACHE/tool" ;;
+        setup-failure) export ADMISSION_TOOL_FAIL=install-rust-tools; expected_status=49; expected_targets=(install-rust-tools) ;;
+        check-failure) export ADMISSION_TOOL_FAIL=rust-tools-check; expected_status=49 ;;
+        standalone-missing)
+            unset IC_METRICS_RELEASE_CACHE_PREPARE
+            rm "$ADMISSION_CACHE/tool"
+            expected_status=53; expected_targets=(rust-tools-check) ;;
+        offline-missing)
+            export CARGO_NET_OFFLINE=true
+            rm "$ADMISSION_CACHE/tool"
+            expected_status=57; expected_targets=(install-rust-tools) ;;
+        pins-changed)
+            # Copy the script owners, so the controlled mutation cannot touch
+            # the real repository's reviewed tool pins.
+            tool_root="$fixture/changed-tool-root"
+            mkdir -p "$tool_root/scripts/release" "$tool_root/scripts/ci" "$tool_root/ci"
+            cp "$root/scripts/release/metadata.sh" "$tool_root/scripts/release/"
+            for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh; do
+                cp "$root/scripts/ci/$helper" "$tool_root/scripts/ci/"
+            done
+            cp "$root/ci/tool-versions.env" "$tool_root/ci/"
+            export ADMISSION_TOOL_ROOT="$tool_root" ADMISSION_TOOL_CHANGE=yes
+            expected_status=1; expected_targets=(install-rust-tools) ;;
+    esac
+    status=0
+    bash "$ADMISSION_TOOL_ROOT/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
+    [[ "$status" == "$expected_status" ]]
+    expected_fetch='fetch --locked'
+    if [[ "$scenario" == standalone-missing ]]; then expected_fetch='fetch --locked --offline'; fi
+    printf '%s\n' 'set-version --help' "$expected_fetch" "${expected_targets[@]}" > "$fixture/expected-tool-events"
+    cmp "$fixture/expected-tool-events" "$ADMISSION_CARGO_EVENTS"
+    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
+    cmp .git/index "$originals/index"
+    [[ "$(cat "$ADMISSION_CACHE/old-tool")" == 'old installed executable' ]]
+    [[ ! -e .git/release-state ]]
 done
 
 for scenario in unstaged staged-hidden untracked; do
