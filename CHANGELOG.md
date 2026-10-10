@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.6]
+
+### Changed
+
+- Record the reviewed Shared Tooling version alongside its snapshot revision,
+  with validation of malformed or duplicate version metadata.
+- Update the private Wasm inspector's locked IC Host dependencies to 0.10.1;
+  arithmetic APIs and report output remain unchanged.
+
 ## [0.3.5] - 2026-10-09
 
 ### Fixed

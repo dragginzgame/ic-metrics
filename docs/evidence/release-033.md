@@ -54,3 +54,26 @@ New inputs and verified receipts are retained under
 `target/evidence/issues-latest-035/`. The current pending Host 0.10.0 graph and
 expanded CLI test retain their separate local qualification. No CI rerun, source
 repair or release effect was used to obtain this new hosted observation.
+
+## Complete native acceptance
+
+The same run now passes all three native jobs and MSRV at the exact released
+source. Downloaded Apple Silicon artifact `11633695994` verifies API ZIP digest
+`65adaf7185670da4d30c1a34deaba41e017353be9f23c0c8a27a4bff8a7ab0d4`
+and inner archive digest
+`c38789575ebdde2b07b978569e369841ffe726d06317f2240a0f3ed2b81d650e`.
+All 14 payload hashes, 68 released-source hashes and nine successful outcomes
+verify against exact run/attempt 1/push/Darwin/arm64 identity and released IC pins.
+The source-bound native log confirms actual CLI/hook checks and substituted
+release/admission/installer cases. Inputs are retained under
+`target/evidence/continuation-036/`.
+
+Together with the earlier Linux and Intel receipts, this completes the original
+installer and literal-hook consumer acceptance in
+[#42](https://github.com/dragginzgame/ic-metrics/issues/42) and
+[#43](https://github.com/dragginzgame/ic-metrics/issues/43). The installer helpers
+and relevant fixtures retain byte identity from 0.3.1. The cancelled original
+0.3.1 jobs and earlier queued observations remain historical. Later Host graphs,
+expanded CLI coverage and Make execution companion changes retain separate
+qualification; the known command-line-hidden mode failure in Shared #30 remains
+open through Metrics #44. No workflow rerun or release effect supplies this result.

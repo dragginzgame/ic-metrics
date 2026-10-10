@@ -80,12 +80,19 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.3.4 is available in the registry; its
-[verification](evidence/release-034.md) binds unchanged arithmetic, the published
+Release 0.3.5 is available in the registry; its
+[verification](evidence/release-035.md) binds unchanged arithmetic, the published
 archive and passing Linux/MSRV results. Downloaded Linux receipts cover the
 shared Make includes and execution companion, actual formatting hooks and
-inspector CLI. Both macOS jobs
-remain queued; delivered tooling acceptance remains separate from publication.
+expanded inspector CLI. Subsequent
+[complete native acceptance](evidence/release-035.md#complete-native-acceptance)
+verifies both macOS receipts and the passing native/MSRV matrix. The pending
+graph and shared Make execution-mode gap retain their separate qualification.
+
+Earlier 0.3.3 now has [complete native/MSRV acceptance](evidence/release-033.md#complete-native-acceptance),
+with all three downloaded source-bound receipts, completing the original installer
+and literal-hook obligations in #42/#43. Later sources/graphs and the shared Make
+execution-mode gap retain their own qualification.
 
 Earlier release 0.3.2's
 [verification](evidence/release-032.md) binds the unchanged arithmetic source,

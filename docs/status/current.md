@@ -4,38 +4,77 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.3.5 Make admission fix
+## Pending compatible 0.3.6
 
-The compatible next draft is 0.3.5, adopting committed Shared Tooling 0.2.8
-`b2646cde9abbc8861857a4379c683a0c19eba43e` through its clean canonical exporter.
-The 92-file selection binds admission to the selected include despite an external
-tooling root, and supports recursive Make commands with additional arguments.
-Consumer release adapters and upstream fixtures pass on Linux Bash 5/3.2, along
-with admission, actual hooks, failure retention and focused snapshot/pin/tool/lint
-checks in [the adoption record](../evidence/adoption-035.md). Ordinary direct and
-inherited unsafe modes reject; command-line `MAKEFLAGS` overrides can still hide
-`-i` and yield false success. The actual consumer reproduction is reported to
-Shared #30; #44 remains open for a committed canonical fix and native acceptance.
-The selected snapshot is not patched. Direct-only delivery, cache preparation
-and local adapters are preserved.
+The next draft is 0.3.6, adopting committed Shared Tooling 0.2.9
+`f8a70ba348e9975a6eb5b337860b00bc8a0b36d1` through the clean canonical exporter.
+The unchanged 92-file selection now records its immutable source version and
+validates malformed/duplicate annotations. Linux Bash 5/3.2 distribution,
+consumer release/admission and focused verification pass in
+[the adoption record](../evidence/adoption-036.md). Fleet reports remain upstream.
 
-An independently incoming lock edit first selected Host 0.9.6, qualified in
-[its separate review](../evidence/host-dependencies-096.md), and subsequently
-advanced to 0.9.7, qualified with the expanded CLI test below. Incoming manifest
-and lock edits now select Host 0.10.0, whose
-[separate review](../evidence/host-dependencies-0100.md) verifies official archives,
+An independently incoming lock edit selects Host 0.10.1.
+[Its review](../evidence/host-dependencies-0101.md) binds official archives,
 unchanged consumed read/artifact source, inspector Clippy, named/CLI tests and
-Rust 1.88 compilation/execution. Host's durable writer/error hard cut has no
-Metrics caller; the private update preserves Metrics' API and output, so 0.3.5
-remains compatible. Manifest/lock and pin hashes remain unchanged during review.
+Rust 1.88 compilation. Host's durable parent-sync fix has no Metrics caller.
+Production source and pins remain unchanged; package/workspace versions stay
+0.3.5. No full local CI, resolver, commit or release runs.
 
-The existing CLI gate now executes all four distinct budget limits, invalid and
-surplus arguments against a valid input, and a closed-pipe output failure. Inputs
-remain intact and refused admission publishes no report. Development and actual
-Rust 1.88 execution pass in [the focused record](../evidence/inspector-cli-035.md),
-which retains the initial lint and invalid-descriptor fixture failures separately.
-Production Rust and pins remain unchanged; package/workspace versions stay 0.3.4.
-No full local CI, dependency resolution, commit or release runs.
+Shared #30's command-line-hidden Make modes still yield false success; this
+revision does not change the execution guard. #44 remains open for the canonical
+repair and its delivered-source acceptance. #10 remains downstream-owned.
+
+The 2026-10-10 recheck finds no newer committed Shared Tooling or IC Host source.
+Shared's dirty formatting/retention work is unadopted and left untouched.
+Issue #44 also records Shared #92's pending concise-formatting wrapper; its
+include/helper/collector changes need a reviewed committed snapshot before adoption.
+Released 0.3.5 now has complete native acceptance below; this does not repair
+Shared #30 or qualify the pending graph. No additional runtime API or consumer
+contract change is needed for this compatible batch.
+
+The read-only downstream recheck retains public IcyDB 0.269.0
+`63ac8cbf9337306187e8bf74309ed9c576aca2af`, selecting registry Metrics 0.3.2.
+[Its completed CI](https://github.com/dragginzgame/icydb/actions/runs/37940288483)
+now passes both native macOS jobs, static, core, workspace, tier-a, MSRV and
+Wasm-size. Downloaded native logs confirm actual library/CLI builds and portable
+automation. Tier-b still fails: its downloaded log observes PocketIC's clean
+exit after 60.532 seconds during compilation, before test execution. This does
+not establish an arithmetic failure or a passing overall gate; IcyDB #298 and
+root #10 retain their remaining owning acceptance. Canic public main remains
+0.110.54 `c4c046f947b2b28f4342cbf6efe9221ba1ed5f70`, with held-HTTP/native
+qualification still in #99/#447. Inputs/logs are retained under
+`target/evidence/continuation-036/`; no sibling execution or mutation runs.
+
+The subsequent public-main recheck advances IcyDB to 0.269.1
+`76dc93ead6b66c8db9cb5c402355867dbdf188e3`, selecting registry Metrics 0.3.5
+and Testkit 0.28.0. [Exact CI](https://github.com/dragginzgame/icydb/actions/runs/37974259856)
+passes both native macOS jobs, static, core, workspace, tier-a, MSRV and Wasm-size,
+while tier-b and the aggregate gate fail. The matching SQL Tier C workflow also
+fails; it is not substituted for acceptance. The downloaded tier-b log observes
+PocketIC exiting cleanly after 60.665 seconds while compilation is still active,
+before test execution; this is not a measurement assertion failure. Inputs are retained under
+`target/evidence/continuation-036-recheck/`; the earlier 0.269.0 observations above
+remain bound to their original source/graph.
+
+## Released 0.3.5
+
+Published 0.3.5 matches source/tag `6c09738c8183bd539e74859fe5433709a928c655`.
+[Its verification](../evidence/release-035.md) binds the dependency-free registry
+archive, unchanged arithmetic, passing Linux/MSRV and downloaded Linux receipts,
+including the expanded actual CLI test. The later
+[complete native acceptance](../evidence/release-035.md#complete-native-acceptance)
+verifies both macOS archives, exact-source logs and all three passing native
+jobs plus MSRV. Earlier queued observations retain their original scope.
+It adopts Shared 0.2.8 and Host 0.10.0; the original
+[adoption](../evidence/adoption-035.md),
+[Host](../evidence/host-dependencies-0100.md) and
+[CLI](../evidence/inspector-cli-035.md) records retain their own inputs and limits.
+
+Earlier 0.3.3 now has complete native/MSRV and downloaded three-host receipts in
+[its acceptance record](../evidence/release-033.md#complete-native-acceptance),
+completing the original installer and literal-hook obligations in #42/#43.
+Cancelled 0.3.1 jobs remain non-execution observations. Later source/graphs and
+the Make execution companion retain separate qualification.
 
 ## Released 0.3.4 Make and qualification fixes
 
@@ -43,7 +82,7 @@ Published 0.3.4 matches source/tag `5a5f1dab1f7ee3e1e5624c9d889148c39abf45f2`.
 [Its verification](../evidence/release-034.md) binds the dependency-free registry
 archive, unchanged arithmetic, passing Linux/MSRV and downloaded Linux receipts,
 including the execution companion and real CLI/hook coverage. Both macOS jobs
-remain queued; #42/#43/#44 retain their native acceptance criteria.
+remain queued; #44 retains its Make companion/failure-boundary acceptance criteria.
 
 The release adopts Shared 0.2.7 and fixes unsafe Make execution, inherited smoke
 roots and newline-root formatting qualification. Its
@@ -55,17 +94,17 @@ Rust 1.88 compilation. No arithmetic or consumer contract changes.
 
 The earlier 0.3.0 five-tool hard cut now has complete native/MSRV and downloaded
 macOS receipt acceptance in [its supplemental record](../evidence/release-030.md#native-acceptance-complete),
-closing #41. The later #42/#43/#44 batches retain their own native criteria.
+closing #41. #42/#43 are completed by the later 0.3.3 acceptance above; #44 remains open.
 
 ## Released 0.3.3 tooling maintenance
 
 Published 0.3.3 matches source/tag `b3ddfdf0406b54ef9a98ce48cbf5a9afe5fe406b`.
 [Its verification](../evidence/release-033.md) binds the registry archive,
 unchanged arithmetic, passing Linux/MSRV and downloaded Linux receipts, including
-both shared Make includes, real formatting hooks and actual CLI coverage. Intel
-macOS now passes with independently verified source-bound receipts in the
-[supplement](../evidence/release-033.md#subsequent-intel-macos-acceptance); Apple
-Silicon remains queued. The preparation evidence below retains its original scope.
+both shared Make includes, real formatting hooks and actual CLI coverage. All
+three native hosts now pass with independently verified source-bound receipts in
+[the completion record](../evidence/release-033.md#complete-native-acceptance).
+The preparation evidence below retains its original scope.
 
 The 0.3.3 batch adopted Shared Tooling 0.2.6
 `ce13a5314916891fd239d9b199b4a91b04775054` with 91 selected files. Standard
@@ -77,9 +116,9 @@ That helper limitation is corrected in released 0.3.4 above.
 The released private graph selects Host 0.9.4. Its
 [separate review](../evidence/host-dependencies-094.md) binds unchanged upstream
 library source, package hashes, inspector Clippy, named/CLI tests and Rust 1.88.
-No arithmetic API, attribution or endpoint contract changes. Delivered-source
-native acceptance remains in [#44](https://github.com/dragginzgame/ic-metrics/issues/44)
-and [#43](https://github.com/dragginzgame/ic-metrics/issues/43).
+No arithmetic API, attribution or endpoint contract changes. The original
+installer/hook acceptance is complete above; later Make companion and failure
+boundaries remain in [#44](https://github.com/dragginzgame/ic-metrics/issues/44).
 
 ## Released 0.3.2 maintenance
 
