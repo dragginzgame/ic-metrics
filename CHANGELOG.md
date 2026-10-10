@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.0]
+
+### Breaking
+
+- Standardize tool setup/checks on all 12 common executables, running host,
+  IC and Rust sets in order even under parallel Make. The host installer no
+  longer accepts `--with-ripgrep` or `--with-cloc`; remove those flags and run
+  `make install-tools`, then `make tools-check`. Matching complete bundles are
+  reused and earlier evidence is retained. Arithmetic APIs and consumer data
+  are unchanged ([Shared #98](https://github.com/dragginzgame/shared-tooling/issues/98),
+  [#47](https://github.com/dragginzgame/ic-metrics/issues/47)).
+
+### Changed
+
+- Use the same ordered common toolset in native CI, retaining setup/check logs,
+  failed candidates and source-bound outcomes.
+- Use IC Host 0.12.0 for the private Wasm inspector; consumed inspection/read
+  APIs, report output and the arithmetic dependency graph are unchanged.
+
 ## [0.4.0] - 2026-10-10
 
 ### Breaking

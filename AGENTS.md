@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`5864f468d39f8f9d1bd26fca1afe0e20f25f1b5e` and file digests are recorded in
+`88a73139a0f083344c41a6f6f4b5c3a8aca7dc1d` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -74,7 +74,9 @@ and [the extraction contract](docs/extraction.md) before implementation.
   `.tools/host/bin`; `make host-tools-check` verifies the complete set offline.
   Explicit `make install-rust-tools` prepares the pinned Cargo tools under
   `.tools/rust/bin`; `make rust-tools-check` verifies their reported versions
-  offline. Rust setup is attached to `install-tools` and `tools-check`.
+  offline. `install-tools` and `tools-check` run the complete common host, IC and
+  Rust sets in order, including under parallel Make; product extensions use the
+  shared ordered target lists rather than aggregate prerequisites.
   Shared `make/tools.mk` owns setup/check and LOC commands. IC executable pins live only in
   `ci/ic-tools.tsv`. The checker and release gates never install tools or unlock graphs.
 - Shared structural reviews use [the common methods](audits/README.md), with

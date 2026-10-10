@@ -97,12 +97,6 @@ jobs:
           toolchain: 1.99.0
           components: rustfmt, clippy
           targets: wasm32-unknown-unknown
-      - name: Install and verify the pinned local Rust tool set
-        id: rust_tools
-        run: |
-          make install-rust-tools 2>&1 | tee target/evidence/native-ci/rust-tools.log
-          make rust-tools-check 2>&1 | tee -a target/evidence/native-ci/rust-tools.log
-          echo "$GITHUB_WORKSPACE/.tools/rust/bin" >> "$GITHUB_PATH"
       - name: Install native tooling prerequisites
         id: prerequisites
         run: |
@@ -113,12 +107,14 @@ jobs:
             Darwin) brew install xz ;;
             *) echo 'unsupported native host' >&2; exit 1 ;;
           esac 2>&1 | tee target/evidence/native-ci/prerequisites.log
-      - name: Install and verify the pinned local host tool set
-        id: host_tools
+      - name: Install and verify the complete common toolset
+        id: tools
         run: |
-          make install-host-tools 2>&1 | tee target/evidence/native-ci/host-tools.log
-          make host-tools-check 2>&1 | tee -a target/evidence/native-ci/host-tools.log
+          make install-tools 2>&1 | tee target/evidence/native-ci/tools-setup.log
+          make tools-check 2>&1 | tee target/evidence/native-ci/tools-check.log
           echo "$GITHUB_WORKSPACE/.tools/host/bin" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/.tools/ic/bin" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/.tools/rust/bin" >> "$GITHUB_PATH"
       - name: Record installed tool versions
         id: tool_inputs
         run: |
@@ -131,12 +127,6 @@ jobs:
             rg --version
             cloc --version
           } > target/evidence/native-ci/tool-versions.txt
-      - name: Provision and verify the pinned local IC tool set
-        id: ic_tools
-        run: |
-          make install-ic-tools 2>&1 | tee target/evidence/native-ci/provision.log
-          make ic-tools-check 2>&1 | tee -a target/evidence/native-ci/provision.log
-          echo "$GITHUB_WORKSPACE/.tools/ic/bin" >> "$GITHUB_PATH"
       - name: Run native CI
         id: native_ci
         env:
@@ -150,27 +140,25 @@ jobs:
         env:
           NATIVE_OUTCOME: ${{ steps.native_ci.outcome }}
           INPUT_OUTCOME: ${{ steps.native_inputs.outcome }}
-          PROVISION_OUTCOME: ${{ steps.ic_tools.outcome }}
+          TOOLS_OUTCOME: ${{ steps.tools.outcome }}
           HOST_OUTCOME: ${{ steps.native_host.outcome }}
           TOOLCHAIN_OUTCOME: ${{ steps.toolchain.outcome }}
-          RUST_OUTCOME: ${{ steps.rust_tools.outcome }}
           PREREQUISITES_OUTCOME: ${{ steps.prerequisites.outcome }}
-          HOST_TOOLS_OUTCOME: ${{ steps.host_tools.outcome }}
           TOOL_INPUT_OUTCOME: ${{ steps.tool_inputs.outcome }}
         run: |
           mkdir -p target/evidence/native-ci
           git rev-parse HEAD > target/evidence/native-ci/source-commit.txt
-          printf 'native=%s\ninputs=%s\nprovision=%s\nhost=%s\ntoolchain=%s\nrust=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s\n' \
-            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" \
-            "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" "$RUST_OUTCOME" \
-            "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME" \
+          printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\ntool_inputs=%s\n' \
+            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$TOOLS_OUTCOME" \
+            "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
+            "$PREREQUISITES_OUTCOME" "$TOOL_INPUT_OUTCOME" \
             > target/evidence/native-ci/outcome.txt
           if [[ -f .tools/ic/files.sha256 ]]; then
             cp .tools/ic/files.sha256 target/evidence/native-ci/ic-tool-files.sha256
             cp .tools/ic/pins.tsv target/evidence/native-ci/ic-tool-pins.tsv
             cp .tools/ic/host target/evidence/native-ci/ic-tool-host.txt
           fi
-          if [[ "$RUST_OUTCOME" == failure || "$HOST_TOOLS_OUTCOME" == failure || "$PROVISION_OUTCOME" == failure ]]; then
+          if [[ "$TOOLS_OUTCOME" == failure ]]; then
             candidates=()
             for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust; do
               if [[ -d "$candidate" ]]; then candidates+=("$PWD" "$candidate"); fi

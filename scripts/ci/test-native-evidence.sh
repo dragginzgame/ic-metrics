@@ -23,15 +23,17 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(.id) | index("checkout")) < (map(.id) | index("native_inputs")) and
     (map(.id) | index("native_inputs")) < (map(.id) | index("native_host")) and
     (map(.id) | index("native_inputs")) < (map(.id) | index("toolchain")) and
-    (map(.id) | index("native_inputs")) < (map(.id) | index("rust_tools")) and
-    (map(.id) | index("rust_tools")) < (map(.id) | index("host_tools")) and
+    (map(.id) | index("toolchain")) < (map(.id) | index("tools")) and
+    (map(.id) | index("prerequisites")) < (map(.id) | index("tools")) and
+    (map(.id) | index("tools")) < (map(.id) | index("tool_inputs")) and
+    (map(.id) | index("tool_inputs")) < (map(.id) | index("native_ci")) and
     (map(.id) | index("native_inputs")) < (map(.id) | index("prerequisites")) and
     (map(select(.id == "native_artifacts"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''") and
     (map(select(.uses != null and .with.name == "native-${{ matrix.runner }}-${{ github.run_attempt }}"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
-for step in native_inputs rust_tools host_tools tool_inputs ic_tools native_ci native_artifacts; do
+for step in native_inputs tools tool_inputs native_ci native_artifacts; do
     # shellcheck disable=SC2016 # $step is bound by jq's --arg.
     "$jq" -er --arg step "$step" '.[] | select(.id == $step) | .run' "$fixture/steps.json" > "$fixture/commands/$step.sh"
 done
@@ -47,9 +49,15 @@ done < "$fixture/source-files"
 cat > "$fixture/bin/make" <<'MAKE'
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ "${1:-}" == --no-print-directory ]]; then shift; fi
 printf '%s\n' "$*" >> "$FIXTURE_COMMANDS"
 printf 'make stdout: %s\n' "$*"
 printf 'make stderr: %s\n' "$*" >&2
+# Run the actual consumer aggregate, substituting only its recursive leaf effects.
+if [[ "$*" == install-tools || "$*" == tools-check ]]; then
+    exec "$FIXTURE_REAL_MAKE" --no-print-directory -j2 "$@" \
+        MAKE="$0" MAKE_COMMAND="$FIXTURE_REAL_MAKE"
+fi
 if [[ "${FIXTURE_FORMATTING:-no}" == yes && "$*" == ci ]]; then
     bash scripts/ci/run-formatting.sh --check bash -c \
         'echo formatter-stdout; echo formatter-stderr >&2; exit 43'
@@ -77,6 +85,8 @@ fi
 MAKE
 chmod +x "$fixture/bin/make"
 real_bash="$(command -v bash)"
+FIXTURE_REAL_MAKE="$(command -v make)"
+export FIXTURE_REAL_MAKE
 for scenario in success rust-install rust-check rust-admission host-install host-check ic-install ic-check native formatting rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
@@ -86,12 +96,12 @@ for scenario in success rust-install rust-check rust-admission host-install host
     export GITHUB_WORKSPACE="$worktree" GITHUB_RUN_ID=123 GITHUB_RUN_ATTEMPT=2 GITHUB_EVENT_NAME=fixture
     export GITHUB_PATH="$worktree/github-path" TMPDIR="$worktree/scratch"
     export RUNNER_TEMP="$worktree/runner temp"
-    mkdir -p "$RUNNER_TEMP"
+    mkdir -p "$RUNNER_TEMP" "$TMPDIR"
     export FIXTURE_COMMANDS="$worktree/commands.log" FIXTURE_FAILURE="" FIXTURE_ADMISSION=no
     export FIXTURE_FORMATTING=no
     export PATH="$fixture/bin:$root/.tools/rust/bin:$root/.tools/host/bin:$PATH"
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
-    export RUST_OUTCOME=skipped HOST_TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped PROVISION_OUTCOME=skipped NATIVE_OUTCOME=skipped
+    export TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped NATIVE_OUTCOME=skipped
     case "$scenario" in
         rust-install|rust-admission|rust-archive-write|rust-archive-conflict) FIXTURE_FAILURE=install-rust-tools ;;
         rust-check) FIXTURE_FAILURE=rust-tools-check ;;
@@ -106,22 +116,33 @@ for scenario in success rust-install rust-check rust-admission host-install host
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
     status=0
-    for step in rust_tools host_tools tool_inputs ic_tools native_ci; do
+    for step in tools tool_inputs native_ci; do
         step_status=0
         "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/$step.sh" > "$step.log" 2>&1 || step_status=$?
         outcome=success
         if [[ "$step_status" != 0 ]]; then outcome=failure; status="$step_status"; fi
         case "$step" in
-            rust_tools) RUST_OUTCOME="$outcome" ;;
-            host_tools) HOST_TOOLS_OUTCOME="$outcome" ;;
+            tools) TOOLS_OUTCOME="$outcome" ;;
             tool_inputs) TOOL_INPUT_OUTCOME="$outcome" ;;
-            ic_tools) PROVISION_OUTCOME="$outcome" ;;
             native_ci) NATIVE_OUTCOME="$outcome" ;;
         esac
         if [[ "$step_status" != 0 ]]; then break; fi
     done
     printf '%s\n' "$status" > status.txt
-    if [[ "$scenario" == success ]]; then [[ "$status" == 0 ]]; else [[ "$status" == 43 ]]; fi
+    case "$scenario" in
+        success) [[ "$status" == 0 ]] ;;
+        native|formatting) [[ "$status" == 43 ]] ;;
+        *) [[ "$status" == 2 ]] ;; # GNU Make preserves its failing aggregate status.
+    esac
+    # No later set/check/native effect can follow the first refused leaf.
+    phases=(install-tools install-host-tools install-ic-tools install-rust-tools
+            tools-check host-tools-check ic-tools-check rust-tools-check ci)
+    : > expected-commands
+    for phase in "${phases[@]}"; do
+        printf '%s\n' "$phase" >> expected-commands
+        if [[ "$phase" == "$FIXTURE_FAILURE" ]]; then break; fi
+    done
+    cmp expected-commands commands.log
     # The outer archive owns full failed-release evidence, including Git state.
     mkdir -p target/evidence/native-ci/scratch/release/.git/release-state
     printf 'retained index\n' > target/evidence/native-ci/scratch/release/.git/index
@@ -142,10 +163,10 @@ for scenario in success rust-install rust-check rust-admission host-install host
             exit 1
         fi
         [[ "$(cat target/evidence/native-ci/tool-candidates.tar.gz)" == "$expected_archive" ]]
-        [[ ! -e target/evidence/native-ci.tar.gz && "$(cat status.txt)" == 43 ]]
+        [[ ! -e target/evidence/native-ci.tar.gz && "$(cat status.txt)" == 2 ]]
         [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]]
         [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]]
-        grep -Fx 'rust=failure' target/evidence/native-ci/outcome.txt > /dev/null
+        grep -Fx 'tools=failure' target/evidence/native-ci/outcome.txt > /dev/null
         grep -Fx 'native=skipped' target/evidence/native-ci/outcome.txt > /dev/null
         exit 0
     fi
@@ -173,18 +194,17 @@ for scenario in success rust-install rust-check rust-admission host-install host
     else
         [[ ! -f unpacked/target/evidence/native-ci/formatting-logs.tar.gz ]]
     fi
-    expected="$(printf 'native=%s\ninputs=%s\nprovision=%s\nhost=%s\ntoolchain=%s\nrust=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s' \
-        "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
-        "$RUST_OUTCOME" "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME")"
+    expected="$(printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\ntool_inputs=%s' \
+        "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$TOOLS_OUTCOME" "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
+        "$PREREQUISITES_OUTCOME" "$TOOL_INPUT_OUTCOME")"
     [[ "$(cat unpacked/target/evidence/native-ci/outcome.txt)" == "$expected" ]]
     if [[ "$scenario" == success ]]; then
         [[ -s unpacked/target/evidence/native-ci/tool-versions.txt ]]
         [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]]
     else
         case "$scenario" in
-            rust-*) failed_log=rust-tools.log ;;
-            host-*) failed_log=host-tools.log ;;
-            ic-*) failed_log=provision.log ;;
+            *-check) failed_log=tools-check.log ;;
+            rust-*|host-*|ic-*) failed_log=tools-setup.log ;;
             native|formatting) failed_log=native-ci.log ;;
         esac
         grep -Fx "make stdout: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null

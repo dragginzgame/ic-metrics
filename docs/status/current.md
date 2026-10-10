@@ -4,9 +4,53 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.4.0 tooling cut
+## Pending 0.5.0 common toolset
 
-The complete draft is now 0.4.0: adopting Shared Tooling 0.2.13
+The user authorized the complete Shared Tooling 0.3.0 adoption from committed
+`88a73139a0f083344c41a6f6f4b5c3a8aca7dc1d`, matching public main at inspection.
+The clean canonical exporter refreshes the existing 93-file selection; dirty
+sibling fleet-dashboard work is excluded. The retired host flags and changed
+aggregate execution contract require the next minor, so the sole pending
+changelog is 0.5.0. Package/workspace versions stay 0.4.0.
+
+The host installer always authenticates jq, yq, ripgrep with PCRE2 and cloc.
+Setup/checks run host, five IC tools and three Cargo tools in order, including
+under parallel Make. Duplicate Rust aggregate prerequisites are removed; product
+extensions use the canonical ordered lists. Metrics has no additional product
+tool target. Native CI uses the same actual aggregate, with separate setup/check
+logs and a common tool outcome; full CI admits the complete set offline before
+dependent checks. Existing admitted Rust-only release preparation stays intact.
+No arithmetic, report, reader, consumer data or executable-pin changes.
+After the initial full gate, an incoming manifest/lock edit selects private Host
+0.12.0. It is preserved and separately [reviewed](../evidence/host-dependencies-0120.md);
+artifact/fs source is unchanged from 0.11, and the original gate keeps its old
+graph identity. Complete updated-graph validation passes, with its own frozen
+88-file delivery-input record.
+
+Local qualification is complete. Actual complete setup and a separate offline
+check reuse the prepared 12-tool set. Full Linux validation passes on the current
+Host 0.12 graph: `ci` (169 seconds), arithmetic Rust 1.85 host/Wasm and inspector
+Rust 1.88 all-target checks. The earlier 176-second gate remains bound to Host
+0.11. Selected ShellCheck, workflow lint, pins, links and preservation pass.
+Focused checks also pass on genuine GNU Make 3.81/Bash 3.2; the actual consumer
+collector and release-admission checks pass again with the current graph.
+The actual native collector fixture passes
+ordered setup/check and first-failure routing through parallel Make, preserving
+candidate/formatting diagnostics and failed Git intent/index bytes. Delivery
+and exact-source Linux/Intel/Apple Silicon acceptance remain with
+[#47](https://github.com/dragginzgame/ic-metrics/issues/47), separately from
+[Shared #98](https://github.com/dragginzgame/shared-tooling/issues/98).
+Records: [adoption evidence](../evidence/adoption-050.md) and
+`target/evidence/adoption-050/` and `target/evidence/host-0120/`.
+No sibling edit, package-version change,
+commit, push, release or publication is performed.
+
+## Released 0.4.0 tooling cut
+
+Published 0.4.0 is `97ec991776bb16efbab59faeb43bc72ce9ebcefa`, matching public
+main, annotated tag and the official non-yanked dependency-free registry archive.
+[Publication verification](../evidence/release-040.md) binds these identities and
+unchanged arithmetic. Adopting Shared Tooling 0.2.13
 `5864f468d39f8f9d1bd26fca1afe0e20f25f1b5e` removes previously supported
 newline-containing operational checkout paths. The maintainer selected this
 minor adoption; the provisional compatible 0.3.8 Host entry moves into this same
@@ -23,8 +67,15 @@ documentation checks and separate release authority. Qualification is recorded i
 [the adoption evidence](../evidence/adoption-040.md).
 The complete Linux suite passes (`ci`, arithmetic MSRV and inspector MSRV), as
 do both local Make/Bash profiles, snapshot-path checks and preservation. Source-
-bound consumer native acceptance remains in #45/#46 after delivery; upstream
-0.2.13 passes its own full native matrix. No commit, push or release was performed.
+bound consumer native acceptance remains in
+[#45](https://github.com/dragginzgame/ic-metrics/issues/45) and
+[#46](https://github.com/dragginzgame/ic-metrics/issues/46):
+[exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38042698441)
+passes Linux and both package-floor checks; Intel remains queued and Apple
+Silicon is running at final inspection. The independently downloaded Linux receipt verifies ZIP/
+inner/payload/source/catalog, run/host/pins and actual fixture execution in
+[the release record](../evidence/release-040.md). Upstream 0.2.13 passes its own full native matrix.
+This review dispatches no workflow or release.
 
 The batch also preserves the incoming private inspector Host 0.11.0 selection.
 [Its review](../evidence/host-dependencies-0110.md) binds non-yanked official index
@@ -33,16 +84,35 @@ argument/report/actual CLI tests and Rust 1.88 compilation. Consumed artifact/re
 source is unchanged; the Host process hard cut has no caller here. No arithmetic
 API, report or consumer contract changes, reset or reinstall are required by
 that private dependency update.
-Package/workspace versions remain 0.3.7. Incoming Cargo changes are preserved.
+Package/workspace versions are now 0.4.0; preparation preserved the incoming
+Cargo selection before the maintainer's release.
+
+## Upstream review
+
+Public Shared Tooling main is now committed 0.3.0 `88a7313`; its
+[exact-source CI](https://github.com/dragginzgame/shared-tooling/actions/runs/38044218125)
+passes Linux and lint/security; both macOS jobs are queued at final inspection.
+The pending adoption above replaces the earlier
+documentation-only 0.2.14 refresh; that source-bound review remains under
+`target/evidence/shared-0214/`. The fleet CI inspector/dashboard implementation
+stays upstream. Host source advances to released 0.12.0
+`1ba4591868a83b367d56bae9e3c213418c66a192`, with the incoming private selection
+reviewed separately above. Canic public main remains
+`c4c046f947b2b28f4342cbf6efe9221ba1ed5f70`, with
+[#447](https://github.com/dragginzgame/canic/issues/447) and
+[#99](https://github.com/dragginzgame/canic/issues/99) open. Root
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10) retains that consumer
+qualification. No sibling edit, setup or test is run.
 
 ## Released 0.3.7
 
 Release source is `7c9402eb8e0bc38fffa0db62be77ab314a88a0e2`; publication is
 maintainer-reported. [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38037875150)
-passes Linux, Apple Silicon and both package floors; Intel remains running at
-the final inspection.
-[#44](https://github.com/dragginzgame/ic-metrics/issues/44) retains changed-source
-native receipt acceptance. No workflow rerun was dispatched.
+now passes Linux, Intel macOS, Apple Silicon macOS and both package floors.
+[All three downloaded receipts](../evidence/release-037.md) verify ZIP, inner,
+payload/source/catalog, run/host/pin identities and actual fixture execution,
+completing [#44](https://github.com/dragginzgame/ic-metrics/issues/44).
+No workflow rerun was dispatched. This acceptance does not qualify 0.4.0.
 
 ### Preparation evidence
 
@@ -64,7 +134,7 @@ unsafe modes even when `MAKEFLAGS` hides them; Make must generate `MFLAGS`.
 [Supplemental qualification](../evidence/adoption-037-make.md) covers the actual
 consumer's release, formatting and publication routes on GNU Make 4.3/Bash 5 and
 GNU Make 3.81/Bash 3.2, preserving safe replacement flags and parallel dispatch.
-Delivery is now complete; #44 retains changed-source native acceptance.
+Delivery and changed-source native acceptance are now complete in #44.
 No full local CI, resolver, commit or release ran during that preparation.
 
 [The scoped downstream closeout](../evidence/consumer-closeout-037.md) binds

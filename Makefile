@@ -12,10 +12,6 @@ include make/tools.mk
 include make/release.mk
 include make/rust-format.mk
 
-# Rust setup stays explicit; checks only inspect the prepared local set.
-install-tools: install-rust-tools
-tools-check: rust-tools-check
-
 # PR delivery requires merged-checkout adapters and qualification we do not own.
 # Refuse it before dispatching any release runner or metadata operation.
 _release_targets := release-patch release-minor release-major release-resume release-version release-preflight release-verify release-prepare-version release-prepared-check release-files release-commit-check release-committed-check release-tagged-check release-push-check
@@ -160,8 +156,7 @@ release-tools-check:
 ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
 	+$(MAKE) --no-print-directory check-doc-links
-	+$(MAKE) --no-print-directory host-tools-check
-	+$(MAKE) --no-print-directory rust-tools-check
+	+$(MAKE) --no-print-directory tools-check
 	+$(MAKE) --no-print-directory check-pins
 	+$(MAKE) --no-print-directory pin-tools-check
 	+$(MAKE) --no-print-directory local-tools-test

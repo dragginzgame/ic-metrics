@@ -44,6 +44,15 @@ consumer-owned named aggregates and their admission/reporting obligations.
 
 ## Canonical ownership
 
+Pending 0.5.0 adopts Shared Tooling's complete 12-executable setup/check contract
+and retires the optional host installer flags. This changes developer commands,
+not arithmetic, attribution, counter identity, persistence or consumer endpoints.
+Each consumer owns its tooling adoption/native qualification under
+[Shared #98](https://github.com/dragginzgame/shared-tooling/issues/98); Metrics'
+coherent adoption is in [#47](https://github.com/dragginzgame/ic-metrics/issues/47)
+and [its evidence](evidence/adoption-050.md). No consumer data reset or new IC
+reader is required.
+
 Zero is a valid sample; empty has no latest or maximum. Count and total saturate
 independently; saturated totals cannot support exact interval arithmetic. Units,
 counter identity, sample admission, replication, reset/restart identity, registries,
@@ -88,14 +97,14 @@ graph. Shared #30's Make-mode gap remains separate; no arithmetic, attribution
 or consumer endpoint contract changes.
 
 Released 0.3.7 adopts the canonical hidden-Make-mode repair, with
-[focused local qualification](evidence/adoption-037-make.md) and separate delivery/
-native acceptance. [IcyDB's scoped closeout](evidence/consumer-closeout-037.md)
+[focused local qualification](evidence/adoption-037-make.md) and
+[complete native acceptance](evidence/release-037.md). [IcyDB's scoped closeout](evidence/consumer-closeout-037.md)
 now binds registry adoption, measurement-state tests and helper/native checks to
 0.269.1; Canic's held-HTTP/native obligation remains in
 [#10](https://github.com/dragginzgame/ic-metrics/issues/10). Neither tooling
 qualification nor native substitutes establish IC measurement costs.
 
-Pending 0.4.0 adopts the Shared Tooling directory-path restriction and selected
+Published 0.4.0 adopts the Shared Tooling directory-path restriction and selected
 executable preparation contract. This is a developer-tooling cut, with no change
 to sample arithmetic, consumer attribution/identity, endpoints, persisted state
 or report output. Operational LF/CR directories must be explicitly renamed;
@@ -103,6 +112,9 @@ retained measurement evidence is not renamed or deleted. The private inspector's
 Host 0.11 selection retains unchanged consumed read/inspection APIs. See the
 [adoption record](evidence/adoption-040.md) and
 [separate Host qualification](evidence/host-dependencies-0110.md).
+[Publication verification](evidence/release-040.md) binds the source, tag and
+dependency-free archive; exact-source Linux and package-floor checks pass while
+Intel remains queued and Apple Silicon is running at final inspection.
 
 Earlier release 0.3.5 is available in the registry; its
 [verification](evidence/release-035.md) binds unchanged arithmetic, the published

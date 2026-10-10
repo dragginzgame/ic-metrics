@@ -116,7 +116,7 @@ implementation. Before delivering completed code, run `make ci`, `make msrv`
 and `make wasm-inspect-msrv`. Inspection alone does not authorize the full suite;
 documentation-only changes use link, consistency and diff checks.
 
-The pending 0.4.0 tooling cut forbids LF/CR characters in repository, tooling and
+The released 0.4.0 tooling cut forbids LF/CR characters in repository, tooling and
 operational directory names, including ancestors and resolved symlink destinations.
 Snapshot refresh/verification refuse these paths before selecting a neighbor.
 Rename affected operational directories explicitly; retained evidence is preserved.
@@ -179,11 +179,19 @@ The setup installs jq, Mike Farah yq, ripgrep with PCRE2 and cloc plus
 Quill, ICP CLI, didc, ic-wasm and Binaryen, plus
 cargo-sort, cargo-sort-derives and candid-extractor,
 under this checkout's `.tools/`. Rust tools use exact pins and locked Cargo
-installation; interrupted setup can leave earlier tools installed and retains
+installation. Setup/checks run host, IC and Rust sets in order, including under
+parallel Make. Interrupted setup can leave earlier tools installed and retains
 build output for inspection. Archive installers retain previous and failed
 candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
+
+The pending 0.5.0 toolset cut removes the host installer's `--with-ripgrep` and
+`--with-cloc` flags; all four host tools are always required. Remove those flags
+from direct callers. Existing complete matching bundles are reused, while older
+bundles and evidence are preserved. Product tool targets extend the shared
+`LOCAL_TOOL_INSTALL_TARGETS` / `LOCAL_TOOL_CHECK_TARGETS` lists; do not add
+aggregate prerequisites. Compiler/toolchain preparation stays explicit.
 
 Release 0.3.0 changes the setup contract to five IC tools. Replace an older
 six-tool selection explicitly with `make install-ic-tools`, then run
@@ -275,8 +283,8 @@ observations or conflicts stop without another push.
 The released Shared Tooling 0.1.25 snapshot also refreshes the matching local
 tracking ref from confirmed delivery, checking its type under Git's update lock.
 Unrelated, newer or symbolic refs are preserved; an optional refresh failure
-reports a fetch remedy without repeating delivery. Native qualification of this
-consumer batch remains pending in the release record.
+reports a fetch remedy without repeating delivery. Native qualification remains
+bound to each source in [the release records](docs/status/current.md).
 
 For a subsequent committed package release, the maintainer can run:
 
