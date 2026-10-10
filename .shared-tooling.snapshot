@@ -1,8 +1,8 @@
 # Shared Tooling snapshot v1
-# version	0.3.2
+# version	0.3.3
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	c16444bf006f17c5bb4dda5ad070a0f345da9623
+revision	d63f0cfaba8ab2961d6012064adbf051c1898bc1
 file	05838a36f21bb4299617ae8965687791062c94d768181f5f97676cc577382153	-	rules/contributions.md
 file	e5d128419ea122da0d5654fa4c9f7ba772b12a3e104ad9796c38da856b52df78	-	DRAGGINZGAME.md
 file	59f6cb0b47fcfa698396776bbb391737292ebf34457ad7c65803fe7b36961499	-	docs/principles/README.md
@@ -29,7 +29,7 @@ file	c8a327fff520f3bb0cdabf1a402b3bcb6de6831d7992f6685fe4dccf292f0d51	-	rules/ag
 file	de68acd7ba25355c73fa3e9a32cbde5525debf081862c1f1a52eccb4a66c48de	x	scripts/ci/check-dependency-pins.sh
 file	3d56ca1b0c5952b9534ece61b6754ca39e6ec1980d929f09de3dbd967a0c4977	-	scripts/ci/dependency-pins.jq
 file	6c89bfb827c331cad10e22b7579ec35890398d6dc26004d95875b5ebc8749d01	x	scripts/ci/install-yq.sh
-file	49ec78ab63a587a2f74f0f7da3e06d9f9942f831129b9201cba5bcd0698548fe	x	scripts/ci/run-validation-targets.sh
+file	8063c47b5249ec6d20680485026f6f77df7d48e2645343b8cbd5ef6d09a9c542	x	scripts/ci/run-validation-targets.sh
 file	36530d995c6ebad1f17b9718030ee168e14d2963dbfe725f9d2c1e9a4d960d5f	x	scripts/ci/test-dependency-pins.sh
 file	faa9a62257ecdfd6532ac2225b3fd053012dfe9c35b8bc2ddc95288d8626a518	-	audits/README.md
 file	518d890bf485bef06c316b4cf26ac6bf357ed52bcce995e8d9b1232a103d0ea3	-	audits/code-hygiene.md

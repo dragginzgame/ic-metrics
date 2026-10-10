@@ -572,5 +572,28 @@ make --no-print-directory -f "$root/Makefile" release-verify \
 cmp gate-events "$fixture/expected-gates"
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
 grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
+# Admission at the actual logger entrypoint must precede every consumer target.
+# Fixtures above own the release adapter; this isolated target proves inherited
+# nesting metadata cannot make the selected logger skip dispatch and return zero.
+depth_consumer="$fixture/depth-admission"
+mkdir -p "$depth_consumer"
+cat > "$depth_consumer/Makefile" <<'DEPTH'
+check:
+	@printf '%s\n' "$$VALIDATION_RUNNER_DEPTH" > dispatched
+DEPTH
+for depth in SHARED_DEPTH_UNDEFINED 00 08 -1 '1+1' 18446744073709551616; do
+    status=0
+    VALIDATION_REPOSITORY_ROOT="$depth_consumer" VALIDATION_RUNNER_DEPTH="$depth" \
+        VALIDATION_LOG_DIR="$depth_consumer/refused-logs" \
+        "$real_bash" "$root/scripts/ci/run-validation-targets.sh" check \
+        > "$depth_consumer/refused.log" 2>&1 || status=$?
+    [[ "$status" == 2 && ! -e "$depth_consumer/dispatched" && ! -e "$depth_consumer/refused-logs" ]]
+done
+for depth in '' 0 8 999999999999999999; do
+    VALIDATION_REPOSITORY_ROOT="$depth_consumer" VALIDATION_RUNNER_DEPTH="$depth" \
+        "$real_bash" "$root/scripts/ci/run-validation-targets.sh" check \
+        > "$depth_consumer/admitted.log" 2>&1
+    [[ "$(cat "$depth_consumer/dispatched")" == "$((${depth:-0} + 1))" ]]
+done
 echo 'release admission, cache preparation, selected-commit metadata and Make/logger retention passed (real Git/offline fetch; remaining Cargo effects and gates substituted)'
 fixture_complete=true

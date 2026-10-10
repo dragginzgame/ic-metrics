@@ -60,11 +60,13 @@ reader is required.
 
 Published 0.5.1 repairs Metrics-owned Cargo jobserver handoff without changing
 arithmetic; [its verification](evidence/release-051.md) binds the registry archive
-and passing Linux receipt, with macOS acceptance remaining separate. Pending
+and passing Linux receipt, with macOS acceptance remaining separate. Released
 compatible 0.5.2 adopts Shared 0.3.2 setup admission, authenticated diagnostics,
 common jobserver handling and completion-aware fixtures through
 [the canonical adoption](evidence/adoption-052.md). Existing 12-tool ordering,
 consumer policies and arithmetic dependencies remain unchanged.
+Pending compatible 0.5.3 [adopts completed validation dispatch](evidence/adoption-053.md)
+without changing these measurement contracts.
 
 Zero is a valid sample; empty has no latest or maximum. Count and total saturate
 independently; saturated totals cannot support exact interval arithmetic. Units,

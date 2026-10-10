@@ -4,7 +4,44 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.5.2 setup and fixture repairs
+## Pending 0.5.3 completed validation dispatch
+
+Adopted committed Shared Tooling 0.3.3
+`d63f0cfaba8ab2961d6012064adbf051c1898bc1` from a clean detached checkout,
+preserving the 94-file selection. The runner admits bounded canonical decimal
+nesting metadata before dispatch and requires completed wrapper/body execution
+before returning success. Incomplete exits preserve available evidence; normal
+failed targets retain their status and release ordering/authority remain intact.
+The old Bash 3.2 actual-entrypoint zero-exit defect is reproduced locally.
+
+The existing Metrics release-admission fixture now covers invalid/valid depth
+at the actual logger boundary. Its complete adapter checks and the canonical
+producer fixture pass on current Bash/Make and genuine Bash 3.2/Make 3.81.
+Selected ShellCheck, workflow lint and snapshot verification pass. Complete
+`ci` (212 seconds), `msrv` and `wasm-inspect-msrv` pass, preserving all 81 frozen
+code/graph/pin/workflow inputs. [The adoption record](../evidence/adoption-053.md)
+retains rejected provisional fixture selection and current source-bound evidence.
+Package/workspace versions remain 0.5.2; sole pending 0.5.3 is compatible.
+Arithmetic, reports, executable pins and the private graph remain unchanged.
+[#51](https://github.com/dragginzgame/ic-metrics/issues/51) owns delivery/native
+acceptance. No sibling edit, commit, push or release is performed.
+
+## Released 0.5.2 setup and fixture repairs
+
+Published 0.5.2 is `2400e918e5a1c89a769768621c0cfe1006067f35`, matching public
+main, the local release tag and official non-yanked dependency-free registry
+archive. [Publication verification](../evidence/release-052.md) binds packaged
+source, manifest, lock, README/license and embedded Git identity. Its exact-source
+CI passes Linux and both package floors. Its downloaded Linux receipt verifies
+source/payload/catalog/run/host/pins and successful outcomes; both macOS jobs
+remain queued. Native acceptance remains incomplete in
+[#49](https://github.com/dragginzgame/ic-metrics/issues/49) and
+[#50](https://github.com/dragginzgame/ic-metrics/issues/50). The preparation record
+below retains its original package versions and graph identity; published
+release metadata advances package versions to 0.5.2. Later local qualification
+does not replace this source's hosted native acceptance.
+
+## 0.5.2 preparation record
 
 The compatible batch adopts committed Shared Tooling 0.3.2
 `c16444bf006f17c5bb4dda5ad070a0f345da9623` through a clean canonical refresh.
@@ -90,7 +127,7 @@ and completed 0.4.0 acceptance. Records: `target/evidence/review-050/` and
 `target/evidence/issues-051/`.
 No sibling edit, setup, build, graph update, commit, push or release is performed
 in that publication review. Subsequent compatible work is collected under the
-pending 0.5.2 heading above; finalized 0.5.0 remains unchanged.
+pending 0.5.3 heading above; finalized 0.5.0 remains unchanged.
 
 ## Released 0.4.0 tooling cut
 

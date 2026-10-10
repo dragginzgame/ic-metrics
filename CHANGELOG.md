@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.3]
+
+### Fixed
+
+- Reject malformed validation nesting metadata before targets run and require
+  completed dispatch before reporting success. Incomplete exits retain evidence,
+  including Bash 3.2 unset-variable failures
+  ([#51](https://github.com/dragginzgame/ic-metrics/issues/51),
+  [Shared #104](https://github.com/dragginzgame/shared-tooling/issues/104)).
+
 ## [0.5.2] - 2026-10-10
 
 ### Fixed
