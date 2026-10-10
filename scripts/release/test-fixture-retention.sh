@@ -142,6 +142,27 @@ FAIL
         esac
     done
 done
+# Execute the actual admission fixture with parent-owned evidence destinations.
+# Its synthetic failures must use its own logs and leave the parent untouched.
+run="$evidence/admission-parent"
+mkdir -p "$run/logs" "$run/failures" "$run/tmp"
+printf 'parent-owned evidence\n' > "$run/expected"
+for destination in logs/sentinel failures/sentinel summary.md; do
+    cp "$run/expected" "$run/$destination"
+done
+VALIDATION_LOG_DIR="$run/logs" VALIDATION_FAILURE_LOG_DIR="$run/failures" \
+    GITHUB_STEP_SUMMARY="$run/summary.md" TMPDIR="$run/tmp" \
+    "$real_bash" "$root/scripts/release/test-release-admission.sh" \
+    > "$run/result.log" 2>&1
+for destination in logs/sentinel failures/sentinel summary.md; do
+    cmp "$run/expected" "$run/$destination"
+done
+for directory in logs failures; do
+    [[ "$(ls -A "$run/$directory")" == sentinel ]]
+done
+for remaining in "$run/tmp"/*; do [[ ! -e "$remaining" ]]; done
+echo 'Admission fixture preserves inherited parent logs and summary'
+
 # Execute the actual cleanup bodies independently of installer/compilation effects.
 # Bash 3.2's nounset trap status and an explicit early exit must never admit success.
 for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \

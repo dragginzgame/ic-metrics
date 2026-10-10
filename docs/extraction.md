@@ -55,7 +55,8 @@ and [its adoption evidence](evidence/adoption-050.md).
 dependency-free archive; Linux and package-floor checks pass, with both macOS
 jobs queued at that initial inspection. Subsequent
 [Apple Silicon acceptance](evidence/release-050.md#apple-silicon-acceptance)
-verifies that receipt; Intel remains queued. No consumer data reset or new IC
+verifies that receipt; Intel later exceeded the job budget, tracked in
+[#52](https://github.com/dragginzgame/ic-metrics/issues/52). No consumer data reset or new IC
 reader is required.
 
 Published 0.5.1 repairs Metrics-owned Cargo jobserver handoff without changing
@@ -65,7 +66,7 @@ compatible 0.5.2 adopts Shared 0.3.2 setup admission, authenticated diagnostics,
 common jobserver handling and completion-aware fixtures through
 [the canonical adoption](evidence/adoption-052.md). Existing 12-tool ordering,
 consumer policies and arithmetic dependencies remain unchanged.
-Pending compatible 0.5.3 [adopts completed validation dispatch](evidence/adoption-053.md)
+Released compatible 0.5.3 [adopts completed validation dispatch](evidence/adoption-053.md)
 without changing these measurement contracts.
 
 Zero is a valid sample; empty has no latest or maximum. Count and total saturate

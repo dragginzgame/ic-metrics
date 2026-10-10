@@ -4,7 +4,52 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.5.3 completed validation dispatch
+## Pending 0.5.4 validation tooling
+
+Native CI now allows 60 minutes for cold tool setup, the complete suite and
+evidence collection. GitHub explicitly reports that 0.5.0's Intel job exceeded
+the previous 30-minute limit; its retained log reaches the fixture-retention
+script after release admission completes. The compatible fix changes only the
+native job budget; every lane, command, source receipt and failure collector is
+preserved. Package/workspace versions remain 0.5.3. Hosted qualification stays
+with [#52](https://github.com/dragginzgame/ic-metrics/issues/52).
+
+The admission fixture also clears inherited validation log/failure destinations
+and GitHub summaries. Its actual pre-fix execution fails and expands a seeded
+parent summary from one line to 61 lines; after correction it passes without
+changing any parent evidence. The existing retention regression exercises this
+boundary on current Bash/Make and genuine Bash 3.2/Make 3.81, retaining its own
+inputs and results. [#53](https://github.com/dragginzgame/ic-metrics/issues/53)
+owns delivery/native acceptance; arithmetic and production logger behavior are
+unchanged. The incoming private Host 0.12.4 selection is
+[verified separately](../evidence/host-dependencies-0124.md).
+
+The expanded batch passes complete `ci` (182 seconds), `msrv` and
+`wasm-inspect-msrv`, preserving all 79 frozen code/graph/pin/workflow inputs.
+Selected ShellCheck, workflow lint and final documentation/diff checks pass.
+Reproduction, parent-isolation and genuine Bash 3.2/Make 3.81 regression logs,
+Host archive/source verification and current gates are retained under
+`target/evidence/review-054-more/`. Shared 0.3.5's producer-only fixture correction
+is reviewed; this local correction needs no snapshot or optimizer-pin change.
+The preceding budget-only qualification remains separate below.
+
+Workflow lint and structural comparison pass: only the native timeout changes.
+Complete `ci` (184 seconds), `msrv` and `wasm-inspect-msrv` pass with all 79 frozen
+code/graph/pin/workflow inputs unchanged. The first passing suite encountered an
+incoming Host 0.12.4 lock update; that separate change is preserved and the repeat
+qualifies the current inputs. Logs and both preservation checks are retained in
+`target/evidence/native-budget-054/`. No commit, release or workflow dispatch is
+performed; hosted qualification remains outstanding.
+
+## Released 0.5.3 completed validation dispatch
+
+Published 0.5.3 is `8cb8f9f59db58e6a1cdcb94be0135ef736b29ae4`, matching public
+main, the release tag and official non-yanked dependency-free registry archive.
+Publication and Linux receipt verification are recorded in
+[#51](https://github.com/dragginzgame/ic-metrics/issues/51); its remaining native
+acceptance stays separate from the pending budget repair.
+
+## 0.5.3 preparation record
 
 Adopted committed Shared Tooling 0.3.3
 `d63f0cfaba8ab2961d6012064adbf051c1898bc1` from a clean detached checkout,
@@ -120,7 +165,9 @@ passes Linux and both package floors. The downloaded Linux receipt verifies
 ZIP/inner/payload/source/catalog, run/host/pins and seven successful outcomes,
 including actual aggregate/collector/release/admission/CLI execution. A later
 [Apple Silicon receipt review](../evidence/release-050.md#apple-silicon-acceptance)
-verifies that passing host too; Intel remains queued. Delivery is complete;
+verifies that passing host too; Intel later exceeds the 30-minute budget.
+[#52](https://github.com/dragginzgame/ic-metrics/issues/52) owns the budget repair.
+Delivery is complete;
 [#47](https://github.com/dragginzgame/ic-metrics/issues/47) retains only this
 source's Intel acceptance, separate from [Shared #98](https://github.com/dragginzgame/shared-tooling/issues/98)
 and completed 0.4.0 acceptance. Records: `target/evidence/review-050/` and

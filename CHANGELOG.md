@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.4]
+
+### Fixed
+
+- Allow native CI up to 60 minutes for cold tool setup and the complete checks,
+  avoiding Intel macOS cancellation at the previous 30-minute limit
+  ([#52](https://github.com/dragginzgame/ic-metrics/issues/52)).
+- Isolate release-admission test logs and summaries from parent validation runs,
+  preventing false failures and synthetic results in parent evidence
+  ([#53](https://github.com/dragginzgame/ic-metrics/issues/53)).
+
+### Changed
+
+- Use IC Host 0.12.4 for the private Wasm inspector; consumed APIs, reports and
+  the arithmetic dependency graph are unchanged.
+
 ## [0.5.3] - 2026-10-10
 
 ### Fixed

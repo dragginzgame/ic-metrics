@@ -318,7 +318,10 @@ fixtures. Failed inputs, outputs and reported scratch paths remain under
 Native CI also puts ordinary fixture TMPDIR scratch under
 `target/evidence/native-ci/scratch/` and includes hidden files so failed Git
 index and configuration evidence survive the job. Success cleanup stays
-invocation-owned. Bash 3.2 execution on Linux is shell-portability evidence;
+invocation-owned. The admission fixture clears inherited validation log/failure
+destinations and GitHub summaries; the retention regression seeds parent evidence
+and verifies it is untouched ([#53](https://github.com/dragginzgame/ic-metrics/issues/53)).
+Bash 3.2 execution on Linux is shell-portability evidence;
 supported native macOS qualification still requires the owning CI jobs.
 `make ci-evidence-check` runs the shared evidence-archive fixture and the consumer
 workflow's actual shell bodies using
@@ -380,6 +383,12 @@ running a reader canister, retaining source hashes, outcomes and logs for 30 day
 The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate
 Linux PocketIC execution and durable inputs. It is not a CI gate, product reader
 or native macOS measurement claim; ordinary library qualification stays separate.
+
+Native jobs have a bounded 60-minute budget for cold tool setup, the complete
+suite and evidence collection. The earlier 30-minute budget expired on Intel
+at released 0.5.0; [#52](https://github.com/dragginzgame/ic-metrics/issues/52)
+owns correction and hosted qualification. The budget does not remove checks or
+change the acceptance of cancelled outcomes.
 
 The configured CI runs `make ci` natively on every declared host and
 `make msrv` on Linux. Completed code delivery requires `make ci`, `make msrv`

@@ -20,7 +20,8 @@ defaults:
 
 jobs:
   native:
-    timeout-minutes: 30
+    # Cold tool setup and the complete fixture suite share this job budget.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
