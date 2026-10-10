@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.1]
+
+### Fixed
+
+- Preserve Cargo's shared job budget in parallel build, test, publication and
+  release-metadata commands without weakening unsafe Make-mode refusal
+  ([#48](https://github.com/dragginzgame/ic-metrics/issues/48)).
+
+### Changed
+
+- Use IC Host 0.12.1 for the private Wasm inspector; consumed APIs, reports and
+  the arithmetic dependency graph are unchanged.
+
 ## [0.5.0] - 2026-10-10
 
 ### Breaking

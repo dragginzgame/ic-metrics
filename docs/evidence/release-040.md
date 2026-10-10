@@ -35,3 +35,29 @@ acceptance; do not reuse earlier releases' receipts for this changed graph.
 Tag/index observations, downloaded package/Linux archives and their verification are
 retained under `target/evidence/release-040/`. No release, publication, workflow
 dispatch, dependency resolution or build occurs during this verification.
+
+## Complete native acceptance
+
+A later review finds the exact 0.4.0 run complete and passing on Linux, Intel
+macOS and Apple Silicon, including both package-floor checks. All three
+independently downloaded receipts verify against that released source:
+
+| Host | Artifact | ZIP SHA-256 | Inner archive SHA-256 |
+| --- | --- | --- | --- |
+| Linux x86_64 | `11665539876` | `ac2e6d01a8f371bff70e9307e448b5eff69deff293d7c581aad72e9d16fd9da0` | `29bde8a495d20911f0d73736e45538f6f831eaae467589ebfed7283a494ca5d5` |
+| macOS Intel | `11668175438` | `39ccc2bb9800f34884f9fb57341cb5f04205eadf070851077529d7941c3052ae` | `3c2e22ce235529acd65bd2d8f16113b21041a4f78327fa3ba00d26d551750989` |
+| macOS Apple Silicon | `11667648298` | `3df5b4d6326815647b112d852ef8de6b510b604ac9d5ac4c4a0115c060937863` | `f5e99f7dbb84bcb7f979aa1b8db7a1a979b0d57b04e7e8d52927bff5124bab4f` |
+
+Each receipt verifies all 15 payload and 70 released-source hashes, the exact
+workflow source catalog, run/attempt/host/pin identities and nine successful
+outcomes. Each downloaded log proves actual snapshot verification, metadata/
+admission/standard-release, native collector and inspector CLI execution; each
+retains two nonempty formatting diagnostics. Tool/release effects inside the
+fixtures remain substituted. Combined with the separately recorded actual
+negative-path and preparation checks, this completes
+[#45](https://github.com/dragginzgame/ic-metrics/issues/45) and
+[#46](https://github.com/dragginzgame/ic-metrics/issues/46).
+
+The initial queue/running observations above remain historical. This acceptance
+does not qualify 0.5.0's changed snapshot/aggregate. New downloads and verification
+are under `target/evidence/review-050/`; no build, rerun or release is performed.

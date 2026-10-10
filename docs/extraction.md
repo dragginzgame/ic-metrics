@@ -44,13 +44,18 @@ consumer-owned named aggregates and their admission/reporting obligations.
 
 ## Canonical ownership
 
-Pending 0.5.0 adopts Shared Tooling's complete 12-executable setup/check contract
+Published 0.5.0 adopts Shared Tooling's complete 12-executable setup/check contract
 and retires the optional host installer flags. This changes developer commands,
 not arithmetic, attribution, counter identity, persistence or consumer endpoints.
 Each consumer owns its tooling adoption/native qualification under
 [Shared #98](https://github.com/dragginzgame/shared-tooling/issues/98); Metrics'
 coherent adoption is in [#47](https://github.com/dragginzgame/ic-metrics/issues/47)
-and [its evidence](evidence/adoption-050.md). No consumer data reset or new IC
+and [its adoption evidence](evidence/adoption-050.md).
+[Publication verification](evidence/release-050.md) binds the source, tag and
+dependency-free archive; Linux and package-floor checks pass, with both macOS
+jobs queued at that initial inspection. Subsequent
+[Apple Silicon acceptance](evidence/release-050.md#apple-silicon-acceptance)
+verifies that receipt; Intel remains queued. No consumer data reset or new IC
 reader is required.
 
 Zero is a valid sample; empty has no latest or maximum. Count and total saturate
@@ -114,7 +119,9 @@ Host 0.11 selection retains unchanged consumed read/inspection APIs. See the
 [separate Host qualification](evidence/host-dependencies-0110.md).
 [Publication verification](evidence/release-040.md) binds the source, tag and
 dependency-free archive; exact-source Linux and package-floor checks pass while
-Intel remains queued and Apple Silicon is running at final inspection.
+Intel remains queued and Apple Silicon is running at that initial inspection.
+Subsequent [complete native acceptance](evidence/release-040.md#complete-native-acceptance)
+verifies all three receipts and closes #45/#46; this remains separate from 0.5.0.
 
 Earlier release 0.3.5 is available in the registry; its
 [verification](evidence/release-035.md) binds unchanged arithmetic, the published

@@ -357,6 +357,13 @@ covers hidden unsafe modes through the actual consumer Makefile under GNU Make
 assignments are refused. [Its completed native acceptance](evidence/release-037.md)
 verifies source-bound receipts on all three hosts; the Linux profiles alone do
 not establish native macOS acceptance.
+The pending 0.5.1 [owned Cargo jobserver repair](evidence/adoption-051-make.md)
+adds descriptor probes through the actual consumer Makefile on both Make/Bash
+profiles, preserving unsafe-mode refusal and first-failure routing. The direct
+Cargo and metadata effects in that fixture are substitutes. Actual parallel
+locked Cargo checks and full delivery validation have their own logs;
+changed-source native acceptance remains in
+[#48](https://github.com/dragginzgame/ic-metrics/issues/48).
 `make check-doc-links` checks maintained Markdown references with the shared
 local-link helper; public URL availability and historical source scope are
 reviewed separately. Those tooling changes are included in released 0.2.2.

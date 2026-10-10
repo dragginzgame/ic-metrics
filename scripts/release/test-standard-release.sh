@@ -86,6 +86,12 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
 cat >> "$fixture/bin/bash" <<'BASH'
 case "${1:-}" in
     */scripts/ci/check-make-execution.sh) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
+    scripts/release/metadata.sh)
+        if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then
+            perl "$JOBSERVER_PROBE" || exit $?
+            printf 'metadata %s\n' "$2" >> "$EVENTS"
+            exit 0
+        fi ;;
 esac
 printf 'unexpected dispatch\n' >> "$EVENTS"
 exit 0
@@ -160,15 +166,34 @@ cmp "$fixture/cache-entry-expected" "$EVENTS"
 # release/formatter operation, including an inherited marker claiming admission.
 # Publication remains a separate single-package Cargo operation. Substitute it
 # before admission cases so even a broken guard cannot reach a registry.
+export JOBSERVER_PROBE="$fixture/jobserver-probe.pl"
+cat > "$JOBSERVER_PROBE" <<'PERL'
+use strict;
+use warnings;
+use Fcntl qw(F_GETFD);
+($ENV{MAKEFLAGS} // "") =~ /--jobserver-(?:auth|fds)=(\d+),(\d+)/
+    or die "parallel Cargo has no pipe jobserver identity\n";
+for my $fd ($1, $2) {
+    open my $handle, "<&=$fd" or die "closed jobserver descriptor $fd: $!\n";
+    defined fcntl($handle, F_GETFD, 0) or die "invalid jobserver descriptor $fd: $!\n";
+}
+PERL
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'
 set -euo pipefail
+if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then
+    perl "$JOBSERVER_PROBE"
+fi
 printf '%s\n' "$@" >> "$EVENTS"
 [[ "${FAIL_PUBLISH:-0}" == 0 ]]
 CARGO
 chmod +x "$fixture/bin/cargo"
+printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
+chmod +x "$fixture/bin/rustc"
+cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv wasm-inspect-check wasm-inspect-msrv)
+metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
-for target in release-patch release-minor release-major release-resume fmt fmt-check publish publish-check; do
+for target in release-patch release-minor release-major release-resume fmt fmt-check "${cargo_targets[@]}" "${metadata_targets[@]}"; do
     for mode in -i --ignore-errors -n --dry-run --just-print --recon -t --touch -q --question -kin; do
         for selection in direct inherited cleared replaced both-hidden; do
             : > "$EVENTS"
@@ -203,6 +228,32 @@ for assignment in 'MFLAGS :=' 'override MFLAGS :='; do
     [[ "$status" == 2 && ! -s "$EVENTS" ]]
 done
 rm "$fixture/bin/bash"
+
+# The real consumer Makefile must leave both pipe descriptors open at every
+# owned Cargo boundary. Cargo effects are substituted; Make admission is real.
+for target in "${cargo_targets[@]}"; do
+    : > "$EVENTS"
+    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" -j4 --no-print-directory \
+        -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
+    [[ -s "$EVENTS" ]]
+done
+# Metadata also dispatches Cargo, so its Bash entry must retain the descriptors.
+cp "$fixture/mode-bash" "$fixture/bin/bash"
+for target in "${metadata_targets[@]}"; do
+    : > "$EVENTS"
+    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" -j4 --no-print-directory \
+        -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
+    [[ -s "$EVENTS" ]]
+done
+rm "$fixture/bin/bash"
+# A failure in a multi-command gate stops before any later Cargo command.
+: > "$EVENTS"
+status=0
+PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 FAIL_PUBLISH=1 "$real_make" -j4 --no-print-directory \
+    -f "$root/Makefile" clippy > "$fixture/output" 2>&1 || status=$?
+[[ "$status" == 2 ]]
+printf '%s\n' clippy -p ic-metrics --all-targets --locked -- -D warnings > "$fixture/expected"
+cmp "$fixture/expected" "$EVENTS"
 
 # Safe replacement flags still reach the real consumer adapter with its selected
 # runner substituted, including parallel mode and a quoted ordinary selection.

@@ -36,13 +36,13 @@ release-verify:
 		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv wasm-inspect-msrv
 
 release-prepare-version:
-	@bash scripts/release/metadata.sh prepare
+	+@bash scripts/release/metadata.sh prepare
 
 release-commit-check:
-	@bash scripts/release/metadata.sh commit-check
+	+@bash scripts/release/metadata.sh commit-check
 
 release-prepared-check release-committed-check release-tagged-check release-push-check:
-	@bash scripts/release/metadata.sh check
+	+@bash scripts/release/metadata.sh check
 
 release-files:
 	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
@@ -69,10 +69,10 @@ help:
 	@echo "Full delivery validation: ci, msrv, wasm-inspect-msrv; release commands remain explicit"
 
 publish:
-	cargo publish -p $(PACKAGE) --locked --registry crates-io
+	+cargo publish -p $(PACKAGE) --locked --registry crates-io
 
 publish-check:
-	cargo publish -p $(PACKAGE) --locked --registry crates-io --dry-run
+	+cargo publish -p $(PACKAGE) --locked --registry crates-io --dry-run
 
 install-hooks:
 	bash scripts/dev/install-git-hooks.sh
@@ -93,18 +93,18 @@ ci-evidence-check:
 	bash scripts/ci/test-native-evidence.sh
 
 check:
-	cargo check -p $(PACKAGE) --locked
+	+cargo check -p $(PACKAGE) --locked
 
 check-wasm:
-	cargo check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
+	+cargo check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
 
 clippy:
-	cargo clippy -p $(PACKAGE) --all-targets --locked -- -D warnings
-	cargo clippy -p $(PACKAGE) --lib --locked --target wasm32-unknown-unknown -- -D warnings
+	+cargo clippy -p $(PACKAGE) --all-targets --locked -- -D warnings
+	+cargo clippy -p $(PACKAGE) --lib --locked --target wasm32-unknown-unknown -- -D warnings
 
 docs-check:
-	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps
-	RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown
+	+RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps
+	+RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown
 
 check-doc-links:
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
@@ -114,25 +114,25 @@ check-doc-links:
 		crates/ic-metrics/src/application.md crates/ic-metrics-wasm-inspect/README.md
 
 test:
-	cargo test -p $(PACKAGE) --locked
+	+cargo test -p $(PACKAGE) --locked
 
 msrv:
 	rustc +$(MSRV) --version
-	cargo +$(MSRV) --version
-	cargo +$(MSRV) check -p $(PACKAGE) --locked
-	cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
+	+cargo +$(MSRV) --version
+	+cargo +$(MSRV) check -p $(PACKAGE) --locked
+	+cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
 
 wasm-inspect-check:
-	cargo check -p ic-metrics-wasm-inspect --all-targets --locked
-	cargo clippy -p ic-metrics-wasm-inspect --all-targets --locked -- -D warnings
-	cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect args::tests
-	cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect report::tests
-	cargo test -p ic-metrics-wasm-inspect --locked --test cli input_admission_controls_exit_and_report_publication -- --exact
+	+cargo check -p ic-metrics-wasm-inspect --all-targets --locked
+	+cargo clippy -p ic-metrics-wasm-inspect --all-targets --locked -- -D warnings
+	+cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect args::tests
+	+cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect report::tests
+	+cargo test -p ic-metrics-wasm-inspect --locked --test cli input_admission_controls_exit_and_report_publication -- --exact
 
 wasm-inspect-msrv:
 	rustc +$(WASM_INSPECT_MSRV) --version
-	cargo +$(WASM_INSPECT_MSRV) --version
-	cargo +$(WASM_INSPECT_MSRV) check -p ic-metrics-wasm-inspect --all-targets --locked
+	+cargo +$(WASM_INSPECT_MSRV) --version
+	+cargo +$(WASM_INSPECT_MSRV) check -p ic-metrics-wasm-inspect --all-targets --locked
 
 shared-tooling-check:
 	bash scripts/ci/verify-shared-tooling-snapshot.sh
