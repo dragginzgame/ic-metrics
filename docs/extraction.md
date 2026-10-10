@@ -80,7 +80,22 @@ These calls share the upstream counter contract; they do not unify attribution.
 Numerically increasing readings alone do not establish a shared call context.
 Actual IC execution and callback identity checks belong in consumer qualification.
 
-Release 0.3.5 is available in the registry; its
+Release 0.3.6 is available in the registry; its
+[verification](evidence/release-036.md) binds unchanged arithmetic, the published
+archive, complete native/MSRV results and all three downloaded source-bound
+receipts. It adopts Shared 0.2.9 and the separately qualified private Host 0.10.1
+graph. Shared #30's Make-mode gap remains separate; no arithmetic, attribution
+or consumer endpoint contract changes.
+
+Pending compatible 0.3.7 adopts the canonical hidden-Make-mode repair, with
+[focused local qualification](evidence/adoption-037-make.md) and separate delivery/
+native acceptance. [IcyDB's scoped closeout](evidence/consumer-closeout-037.md)
+now binds registry adoption, measurement-state tests and helper/native checks to
+0.269.1; Canic's held-HTTP/native obligation remains in
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10). Neither tooling
+qualification nor native substitutes establish IC measurement costs.
+
+Earlier release 0.3.5 is available in the registry; its
 [verification](evidence/release-035.md) binds unchanged arithmetic, the published
 archive and passing Linux/MSRV results. Downloaded Linux receipts cover the
 shared Make includes and execution companion, actual formatting hooks and

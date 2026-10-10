@@ -50,6 +50,10 @@ set -euo pipefail
 printf '%s\n' "$*" >> "$FIXTURE_COMMANDS"
 printf 'make stdout: %s\n' "$*"
 printf 'make stderr: %s\n' "$*" >&2
+if [[ "${FIXTURE_FORMATTING:-no}" == yes && "$*" == ci ]]; then
+    bash scripts/ci/run-formatting.sh --check bash -c \
+        'echo formatter-stdout; echo formatter-stderr >&2; exit 43'
+fi
 if [[ "$*" == "$FIXTURE_FAILURE" ]]; then
     case "$*" in
         *rust*) candidate=.tools/rust ;;
@@ -73,7 +77,7 @@ fi
 MAKE
 chmod +x "$fixture/bin/make"
 real_bash="$(command -v bash)"
-for scenario in success rust-install rust-check rust-admission host-install host-check ic-install ic-check native rust-archive-write rust-archive-conflict; do (
+for scenario in success rust-install rust-check rust-admission host-install host-check ic-install ic-check native formatting rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -81,7 +85,10 @@ for scenario in success rust-install rust-check rust-admission host-install host
     export GIT_DIR="$git_dir" GIT_WORK_TREE="$worktree"
     export GITHUB_WORKSPACE="$worktree" GITHUB_RUN_ID=123 GITHUB_RUN_ATTEMPT=2 GITHUB_EVENT_NAME=fixture
     export GITHUB_PATH="$worktree/github-path" TMPDIR="$worktree/scratch"
+    export RUNNER_TEMP="$worktree/runner temp"
+    mkdir -p "$RUNNER_TEMP"
     export FIXTURE_COMMANDS="$worktree/commands.log" FIXTURE_FAILURE="" FIXTURE_ADMISSION=no
+    export FIXTURE_FORMATTING=no
     export PATH="$fixture/bin:$root/.tools/rust/bin:$root/.tools/host/bin:$PATH"
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
     export RUST_OUTCOME=skipped HOST_TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped PROVISION_OUTCOME=skipped NATIVE_OUTCOME=skipped
@@ -93,6 +100,7 @@ for scenario in success rust-install rust-check rust-admission host-install host
         ic-install) FIXTURE_FAILURE=install-ic-tools ;;
         ic-check) FIXTURE_FAILURE=ic-tools-check ;;
         native) FIXTURE_FAILURE=ci ;;
+        formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
     esac
     if [[ "$scenario" == rust-admission ]]; then FIXTURE_ADMISSION=yes; fi
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
@@ -153,6 +161,18 @@ for scenario in success rust-install rust-check rust-admission host-install host
         cmp "target/evidence/native-ci/scratch/release/.git/$file" \
             "unpacked/target/evidence/native-ci/scratch/release/.git/$file"
     done
+    if [[ "$scenario" == formatting ]]; then
+        logs=("$RUNNER_TEMP"/formatting.*)
+        [[ ${#logs[@]} == 1 && -f "${logs[0]}" ]]
+        mkdir recovered-formatting
+        tar -xzf unpacked/target/evidence/native-ci/formatting-logs.tar.gz -C recovered-formatting
+        cmp "${logs[0]}" "recovered-formatting/${logs[0]##*/}"
+        grep -Fx formatter-stdout "recovered-formatting/${logs[0]##*/}" > /dev/null
+        grep -Fx formatter-stderr "recovered-formatting/${logs[0]##*/}" > /dev/null
+        grep -Fx 'Checking formatting... FAILED (exit 43)' unpacked/target/evidence/native-ci/native-ci.log > /dev/null
+    else
+        [[ ! -f unpacked/target/evidence/native-ci/formatting-logs.tar.gz ]]
+    fi
     expected="$(printf 'native=%s\ninputs=%s\nprovision=%s\nhost=%s\ntoolchain=%s\nrust=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s' \
         "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$PROVISION_OUTCOME" "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
         "$RUST_OUTCOME" "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME")"
@@ -165,12 +185,12 @@ for scenario in success rust-install rust-check rust-admission host-install host
             rust-*) failed_log=rust-tools.log ;;
             host-*) failed_log=host-tools.log ;;
             ic-*) failed_log=provision.log ;;
-            native) failed_log=native-ci.log ;;
+            native|formatting) failed_log=native-ci.log ;;
         esac
         grep -Fx "make stdout: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
         grep -Fx "make stderr: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
         [[ "$(tail -1 commands.log)" == "$FIXTURE_FAILURE" ]]
-        if [[ "$scenario" == rust-admission || "$scenario" == native ]]; then
+        if [[ "$scenario" == rust-admission || "$scenario" == native || "$scenario" == formatting ]]; then
             [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]]
         else
             mkdir recovered-candidates

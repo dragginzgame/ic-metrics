@@ -372,7 +372,7 @@ for scenario in retention fallback; do
     mkdir -p scripts/ci make "$worktree/tmp"
     cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
     cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
-    cp "$root/scripts/ci/check-make-execution.sh" scripts/ci/
+    cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
     cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
@@ -438,7 +438,7 @@ setup logger-second-gate
 mkdir -p scripts/ci make
 cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
 cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
-cp "$root/scripts/ci/check-make-execution.sh" scripts/ci/
+cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
 cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:

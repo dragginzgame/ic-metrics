@@ -69,7 +69,7 @@ jobs:
             'scripts/release/*.sh' scripts/dev/test-format-hook.sh \
             scripts/ci/check-release-commands.sh scripts/ci/check-documentation-links.pl \
             scripts/ci/check-formatting-hooks.sh \
-            scripts/ci/check-format-tools.sh scripts/ci/test-format-tools.sh \
+            scripts/ci/check-format-tools.sh scripts/ci/test-format-tools.sh scripts/ci/run-formatting.sh \
             scripts/ci/check-make-execution.sh \
             scripts/ci/read-cargo-workspace-version.sh \
             scripts/ci/rewrite-local-lock-versions.pl .githooks/pre-commit \
@@ -178,6 +178,16 @@ jobs:
             if [[ ${#candidates[@]} != 0 ]]; then
               bash scripts/ci/archive-evidence.sh target/evidence/native-ci/tool-candidates.tar.gz "${candidates[@]}"
             fi
+          fi
+          # The formatter prefers RUNNER_TEMP, outside the native scratch tree.
+          # Pack its retained diagnostics before hashing the native payloads.
+          formatting_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
+          formatting_logs=()
+          for log in "$formatting_root"/formatting.*; do
+            if [[ -f "$log" ]]; then formatting_logs+=("$formatting_root" "${log##*/}"); fi
+          done
+          if [[ ${#formatting_logs[@]} != 0 ]]; then
+            bash scripts/ci/archive-evidence.sh target/evidence/native-ci/formatting-logs.tar.gz "${formatting_logs[@]}"
           fi
           for file in target/evidence/native-ci/*; do
             if [[ -f "$file" && "$file" != target/evidence/native-ci/artifact-sha256.txt ]]; then

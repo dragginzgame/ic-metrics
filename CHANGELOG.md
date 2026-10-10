@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.7]
+
+### Changed
+
+- Keep `make fmt` and `make fmt-check` output concise, retaining full diagnostics
+  and failing status on errors. Native CI archives include retained formatting
+  logs ([Shared #92](https://github.com/dragginzgame/shared-tooling/issues/92),
+  [#44](https://github.com/dragginzgame/ic-metrics/issues/44)).
+
+### Fixed
+
+- Refuse unsafe Make execution modes even when command-line `MAKEFLAGS` hides
+  them, preventing false success and unintended release, formatting or publication
+  dispatch ([Shared #30](https://github.com/dragginzgame/shared-tooling/issues/30),
+  [#44](https://github.com/dragginzgame/ic-metrics/issues/44)).
+
 ## [0.3.6] - 2026-10-10
 
 ### Changed

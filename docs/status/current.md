@@ -4,33 +4,54 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending compatible 0.3.6
+## Pending compatible 0.3.7
 
-The next draft is 0.3.6, adopting committed Shared Tooling 0.2.9
-`f8a70ba348e9975a6eb5b337860b00bc8a0b36d1` through the clean canonical exporter.
-The unchanged 92-file selection now records its immutable source version and
-validates malformed/duplicate annotations. Linux Bash 5/3.2 distribution,
-consumer release/admission and focused verification pass in
-[the adoption record](../evidence/adoption-036.md). Fleet reports remain upstream.
+The next draft is 0.3.7, adopting committed Shared Tooling 0.2.11
+`83efac446348dea024798a331d77933b24b429dc` through its clean canonical exporter.
+The 93-file selection adds the formatting reporter. Success output is concise;
+failed commands retain full stdout/stderr and their failing status. Hook and
+isolated release fixtures include the companion; native source receipts include
+it, and the native collector archives reporter logs outside its scratch tree.
+[The adoption record](../evidence/adoption-037.md) binds focused Bash 5/3.2 checks,
+actual formatting/hooks, substituted release/collector effects and preservation.
 
-An independently incoming lock edit selects Host 0.10.1.
-[Its review](../evidence/host-dependencies-0101.md) binds official archives,
-unchanged consumed read/artifact source, inspector Clippy, named/CLI tests and
-Rust 1.88 compilation. Host's durable parent-sync fix has no Metrics caller.
-Production source and pins remain unchanged; package/workspace versions stay
-0.3.5. No full local CI, resolver, commit or release runs.
+This is compatible developer presentation and evidence retention, with unchanged
+formatter selection/order, exit semantics, product APIs and report output.
+No consumer reset or reinstall is required. Versions remain 0.3.6; production Rust,
+Cargo selection and pins are unchanged. The canonical repair for
+[Shared #30](https://github.com/dragginzgame/shared-tooling/issues/30) now rejects
+unsafe modes even when `MAKEFLAGS` hides them; Make must generate `MFLAGS`.
+[Supplemental qualification](../evidence/adoption-037-make.md) covers the actual
+consumer's release, formatting and publication routes on GNU Make 4.3/Bash 5 and
+GNU Make 3.81/Bash 3.2, preserving safe replacement flags and parallel dispatch.
+[#44](https://github.com/dragginzgame/ic-metrics/issues/44) retains delivery and
+changed-source native acceptance. No full local CI, resolver, commit or release runs.
 
-Shared #30's command-line-hidden Make modes still yield false success; this
-revision does not change the execution guard. #44 remains open for the canonical
-repair and its delivered-source acceptance. #10 remains downstream-owned.
+[The scoped downstream closeout](../evidence/consumer-closeout-037.md) binds
+IcyDB 0.269.1's ten passing metrics-state tests and Linux/Intel/Apple Silicon
+helper qualification to exact committed source and lock. It completes the original
+IcyDB #298/#309 scope without claiming passing SQL tier-b or a release gate.
+IcyDB #311 retains adoption of the newer Make guard; root
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10) retains Canic's
+held-HTTP/native obligation. No sibling execution or file mutation occurs.
 
-The 2026-10-10 recheck finds no newer committed Shared Tooling or IC Host source.
-Shared's dirty formatting/retention work is unadopted and left untouched.
-Issue #44 also records Shared #92's pending concise-formatting wrapper; its
-include/helper/collector changes need a reviewed committed snapshot before adoption.
-Released 0.3.5 now has complete native acceptance below; this does not repair
-Shared #30 or qualify the pending graph. No additional runtime API or consumer
-contract change is needed for this compatible batch.
+## Released 0.3.6
+
+Published 0.3.6 matches source/tag `93c350a1179c83a3cfc8f7f713c50bc1c6be6a8f`.
+[Its verification](../evidence/release-036.md) binds the dependency-free registry
+archive, unchanged arithmetic, complete native/MSRV and all three downloaded
+source-bound receipts. The earlier Linux/Apple Silicon success with Intel running
+remains an initial observation, separate from the subsequent completion.
+
+The prepared batch adopted Shared Tooling 0.2.9
+`f8a70ba348e9975a6eb5b337860b00bc8a0b36d1` through the clean exporter. Its unchanged
+92-file selection records immutable source-version metadata and validates
+malformed/duplicate annotations. [The preparation record](../evidence/adoption-036.md)
+retains Linux Bash 5/3.2 distribution, release/admission and focused checks;
+fleet reports remain upstream. Released private Host 0.10.1 has
+[its own review](../evidence/host-dependencies-0101.md), binding official archives,
+unchanged consumed read/artifact source, Clippy, named/CLI tests and Rust 1.88
+compilation. The durable parent-sync repair has no Metrics caller.
 
 The read-only downstream recheck retains public IcyDB 0.269.0
 `63ac8cbf9337306187e8bf74309ed9c576aca2af`, selecting registry Metrics 0.3.2.
