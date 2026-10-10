@@ -106,11 +106,11 @@ dependencies = [
 
 [[package]]
 name = "ic-metrics"
-version = "0.3.6"
+version = "0.3.7"
 
 [[package]]
 name = "ic-metrics-wasm-inspect"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "ic-host-artifacts",
  "ic-host-fs",
