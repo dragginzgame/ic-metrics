@@ -35,7 +35,7 @@ differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-Pending **0.6.0 is a hard cut**: histogram `summary()` is replaced by `aggregate()`,
+Release **0.6.0 is a hard cut**: histogram `summary()` is replaced by `aggregate()`,
 which has no latest value. Callers that need latest must own that observation
 separately. Tracked projections now use actual overflow rather than rejecting
 exactly reached caps. No serialized format, reader or endpoint is added; consumers

@@ -397,7 +397,7 @@ verify these checks and the actual Host 0.12.7 graph on all three hosts. Release
 0.5.6 also rejects incomplete preparation and selected-commit checks during EXIT cleanup;
 [its qualification](evidence/release-preparation-056.md) distinguishes genuine
 Bash 3.2 behavior from substituted release effects; [publication verification](evidence/release-056.md)
-retains that source's separate native acceptance. Pending 0.6.0's
+retains that source's separate native acceptance. Released 0.6.0's
 [private Host 0.12.9 qualification](evidence/host-dependencies-0129.md) leaves
 arithmetic and both package floors unchanged.
 The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate

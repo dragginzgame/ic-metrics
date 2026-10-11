@@ -44,7 +44,7 @@ It establishes no unit, snapshot identity or input provenance and adds no storag
 The [packaged application guide](../crates/ic-metrics/src/application.md) shows
 consumer-owned named aggregates and their admission/reporting obligations.
 
-## Pending 0.6.0 arithmetic hard cut
+## Released 0.6.0 arithmetic hard cut
 
 The one current source contract tracks actual overflow in accumulators. Exactly
 reaching `u64::MAX` remains exact; adding zero to an exact total does not saturate it.

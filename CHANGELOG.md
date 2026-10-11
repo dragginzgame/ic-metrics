@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.1]
+
+### Fixed
+
+- Adopt Shared Tooling 0.3.12 so formatting and release checks preserve relative
+  or symlinked temporary-directory selections, Rust tool setup consistently uses
+  the selected checkout, and retained validation summaries include the same
+  diagnostics as live output
+  ([#58](https://github.com/dragginzgame/ic-metrics/issues/58),
+  [Shared #116](https://github.com/dragginzgame/shared-tooling/issues/116),
+  [Shared #112](https://github.com/dragginzgame/shared-tooling/issues/112),
+  [Shared #111](https://github.com/dragginzgame/shared-tooling/issues/111),
+  [Shared #101](https://github.com/dragginzgame/shared-tooling/issues/101),
+  [Shared #110](https://github.com/dragginzgame/shared-tooling/issues/110)).
+
 ## [0.6.0] - 2026-10-11
 
 ### Breaking

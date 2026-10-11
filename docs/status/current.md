@@ -4,7 +4,36 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.0 arithmetic hard cut
+## Pending 0.6.1 Shared Tooling adoption
+
+Adopted committed/public Shared Tooling 0.3.12
+`52e846369c39a1da371eac47ff97d94da925217e` through a clean detached canonical
+exporter, preserving all 94 selected files. The compatible update repairs
+temporary-directory handling in formatting/release checks, Rust setup checkout
+selection and live/retained diagnostic consistency. Arithmetic, dependency and
+executable pins, package versions and supported hosts remain unchanged.
+[The adoption record](../evidence/adoption-061.md) owns source and qualification
+evidence; [#58](https://github.com/dragginzgame/ic-metrics/issues/58) retains delivered-source
+native acceptance. The pending changelog is 0.6.1; package/workspace versions remain 0.6.0.
+Complete local `ci` (210 seconds), `msrv` and `wasm-inspect-msrv` pass with all
+140 frozen code/graph/pin/snapshot inputs unchanged. Focused checks pass on
+current Bash/Make and genuine Bash 3.2/Make 3.81, including symlinked relative
+temporary paths. Real offline Rust preflight/checks pass from outside the checkout.
+The actual released graph already selects private Host 0.13.0; this adoption
+preserves it. Preparation evidence below retains its earlier Host 0.12.9 graph.
+No commit, release, publication or sibling edit is performed by this adoption.
+
+Released 0.6.0 `d156d647e88df137801989f2c7a010823c300d2f` agrees with public
+main and the annotated tag. Its official non-yanked dependency-free archive
+verifies checksum `fd550fca217e0989067bfcf14bdd41e1042ba95a326abe6fb04f900ef517da34`
+and matches the arithmetic sources, original manifest, README, license and
+embedded Git identity. At the release inspection, Linux and both package floors
+pass in [exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38122529690),
+with both macOS jobs queued. #57 retains native receipt acceptance; this released
+run does not qualify the changed Shared snapshot. Archive inputs remain under
+`target/evidence/release-060/`. Consumer qualification stays with its owning issues.
+
+## 0.6.0 arithmetic hard-cut preparation history
 
 The maintainer selected explicit actual-overflow state, unordered aggregate and
 histogram merge, and checked count/total intervals. [The hard-cut review](../evidence/arithmetic-060.md)
