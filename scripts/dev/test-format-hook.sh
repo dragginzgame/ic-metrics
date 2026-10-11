@@ -30,6 +30,15 @@ trap cleanup EXIT
 # shellcheck source=ci/tool-versions.env
 source "$root/ci/tool-versions.env"
 bash "$root/scripts/ci/check-format-tools.sh" "$SHARED_TOOLING_CARGO_SORT_VERSION" > "$fixture/format-tools.log" 2>&1
+# Overlay the complete current arithmetic module tree, including new modules.
+# The canonical checker starts from committed HEAD; lib.rs alone can refer to
+# modules absent from that export. Keep the producer's failure visible before
+# passing its NUL-delimited, checkout-relative regular files to the checker.
+(cd "$root"; rg --files --null -- crates/ic-metrics/src) > "$fixture/arithmetic-sources"
+arithmetic_sources=()
+while IFS= read -r -d '' path; do
+    arithmetic_sources+=("$path")
+done < "$fixture/arithmetic-sources"
 # The shared checker owns disposable exports and mechanical hook cases.
 # Nest its retained failures under this consumer's reported evidence directory.
 TMPDIR="$fixture" bash "$root/scripts/ci/check-formatting-hooks.sh" "$root" \
@@ -37,6 +46,7 @@ TMPDIR="$fixture" bash "$root/scripts/ci/check-formatting-hooks.sh" "$root" \
     --no-dependency-tables Cargo.toml Cargo.lock crates/ic-metrics/LICENSE \
     ci/tool-versions.env scripts/ci/check-format-tools.sh scripts/ci/run-formatting.sh \
     make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
+    "${arithmetic_sources[@]}" \
     > "$fixture/hook.log" 2>&1
 cat "$fixture/hook.log"
 fixture_complete=true

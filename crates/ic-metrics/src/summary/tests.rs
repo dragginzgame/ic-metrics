@@ -1,3 +1,5 @@
+use crate::MeasurementAggregate;
+
 use super::{MeasurementMeanError, MeasurementSummary, checked_mean, record_sample};
 
 #[test]
@@ -40,16 +42,17 @@ fn summary_mean_preserves_recording_and_saturation_contracts() {
     assert_eq!(summary.mean(), Ok(Some(4)));
     summary.record(u64::MAX - 9);
     assert_eq!(summary.total(), u64::MAX);
-    assert_eq!(summary.mean(), Err(MeasurementMeanError::SaturatedTotal));
+    assert_eq!(summary.mean(), Ok(Some(u64::MAX / 3)));
+    assert!(!summary.aggregate().total_saturated());
     summary.record(1);
     assert_eq!(summary.mean(), Err(MeasurementMeanError::SaturatedTotal));
     assert_eq!(summary.latest(), Some(1));
-    let saturated_count = MeasurementSummary {
-        samples: u64::MAX,
-        total: 9,
-        latest: 9,
-        maximum: 9,
+    let mut saturated_count = MeasurementSummary {
+        aggregate: maximum_zero_count(),
+        latest: 0,
     };
+    assert_eq!(saturated_count.mean(), Ok(Some(0)));
+    saturated_count.record(9);
     assert_eq!(
         saturated_count.mean(),
         Err(MeasurementMeanError::SaturatedSamples)
@@ -119,14 +122,12 @@ fn total_saturation_preserves_count_latest_and_maximum() {
 #[test]
 fn count_saturation_does_not_freeze_other_observations() {
     let mut summary = MeasurementSummary {
-        samples: u64::MAX,
-        total: 3,
-        latest: 3,
-        maximum: 3,
+        aggregate: maximum_zero_count(),
+        latest: 0,
     };
     summary.record(4);
     assert_eq!(summary.samples(), u64::MAX);
-    assert_eq!(summary.total(), 7);
+    assert_eq!(summary.total(), 4);
     assert_eq!(summary.latest(), Some(4));
     assert_eq!(summary.maximum(), Some(4));
 }
@@ -160,4 +161,15 @@ fn recording_is_available_in_constant_evaluation() {
     assert_eq!(SUMMARY.total(), 11);
     assert_eq!(SUMMARY.latest(), Some(2));
     assert_eq!(SUMMARY.maximum(), Some(9));
+}
+
+// Repeated disjoint zero-sample batches construct an exact cap without a fake
+// production path or an impractically large recording loop.
+fn maximum_zero_count() -> MeasurementAggregate {
+    let mut aggregate = MeasurementAggregate::EMPTY;
+    for _ in 0..64 {
+        aggregate.merge(aggregate);
+        aggregate.record(0);
+    }
+    aggregate
 }

@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.0]
+
+### Breaking
+
+- Tracked summaries and histogram queries distinguish actual overflow from an
+  exactly reached `u64::MAX`. Replace histogram `summary()` with `aggregate()`;
+  latest-observation tracking stays with ordered summaries or consumer code.
+  [#57](https://github.com/dragginzgame/ic-metrics/issues/57).
+
+### Added
+
+- Merge count/total/maximum aggregates and histograms with matching bounds,
+  without claiming observation ordering. Check count/total intervals between
+  snapshots after establishing common identity, units and append-only continuity.
+
+### Changed
+
+- Use IC Host 0.12.9 for the private Wasm inspector; reports, bounded input reads
+  and the arithmetic dependency graph remain unchanged.
+
 ## [0.5.6] - 2026-10-10
 
 ### Fixed

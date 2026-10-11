@@ -8,12 +8,25 @@
 #![doc = include_str!("application.md")]
 #![no_std]
 
+mod aggregate;
 mod histogram;
 mod ratio;
 mod summary;
 
+pub use aggregate::{MeasurementAggregate, MeasurementInterval, MeasurementIntervalError};
 pub use histogram::{
-    HistogramBoundsError, HistogramQueryError, HistogramRange, MeasurementHistogram,
+    HistogramBoundsError, HistogramMergeError, HistogramQueryError, HistogramRange,
+    MeasurementHistogram,
 };
 pub use ratio::{MeasurementRatioError, checked_scaled_ratio};
 pub use summary::{MeasurementMeanError, MeasurementSummary, checked_mean, record_sample};
+
+// One owner for tracked overflow; flags never infer loss from the numeric cap.
+const fn add_count(value: &mut u64, saturated: &mut bool, increment: u64) {
+    if let Some(next) = value.checked_add(increment) {
+        *value = next;
+    } else {
+        *value = u64::MAX;
+        *saturated = true;
+    }
+}

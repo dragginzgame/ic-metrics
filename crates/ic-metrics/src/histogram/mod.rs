@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use crate::MeasurementSummary;
+use crate::{MeasurementAggregate, add_count};
 
 #[cfg(test)]
 mod tests;
@@ -45,7 +45,7 @@ pub enum HistogramQueryError {
     },
     /// A nearest-rank fraction must satisfy `0 < numerator <= denominator`.
     InvalidQuantile,
-    /// A required count or cumulative sum is at the `u64::MAX` cap.
+    /// A required count or cumulative sum has actually overflowed.
     SaturatedCount,
 }
 
@@ -67,6 +67,28 @@ impl fmt::Display for HistogramQueryError {
 }
 
 impl core::error::Error for HistogramQueryError {}
+
+/// Why two histogram distributions cannot be combined.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct HistogramMergeError {
+    index: usize,
+}
+
+impl HistogramMergeError {
+    /// Zero-based index of the first differing inclusive upper bound.
+    #[must_use]
+    pub const fn index(self) -> usize {
+        self.index
+    }
+}
+
+impl fmt::Display for HistogramMergeError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "histogram merge bound {} differs", self.index)
+    }
+}
+
+impl core::error::Error for HistogramMergeError {}
 
 /// The observation range of a histogram bucket, not an exact percentile value.
 ///
@@ -103,16 +125,16 @@ impl HistogramRange {
 /// is valid and leaves overflow empty.
 ///
 /// Each observation updates one bucket and the accompanying
-/// [`MeasurementSummary`]. Bucket counts saturate independently at `u64::MAX`.
-/// Treat a count at that value as unavailable for exact arithmetic, even when
-/// reached exactly. Unsaturated bucket counts remain useful after the summary's
-/// total saturates. Saturation can prevent bucket counts from summing to the
-/// summary's sample count. Buckets describe ranges, not exact percentiles.
+/// [`MeasurementAggregate`]. Counts clip independently at `u64::MAX`, with sticky
+/// flags for actual overflow; exactly reached caps remain exact. Unsaturated
+/// bucket counts remain useful after the aggregate's total overflows. Overflow
+/// can prevent bucket counts from summing to the aggregate's sample count.
+/// Buckets describe ranges, not exact percentiles; no latest value is retained.
 ///
-/// Storage is fixed arrays, one overflow count and one summary, with no heap
+/// Storage is fixed arrays, overflow state and one aggregate, with no heap
 /// allocation. Recording searches at most `N` bounds. Consumers choose bounds,
 /// units, sample admission, identity and reset boundaries. Bounds are immutable
-/// after construction; cumulative reporting and persistence remain consumer-owned.
+/// after construction; report encoding and persistence remain consumer-owned.
 ///
 /// ```
 /// use ic_metrics::MeasurementHistogram;
@@ -124,7 +146,7 @@ impl HistogramRange {
 /// }
 /// assert_eq!(histogram.bucket_counts(), &[2, 1]);
 /// assert_eq!(histogram.overflow(), 1);
-/// assert_eq!(histogram.summary().samples(), 4);
+/// assert_eq!(histogram.aggregate().samples(), 4);
 /// # Ok(())
 /// # }
 /// ```
@@ -133,7 +155,9 @@ pub struct MeasurementHistogram<const N: usize> {
     upper_bounds: [u64; N],
     bucket_counts: [u64; N],
     overflow: u64,
-    summary: MeasurementSummary,
+    bucket_saturation: [bool; N],
+    overflow_saturated: bool,
+    aggregate: MeasurementAggregate,
 }
 
 impl<const N: usize> MeasurementHistogram<N> {
@@ -159,26 +183,32 @@ impl<const N: usize> MeasurementHistogram<N> {
             upper_bounds,
             bucket_counts: [0; N],
             overflow: 0,
-            summary: MeasurementSummary::EMPTY,
+            bucket_saturation: [false; N],
+            overflow_saturated: false,
+            aggregate: MeasurementAggregate::EMPTY,
         })
     }
 
     /// Record one completed observation, including zero.
     ///
-    /// Updates the summary and exactly one disjoint bucket. Every observation
+    /// Updates the aggregate and exactly one disjoint bucket. Every observation
     /// must use the same unit as the bounds and earlier observations.
     pub const fn record(&mut self, value: u64) {
-        self.summary.record(value);
+        self.aggregate.record(value);
         let mut index = 0;
         while index < N {
             // Both arrays have length N; the guard establishes valid indices.
             if value <= self.upper_bounds[index] {
-                self.bucket_counts[index] = self.bucket_counts[index].saturating_add(1);
+                add_count(
+                    &mut self.bucket_counts[index],
+                    &mut self.bucket_saturation[index],
+                    1,
+                );
                 return;
             }
             index += 1;
         }
-        self.overflow = self.overflow.saturating_add(1);
+        add_count(&mut self.overflow, &mut self.overflow_saturated, 1);
     }
 
     /// Immutable inclusive upper bounds corresponding to [`Self::bucket_counts`].
@@ -189,7 +219,8 @@ impl<const N: usize> MeasurementHistogram<N> {
 
     /// Disjoint bucket counts, each saturating independently at `u64::MAX`.
     ///
-    /// These exclude overflow and are not cumulative counts.
+    /// These exclude overflow and are not cumulative counts. Inspect
+    /// [`Self::bucket_saturation`] before using clipped counts as exact values.
     #[must_use]
     pub const fn bucket_counts(&self) -> &[u64; N] {
         &self.bucket_counts
@@ -197,30 +228,81 @@ impl<const N: usize> MeasurementHistogram<N> {
 
     /// Count above the last bound, saturating independently at `u64::MAX`.
     ///
-    /// With no bounds, this counts all observations.
+    /// With no bounds, this counts all observations. Inspect
+    /// [`Self::overflow_saturated`] before treating the clipped count as exact.
     #[must_use]
     pub const fn overflow(&self) -> u64 {
         self.overflow
     }
 
-    /// Summary of all observations, including overflow.
+    /// Sticky actual-overflow flags corresponding to [`Self::bucket_counts`].
     #[must_use]
-    pub const fn summary(&self) -> MeasurementSummary {
-        self.summary
+    pub const fn bucket_saturation(&self) -> &[bool; N] {
+        &self.bucket_saturation
+    }
+
+    /// Whether the overflow bucket's count has actually overflowed.
+    #[must_use]
+    pub const fn overflow_saturated(&self) -> bool {
+        self.overflow_saturated
+    }
+
+    /// Mergeable aggregate of all observations, including overflow.
+    #[must_use]
+    pub const fn aggregate(&self) -> MeasurementAggregate {
+        self.aggregate
+    }
+
+    /// Combine a distribution with exactly the same finite bounds.
+    ///
+    /// Consumers establish matching units and deliberate sample attribution.
+    /// This adds observations without deduplication or ordering. Source overflow
+    /// propagates independently for each count and the aggregate.
+    ///
+    /// # Errors
+    /// Returns [`HistogramMergeError`] for the first differing bound, leaving
+    /// the entire destination unchanged. Different bound counts are different
+    /// Rust types and cannot be merged.
+    pub const fn merge(&mut self, other: &Self) -> Result<(), HistogramMergeError> {
+        let mut index = 0;
+        while index < N {
+            if self.upper_bounds[index] != other.upper_bounds[index] {
+                return Err(HistogramMergeError { index });
+            }
+            index += 1;
+        }
+        index = 0;
+        while index < N {
+            add_count(
+                &mut self.bucket_counts[index],
+                &mut self.bucket_saturation[index],
+                other.bucket_counts[index],
+            );
+            self.bucket_saturation[index] |= other.bucket_saturation[index];
+            index += 1;
+        }
+        add_count(
+            &mut self.overflow,
+            &mut self.overflow_saturated,
+            other.overflow,
+        );
+        self.overflow_saturated |= other.overflow_saturated;
+        self.aggregate.merge(other.aggregate);
+        Ok(())
     }
 
     /// Count observations at or below the finite upper bound at `index`.
     ///
     /// Sums disjoint buckets through that index, excluding overflow. Empty
     /// histograms return zero for valid indices. Later buckets, overflow and
-    /// summary saturation do not invalidate an otherwise exact prefix count.
+    /// aggregate saturation do not invalidate an otherwise exact prefix count.
     /// Arbitrary thresholds inside a bucket cannot be answered exactly.
     ///
     /// # Errors
     ///
     /// Returns [`HistogramQueryError::BucketOutOfBounds`] when `index >= N`, or
     /// [`HistogramQueryError::SaturatedCount`] when a contributing count or sum
-    /// reaches `u64::MAX`, including an exactly reached cap.
+    /// has actually overflowed; an exactly reached `u64::MAX` is valid.
     pub const fn cumulative_count(&self, index: usize) -> Result<u64, HistogramQueryError> {
         if index >= N {
             return Err(HistogramQueryError::BucketOutOfBounds { index, buckets: N });
@@ -228,10 +310,13 @@ impl<const N: usize> MeasurementHistogram<N> {
         let mut total = 0_u64;
         let mut position = 0;
         while position <= index {
-            total = total.saturating_add(self.bucket_counts[position]);
-            if total == u64::MAX {
+            if self.bucket_saturation[position] {
                 return Err(HistogramQueryError::SaturatedCount);
             }
+            total = match total.checked_add(self.bucket_counts[position]) {
+                Some(next) => next,
+                None => return Err(HistogramQueryError::SaturatedCount),
+            };
             position += 1;
         }
         Ok(total)
@@ -248,7 +333,7 @@ impl<const N: usize> MeasurementHistogram<N> {
     ///
     /// Returns [`HistogramQueryError::InvalidQuantile`] first for an invalid
     /// fraction, or [`HistogramQueryError::SaturatedCount`] if the sample count
-    /// or any bucket count is at `u64::MAX`. A saturated value total does not
+    /// or any bucket count has actually overflowed. A saturated value total does not
     /// invalidate a distribution whose counts remain exact.
     ///
     /// ```
@@ -268,20 +353,23 @@ impl<const N: usize> MeasurementHistogram<N> {
         numerator: u64,
         denominator: u64,
     ) -> Result<Option<HistogramRange>, HistogramQueryError> {
-        let rank = match quantile_rank(self.summary.samples(), numerator, denominator) {
+        let rank = match quantile_rank(self.aggregate.samples(), numerator, denominator) {
             Ok(Some(rank)) => rank,
             Ok(None) => return Ok(None),
             Err(error) => return Err(error),
         };
+        if self.aggregate.samples_saturated() {
+            return Err(HistogramQueryError::SaturatedCount);
+        }
         // Check every count before returning a whole-distribution projection.
         let mut index = 0;
         while index < N {
-            if self.bucket_counts[index] == u64::MAX {
+            if self.bucket_saturation[index] {
                 return Err(HistogramQueryError::SaturatedCount);
             }
             index += 1;
         }
-        if self.overflow == u64::MAX {
+        if self.overflow_saturated {
             return Err(HistogramQueryError::SaturatedCount);
         }
         let mut cumulative = 0_u128;
@@ -319,9 +407,6 @@ const fn quantile_rank(
 ) -> Result<Option<u128>, HistogramQueryError> {
     if numerator == 0 || numerator > denominator {
         return Err(HistogramQueryError::InvalidQuantile);
-    }
-    if samples == u64::MAX {
-        return Err(HistogramQueryError::SaturatedCount);
     }
     if samples == 0 {
         return Ok(None);

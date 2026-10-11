@@ -50,7 +50,7 @@ impl ApplicationMetrics {
 
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
 let mut metrics = ApplicationMetrics::new()?;
-assert_eq!(metrics.instructions[Span::Readiness.index()].summary().mean()?, None);
+assert_eq!(metrics.instructions[Span::Readiness.index()].aggregate().mean()?, None);
 metrics.record_instructions(Span::Readiness, 0);
 metrics.record_instructions(Span::Readiness, 12_000);
 metrics.record_instructions(Span::Mint, 120_000);
@@ -59,9 +59,9 @@ metrics.record_budget_stop();
 
 let readiness = &metrics.instructions[Span::Readiness.index()];
 assert_eq!(readiness.bucket_counts(), &[1, 1]);
-assert_eq!(readiness.summary().samples(), 2);
-assert_eq!(readiness.summary().maximum(), Some(12_000));
-assert_eq!(readiness.summary().mean()?, Some(6_000));
+assert_eq!(readiness.aggregate().samples(), 2);
+assert_eq!(readiness.aggregate().maximum(), Some(12_000));
+assert_eq!(readiness.aggregate().mean()?, Some(6_000));
 assert_eq!(metrics.instructions[Span::Mint.index()].overflow(), 1);
 assert_eq!(metrics.rows_per_batch.latest(), Some(128));
 assert_eq!(metrics.budget_stops, 1);
@@ -69,8 +69,8 @@ assert_eq!(metrics.budget_stops, 1);
 # }
 ```
 
-The histogram already owns its summary. Project count, total, latest, maximum
-and mean from `summary()` rather than maintaining another instruction summary
+The histogram already owns its mergeable aggregate. Project count, total, maximum
+and mean from `aggregate()` rather than maintaining another instruction aggregate
 for the same observations. Separate rows, bytes, instructions and outcome
 counts. Independent summaries do not retain per-call correlations: a mean of
 per-call instructions per item differs from total instructions divided by total
@@ -110,13 +110,13 @@ let p95 = bytes.quantile_bucket(95, 100)?.unwrap();
 assert_eq!(p95.lower_exclusive(), Some(32_768));
 assert_eq!(p95.upper_inclusive(), Some(262_144));
 // Check exact count/total availability before projecting ratios from summaries.
-let summary = bytes.summary();
-let mean_tenths = match summary.mean()? {
-    Some(_) => Some(checked_scaled_ratio(u128::from(summary.total()), summary.samples(), 10)?),
+let aggregate = bytes.aggregate();
+let mean_tenths = match aggregate.mean()? {
+    Some(_) => Some(checked_scaled_ratio(u128::from(aggregate.total()), aggregate.samples(), 10)?),
     None => None,
 };
 assert_eq!(mean_tenths, Some(286_720)); // 28,672.0 bytes, in tenths
-assert_eq!(checked_scaled_ratio(u128::from(small_chunks), summary.samples(), 10_000)?, 7_500);
+assert_eq!(checked_scaled_ratio(u128::from(small_chunks), aggregate.samples(), 10_000)?, 7_500);
 # Ok(())
 # }
 ```
@@ -127,14 +127,20 @@ value. Callers must admit count/total provenance first, choose the scale and
 unit, and handle empty data before supplying a denominator. It neither formats
 decimals nor replaces the stricter availability contract of [`checked_mean`].
 For the histogram example, the proportion's denominator also must be known exact;
-the summary availability check above establishes that before using it.
+the aggregate availability check above establishes that before using it.
 
-An empty aggregate differs from measured zero. [`checked_mean`] and
-[`MeasurementSummary::mean`] return `None` when empty, floor the mean of
-unsaturated observations, and return a typed error when exact inputs are
-unavailable. Display that unavailability rather than substituting zero.
-Latest and maximum remain individual observations after saturation. Bucket
-counts saturate independently; they need not sum to a saturated sample count.
+An empty aggregate differs from measured zero. Tracked aggregates and ordered
+summaries return `None` when empty, floor exact means and record actual overflow.
+An exactly reached `u64::MAX` remains exact; adding zero does not lose exactness.
+Inspect saturation flags before using clipped counts/totals in other arithmetic.
+Flags describe accumulation only: consumers must admit exact input observations
+and must not treat a clamped or otherwise lossy sample as an exact measurement.
+The raw-field [`checked_mean`] remains conservative at either numeric cap because
+external fields have no overflow provenance. Display unavailable means rather
+than substituting zero. [`MeasurementSummary`] retains the latest ordered sample;
+mergeable aggregates and histograms retain no latest value. Maximum remains an
+individual observation after overflow. Bucket counts saturate independently;
+they need not sum to a saturated sample count.
 [`MeasurementHistogram::cumulative_count`] needs only its selected bucket prefix
 to remain exact; [`MeasurementHistogram::quantile_bucket`] requires an exact
 sample count and all buckets. A saturated value total alone does not invalidate
@@ -147,6 +153,48 @@ it with a newly constructed empty one and update its window identity at the
 same owning boundary. Establish matching units, bounds and identities before
 comparing snapshots; saturated counters cannot supply exact interval deltas.
 
+### Batches and intervals
+
+Use [`MeasurementAggregate`] for unordered batches. `merge` adds count/total and
+retains the maximum; it is not deduplication. Use [`MeasurementSummary`] when
+latest matters, and extract its `aggregate()` for unordered reporting. There is
+no way to merge summaries and invent a latest observation. Histograms merge only
+when every finite bound matches; a typed mismatch leaves the destination unchanged.
+Consumers must establish common units, windows and deliberate attribution before
+merging. Combining overlapping spans does not turn them into exclusive work.
+
+```rust
+use ic_metrics::{MeasurementAggregate, MeasurementHistogram};
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+let mut all = MeasurementAggregate::EMPTY;
+all.record(0);
+let before = all;
+let mut batch = MeasurementAggregate::EMPTY;
+batch.record(10);
+batch.record(20);
+all.merge(batch);
+// The owner first establishes the same append-only window and attribution.
+let interval = all.interval_since(before)?;
+assert_eq!(interval.samples(), 2);
+assert_eq!(interval.total(), 30);
+assert_eq!(interval.mean(), Some(15));
+
+let mut left = MeasurementHistogram::new([10, 100])?;
+let mut right = MeasurementHistogram::new([10, 100])?;
+left.record(0);
+right.record(20);
+left.merge(&right)?;
+assert_eq!(left.bucket_counts(), &[1, 1]);
+# Ok(())
+# }
+```
+
+`interval_since` rejects actual overflow, decreasing counters and a changed total
+without new samples. Numeric success does not establish counter identity or detect
+a reset followed by larger values. It returns only count/total and mean: maximum,
+latest and quantiles cannot be obtained by subtracting cumulative snapshots.
+Consumers keep reset/restart identity, synchronization and persistence policy.
+
 Budget-stop counts are diagnostics. Actual budget enforcement, balances,
 journal debt and other authoritative accounting need their existing exact
 consumer contracts. Reporting DTOs, admin authorization, endpoints,
@@ -154,7 +202,7 @@ persistence and synchronization also remain application-owned.
 
 ### Cost qualification
 
-Each named histogram stores its bounds, counts, overflow and summary. Select
+Each named histogram stores its bounds, counts, overflow flags and aggregate. Select
 bounds and cardinality for a demonstrated workload. Measure target-specific
 storage and raw Wasm bytes, IC instructions and actual cycle charges separately.
 Include the recording work itself; samples whose measurement ends before

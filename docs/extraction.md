@@ -2,8 +2,10 @@
 
 ic-metrics owns only allocation-free, dependency-free `no_std` arithmetic:
 `record_sample` updates consumer-owned count/total fields, and
-`MeasurementSummary` owns samples, total, latest and maximum, and the separate
-`MeasurementHistogram` adds fixed disjoint buckets and overflow around that summary.
+`MeasurementAggregate` owns mergeable samples, total and maximum with actual-overflow
+flags. `MeasurementSummary` adds the latest ordered observation; the separate
+`MeasurementHistogram` adds mergeable fixed disjoint buckets and overflow around
+an aggregate, without inventing a latest observation.
 Histogram bounds and units are caller-selected; invalid bounds return a typed
 error. Bucket counts saturate independently. These primitives never read
 platform counters, allocate labels, persist data or claim endpoints.
@@ -41,6 +43,35 @@ means round down. A nonzero total without samples or either counter at
 It establishes no unit, snapshot identity or input provenance and adds no storage.
 The [packaged application guide](../crates/ic-metrics/src/application.md) shows
 consumer-owned named aggregates and their admission/reporting obligations.
+
+## Pending 0.6.0 arithmetic hard cut
+
+The one current source contract tracks actual overflow in accumulators. Exactly
+reaching `u64::MAX` remains exact; adding zero to an exact total does not saturate it.
+Tracked means and histogram queries use these flags. Consumer-owned raw-field
+`record_sample` and `checked_mean` retain their existing conservative cap contract:
+those fields carry no overflow provenance. Admission of exact samples remains with
+the owner; a clamped duration is not made exact by recording its clipped value.
+
+`MeasurementAggregate::merge` adds count/total and retains maximum, with sticky
+independent overflow flags. It establishes neither ordering nor deduplication.
+`MeasurementSummary` records latest separately and cannot merge. Histogram
+`summary()` is replaced by `aggregate()`; equal-bound histogram merges reject the
+first mismatch without any destination mutation. Owners establish common units,
+windows and deliberate attribution before combining independent batches.
+`interval_since` admits exact count/total differences only after owners establish
+matching identity and append-only continuity. It rejects overflow, decreases and a
+changed total without added samples; maxima/latest/quantiles are not subtractable.
+
+The library has no codecs or stored format. Reviewed Timers and Backup measurement
+instances are volatile; Backup explicitly does not persist or reconstruct its
+local metrics. No consumer data is reset by this source change. Consumers exposing
+shared types must coordinate the released 0.6 dependency identity, adjust histogram
+projections and decide their own report/retained-data disposition. Frozen historical
+source and performance bundles remain unchanged and do not qualify this new recorder.
+[The hard-cut review](evidence/arithmetic-060.md) binds the six read-only caller
+reviews, the source contract and current local validation. Owning adoption and
+native/runtime checks remain separate; sibling files are not changed here.
 
 ## Canonical ownership
 

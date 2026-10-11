@@ -392,11 +392,14 @@ gate explicitly refuse failures on Bash 3.2. Existing regressions execute actual
 wrong-version admission, contradictory parser output and host refusals; their
 substituted effects remain separate from hosted acceptance. Routine CI uses the
 common workflow/ref group to cancel superseded runs, retaining the full matrix.
-The [released-source Linux receipt](evidence/release-055.md) verifies these checks
-and the actual Host 0.12.7 graph; macOS acceptance remains separate. Pending
+The [complete released-source native receipts](evidence/release-055.md#complete-native-acceptance)
+verify these checks and the actual Host 0.12.7 graph on all three hosts. Released
 0.5.6 also rejects incomplete preparation and selected-commit checks during EXIT cleanup;
 [its qualification](evidence/release-preparation-056.md) distinguishes genuine
-Bash 3.2 behavior from substituted release effects.
+Bash 3.2 behavior from substituted release effects; [publication verification](evidence/release-056.md)
+retains that source's separate native acceptance. Pending 0.6.0's
+[private Host 0.12.9 qualification](evidence/host-dependencies-0129.md) leaves
+arithmetic and both package floors unchanged.
 The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate
 Linux PocketIC execution and durable inputs. It is not a CI gate, product reader
 or native macOS measurement claim; ordinary library qualification stays separate.

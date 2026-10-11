@@ -4,7 +4,61 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Released 0.5.5 and pending 0.5.6 metadata cleanup
+## Pending 0.6.0 arithmetic hard cut
+
+The maintainer selected explicit actual-overflow state, unordered aggregate and
+histogram merge, and checked count/total intervals. [The hard-cut review](../evidence/arithmetic-060.md)
+binds the current APIs and read-only six-consumer review. Exactly reached caps
+remain exact; raw-field helpers stay conservative because provenance is absent.
+Ordered summaries retain latest; histograms replace `summary()` with `aggregate()`
+and own no latest. Mismatch rejection is atomic; identity, units, append-only
+continuity, sample admission and persistence remain consumer-owned.
+
+The whole pending batch moves from 0.5.7 to 0.6.0 for these public contract changes,
+carrying the separately qualified Host 0.12.9 selection. Package/workspace versions
+remain 0.5.6. No commit, release or publication is executed. [#57](https://github.com/dragginzgame/ic-metrics/issues/57)
+retains root delivery/native acceptance; [Backup #38](https://github.com/dragginzgame/ic-backup/issues/38)
+and [Timers #43](https://github.com/dragginzgame/ic-timers/issues/43) own coordinated
+shared-type adoption, histogram/latest disposition and exact sample admission.
+No sibling edits or owning builds are performed. Native/Wasm Clippy and focused
+arithmetic tests pass. The completed final-source `ci` (250 seconds), `msrv` and
+`wasm-inspect-msrv` pass with all 101 frozen inputs unchanged, separately from the
+previous 99-input Host-selection run. The required formatting fixture now overlays
+all current arithmetic modules; modern and Bash 3.2/Make 3.81 hook checks and the
+existing failure-retention regression pass. The initial failed gate is retained.
+Measured Wasm layouts add eight bytes per inspected summary/histogram instance;
+new IC recording cost remains unqualified. Frozen old measurements remain historical.
+The final read-only CI check observes all released 0.5.6 native jobs and both
+package floors passing at its exact source. #56 still retains downloaded macOS
+receipt verification; that run does not qualify this unreleased 0.6 source.
+
+## Earlier compatible 0.5.7 private Host preparation
+
+Published 0.5.6, tag and public main agree on
+`392d1e2cbffb434dea591df8cb3165e8c625ab01`.
+[Publication verification](../evidence/release-056.md) binds the dependency-free
+archive and unchanged arithmetic. Both package floors and Linux pass, with a
+[verified Linux receipt](../evidence/release-056.md#linux-acceptance); macOS remains
+queued at this observation. #56 retains full released-source
+native acceptance. The earlier 0.5.5 matrix now has
+[all three verified native receipts](../evidence/release-055.md#complete-native-acceptance),
+closing #54/#55. Earlier cancelled sources retain their actual status.
+
+Shared Tooling 0.3.8 remains the latest committed/public revision and the 94-file
+snapshot stays unchanged. Public Host advanced to 0.12.9; the local sibling
+initially remained on 0.12.8 with dirty work, then caught up to the released
+revision. The reviewed
+[private graph update](../evidence/host-dependencies-0129.md) selects only the two
+published Host versions/checksums, with unchanged consumed Rust code and package
+floors. Existing inspector check/Clippy and named behavior/CLI tests pass. Complete
+`ci` (181 seconds), `msrv` and `wasm-inspect-msrv` pass with all 99 frozen
+code/graph/pin/workflow inputs unchanged; final logs and preservation records
+belong under `target/evidence/review-057/`. The compatible pending changelog is
+0.5.7; package/workspace versions remain 0.5.6. No arithmetic API, downstream
+contract, new writer or platform reader changes. Canic #99/#447 remain open;
+the owning held-HTTP/native obligation in #10 is not supplied by root publication.
+
+## 0.5.6 metadata cleanup preparation history
 
 Published 0.5.5, tag and public main agree on
 `b995f787c8e08a6e2e8c18d99e223835f43f6e4e`.

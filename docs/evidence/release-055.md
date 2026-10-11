@@ -52,3 +52,24 @@ remain under `target/evidence/review-056/`.
 #54/#55 remain open for Intel and complete native acceptance. This supplements
 0.5.5's original queued observation without qualifying pending 0.5.6 or supplying
 IC performance evidence.
+
+## Complete native acceptance
+
+The same exact-source run now passes all three native hosts and both package-floor
+checks. All three downloaded receipts independently verify ZIP and inner archive
+digests, exact released workflow catalogs, all 70 source and 14 payload hashes,
+source/run/attempt/host/pins and seven successful outcomes. New Intel artifact
+`11676224746` verifies ZIP SHA-256
+`77e1bb149c8421a2197acb531a93614b35236cfa862c71a8b7931ed36d277256`
+and inner archive SHA-256
+`3e997a979c845a2bc25c8eb1712fe292fd055af1afbda9415fa9f41e4c1c5638`.
+Actual aggregate/collector, release/admission, formatting and inspector CLI checks
+execute on each host; every artifact retains two nonempty formatting diagnostics
+and shows no jobserver descriptor warning.
+
+This completes [#54](https://github.com/dragginzgame/ic-metrics/issues/54) and
+[#55](https://github.com/dragginzgame/ic-metrics/issues/55) at released 0.5.5,
+including its actual Host 0.12.7 graph. Earlier local graphs and later 0.5.6
+qualification remain distinct. Fresh downloads, observations, extracted receipts
+and independent verification results are under `target/evidence/review-057/`;
+no IC measurement or live release execution is inferred from fixture substitutes.

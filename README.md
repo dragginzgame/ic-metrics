@@ -3,10 +3,12 @@
 Allocation-free, dependency-free measurement arithmetic.
 
 The `no_std` library exports `record_sample` for consumer-owned
-count/total fields and `MeasurementSummary` for samples, total, latest and maximum.
-`MeasurementHistogram` adds a fixed-size distribution with caller-selected bounds.
+count/total fields, `MeasurementAggregate` for mergeable count/total/maximum,
+and `MeasurementSummary` for ordered observations with a latest value.
+`MeasurementHistogram` adds a mergeable fixed-size distribution with caller-selected bounds.
 Zero is a valid observation; an empty summary has no latest or maximum value.
-Count and total saturate independently. Consumers establish units, identity and
+Tracked count and total clip independently, with sticky actual-overflow flags.
+An exactly reached `u64::MAX` remains exact. Consumers establish units, identity and
 reset boundaries before comparing observations; saturated totals cannot supply
 exact interval arithmetic.
 
@@ -20,12 +22,24 @@ assert_eq!(summary.samples(), 1);
 assert_eq!(summary.latest(), Some(0));
 ```
 
-Published 0.2.6 adds `checked_mean(samples, total)` and
-`MeasurementSummary::mean()`. Both return `Result<Option<u64>, MeasurementMeanError>`:
-empty data is `None`, measured zero is `Some(0)`, and nonempty unsaturated means
-use floor division. A nonzero total without samples or either counter at
-`u64::MAX` returns a typed error, including an exactly reached cap. The raw-field
-function supports consumer-owned report shapes without constructing an accumulator.
+Tracked `MeasurementAggregate::mean()` and `MeasurementSummary::mean()` return
+`Result<Option<u64>, MeasurementMeanError>`: empty is `None`, measured zero is
+`Some(0)`, and exact means round down. Actual overflow returns a typed error;
+exactly reaching the cap remains valid. The raw-field `checked_mean(samples,
+total)` stays conservative at either numeric cap because external fields do not
+carry overflow provenance. Accumulator flags cannot restore a clamped input sample.
+
+`MeasurementAggregate::merge` combines count/total and maximum without claiming
+ordering or deduplication. `interval_since(previous)` returns checked count/total
+differences and mean after the owner establishes common identity, units and
+append-only continuity. It rejects actual overflow and numeric discontinuity;
+maximum and latest values cannot be subtracted. Ordered summaries do not merge.
+
+Pending **0.6.0 is a hard cut**: histogram `summary()` is replaced by `aggregate()`,
+which has no latest value. Callers that need latest must own that observation
+separately. Tracked projections now use actual overflow rather than rejecting
+exactly reached caps. No serialized format, reader or endpoint is added; consumers
+coordinate public re-exports and retain their own persistence/reset contracts.
 
 The [application guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md) is included in
 packaged crate documentation, with a compiled example of fixed named histograms,
@@ -34,13 +48,15 @@ resets, reporting and cost qualification; applications own those policies.
 
 For a distribution, construct `MeasurementHistogram::new([10, 100])`. Its
 disjoint buckets cover `0..=10` and `11..=100`; `overflow()` counts larger
-observations. `bucket_counts()` returns those two counts, and `summary()`
+observations. `bucket_counts()` returns those two counts, and `aggregate()`
 includes every observation. Duplicate or descending bounds return a typed
 `HistogramBoundsError` identifying the invalid bound. Construction and recording
 support constant evaluation. Storage is fixed, recording searches at most the
 configured number of bounds, and every bucket saturates independently. Buckets
 describe ranges; they do not provide exact percentiles. Units, thresholds and
-cumulative export remain consumer-owned. The histogram API is published in 0.2.4.
+export encoding remain consumer-owned. `merge(&other)` requires matching bounds
+and returns a typed mismatch without changing the destination. Bucket and overflow
+saturation flags distinguish exact caps from lost counts.
 
 Published 0.2.17 adds `cumulative_count(index)` for exact counts through a configured
 bound and `quantile_bucket(numerator, denominator)` for nearest-rank ranges, such
@@ -75,8 +91,8 @@ Verified 0.2.16 publication and complete native qualification are bound in the
 The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local source, remote/publication state, locks and owning CI.
 Consumers exposing `MeasurementSummary` in
-public APIs must coordinate the same released dependency identity. Stored data, reports
-and endpoints are unchanged.
+public APIs must coordinate the same released dependency identity. The arithmetic owns no stored format or endpoints. Consumers own report-shape
+changes and any retained-data disposition when adopting a new public contract.
 Historical reader execution remains in the source-bound
 [evidence](https://github.com/dragginzgame/ic-metrics/blob/v0.2.3/docs/status/current.md#released-019)
 and tagged releases; current CI qualifies arithmetic and repository tooling.

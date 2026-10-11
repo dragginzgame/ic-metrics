@@ -2,6 +2,8 @@
 
 use core::fmt;
 
+use crate::MeasurementAggregate;
+
 #[cfg(test)]
 mod tests;
 
@@ -10,9 +12,9 @@ mod tests;
 pub enum MeasurementMeanError {
     /// A nonzero total has no observations to account for it.
     TotalWithoutSamples,
-    /// The sample count is at `u64::MAX`, including an exactly reached cap.
+    /// Tracked samples overflowed, or a raw count is at the ambiguous numeric cap.
     SaturatedSamples,
-    /// The total is at `u64::MAX`, including an exactly reached cap.
+    /// The tracked total overflowed, or a raw total is at the ambiguous numeric cap.
     SaturatedTotal,
 }
 
@@ -77,82 +79,71 @@ pub const fn record_sample(samples: &mut u64, total: &mut u64, value: u64) {
     *total = total.saturating_add(value);
 }
 
-/// Saturating summary of observations in one consumer-selected unit.
+/// Ordered observations with a mergeable aggregate and a separate latest value.
 ///
-/// Count and total saturate independently at `u64::MAX`. Treat either counter
-/// at that value as unavailable for exact interval arithmetic, including when
-/// reached exactly. Latest and maximum remain individual observations after
-/// saturation. Empty and measured zero are distinct states.
-///
-/// Consumers establish identity and reset boundaries before comparing snapshots.
-/// The summary does not decide whether observations overlap or are additive.
+/// Count and total saturate independently, tracking actual overflow. An exactly
+/// reached `u64::MAX` remains exact; inspect the aggregate's saturation flags
+/// before using raw counts/totals for exact arithmetic. Latest and maximum remain
+/// individual observations after overflow. Empty and measured zero are distinct.
+/// Consumers own units, identity, ordering and reset boundaries.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct MeasurementSummary {
-    samples: u64,
-    total: u64,
+    aggregate: MeasurementAggregate,
     latest: u64,
-    maximum: u64,
 }
 
 impl MeasurementSummary {
     /// Empty summary, with no latest or maximum observation.
     pub const EMPTY: Self = Self {
-        samples: 0,
-        total: 0,
+        aggregate: MeasurementAggregate::EMPTY,
         latest: 0,
-        maximum: 0,
     };
 
-    /// Record one completed observation, including zero.
-    ///
-    /// Every observation must use the same unit as earlier observations.
+    /// Record one completed observation, including zero, in the existing unit.
     pub const fn record(&mut self, value: u64) {
-        record_sample(&mut self.samples, &mut self.total, value);
+        self.aggregate.record(value);
         self.latest = value;
-        if value > self.maximum {
-            self.maximum = value;
-        }
     }
 
-    /// Number of completed samples, saturating independently of the total.
+    /// Mergeable count/total/maximum snapshot without observation ordering.
+    #[must_use]
+    pub const fn aggregate(self) -> MeasurementAggregate {
+        self.aggregate
+    }
+
+    /// Sample count, clipped at `u64::MAX`; saturation is in [`Self::aggregate`].
     #[must_use]
     pub const fn samples(self) -> u64 {
-        self.samples
+        self.aggregate.samples()
     }
 
-    /// Sum of all observations, saturating independently of the sample count.
+    /// Observation total, clipped at `u64::MAX`; saturation is in [`Self::aggregate`].
     #[must_use]
     pub const fn total(self) -> u64 {
-        self.total
+        self.aggregate.total()
     }
 
-    /// Integer mean in the observation's unit, rounded down, or `None` if empty.
+    /// Floor-rounded mean, or `None` when empty. An exactly reached cap is valid.
     ///
     /// # Errors
-    ///
-    /// Returns [`MeasurementMeanError`] when either counter is at `u64::MAX`,
-    /// including an exactly reached cap. Uses the same contract as [`checked_mean`].
+    /// Returns [`MeasurementMeanError`] on actual count or total overflow.
     pub const fn mean(self) -> Result<Option<u64>, MeasurementMeanError> {
-        checked_mean(self.samples, self.total)
+        self.aggregate.mean()
     }
 
-    /// Latest observation, or `None` when no sample has been recorded.
+    /// Latest observation, or `None` when empty. Summaries cannot be merged.
     #[must_use]
     pub const fn latest(self) -> Option<u64> {
-        if self.samples == 0 {
+        if self.samples() == 0 {
             None
         } else {
             Some(self.latest)
         }
     }
 
-    /// Largest observation, or `None` when no sample has been recorded.
+    /// Largest observation, or `None` when empty, including after overflow.
     #[must_use]
     pub const fn maximum(self) -> Option<u64> {
-        if self.samples == 0 {
-            None
-        } else {
-            Some(self.maximum)
-        }
+        self.aggregate.maximum()
     }
 }
