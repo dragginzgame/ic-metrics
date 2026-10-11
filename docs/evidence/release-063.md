@@ -44,3 +44,24 @@ deleted local evidence or change historical source identities. This verification
 performs no build, dependency resolution, installation, workflow dispatch,
 release, staging or sibling mutation. No behavior change requires a pending
 changelog entry.
+
+## Supplemental Apple Silicon acceptance
+
+A subsequent exact-source observation reports Linux, Apple Silicon and both Rust
+floors passing; Intel remains queued. Independently downloaded Apple Silicon
+artifact `11702141046` verifies its API-declared ZIP SHA-256
+`a4ca50f768ec00d55b7fc08a53807e31aa7317de324bd41998433a9401a0162a`
+and inner archive SHA-256
+`c69d2477e253e751c183add7d6494a3d013c05a13079557627d7566b1aaa9195`.
+All 74 released-source hashes, the exact workflow catalog, all 14 payload hashes,
+source/run/attempt/native host/IC pins and seven successful outcomes verify.
+The actual aggregate/collector, release metadata/admission/retention,
+formatting-hook and inspector checks execute on Apple Silicon. Fixture effects
+remain substitutes and establish no IC runtime costs.
+
+The API metadata, original ZIP/archive, recovered receipt and independent checks
+are retained under `target/evidence/release-064/prior-apple-*`. This evidence
+qualifies released 0.6.3, not the separately prepared 0.6.4 metadata or its
+Shared 0.6.0 contract. [#60](https://github.com/dragginzgame/ic-metrics/issues/60)
+remains open for Intel acceptance; the initial queued observation above is
+retained as history.

@@ -206,7 +206,8 @@ Quill, ICP CLI, didc, ic-wasm and Binaryen, plus
 cargo-sort, cargo-sort-derives and candid-extractor,
 through this checkout's `.tools/` paths, selecting verified shared generations.
 Rust tools use exact pins, locked Cargo installation and the shared standard
-tool-build environment; application flags and wrappers remain local. Setup/checks run host, IC and Rust sets in order, including under
+tool-build environment; application flags and wrappers remain local. Setup/checks
+run host, IC and Rust sets in order, including under
 parallel Make. Setup first checks the supported platform, pins and selected
 Rust/Cargo toolchain without installing them. Host check failures identify the
 tool, selected path and repair command. Interrupted setup can leave earlier tools installed and retains

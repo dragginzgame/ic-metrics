@@ -4,7 +4,38 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.4 Shared Tooling 0.6.0 adoption
+## Latest publication and upstream observations
+
+Read-only public verification still observes Metrics main at released 0.6.3
+`b51e30743ad23a74ef02fef0edcf2b3acca6d4e3`, with no public `v0.6.4` tag and no
+0.6.4 row in the official sparse registry index. Local 0.6.4 metadata and dated
+changelog remain prepared, alongside uncommitted documentation. The maintainer's
+reported publication is not yet independently confirmed; no release recovery or
+metadata mutation is performed by this review.
+
+Released 0.6.3 now has independently verified
+[Apple Silicon acceptance](../evidence/release-063.md#supplemental-apple-silicon-acceptance),
+joining Linux and both Rust floors. Intel remains queued, so
+[#60](https://github.com/dragginzgame/ic-metrics/issues/60) stays open.
+The older exact-source gaps in #49/#50/#51 remain distinct; cancelled lanes
+are not replaced with later-release receipts.
+
+The adopted Shared 0.6.0 source is still the newest committed sibling revision.
+Its exact-source Apple Silicon regression fails in the canonical Rust fixture;
+[Shared #124](https://github.com/dragginzgame/shared-tooling/issues/124) owns the
+padded build-count correction. Shared's dirty pending 0.6.1 also strengthens
+Cargo setup failure propagation under
+[#120](https://github.com/dragginzgame/shared-tooling/issues/120).
+These fixes require clean committed canonical distribution before adoption;
+snapshot-owned files remain untouched. Private Host 0.13.3 changes contributor
+tooling, with the consumed artifacts/filesystem Rust source unchanged from 0.13.2.
+The maintainer's separate working lock now selects Host 0.13.3. Private inspector
+Clippy, all-target checks and Rust 1.88 pass against this prepared 0.6.4 graph,
+with the current Cargo metadata, lock and changelog preserved. These focused
+checks do not replace the earlier full gate or establish native release
+acceptance. No dependency update or sibling edit is performed by this review.
+
+## Prepared 0.6.4 Shared Tooling 0.6.0 adoption
 
 Adopted committed/public Shared Tooling 0.6.0
 `75180980a0c4e4252d8a915aaecfaefd92bf9a4e` through the canonical exporter from a
@@ -19,16 +50,26 @@ Metrics' custom native collector delegates both local Rust and referenced shared
 build selection to the canonical owner, eliminating duplicate selection. It
 retains safe local evidence and diagnostics when store admission fails, packs
 the upload before reporting incomplete collection, and tests shared Cargo recovery
-and redirected-store refusal. Focused fixtures, selected ShellCheck and actionlint
-pass. [The adoption record](../evidence/adoption-064.md) owns real setup and delivery
+and redirected-store refusal. Real setup/offline admission, two-checkout Cargo
+reuse without resolution or compilation, selected Clippy, both Rust floors,
+Bash 3.2/Make 3.81 checks and full `make ci` pass. The full gate takes 251 seconds;
+105 frozen inputs, 2,394 earlier tool files and the working lock remain unchanged
+immediately after that gate, with 0.6.3 package metadata.
+Two earlier shared IC-tool lock refusals and the initial default-compiler reuse
+attempt are retained separately. [The adoption record](../evidence/adoption-064.md) owns setup and delivery
 qualification; [#61](https://github.com/dragginzgame/ic-metrics/issues/61) retains
 delivered-source native acceptance.
 
-The pending version is compatible 0.6.4: arithmetic sources/APIs/behavior, tool
-pins and both Rust floors remain unchanged. Package/workspace versions stay
-0.6.3. The pre-existing Host 0.13.2 working lock and earlier release-evidence
-edits are preserved separately; the adoption selects no dependency update.
-No sibling mutation, real staging, commit or release is performed.
+The candidate is compatible 0.6.4: arithmetic sources/APIs/behavior, tool
+pins and both Rust floors remain unchanged. The maintainer commits the adoption
+as `ddcd7665ac44f3f903b3c4d0faf2eb0963033a29` during qualification, then prepares
+0.6.4 workspace/package metadata and dates its changelog. These subsequent
+metadata changes remain separate from the passing 0.6.3-metadata local gate;
+their release validation/delivery is not claimed here.
+The pre-existing Host 0.13.2 working lock selection and earlier release-evidence
+edits were preserved during adoption; the adoption selects no dependency update.
+The subsequent Host 0.13.3 working selection is reviewed separately above.
+The agent performs no sibling mutation, real staging, commit or release.
 
 ## Published 0.6.3 and current qualification
 
@@ -49,11 +90,14 @@ and Shared 0.3.12 adoption in [#58](https://github.com/dragginzgame/ic-metrics/i
 Cancelled 0.6.0/0.6.1 sources retain their historical gaps. The newer 0.6.3
 tooling contract still needs its own macOS acceptance in #60.
 
-The released private graph selects Host 0.13.1. A separate uncommitted Host
-0.13.2 lock update is preserved and has no released-source qualification here.
-Shared remains committed/public 0.5.0; its exact-source Linux and Apple Silicon
-regression jobs report success, with Intel queued. New dirty upstream work is
-not an adopted revision. No further committed baseline is available to refresh.
+The released private graph selects Host 0.13.1. At the initial release review,
+a separate uncommitted Host 0.13.2 lock update was preserved without released-source
+qualification. The newer prepared Host 0.13.3 graph is reviewed above.
+At that earlier release verification, Shared was committed/public 0.5.0, with
+successful Linux and Apple Silicon regression jobs and Intel queued. The pending
+0.6.0 adoption above now supersedes that baseline; its own exact-source Linux
+regression passes while both macOS lanes remain in progress. These observations
+retain their separate source identities.
 
 Remaining root issues concern source-bound native or consumer qualification.
 Timers' [0.6 adoption](https://github.com/dragginzgame/ic-timers/issues/43) is
