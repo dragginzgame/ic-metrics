@@ -109,7 +109,19 @@ if [[ "$*" == "$FIXTURE_FAILURE" ]]; then
         *) candidate="" ;;
     esac
     if [[ -n "$candidate" && "$FIXTURE_ADMISSION" != yes ]]; then
-        mkdir -p "$candidate"
+        if [[ "${FIXTURE_SHARED_STORE:-no}" == yes ]]; then
+            store_kind=host
+            [[ "$*" != install-ic-tools ]] || store_kind=ic
+            store_slot="$SHARED_TOOLING_STORE/$store_kind-$(printf '%064d' 0)"
+            mkdir -p "$store_slot/set.fixture" .tools
+            ln -s "$store_slot/set.fixture" "$candidate"
+            # A bundle without this checkout's reference must not be collected.
+            mkdir -p "$store_slot/set.unrelated"
+            printf 'unrelated store payload\n' > "$store_slot/set.unrelated/payload"
+            chmod 700 "$SHARED_TOOLING_STORE" "$store_slot" "$store_slot/set.fixture"
+        else
+            mkdir -p "$candidate"
+        fi
         printf 'retained candidate\n' > "$candidate/failure:payload"
         printf 'literal name\n' > "$candidate/"$'trailing\n'
         chmod 640 "$candidate/failure:payload"
@@ -146,7 +158,7 @@ FIXTURE_REAL_BASH="$real_bash"
 export FIXTURE_REAL_BASH
 FIXTURE_REAL_MAKE="$(command -v make)"
 export FIXTURE_REAL_MAKE
-for scenario in success rust-install rust-check rust-admission ic-admission host-install host-check ic-install ic-check native formatting rust-archive-write rust-archive-conflict; do (
+for scenario in success rust-install rust-check rust-admission ic-admission host-install host-check host-store ic-install ic-check ic-store native formatting rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -154,11 +166,12 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
     export GIT_DIR="$git_dir" GIT_WORK_TREE="$worktree"
     export GITHUB_WORKSPACE="$worktree" GITHUB_RUN_ID=123 GITHUB_RUN_ATTEMPT=2 GITHUB_EVENT_NAME=fixture
     export GITHUB_PATH="$worktree/github-path" TMPDIR="$worktree/scratch"
+    export SHARED_TOOLING_STORE="$worktree/shared-store" FIXTURE_SHARED_STORE=no
     export RUNNER_TEMP="$worktree/runner temp"
     mkdir -p "$RUNNER_TEMP" "$TMPDIR"
     export FIXTURE_COMMANDS="$worktree/commands.log" FIXTURE_FAILURE="" FIXTURE_ADMISSION=no
     export FIXTURE_FORMATTING=no
-    export PATH="$fixture/bin:$root/.tools/rust/bin:$root/.tools/host/bin:$PATH"
+    export PATH="$fixture/bin:$root/.tools/rust/common/bin:$root/.tools/host/bin:$PATH"
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
     export TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped NATIVE_OUTCOME=skipped
     case "$scenario" in
@@ -166,13 +179,14 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
         rust-admission) FIXTURE_FAILURE=install-rust-tools-preflight ;;
         ic-admission) FIXTURE_FAILURE=install-ic-tools-preflight ;;
         rust-check) FIXTURE_FAILURE=rust-tools-check ;;
-        host-install) FIXTURE_FAILURE=install-host-tools ;;
+        host-install|host-store) FIXTURE_FAILURE=install-host-tools ;;
         host-check) FIXTURE_FAILURE=host-tools-check ;;
-        ic-install) FIXTURE_FAILURE=install-ic-tools ;;
+        ic-install|ic-store) FIXTURE_FAILURE=install-ic-tools ;;
         ic-check) FIXTURE_FAILURE=ic-tools-check ;;
         native) FIXTURE_FAILURE=ci ;;
         formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
     esac
+    if [[ "$scenario" == *-store ]]; then FIXTURE_SHARED_STORE=yes; fi
     if [[ "$scenario" == *-admission ]]; then FIXTURE_ADMISSION=yes; fi
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
@@ -281,18 +295,26 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
             tar -xzf unpacked/target/evidence/native-ci/tool-candidates.tar.gz -C recovered-candidates
             for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust; do
                 if [[ -d "$candidate" ]]; then
-                    cmp "$candidate/failure:payload" "recovered-candidates/$candidate/failure:payload"
-                    cmp "$candidate/"$'trailing\n' "recovered-candidates/$candidate/"$'trailing\n'
-                    cmp "$candidate/executable" "recovered-candidates/$candidate/executable"
-                    [[ -x "recovered-candidates/$candidate/executable" ]] || exit 1
-                    [[ -L "recovered-candidates/$candidate/link" ]] || exit 1
-                    [[ "$(readlink "recovered-candidates/$candidate/link")" == failure:payload ]] || exit 1
-                    [[ ! -e "recovered-candidates/$candidate/.git" ]] || exit 1
+                    recovered="recovered-candidates/$candidate"
+                    if [[ -L "$candidate" ]]; then
+                        [[ -L "$recovered" && "$(readlink "$recovered")" == "$(readlink "$candidate")" ]] || exit 1
+                        physical="$(cd "$candidate" && pwd -P)"
+                        recovered="recovered-candidates/${physical#"$SHARED_TOOLING_STORE/"}"
+                        [[ -d "$recovered" && ! -L "$recovered" ]] || exit 1
+                        [[ ! -e "${recovered%/*}/set.unrelated" ]] || exit 1
+                    fi
+                    cmp "$candidate/failure:payload" "$recovered/failure:payload"
+                    cmp "$candidate/"$'trailing\n' "$recovered/"$'trailing\n'
+                    cmp "$candidate/executable" "$recovered/executable"
+                    [[ -x "$recovered/executable" ]] || exit 1
+                    [[ -L "$recovered/link" ]] || exit 1
+                    [[ "$(readlink "$recovered/link")" == failure:payload ]] || exit 1
+                    [[ ! -e "$recovered/.git" ]] || exit 1
                     # macOS and Linux expose permissions through different stat syntax.
                     if [[ "$(uname -s)" == Darwin ]]; then
-                        [[ "$(stat -f %Lp "recovered-candidates/$candidate/failure:payload")" == 640 ]] || exit 1
+                        [[ "$(stat -f %Lp "$recovered/failure:payload")" == 640 ]] || exit 1
                     else
-                        [[ "$(stat -c %a "recovered-candidates/$candidate/failure:payload")" == 640 ]] || exit 1
+                        [[ "$(stat -c %a "$recovered/failure:payload")" == 640 ]] || exit 1
                     fi
                 fi
             done

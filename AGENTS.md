@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`52e846369c39a1da371eac47ff97d94da925217e` and file digests are recorded in
+`a306180ce534227fcb98b882fba9a526d5d747e0` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -72,9 +72,15 @@ and [the extraction contract](docs/extraction.md) before implementation.
   tool versions/digests are in the reviewed `ci/tool-versions.env`. Explicit
   `make install-host-tools` prepares jq, yq, ripgrep with PCRE2 and cloc under
   `.tools/host/bin`; `make host-tools-check` verifies the complete set offline.
+  Host/IC payloads live in the canonical per-user store; checkout paths select
+  exact shared generations. Use the same `SHARED_TOOLING_STORE` setting for setup,
+  checks and evidence collection. Preserve earlier local bundles and references;
+  do not copy payloads or create consumer-owned storage management.
   Explicit `make install-rust-tools` prepares the pinned Cargo tools under
-  `.tools/rust/bin`; `make rust-tools-check` verifies their reported versions
-  offline. `install-tools` and `tools-check` run the complete common host, IC and
+  versioned slots, activating `.tools/rust/common/bin` only after the complete
+  set passes admission. `make rust-tools-check` verifies Cargo receipts, local
+  byte identities and reported versions offline. Retain prior sets and failed
+  build evidence. `install-tools` and `tools-check` run the complete common host, IC and
   Rust sets in order, including under parallel Make; product extensions use the
   shared ordered target lists rather than aggregate prerequisites.
   Shared `make/tools.mk` owns setup/check and LOC commands. IC executable pins live only in

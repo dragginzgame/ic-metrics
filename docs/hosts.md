@@ -131,7 +131,7 @@ earlier Linux preparation or tagged host results.
 - The reviewed shared Make include provides `make install-tools` and offline
   `make tools-check`. Host tool pins live in the reviewed `ci/tool-versions.env`;
   IC executable pins live in `ci/ic-tools.tsv`. Make selects `.tools/host/bin`
-  `.tools/ic/bin` and `.tools/rust/bin`. `make check-pins` and release validation never install tools.
+  `.tools/ic/bin` and `.tools/rust/common/bin`. `make check-pins` and release validation never install tools.
   Explicit CI setup uses the same aggregate: host, five IC executables and
   three Cargo tools in order, followed by a separate offline aggregate check.
   Both setup/check logs survive failures, with one common tool outcome. New hosted
@@ -148,8 +148,18 @@ earlier Linux preparation or tagged host results.
 - The pinned cargo-sort, cargo-sort-derives and candid-extractor set, installed
   explicitly with `make install-rust-tools` and verified offline with
   `make rust-tools-check`. Pins are owned by `ci/tool-versions.env`; interactive
-  commands select `.tools/rust/bin` on PATH. Formatting, CI and release
+  commands select `.tools/rust/common/bin` on PATH. Formatting, CI and release
   validation check all workspace manifests before Rust formatting.
+  Existing checkouts must rerun explicit `make install-tools` followed by
+  `make tools-check` after adopting Shared Tooling 0.5.0. Host/IC paths select
+  verified shared-store generations; older physical local bundles are retained
+  but no longer admitted as active installations. Use the same optional
+  `SHARED_TOOLING_STORE` setting for setup, checks and failure collection. Rust
+  slots remain checkout-local. The common Rust PATH
+  activates only after all three versioned slots pass receipt, byte and version
+  checks. Previous sets, in-place tools and failed build evidence are retained;
+  validation does not fall back to the old PATH. See
+  [the current adoption record](evidence/adoption-063-store.md).
 - SHA-256 via `sha256sum` on Linux or `shasum -a 256` on macOS.
 - Library builds and named arithmetic tests have no third-party dependencies,
   network services or external IC runtime requirements. There is no platform
@@ -299,7 +309,7 @@ Prepare tools explicitly before local validation:
 make install-tools
 make tools-check
 make check-pins
-export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/bin:$PATH"
+export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin:$PATH"
 ```
 
 `make local-tools-test`, `make pin-tools-check`, `make release-tools-check` and `make hook-check` run

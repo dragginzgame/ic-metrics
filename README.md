@@ -198,7 +198,7 @@ Prepare the reviewed local executables explicitly:
 ```sh
 make install-tools
 make tools-check
-export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/bin:$PATH"
+export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin:$PATH"
 ```
 
 The setup installs jq, Mike Farah yq, ripgrep with PCRE2 and cloc plus

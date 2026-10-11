@@ -4,7 +4,63 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.2 quantile costs and arithmetic evidence
+## Pending 0.6.3 Shared Tooling 0.5.0 adoption
+
+Adopted committed/public Shared Tooling 0.5.0
+`a306180ce534227fcb98b882fba9a526d5d747e0` through the canonical exporter
+from a clean detached checkout. Preview identifies 12 updates and two required
+companions; the resulting 96-file snapshot verifies. Host/IC command paths now
+select exact bundles in the canonical per-user store; Rust slots remain local.
+Earlier installations and failed evidence are retained. Metrics' native CI
+collector uses the shared evidence selector to retain referenced physical
+payloads, with host/IC shared-reference and unrelated-bundle fixture coverage.
+
+This extends the same compatible 0.6.3 batch: library sources, APIs, runtime
+behavior, dependency/tool pins, supported consumer builds and both Rust floors
+are unchanged. Package/workspace metadata stays 0.6.2. The
+[current adoption record](../evidence/adoption-063-store.md) owns setup and
+qualification evidence; [#60](https://github.com/dragginzgame/ic-metrics/issues/60)
+retains delivered-source native acceptance. No sibling source, real index,
+version, commit or release mutation is performed.
+
+Real host/IC setup, complete offline admission and two-checkout reuse with zero
+downloads pass; all 4,723 earlier physical tool files retain their checksums.
+Affected fixtures and hooks pass on current Bash/Make and genuine Bash 3.2/Make
+3.81. Full `make ci` passes in 241 seconds, both package floors pass, and all 104
+frozen code/graph/pin/Make/workflow/snapshot inputs remain unchanged. Read-only
+six-consumer review binds committed and working inputs separately. Exact-source
+Shared Linux CI reports success; its macOS lanes and subsequent delivered Metrics
+native acceptance remain separate. The initial 0.4.1 evidence below is historical.
+
+## Initial 0.4.1 adoption preparation history for 0.6.3
+
+Adopted committed/public Shared Tooling 0.4.1
+`5ab05317f8da10c6388dc9096780131459d9db71` through its canonical exporter
+from a clean detached checkout. All 94 selected files remain selected; the
+read-only preview reports 16 updates and no missing companions. Metrics-owned
+CI, native-evidence fixtures and shell instructions now select
+`.tools/rust/common/bin`. Common tools share the selected-Cargo slot/receipt/byte
+admission engine, and the full physical Rust tree is retained by the evidence
+action. Prior installations and failed evidence are preserved.
+
+The next changelog is 0.6.3: contributor setup changes leave published arithmetic,
+APIs, behavior, consumer build requirements, dependency pins and Rust floors
+unchanged. Package/workspace metadata remains 0.6.2. The
+[adoption record](../evidence/adoption-063.md) records local qualification;
+[#60](https://github.com/dragginzgame/ic-metrics/issues/60) retains exact-source
+native acceptance. No sibling edit, commit, version change or release is performed.
+
+Real Linux setup and offline admission pass; repeated setup dispatches no Cargo
+with a refusing substitute, and all 2,329 prior Rust-tree files remain byte-identical.
+Full `ci` (182 seconds), native/Wasm Clippy and both package-floor checks pass.
+All 82 frozen code/graph/pin/Make/workflow/snapshot inputs remain unchanged.
+Rust installation fixtures, CI evidence and the real formatting hook also pass
+on genuine Bash 3.2.57/Make 3.81 on Linux. These checks do not qualify macOS.
+The exact-source upstream Linux run passes real setup and portable tests but
+fails its stale native-retention qualifier; the reproduced argument/path mismatch
+and remaining shared-host documentation discrepancies are reported to Shared #118.
+
+## 0.6.2 quantile costs and arithmetic evidence preparation history
 
 The [quantile fast-path comparison](../evidence/quantile-cost-062.md) qualifies
 checked-u64 product/division with an exact wide fallback against released 0.6.1.

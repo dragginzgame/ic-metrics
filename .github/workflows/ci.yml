@@ -54,6 +54,7 @@ jobs:
             .github/actions/retain-failure-evidence/action.yml ci/tool-versions.env ci/ic-tools.tsv \
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/dev/install-rust-tools.sh scripts/ci/test-rust-tools.sh \
+            scripts/dev/tool-store.sh scripts/ci/test-tool-store.sh \
             scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh \
             scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
             scripts/ci/select-tool-evidence.sh scripts/ci/test-tool-evidence.sh \
@@ -114,7 +115,7 @@ jobs:
           make tools-check 2>&1 | tee target/evidence/native-ci/tools-check.log
           echo "$GITHUB_WORKSPACE/.tools/host/bin" >> "$GITHUB_PATH"
           echo "$GITHUB_WORKSPACE/.tools/ic/bin" >> "$GITHUB_PATH"
-          echo "$GITHUB_WORKSPACE/.tools/rust/bin" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/.tools/rust/common/bin" >> "$GITHUB_PATH"
       - name: Record installed tool versions
         id: tool_inputs
         run: |
@@ -160,9 +161,14 @@ jobs:
           fi
           if [[ "$TOOLS_OUTCOME" == failure ]]; then
             candidates=()
-            for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust; do
-              if [[ -d "$candidate" ]]; then candidates+=("$PWD" "$candidate"); fi
-            done
+            diagnostics="$(mktemp -d target/evidence/native-ci/tool-evidence.XXXXXX)"
+            bash scripts/ci/select-tool-evidence.sh full "$PWD" "$diagnostics" > "$diagnostics/selections.nul"
+            while IFS= read -r -d '' candidate_root && IFS= read -r -d '' candidate; do
+              candidates+=("$candidate_root" "$candidate")
+            done < "$diagnostics/selections.nul"
+            if [[ ! -L .tools && -d .tools/rust && ! -L .tools/rust ]]; then
+              candidates+=("$PWD" .tools/rust)
+            fi
             if [[ ${#candidates[@]} != 0 ]]; then
               bash scripts/ci/archive-evidence.sh target/evidence/native-ci/tool-candidates.tar.gz "${candidates[@]}"
             fi

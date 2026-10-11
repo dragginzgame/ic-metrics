@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.3]
+
+### Changed
+
+- Adopt Shared Tooling 0.5.0 to reuse verified host/IC bundles across checkouts
+  and admit the complete common Rust tool set before activation. Contributors
+  must rerun `make install-tools`, then `make tools-check`, and select
+  `.tools/rust/common/bin` in their shell. Previous installations and failed
+  evidence are preserved; the published library contract is unchanged
+  ([#60](https://github.com/dragginzgame/ic-metrics/issues/60),
+  [Shared #118](https://github.com/dragginzgame/shared-tooling/issues/118),
+  [Shared #120](https://github.com/dragginzgame/shared-tooling/issues/120)).
+
+### Testing
+
+- Verify that CI failure artifacts retain referenced shared tool payloads while
+  excluding unrelated stored bundles
+  ([#60](https://github.com/dragginzgame/ic-metrics/issues/60)).
+
 ## [0.6.2] - 2026-10-11
 
 ### Changed
