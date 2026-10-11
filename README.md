@@ -58,10 +58,10 @@ export encoding remain consumer-owned. `merge(&other)` requires matching bounds
 and returns a typed mismatch without changing the destination. Bucket and overflow
 saturation flags distinguish exact caps from lost counts.
 
-Published 0.2.17 adds `cumulative_count(index)` for exact counts through a configured
+`cumulative_count(index)` provides exact counts through a configured
 bound and `quantile_bucket(numerator, denominator)` for nearest-rank ranges, such
 as p95 with `(95, 100)`. Empty quantiles are `None`; required count saturation
-returns `HistogramQueryError`. Overflow has no configured ceiling. The new
+returns `HistogramQueryError`. Overflow has no configured ceiling.
 `checked_scaled_ratio(numerator, denominator, scale)` floors an exact scaled
 integer ratio from a `u128` numerator, without floating point or overflowing
 intermediate multiplication. Callers establish exact inputs and handle empty or
@@ -78,24 +78,12 @@ Consumers own their summary and histogram instances, labels and persistence poli
 [The extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
 records scope and evidence.
 
-The published 0.2.0 hard cut removes the `ic` feature and
-`call_context_instructions`. Platform reads belong in consumer adapters:
+Platform reads belong in consumer adapters:
 IcyDB and Canic use `ic_cdk::api::call_context_instruction_counter()`; IC Timers
 uses its existing `ic0::performance_counter(1)` binding. Both read counter 1.
 Consumers own target gating, native handling, call-context identity and attribution.
 IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
 remain different consumer contracts.
-
-Verified 0.2.16 publication and complete native qualification are bound in the
-[release record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/release-0216.md).
-The [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
-distinguishes local source, remote/publication state, locks and owning CI.
-Consumers exposing `MeasurementSummary` in
-public APIs must coordinate the same released dependency identity. The arithmetic owns no stored format or endpoints. Consumers own report-shape
-changes and any retained-data disposition when adopting a new public contract.
-Historical reader execution remains in the source-bound
-[evidence](https://github.com/dragginzgame/ic-metrics/blob/v0.2.3/docs/status/current.md#released-019)
-and tagged releases; current CI qualifies arithmetic and repository tooling.
 
 ## Measuring cost
 
@@ -135,209 +123,79 @@ when possible, rather than on every recorded observation.
 
 ## Development
 
-Install rustup, Git, GNU Make, Bash 3.2 or newer and a SHA-256 utility. The pinned
-toolchain is Rust 1.99.0 and the arithmetic MSRV is 1.85.0. Install `wasm32-unknown-unknown`
-for Wasm checks. `make help` lists focused commands; select named tests during
-implementation. Before delivering completed code, run `make ci`, `make msrv`
-and `make wasm-inspect-msrv`. Inspection alone does not authorize the full suite;
-documentation-only changes use link, consistency and diff checks.
-
-The released 0.4.0 tooling cut forbids LF/CR characters in repository, tooling and
-operational directory names, including ancestors and resolved symlink destinations.
-Snapshot refresh/verification refuse these paths before selecting a neighbor.
-Rename affected operational directories explicitly; retained evidence is preserved.
-Spaces remain supported. Arithmetic APIs, stored data and report output are unchanged.
+Use rustup with the pinned Rust 1.99.0 toolchain, Git, GNU Make and Bash 3.2 or
+newer. Install `wasm32-unknown-unknown` for Wasm checks. The arithmetic library's
+minimum compiler is Rust 1.85.0.
 
 The private [Wasm evidence inspector](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics-wasm-inspect/README.md)
-uses the IC Host libraries to inspect explicitly supplied Wasms with caller-selected
-bounds. It needs Rust 1.88 and reports raw/encoded bytes and structural counts,
-without executing a canister. Bare Cargo commands select the arithmetic package;
-its dependency-free `no_std` graph and consumer contracts remain unchanged.
+requires Rust 1.88.0. It uses IC Host libraries to report raw/encoded bytes and
+structural counts for explicitly supplied Wasms with caller-selected bounds,
+without executing a canister. Bare Cargo commands select the arithmetic package.
 
-Prepare the pinned checkout-local Cargo tools during developer setup:
-
-```bash
-make install-rust-tools
-make rust-tools-check
-make install-hooks
-```
-
-`make fmt` sorts every workspace manifest before Rust formatting. `make fmt-check`
-checks both without changing files; CI installs the same pinned formatter.
-Successful commands report `Formatting... ok` or `Checking formatting... ok`.
-Failures keep their failing status and print the complete diagnostic log's path;
-native CI retains those logs in its evidence archive.
-Both targets use the reviewed shared Make include and prepared tools offline;
-they disable automatic Rustup installation.
-The shared admission guard rejects ignore-errors, dry-run, touch and query modes,
-including command-line `MAKEFLAGS` replacements. Leave `MFLAGS` generated by GNU
-Make; assigning it in a command or Makefile is refused before dispatch. Ordinary
-parallel Make and safe `MAKEFLAGS` replacements remain supported.
-Run `make install-hooks` once per clone and after updating shared tooling. The
-repository-local pre-commit hook formats the staged snapshot, refreshes selected
-files, rejects partial staging and preserves unrelated working edits. It refuses
-to replace existing hook installations. `make hook-check` exercises these
-contracts in scratch repositories without creating commits.
-
-See [agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md),
-[host support](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md) and
-[the current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md).
-The reviewed [maintenance task catalog](https://github.com/dragginzgame/ic-metrics/blob/main/tasks/README.md) supplies repeatable
-inspection procedures. Its optional coordinator is inactive until explicitly
-enabled; snapshot adoption starts no schedule or background agent.
-Reviewed shared tooling is vendored;
-normal checks and release scripts need no Shared Tooling sibling checkout.
-Standard release preflight prepares the selected locked cache and this checkout's
-pinned Rust tool set through `make install-rust-tools`, then runs offline
-`make rust-tools-check` before validation. Preparation follows source/candidate
-admission and saved-release reconciliation; explicit Cargo offline settings remain
-authoritative. Standalone preflight checks the existing set without installing it.
-
-Prepare the reviewed local executables explicitly:
+Prepare and check the reviewed tools, select their paths, then install the
+repository's formatting hook:
 
 ```sh
 make install-tools
 make tools-check
 export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin:$PATH"
+make install-hooks
 ```
 
-The setup installs jq, Mike Farah yq, ripgrep with PCRE2 and cloc plus
-Quill, ICP CLI, didc, ic-wasm and Binaryen, plus
-cargo-sort, cargo-sort-derives and candid-extractor,
-through this checkout's `.tools/` paths, selecting verified shared generations.
-Rust tools use exact pins, locked Cargo installation and the shared standard
-tool-build environment; application flags and wrappers remain local. Setup/checks
-run host, IC and Rust sets in order, including under
-parallel Make. Setup first checks the supported platform, pins and selected
-Rust/Cargo toolchain without installing them. Host check failures identify the
-tool, selected path and repair command. Interrupted setup can leave earlier tools installed and retains
-build output for inspection. Archive installers retain previous and failed
-candidates. `tools-check` is offline; ordinary validation never installs
-tools. System bootstrap packages and installation behavior are documented in
-[local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
+[Local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md)
+owns bootstrap prerequisites, tool inventory, shared storage, installer failure
+handling and PATH selection. [Git hook rules](https://github.com/dragginzgame/ic-metrics/blob/main/rules/git-hooks.md)
+own staged formatting and hook installation. The reviewed shared tooling is
+vendored; normal commands need no Shared Tooling sibling checkout.
 
-After Shared Tooling 0.6.1 adoption, rerun `make install-tools` and `make tools-check`.
-Cargo reuse requires matching compiler, native environment, published source/lock,
-target and profile; prior local installations and failed builds are preserved.
-Use the same optional `SHARED_TOOLING_STORE` setting for setup, checking and evidence.
-Setup failures stop common-tool activation and preserve the original failure
-status and another installer's locks. Resolve the reported cause, then rerun setup.
+`make fmt` sorts workspace manifests and formats Rust; `make fmt-check` checks
+without editing. `make help` lists focused commands. Select named tests during
+implementation, and use `make check`, `make check-wasm`, `make clippy` and
+`make wasm-inspect-check` for the affected package. Completed code delivery uses
+`make ci`, `make msrv` and `make wasm-inspect-msrv`; inspection and documentation
+changes use narrower checks. The [host support and qualification guide](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks)
+owns local gates and native acceptance. [Agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md)
+own command authority.
 
-The released 0.5.0 toolset cut removes the host installer's `--with-ripgrep` and
-`--with-cloc` flags; all four host tools are always required. Remove those flags
-from direct callers. Existing complete matching bundles are reused, while older
-bundles and evidence are preserved. Product tool targets extend the shared
-`LOCAL_TOOL_INSTALL_TARGETS` / `LOCAL_TOOL_CHECK_TARGETS` lists; do not add
-aggregate prerequisites. Compiler/toolchain preparation stays explicit.
-
-Release 0.3.0 changes the setup contract to five IC tools. Replace an older
-six-tool selection explicitly with `make install-ic-tools`, then run
-`make ic-tools-check`; previous bundles and evidence remain retained. PocketIC
-setup and admission belong to IC Testkit under the
-[ownership handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/ic-tools.md#pocketic-ownership-handoff).
-Metrics has no active server caller and adds no Testkit dependency. Arithmetic
-APIs and consumer data are unchanged; this tooling cut requires no data reset.
-
-The reviewed shared Make include supplies `make cloc` for this workspace's
-Rust runtime/test report using the prepared local tools. Fleet tooling inventory
-runs from Shared Tooling; this repository does not vendor that reporter or its
-dedicated regression suite. Counts guide review and do not establish equivalent
-behavior or performance.
-
-`make check-pins` checks dependency and workflow declarations offline using
-Git and the prepared local parsers. Their single reviewed pin owner is
-`ci/tool-versions.env`; IC executable pins live in `ci/ic-tools.tsv`.
-Local setup and focused commands are in
-[host support](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks).
-The library has no Cargo dependencies. Tracked lockfiles preserve workspace
-identity.
-Dependency changes must prepare every affected independent workspace graph before
-release validation. Checks never upgrade dependencies or install tools implicitly.
+Common IC executable setup and PocketIC ownership are documented in
+[IC tools](https://github.com/dragginzgame/ic-metrics/blob/main/docs/ic-tools.md).
+Metrics has no active server caller or Testkit dependency. Repository maintenance
+procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics/blob/main/tasks/README.md).
 
 ## Releases and adoption
 
-The public repository is [dragginzgame/ic-metrics](https://github.com/dragginzgame/ic-metrics).
-The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
-preserves the initial `0.1.0` scaffold, the `0.1.1` arithmetic release and later
-tooling releases. [`ic-metrics 0.3.3`](https://crates.io/crates/ic-metrics/0.3.3)
-is published on crates.io with tag `v0.3.3`. Declare the published release
-in the consumer's
-root dependency catalog:
+Declare the current arithmetic contract in the consumer's root catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.3.3"
+ic-metrics = "0.6.5"
 ```
 
-Members inherit with `ic-metrics = { workspace = true }`. Consumers using
-`MeasurementHistogram` require `ic-metrics = "0.2.4"` or a later compatible
-published minimum in the root catalog. Either mean projection requires at least
-published 0.2.6. Checked histogram queries and scaled ratios require published
-0.2.17 or later. Published consumers
-must resolve the registry package rather than require a sibling checkout.
-[The qualification issue](https://github.com/dragginzgame/ic-metrics/issues/10)
-links each consumer's integration evidence. Native qualification is recorded
-against its actual revision in
-[the host record](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md).
+Members inherit with `ic-metrics = { workspace = true }`. Published consumers
+resolve the registry package; consumers exposing shared types coordinate the
+same released dependency identity. The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
+owns release history and required hard-cut changes. The [extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
+and [consumer qualification issue](https://github.com/dragginzgame/ic-metrics/issues/10)
+own integration scope and acceptance; the [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
+distinguishes local preparation, publication and hosted qualification.
 
-People and agents contribute through topic branches and pull requests under the
-[contribution rules](https://github.com/dragginzgame/ic-metrics/blob/main/rules/contributions.md).
-An explicit PR request includes the agent's scoped commits, branch push and PR
-creation. Ordinary fixes and continuation authorize local work. Merging and
-direct integration-branch pushes require separate authority and required checks.
+Contributions follow the [shared contribution rules](https://github.com/dragginzgame/ic-metrics/blob/main/rules/contributions.md).
+Maintainer releases use `make release-patch`, `make release-minor` or
+`make release-major` under the [shared release contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md).
+This repository supports `RELEASE_DELIVERY=direct` only, defaulting to remote
+`origin` and branch `main`. Release execution requires cargo-edit
+(`cargo set-version`). The shared contract owns preparation, validation,
+commit/tag delivery and interrupted-release recovery.
 
-Explicitly requested `make release-patch`, `release-minor` and `release-major` use the
-[same reviewed workflow](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md),
-with `RELEASE_REMOTE=origin` and
-`RELEASE_BRANCH=main` and `RELEASE_DELIVERY=direct`. This repo rejects PR release
-delivery before dispatch; adopting it requires merged-checkout adapters and their
-own qualification. They require cargo-edit (`cargo set-version`) and
-the prepared pinned Cargo tools and rustfmt. After source/candidate admission and
-recovery selection, they run `cargo fetch --locked` for the complete workspace
-before the offline gate. This prepares missing dependencies without updating
-the lock; caller-selected Cargo offline environment/configuration stays effective.
-A fetch failure stops this attempt before validation or metadata changes.
-Standalone `make release-preflight` stays offline. The standard entrypoints pass
-an internal cache-preparation selection, consumed before helper/Cargo dispatch and
-removed from validation children. Validation remains `CARGO_NET_OFFLINE=true`.
-They then prepare only Cargo metadata
-and release notes, commit,
-tag and atomically push. They do not publish the crate. Normal release targets
-reconcile an interrupted release at its saved commit. Newer committed fixes or
-a different requested increment then receive fresh preflight and full validation
-before the next release is prepared. Failed validation logs remain under the
-Git directory's `release-state/validation-failures/`; earlier attempts are retained.
-Source refusals list every staged, unstaged and untracked path outside
-`Cargo.toml`, `Cargo.lock` and `CHANGELOG.md`, before this attempt starts validation
-or version preparation. Resolve those paths through the ordinary contribution
-workflow; the checker preserves files and index bytes.
-`make release-resume VERSION=X.Y.Z` remains available for explicit selection;
-identity, payload and destination conflicts stop recovery.
-The 0.2.11 runner also rechecks the index, working payload and exact tag
-after the final consumer check. Completed direct recovery confirms local and
-remote tag identity and branch ancestry before reporting success; unavailable
-observations or conflicts stop without another push.
-The released Shared Tooling 0.1.25 snapshot also refreshes the matching local
-tracking ref from confirmed delivery, checking its type under Git's update lock.
-Unrelated, newer or symbolic refs are preserved; an optional refresh failure
-reports a fetch remedy without repeating delivery. Native qualification remains
-bound to each source in [the release records](docs/status/current.md).
+Publication is separate from release delivery:
 
-For a subsequent committed package release, the maintainer can run:
-
-```bash
+```sh
 make publish-check
 make publish
 ```
 
-`publish-check` delegates to Cargo's dry run. `publish` uploads only ic-metrics to
-crates.io, using the existing package version, locked dependencies and normal
-Cargo credential setup (`cargo login --registry crates-io`). Both retain Cargo's
-package verification and dirty-tree rejection. Publication creates no Git commit
-or tag, does not bump versions and preserves build artifacts.
-See [Cargo's publication documentation](https://doc.rust-lang.org/cargo/commands/cargo-publish.html).
-
-`cargo package -p ic-metrics --locked --offline --allow-dirty` prepares and verifies
-a local development archive without uploading it. The package includes the
-canonical MIT license text, source and this README; documentation links resolve
-to the public repository. The manifest restricts publication to crates.io.
+`publish-check` is Cargo's dry run; `publish` uploads only the existing
+`ic-metrics` package version to crates.io, using normal Cargo credentials and
+locked dependencies. Both retain Cargo's package verification and dirty-tree
+rejection. Publication does not bump versions, create Git commits/tags or clean
+artifacts. See [Cargo's publication documentation](https://doc.rust-lang.org/cargo/commands/cargo-publish.html).

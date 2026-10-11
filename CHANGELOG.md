@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.6]
+
+### Fixed
+
+- Focus the README on current measurement APIs, setup and consumer adoption,
+  referencing the shared setup, hook and release contracts instead of repeating
+  them. Update the registry example to the current arithmetic contract
+  ([#62](https://github.com/dragginzgame/ic-metrics/issues/62)).
+
 ## [0.6.5] - 2026-10-11
 
 ### Changed

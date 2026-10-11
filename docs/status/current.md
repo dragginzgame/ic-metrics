@@ -4,7 +4,40 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.5 Shared Tooling repair and Host selection
+## Pending 0.6.6 README cleanup
+
+[#62](https://github.com/dragginzgame/ic-metrics/issues/62) is repaired locally:
+the README keeps product examples, separate arithmetic/inspector Rust floors,
+one complete setup/check/PATH recipe, local validation and publication commands.
+Shared installer, hook and release semantics link to their existing owners;
+the registry example selects the current 0.6 contract. Historical qualification
+remains in the existing records. Link, consistency and diff checks pass, without
+changing product code or adding a full gate. The compatible pending notes are
+0.6.6; package/workspace metadata remains released 0.6.5. The issue stays open
+until this documentation repair is delivered.
+
+## Published 0.6.5 and incoming Host 0.14.1 review
+
+[Published 0.6.5 verification](../evidence/release-065.md) binds local/public
+source, tag and the official dependency-free archive to
+`c4685c9f79d97a55f5dcd5d4ea4b796812fb2ad0`. The release delivers Shared Tooling
+0.6.3 with committed Host 0.14.0. Hosted Rust-floor checks pass; Linux is running
+and both macOS lanes are queued. [#61](https://github.com/dragginzgame/ic-metrics/issues/61)
+still needs delivered-source native acceptance, not another arithmetic change.
+
+The maintainer's incoming lock selects Host 0.14.1.
+[Its separate review](../evidence/host-dependencies-0141.md) verifies official
+archives and committed source, unchanged consumed APIs and focused inspector/
+package-floor checks. This selection remains uncommitted and is not covered by
+the released graph or preceding full CI. Host 0.14.1's receipt-preservation repair
+belongs to its release adapter; Metrics needs no artifact/filesystem rewrite.
+
+Canic's public source and existing runtime/native acceptance gaps are unchanged
+from the preceding review; [#10](https://github.com/dragginzgame/ic-metrics/issues/10)
+remains open. This check performs no sibling edit, workflow dispatch or release.
+The qualification history below retains its original sources and observations.
+
+## Original 0.6.5 Shared Tooling repair and Host selection
 
 The incoming maintainer graph now selects Host 0.14.0 for the private inspector.
 [Its separate review](../evidence/host-dependencies-0140.md) verifies official
