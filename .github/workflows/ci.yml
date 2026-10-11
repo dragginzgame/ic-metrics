@@ -54,7 +54,7 @@ jobs:
             .github/actions/retain-failure-evidence/action.yml ci/tool-versions.env ci/ic-tools.tsv \
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/dev/install-rust-tools.sh scripts/ci/test-rust-tools.sh \
-            scripts/dev/tool-store.sh scripts/ci/test-tool-store.sh \
+            scripts/dev/tool-store.sh scripts/dev/cargo-tool-build.sh scripts/ci/test-tool-store.sh \
             scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh \
             scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
             scripts/ci/select-tool-evidence.sh scripts/ci/test-tool-evidence.sh \
@@ -159,16 +159,20 @@ jobs:
             cp .tools/ic/pins.tsv target/evidence/native-ci/ic-tool-pins.tsv
             cp .tools/ic/host target/evidence/native-ci/ic-tool-host.txt
           fi
+          collection_status=0
           if [[ "$TOOLS_OUTCOME" == failure ]]; then
             candidates=()
             diagnostics="$(mktemp -d target/evidence/native-ci/tool-evidence.XXXXXX)"
-            bash scripts/ci/select-tool-evidence.sh full "$PWD" "$diagnostics" > "$diagnostics/selections.nul"
+            bash scripts/ci/select-tool-evidence.sh full "$PWD" "$diagnostics" \
+              > "$diagnostics/selections.nul" 2> "$diagnostics/selection.log" || collection_status=$?
+            printf '%s\n' "$collection_status" > "$diagnostics/selection-status"
+            if [[ "$collection_status" != 0 ]]; then
+              cat "$diagnostics/selection.log" >&2
+              echo 'Tool evidence collection incomplete; retaining admitted local evidence and diagnostics.' >&2
+            fi
             while IFS= read -r -d '' candidate_root && IFS= read -r -d '' candidate; do
               candidates+=("$candidate_root" "$candidate")
             done < "$diagnostics/selections.nul"
-            if [[ ! -L .tools && -d .tools/rust && ! -L .tools/rust ]]; then
-              candidates+=("$PWD" .tools/rust)
-            fi
             if [[ ${#candidates[@]} != 0 ]]; then
               bash scripts/ci/archive-evidence.sh target/evidence/native-ci/tool-candidates.tar.gz "${candidates[@]}"
             fi
@@ -194,6 +198,7 @@ jobs:
           # the shared tool-candidate archiver deliberately excludes Git metadata.
           tar -czf target/evidence/native-ci.tar.gz -C target/evidence/native-ci .
           shasum -a 256 target/evidence/native-ci.tar.gz > target/evidence/native-ci.tar.gz.sha256
+          exit "$collection_status"
       # actions/upload-artifact v7
       - name: Upload native evidence
         if: always() && steps.checkout.outcome == 'success'

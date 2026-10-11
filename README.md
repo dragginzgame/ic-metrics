@@ -204,8 +204,9 @@ export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin
 The setup installs jq, Mike Farah yq, ripgrep with PCRE2 and cloc plus
 Quill, ICP CLI, didc, ic-wasm and Binaryen, plus
 cargo-sort, cargo-sort-derives and candid-extractor,
-under this checkout's `.tools/`. Rust tools use exact pins and locked Cargo
-installation. Setup/checks run host, IC and Rust sets in order, including under
+through this checkout's `.tools/` paths, selecting verified shared generations.
+Rust tools use exact pins, locked Cargo installation and the shared standard
+tool-build environment; application flags and wrappers remain local. Setup/checks run host, IC and Rust sets in order, including under
 parallel Make. Setup first checks the supported platform, pins and selected
 Rust/Cargo toolchain without installing them. Host check failures identify the
 tool, selected path and repair command. Interrupted setup can leave earlier tools installed and retains
@@ -213,6 +214,11 @@ build output for inspection. Archive installers retain previous and failed
 candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
+
+After Shared Tooling 0.6.0 adoption, rerun `make install-tools` and `make tools-check`.
+Cargo reuse requires matching compiler, native environment, published source/lock,
+target and profile; prior local installations and failed builds are preserved.
+Use the same optional `SHARED_TOOLING_STORE` setting for setup, checking and evidence.
 
 The released 0.5.0 toolset cut removes the host installer's `--with-ripgrep` and
 `--with-cloc` flags; all four host tools are always required. Remove those flags

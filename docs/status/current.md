@@ -4,7 +4,66 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.3 Shared Tooling 0.5.0 adoption
+## Pending 0.6.4 Shared Tooling 0.6.0 adoption
+
+Adopted committed/public Shared Tooling 0.6.0
+`75180980a0c4e4252d8a915aaecfaefd92bf9a4e` through the canonical exporter from a
+clean detached checkout. All 96 existing selections remain selected; 16 update,
+80 remain unchanged, and the explicitly added standard Cargo build helper makes
+a verified 97-file snapshot. Common Cargo tools now share exact compiler/native/
+source/packaged-lock/target/profile identities and use the shared standard tool
+environment. Application build settings remain local; older installations and
+failed build evidence are retained.
+
+Metrics' custom native collector delegates both local Rust and referenced shared
+build selection to the canonical owner, eliminating duplicate selection. It
+retains safe local evidence and diagnostics when store admission fails, packs
+the upload before reporting incomplete collection, and tests shared Cargo recovery
+and redirected-store refusal. Focused fixtures, selected ShellCheck and actionlint
+pass. [The adoption record](../evidence/adoption-064.md) owns real setup and delivery
+qualification; [#61](https://github.com/dragginzgame/ic-metrics/issues/61) retains
+delivered-source native acceptance.
+
+The pending version is compatible 0.6.4: arithmetic sources/APIs/behavior, tool
+pins and both Rust floors remain unchanged. Package/workspace versions stay
+0.6.3. The pre-existing Host 0.13.2 working lock and earlier release-evidence
+edits are preserved separately; the adoption selects no dependency update.
+No sibling mutation, real staging, commit or release is performed.
+
+## Published 0.6.3 and current qualification
+
+Published 0.6.3 `b51e30743ad23a74ef02fef0edcf2b3acca6d4e3`, public main and the
+peeled annotated tag agree. [Release verification](../evidence/release-063.md)
+binds the official non-yanked dependency-free archive, complete packaged source
+and a downloaded Linux receipt with verified source/payload hashes, catalog,
+host/pins and successful outcomes. Linux and both Rust floors pass; both Metrics
+macOS lanes are queued. [#60](https://github.com/dragginzgame/ic-metrics/issues/60)
+retains native acceptance for the delivered Shared 0.5.0 batch. Package/workspace
+metadata is 0.6.3; arithmetic is unchanged from 0.6.2.
+
+Released 0.6.2 now has [complete independently verified native acceptance](../evidence/release-062.md):
+Linux, Apple Silicon, Intel and both package floors pass at its exact source,
+with all three downloaded receipts verified. This completes the current root
+arithmetic contract in [#57](https://github.com/dragginzgame/ic-metrics/issues/57)
+and Shared 0.3.12 adoption in [#58](https://github.com/dragginzgame/ic-metrics/issues/58).
+Cancelled 0.6.0/0.6.1 sources retain their historical gaps. The newer 0.6.3
+tooling contract still needs its own macOS acceptance in #60.
+
+The released private graph selects Host 0.13.1. A separate uncommitted Host
+0.13.2 lock update is preserved and has no released-source qualification here.
+Shared remains committed/public 0.5.0; its exact-source Linux and Apple Silicon
+regression jobs report success, with Intel queued. New dirty upstream work is
+not an adopted revision. No further committed baseline is available to refresh.
+
+Remaining root issues concern source-bound native or consumer qualification.
+Timers' [0.6 adoption](https://github.com/dragginzgame/ic-timers/issues/43) is
+closed; [Backup #38](https://github.com/dragginzgame/ic-backup/issues/38) and
+Canic's [accounting](https://github.com/dragginzgame/canic/issues/99) and
+[owning adoption](https://github.com/dragginzgame/canic/issues/447) obligations
+remain open. No consumer source/build or new arithmetic work is performed by
+this release verification. Historical source gaps below retain their identities.
+
+## 0.6.3 Shared Tooling 0.5.0 adoption preparation history
 
 Adopted committed/public Shared Tooling 0.5.0
 `a306180ce534227fcb98b882fba9a526d5d747e0` through the canonical exporter

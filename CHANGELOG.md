@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.4]
+
+### Changed
+
+- Adopt Shared Tooling 0.6.0 to share Cargo tools across checkouts using exact
+  compiler, native-environment and packaged-lock identities. Rerun explicit
+  `make install-tools`, then `make tools-check`; `.tools/rust/common/bin` remains
+  the shell path. Tool builds use the shared standard environment while application
+  settings remain local. Earlier installations and build evidence are retained;
+  the published arithmetic contract is unchanged
+  ([#61](https://github.com/dragginzgame/ic-metrics/issues/61)).
+
+### Fixed
+
+- Retain safe local CI failure evidence and incomplete-collection diagnostics
+  when shared-store admission fails, including referenced Cargo builds during
+  successful collection
+  ([#61](https://github.com/dragginzgame/ic-metrics/issues/61),
+  [Shared #121](https://github.com/dragginzgame/shared-tooling/issues/121)).
+
 ## [0.6.3] - 2026-10-11
 
 ### Changed

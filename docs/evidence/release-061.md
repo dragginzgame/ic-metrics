@@ -38,3 +38,8 @@ The prior ignored evidence directory was absent; new hosted downloads do not
 restore deleted local preparation/performance evidence. This review performs no
 build, dependency resolution, installation, workflow dispatch, release or sibling
 mutation. No new behavior requires a pending changelog entry.
+
+Subsequent [0.6.2 native acceptance](release-062.md) verifies all three native
+receipts at that later released source, completing #58's unchanged Shared
+0.3.12 adoption and #57's current arithmetic contract. This retains the original
+0.6.1 observations above and does not qualify its subsequently cancelled run.

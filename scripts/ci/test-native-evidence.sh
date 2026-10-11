@@ -112,13 +112,25 @@ if [[ "$*" == "$FIXTURE_FAILURE" ]]; then
         if [[ "${FIXTURE_SHARED_STORE:-no}" == yes ]]; then
             store_kind=host
             [[ "$*" != install-ic-tools ]] || store_kind=ic
-            store_slot="$SHARED_TOOLING_STORE/$store_kind-$(printf '%064d' 0)"
+            if [[ "$*" == install-rust-tools ]]; then
+                store_kind=rust
+                mkdir -p "$candidate"
+                printf 'local failed compilation\n' > "$candidate/local-failure:payload"
+                candidate="$candidate/rust-set.fixture"
+            fi
+            fixture_store="$SHARED_TOOLING_STORE"
+            if [[ "${FIXTURE_STORE_INVALID:-no}" == yes ]]; then
+                fixture_store="$SHARED_TOOLING_STORE.physical"
+                mkdir "$fixture_store"
+                ln -s "$fixture_store" "$SHARED_TOOLING_STORE"
+            fi
+            store_slot="$fixture_store/$store_kind-$(printf '%064d' 0)"
             mkdir -p "$store_slot/set.fixture" .tools
             ln -s "$store_slot/set.fixture" "$candidate"
             # A bundle without this checkout's reference must not be collected.
             mkdir -p "$store_slot/set.unrelated"
             printf 'unrelated store payload\n' > "$store_slot/set.unrelated/payload"
-            chmod 700 "$SHARED_TOOLING_STORE" "$store_slot" "$store_slot/set.fixture"
+            chmod 700 "$fixture_store" "$store_slot" "$store_slot/set.fixture"
         else
             mkdir -p "$candidate"
         fi
@@ -158,7 +170,7 @@ FIXTURE_REAL_BASH="$real_bash"
 export FIXTURE_REAL_BASH
 FIXTURE_REAL_MAKE="$(command -v make)"
 export FIXTURE_REAL_MAKE
-for scenario in success rust-install rust-check rust-admission ic-admission host-install host-check host-store ic-install ic-check ic-store native formatting rust-archive-write rust-archive-conflict; do (
+for scenario in success rust-install rust-check rust-store rust-store-invalid rust-admission ic-admission host-install host-check host-store ic-install ic-check ic-store native formatting rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -167,6 +179,7 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
     export GITHUB_WORKSPACE="$worktree" GITHUB_RUN_ID=123 GITHUB_RUN_ATTEMPT=2 GITHUB_EVENT_NAME=fixture
     export GITHUB_PATH="$worktree/github-path" TMPDIR="$worktree/scratch"
     export SHARED_TOOLING_STORE="$worktree/shared-store" FIXTURE_SHARED_STORE=no
+    export FIXTURE_STORE_INVALID=no
     export RUNNER_TEMP="$worktree/runner temp"
     mkdir -p "$RUNNER_TEMP" "$TMPDIR"
     export FIXTURE_COMMANDS="$worktree/commands.log" FIXTURE_FAILURE="" FIXTURE_ADMISSION=no
@@ -175,7 +188,7 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
     export TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped NATIVE_OUTCOME=skipped
     case "$scenario" in
-        rust-install|rust-archive-write|rust-archive-conflict) FIXTURE_FAILURE=install-rust-tools ;;
+        rust-install|rust-store|rust-store-invalid|rust-archive-write|rust-archive-conflict) FIXTURE_FAILURE=install-rust-tools ;;
         rust-admission) FIXTURE_FAILURE=install-rust-tools-preflight ;;
         ic-admission) FIXTURE_FAILURE=install-ic-tools-preflight ;;
         rust-check) FIXTURE_FAILURE=rust-tools-check ;;
@@ -186,7 +199,8 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
         native) FIXTURE_FAILURE=ci ;;
         formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
     esac
-    if [[ "$scenario" == *-store ]]; then FIXTURE_SHARED_STORE=yes; fi
+    if [[ "$scenario" == *-store || "$scenario" == rust-store-invalid ]]; then FIXTURE_SHARED_STORE=yes; fi
+    if [[ "$scenario" == rust-store-invalid ]]; then FIXTURE_STORE_INVALID=yes; fi
     if [[ "$scenario" == *-admission ]]; then FIXTURE_ADMISSION=yes; fi
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
@@ -246,7 +260,14 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
         grep -Fx 'native=skipped' target/evidence/native-ci/outcome.txt > /dev/null
         exit 0
     fi
-    "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1
+    collection_status=0
+    "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || collection_status=$?
+    if [[ "$FIXTURE_STORE_INVALID" == yes ]]; then
+        [[ "$collection_status" == 1 ]] || exit 1
+        grep -F 'Tool evidence collection incomplete' archive.log > /dev/null
+    else
+        [[ "$collection_status" == 0 ]] || exit 1
+    fi
     shasum -a 256 -c target/evidence/native-ci.tar.gz.sha256 > archive-check.log
     mkdir -p unpacked/target/evidence/native-ci
     tar -xzf target/evidence/native-ci.tar.gz -C unpacked/target/evidence/native-ci
@@ -293,11 +314,19 @@ for scenario in success rust-install rust-check rust-admission ic-admission host
         else
             mkdir recovered-candidates
             tar -xzf unpacked/target/evidence/native-ci/tool-candidates.tar.gz -C recovered-candidates
-            for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust; do
+            for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust .tools/rust/rust-set.*; do
                 if [[ -d "$candidate" ]]; then
                     recovered="recovered-candidates/$candidate"
+                    if [[ "$candidate" == .tools/rust && "$FIXTURE_SHARED_STORE" == yes ]]; then
+                        cmp "$candidate/local-failure:payload" "$recovered/local-failure:payload"
+                        continue
+                    fi
                     if [[ -L "$candidate" ]]; then
                         [[ -L "$recovered" && "$(readlink "$recovered")" == "$(readlink "$candidate")" ]] || exit 1
+                        if [[ "$FIXTURE_STORE_INVALID" == yes ]]; then
+                            [[ ! -e "recovered-candidates/rust-$(printf '%064d' 0)" ]] || exit 1
+                            continue
+                        fi
                         physical="$(cd "$candidate" && pwd -P)"
                         recovered="recovered-candidates/${physical#"$SHARED_TOOLING_STORE/"}"
                         [[ -d "$recovered" && ! -L "$recovered" ]] || exit 1
