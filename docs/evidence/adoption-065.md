@@ -1,9 +1,10 @@
 # Shared Tooling 0.6 adoption for Metrics 0.6.5
 
-Current snapshot is committed/public Shared Tooling 0.6.2
-`7f1ca16b0dfa98021d2671017ecb7de767409b0e`. A subsequent maintainer lock update
-selects Host 0.13.5; it is preserved and reviewed in
-[the Host record](host-dependencies-0135.md). The original 0.6.1/Host 0.13.3
+Current snapshot is committed Shared Tooling 0.6.3
+`4fd979d13c32adb3cb2f51f213ebfc4f98339b3d`. Subsequent maintainer graph updates
+select [Host 0.13.5](host-dependencies-0135.md), then
+[Host 0.14.0](host-dependencies-0140.md); each review retains its own inputs.
+The original 0.6.1/Host 0.13.3
 qualification below retains its own inputs. Later qualification is recorded in
 the supplemental section rather than relabelling that earlier full gate.
 
@@ -155,3 +156,68 @@ reports Linux regression and lint/security success, with Apple Silicon running
 and Intel queued at the observation. This status is distinct from downloaded
 receipt acceptance or delivered Metrics native qualification in
 [#61](https://github.com/dragginzgame/ic-metrics/issues/61).
+
+## Supplemental Shared Tooling 0.6.3 adoption
+
+The maintainer reports that normal patch release is blocked by the retained
+`.git/release-state/0.6.4.plan`: phase `prepare`, previous 0.6.3, candidate 0.6.4,
+source `ddcd7665ac44f3f903b3c4d0faf2eb0963033a29`, empty saved index tree and no
+preparation file set. Actual clean HEAD is its descendant
+`e5986b6e859578695856bc56a5096ee077dde007`, whose canonical Cargo workspace
+version is 0.6.4 with pending 0.6.5 notes. The plan's SHA-256 is
+`8205b789a498fcd67da84f2827357778fff81e21f96e693ec97af1263be6a41d`.
+Inspection and adoption leave that real intent unchanged; no release, staging,
+commit, tag, push, publication or recovery is performed by the agent.
+
+With express authorization for the Shared Tooling repair, its runner now archives
+superseded direct preparation after checking clean descendant source, unchanged
+destination, absent staging evidence and committed metadata at the saved base or
+candidate. Normal targets select the requested increment from current metadata
+and repeat preflight/full validation. Preparation remains local metadata only;
+consumer journals, backups and receipts are retained and reconciled by their owner.
+Explicit resume and later effect phases keep exact-source/payload recovery.
+
+The maintainer commits the reviewed repair as Shared Tooling 0.6.3
+`4fd979d13c32adb3cb2f51f213ebfc4f98339b3d` during qualification. A clean detached
+clone of that revision supplies the canonical preview and refresh: all 97
+selections remain, nine update and 88 are unchanged. The accompanying maintenance
+rules require evidence-based delivered-issue reconciliation; they add no automatic
+workflow or CI dispatch. The real Metrics index, version, lock and selected pins
+remain unchanged. The candidate remains compatible 0.6.5.
+
+Shared qualification covers all increments, unchanged and committed-bumped
+metadata, explicit-resume refusal, failed fresh validation, exact retained plans
+and logs, dirty/divergent/staging/destination conflicts, and a different requested
+increment. Disposable real Git histories additionally reproduce 0.6.4-to-0.6.5
+selection, the exact new release commit and bare-destination atomic delivery,
+while preserving a separately delivered older tag. These are fixture effects,
+not a live Metrics release. ShellCheck and the complete genuine Bash 3.2.57/Make
+3.81 simulation profile pass. Logs and canonical export records are retained in
+`target/evidence/adoption-065/shared-063/`.
+
+Read-only reviews of IcyDB, Canic, Timers, Backup, Blob Storage and Toko Miner
+confirm local-metadata preparation ownership. Their source-bound journals/receipts
+and qualification remain consumer-owned; this adoption does not weaken a consumer
+preflight or archive its transaction evidence. No sibling edit is performed other
+than the expressly authorized Shared Tooling repair.
+
+The Shared Tooling full portable suite and full declared ShellCheck set pass;
+its six scoped repair inputs retain their hashes after the maintainer commit.
+The public main commit matches the reviewed source. Metrics' complete `make ci`
+passes in 267 seconds, 14:10:49–14:15:16 UTC on 2026-10-11, including both Clippy
+gates, the actual inspector CLI test and consumer metadata/admission fixtures.
+Arithmetic Rust 1.85 native/Wasm and private-inspector Rust 1.88 checks pass.
+All 85 frozen technical inputs, the real plan/version/graph/pins and all 2,406
+earlier selected physical tool-file hashes verify after delivery validation.
+The selected Cargo policy and pins remain unchanged; no real reinstallation is
+needed. Fourteen committed/working Make/adapter rows bind the owning preparation
+reviews in `downstream-preparation-inputs.tsv`.
+
+Exact-source [Shared CI](https://github.com/dragginzgame/shared-tooling/actions/runs/38145666246)
+reports lint/security success, Linux running and both macOS lanes queued at the
+observation. Local fixtures do not establish native macOS acceptance; Shared
+[#126](https://github.com/dragginzgame/shared-tooling/issues/126) retains that
+qualification. Metrics [#61](https://github.com/dragginzgame/ic-metrics/issues/61)
+retains this adopted source's delivered native acceptance. The pending Metrics
+changes must be committed before the maintainer reruns the normal release target;
+that future invocation performs the real plan archival and selects 0.6.5.

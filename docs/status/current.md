@@ -4,9 +4,45 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.5 Shared Tooling repair adoption
+## Pending 0.6.5 Shared Tooling repair and Host selection
 
-Current snapshot is committed/public Shared Tooling 0.6.2
+The incoming maintainer graph now selects Host 0.14.0 for the private inspector.
+[Its separate review](../evidence/host-dependencies-0140.md) verifies official
+archives, committed source and unchanged artifact/filesystem implementations.
+The upstream process API cut has no Metrics caller. Inspector checks,
+warnings-denied Clippy, selected tests and both package-floor checks pass; earlier full CI
+results below retain their original Host 0.13.5 scope. Full `make ci` now also
+passes against Host 0.14.0 in 230 seconds, with all 89 frozen technical inputs
+unchanged. Host's subsequently published 0.14.1 changes only tooling/release
+handling; consumed source is unchanged and the qualified lock remains 0.14.0.
+The complete pending
+batch remains compatible 0.6.5 with unchanged arithmetic and inspector contracts;
+workspace/package metadata remains 0.6.4.
+
+Shared Tooling's newer snapshot-consumption guidance is uncommitted upstream;
+there is no newer clean committed revision to adopt. Canic's latest published
+0.111.0 CI still fails changelog validation and embedded-artifact preflight before
+the required runtime suites. Its owning fixes remain in
+[#450](https://github.com/dragginzgame/canic/issues/450); Metrics
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10) retains consumer
+acceptance. No sibling edit, build, release or workflow dispatch is performed.
+
+The current snapshot is committed Shared Tooling 0.6.3
+`4fd979d13c32adb3cb2f51f213ebfc4f98339b3d`. Normal direct targets archive stale
+`prepare` intent after its metadata disposition is committed in a clean descendant
+checkout, then select from current metadata and repeat full validation. This fixes
+the reported 0.6.3-to-0.6.4 plan blocking committed 0.6.4 metadata; the next patch
+is 0.6.5. The real plan remains untouched until the maintainer runs the release.
+[The supplemental record](../evidence/adoption-065.md#supplemental-shared-tooling-063-adoption)
+owns this qualification. Earlier results below retain their original source scope.
+Full `make ci` passes in 267 seconds, both Rust floors pass, and the 85 frozen
+technical inputs, real plan/version/graph/pins and 2,406 selected tool-file hashes
+verify unchanged. The adoption remains local and uncommitted, ready for the
+maintainer's ordinary commit and release flow.
+
+### Original Shared Tooling 0.6.2 qualification
+
+That snapshot is committed/public Shared Tooling 0.6.2
 `7f1ca16b0dfa98021d2671017ecb7de767409b0e`, canonically refreshed with the
 same 97 selections. It adds exact interrupted-release source-conflict diagnostics
 and guarded recovery guidance, plus distinct Audit/Machete invocation examples.

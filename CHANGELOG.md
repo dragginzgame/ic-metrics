@@ -2,9 +2,16 @@
 
 ## [0.6.5]
 
+### Changed
+
+- Use IC Host 0.14 for the private Wasm inspector, retaining its existing bounded
+  inspection and report contracts. The published arithmetic library remains
+  dependency-free; [the dependency review](docs/evidence/host-dependencies-0140.md)
+  covers the unchanged consumed APIs and Rust floors.
+
 ### Fixed
 
-- Adopt Shared Tooling 0.6.2 so failed Cargo setup reports its original failure
+- Adopt Shared Tooling 0.6.3 so failed Cargo setup reports its original failure
   without activating an incomplete common tool set or disturbing another
   installer's lock. Earlier selections and failed build evidence remain retained.
   Rerun `make install-tools`, then `make tools-check`
@@ -12,8 +19,9 @@
   [Shared #120](https://github.com/dragginzgame/shared-tooling/issues/120)).
 - Handle padded build counts in Cargo setup regression checks, including macOS
   output ([Shared #124](https://github.com/dragginzgame/shared-tooling/issues/124)).
-- Identify interrupted-release source conflicts with the saved plan, phase,
-  versions and source commits, retaining the existing refusal and evidence
+- Restart stale direct-release preparation from clean committed metadata, retaining
+  the old plan and running fresh validation. A committed workspace at 0.6.4 now
+  selects 0.6.5 despite an older 0.6.4 preparation attempt
   ([Shared #126](https://github.com/dragginzgame/shared-tooling/issues/126)).
 
 ## [0.6.4] - 2026-10-11
