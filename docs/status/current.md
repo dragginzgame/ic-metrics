@@ -4,7 +4,80 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.1 Shared Tooling adoption
+## Pending 0.6.2 quantile costs and arithmetic evidence
+
+The [quantile fast-path comparison](../evidence/quantile-cost-062.md) qualifies
+checked-u64 product/division with an exact wide fallback against released 0.6.1.
+Two full runs reproduce 296 measurements/eight typed rejections, and all eight
+Wasms rebuild byte-for-byte from a fresh extraction. Per 1,000 queries, isolated
+p50/p95 each save 200,000 instructions; the reporting cohort saves 400,000
+instructions (23.4%) and 400,000 whole-update cycles (4.5%). The explicit cost
+is 89 raw bytes in quantile-bearing probes and 79 extra instructions per query
+on measured wide-fallback inputs. Recording and cumulative-count Wasms/deltas
+are unchanged. APIs, states, range/error semantics, dependency graph and floors
+remain unchanged; no consumer migration or source edits are required.
+
+Maintained Clippy, all 18 histogram tests and Rust 1.85 native/Wasm checks pass.
+Independent wide-oracle tests cover exact product caps, overflow/rounding
+boundaries and invalid-fraction precedence. The explicitly authorized full `ci`
+gate and both Rust floors pass with all 119 frozen code/graph/pin/Make/snapshot
+and measurement-artifact inputs unchanged; maintained sources still match the
+measured candidate byte-for-byte. The separate durable delivery receipt retains
+the source patch, exact logs, input hashes and actual command outcomes.
+The candidate/source patch, exact graph, logs, Wasms and raw
+readings are retained in a separate durable frozen archive. Earlier released-source
+measurement inputs remain unchanged. No version change or release is performed.
+
+The maintainer-selected [frozen IC experiment](../evidence/arithmetic-cost-061.md)
+measures byte-exact released 0.5.6 and 0.6.1 arithmetic with IC Testkit-owned
+PocketIC 16.1.0 admission/startup. Two finalized runs agree on all raw CSV bytes;
+the fresh-extraction replay rebuilds all 11 Wasms byte-for-byte and independently
+validates 554 measured replies plus 11 typed admission rejections. The durable
+archive retains sources, selected/seed locks, receipts, raw counters/balances,
+projections, logs and Wasms. It is a frozen evidence artifact, not a maintained
+workspace member, production reader, generic harness or runtime dependency.
+
+Actual-overflow tracking adds recording instructions in this fixture; the new
+histogram's complete probe is 167 raw bytes smaller, with different latest/overflow
+contracts. Merging already prepared 16-observation batches uses 9.8 times fewer
+bracketed instructions for aggregates and 4.3–6.2 times fewer for four-bound
+histograms than recording the same 16,000 observations. Batch creation is excluded.
+The cumulative-count/p50/p95 query cohort uses 1,708,250 instructions per 1,000
+iterations, supporting consumer-owned reporting outside the recording path.
+Zero-loop cycle variation is retained, not converted into universal API costs.
+[The quantile-cost issue](https://github.com/dragginzgame/ic-metrics/issues/59)
+owns the separately qualified narrow-rank change above.
+
+The next changelog is 0.6.2 because the complete batch adds compatible query
+optimization and measurement coverage; package metadata remains 0.6.1.
+The released-source experiment itself leaves main source/graph/pin/Make/snapshot
+inputs unchanged. Its selected fixture formatting, warning-denied Clippy, locked
+offline builds and actual IC replay pass without a root Rust edit or broad gate.
+No sibling mutation/build, commit, push, version change or release is performed.
+Native arithmetic acceptance and consumer qualification retain their owning issues.
+
+## Released 0.6.1 and native acceptance
+
+Published 0.6.1 `39b357eb4e53051b5ad9afcfcd0a8c147c68a524`, public main and
+the annotated tag agree. [Release verification](../evidence/release-061.md)
+binds the official non-yanked dependency-free archive and a downloaded,
+source/hash/catalog/host/outcome-verified Linux receipt. Linux and both package
+floors pass; both macOS jobs are queued at inspection. #58 retains the new
+snapshot's native acceptance. Arithmetic is unchanged from 0.6.0; that older run
+was cancelled on unfinished macOS lanes and is not fully qualified. #57 retains
+current arithmetic acceptance, with consumer adoption at its owning issues.
+
+Released 0.5.6 now has [all three independently verified native receipts](../evidence/release-056.md#complete-native-acceptance),
+completing #56. Earlier cancelled sources retain their actual gaps.
+Shared Tooling 0.3.12 and Host 0.13.0 remain the latest committed/public inputs;
+no new dependency or snapshot selection is needed. The ignored local evidence
+tree was absent, so fresh hosted downloads recover released-source proof under
+`target/evidence/review-062/`; deleted local preparation evidence is not restored.
+That verification changed documentation and issue acceptance only; package versions
+remain 0.6.1 and the finalized changelog is preserved. No pending release is selected
+by that routine verification, and it ran no build, release, publication or sibling edit.
+
+## 0.6.1 Shared Tooling adoption preparation history
 
 Adopted committed/public Shared Tooling 0.3.12
 `52e846369c39a1da371eac47ff97d94da925217e` through a clean detached canonical

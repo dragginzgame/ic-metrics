@@ -123,6 +123,16 @@ provides a checksum-bound bundle of new fixture sources, locks, raw results and
 measured Wasms. It measures direct arithmetic without Canic lookup or attribution;
 its observations have their own source and workload identity.
 
+The [0.6 arithmetic comparison](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/arithmetic-cost-061.md)
+measures recording, merging already prepared batches and reporting queries on
+exact released sources. The separate
+[quantile fast-path comparison](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/quantile-cost-062.md)
+isolates the checked narrow-product improvement and its wide-product fallback
+cost. Both retain reproducible sources, locks, Wasms and raw IC readings.
+Batch preparation is excluded from merge costs; these synthetic workloads do not
+qualify consumer applications. Compute distribution queries during reporting
+when possible, rather than on every recorded observation.
+
 ## Development
 
 Install rustup, Git, GNU Make, Bash 3.2 or newer and a SHA-256 utility. The pinned

@@ -271,6 +271,55 @@ fn quantiles_reject_invalid_fractions_and_all_required_saturated_counts() {
 }
 
 #[test]
+fn nearest_rank_matches_wide_oracle_across_product_boundaries() {
+    for (numerator, denominator) in [
+        (1, 1),
+        (1, 2),
+        (2, 3),
+        (95, 100),
+        (1, u64::MAX),
+        (u64::MAX / 2, u64::MAX),
+        (u64::MAX - 1, u64::MAX),
+        (u64::MAX, u64::MAX),
+    ] {
+        let boundary = u64::MAX / numerator;
+        for samples in [
+            0,
+            1,
+            2,
+            3,
+            5,
+            100,
+            u64::from(u32::MAX),
+            u64::from(u32::MAX) + 1,
+            boundary - 1,
+            boundary,
+            boundary.saturating_add(1),
+            u64::MAX - 1,
+            u64::MAX,
+        ] {
+            let product = u128::from(samples) * u128::from(numerator);
+            let divisor = u128::from(denominator);
+            let expected = if samples == 0 {
+                None
+            } else {
+                Some(product / divisor + u128::from(product % divisor != 0))
+            };
+            assert_eq!(quantile_rank(samples, numerator, denominator), Ok(expected));
+        }
+    }
+    // Invalid fractions precede emptiness on both sides of the product boundary.
+    for samples in [0, 1, u64::MAX] {
+        for (numerator, denominator) in [(0, 0), (0, 1), (1, 0), (u64::MAX, u64::MAX - 1)] {
+            assert_eq!(
+                quantile_rank(samples, numerator, denominator),
+                Err(HistogramQueryError::InvalidQuantile)
+            );
+        }
+    }
+}
+
+#[test]
 fn reporting_queries_are_available_in_constant_evaluation() {
     const REPORT: (
         Result<u64, HistogramQueryError>,

@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.2]
+
+### Changed
+
+- Reduce common histogram quantile work with checked narrow-product arithmetic,
+  retaining exact wide arithmetic for larger products and unchanged range/error
+  semantics. The measured fast path adds 89 raw Wasm bytes; see
+  [the IC comparison](docs/evidence/quantile-cost-062.md)
+  ([#59](https://github.com/dragginzgame/ic-metrics/issues/59)).
+
+### Testing
+
+- Retain a reproducible IC instruction, cycle and raw Wasm comparison of
+  recording, prepared-batch merging and histogram queries, including exact-cap,
+  overflow and atomic merge-rejection checks. See
+  [the source-bound observations](docs/evidence/arithmetic-cost-061.md).
+
 ## [0.6.1] - 2026-10-11
 
 ### Fixed

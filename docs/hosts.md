@@ -403,6 +403,12 @@ arithmetic and both package floors unchanged.
 The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate
 Linux PocketIC execution and durable inputs. It is not a CI gate, product reader
 or native macOS measurement claim; ordinary library qualification stays separate.
+The separate [released 0.6 arithmetic experiment](evidence/arithmetic-cost-061.md)
+retains recording, prepared-batch merge, query and rejection costs with IC Testkit
+0.33.3-owned admission/startup and an exact PocketIC 16.1.0 executable. Its fresh
+extraction rebuilds all 11 Wasms and reproduces raw instruction/balance/projection
+CSV bytes. It adds no maintained server caller or arithmetic dependency; each
+frozen artifact keeps its own source, graph, server and measurement identity.
 
 Native jobs have a bounded 60-minute budget for cold tool setup, the complete
 suite and evidence collection. The earlier 30-minute budget expired on Intel

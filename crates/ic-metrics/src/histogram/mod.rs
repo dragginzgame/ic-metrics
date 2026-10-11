@@ -399,7 +399,7 @@ impl<const N: usize> MeasurementHistogram<N> {
     }
 }
 
-// Wide multiplication retains exact ranks for every valid u64 count and fraction.
+// Use native-width division when the product fits; otherwise retain exact wide ranks.
 const fn quantile_rank(
     samples: u64,
     numerator: u64,
@@ -410,6 +410,9 @@ const fn quantile_rank(
     }
     if samples == 0 {
         return Ok(None);
+    }
+    if let Some(product) = samples.checked_mul(numerator) {
+        return Ok(Some(product.div_ceil(denominator) as u128));
     }
     Ok(Some(
         ((samples as u128) * (numerator as u128)).div_ceil(denominator as u128),
