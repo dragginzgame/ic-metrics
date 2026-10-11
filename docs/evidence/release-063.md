@@ -65,3 +65,48 @@ qualifies released 0.6.3, not the separately prepared 0.6.4 metadata or its
 Shared 0.6.0 contract. [#60](https://github.com/dragginzgame/ic-metrics/issues/60)
 remains open for Intel acceptance; the initial queued observation above is
 retained as history.
+
+## Supplemental Intel acceptance and closeout
+
+The same exact-source CI run now passes Intel alongside Linux, Apple Silicon
+and both Rust floors. Independently downloaded Intel artifact `11703016246`
+verifies its API-declared ZIP SHA-256
+`a96abf39b300caa738983948aa2006ca0db0189c763e98442b3d5d4b703c3c78`
+and inner archive SHA-256
+`4f31639b0b3439b7ed55e6d6b792fc1d6d519516d11423424f1dc83c0e1b275b`.
+All 74 released-source hashes, the exact workflow catalog, all 14 payload hashes,
+source/run/attempt/native host/IC pins and seven successful outcomes verify.
+The actual common Cargo, native collector, release-admission/retention,
+formatting-hook and inspector CLI checks execute. Their substituted effects
+remain distinct from IC runtime measurements.
+
+This completes the three-host acceptance for released 0.6.3 and
+[#60](https://github.com/dragginzgame/ic-metrics/issues/60). API metadata, raw
+ZIP/archive, recovered receipt and independent checks remain under
+`target/evidence/adoption-065/prior-intel-*`. This does not qualify the later
+Shared 0.6 batch, Host 0.13.3 graph or older cancelled sources. Earlier queued
+observations retain their historical identities.
+
+## Superseding older cancelled-run acceptance
+
+The maintainer accepts later recorded native coverage for fixes carried forward
+into the maintained source. Under that policy, the complete 0.6.3 matrix in
+[run 38134831567](https://github.com/dragginzgame/ic-metrics/actions/runs/38134831567)
+closes [#49](https://github.com/dragginzgame/ic-metrics/issues/49),
+[#50](https://github.com/dragginzgame/ic-metrics/issues/50) and
+[#51](https://github.com/dragginzgame/ic-metrics/issues/51). Both original release
+commits are ancestors of the qualified 0.6.3 source. All three retained receipts'
+74 source hashes and 14 payload hashes are reverified during this closeout.
+
+The recorded native gates execute the carried-forward setup preflight, Cargo
+jobserver and unsafe-Make admission fixtures for #49; actual cleanup-body
+nounset/early-zero/success retention checks for #50; and rejected/admitted
+validation-depth and completed-dispatch fixtures for #51. Current code coverage
+and owning native results supersede those older acceptance obligations.
+The original 0.5.2 Intel cancellation and 0.5.3 macOS cancellations remain
+historical observations; this closeout does not claim those runs passed.
+
+Independent rechecks are retained under `target/evidence/issue-supersession-063/`.
+The newer Shared 0.6 setup/collector batch in
+[#61](https://github.com/dragginzgame/ic-metrics/issues/61) still requires its
+own delivered-source coverage because its changes follow this qualified release.

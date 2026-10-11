@@ -151,7 +151,7 @@ earlier Linux preparation or tagged host results.
   commands select `.tools/rust/common/bin` on PATH. Formatting, CI and release
   validation check all workspace manifests before Rust formatting.
   Existing checkouts must rerun explicit `make install-tools` followed by
-  `make tools-check` after adopting Shared Tooling 0.6.0. Host/IC/Cargo paths select
+  `make tools-check` after adopting Shared Tooling 0.6.1. Host/IC/Cargo paths select
   verified shared-store generations; older physical local bundles are retained
   but no longer admitted as active installations. Use the same optional
   `SHARED_TOOLING_STORE` setting for setup, checks and failure collection. Cargo
@@ -161,8 +161,11 @@ earlier Linux preparation or tagged host results.
   source cache is also required for offline admission. The common Rust PATH
   activates only after all three shared selections pass receipt, byte and version
   checks. Previous sets, in-place tools and failed build evidence are retained;
-  validation does not fall back to the old PATH. See
-  [the current adoption record](evidence/adoption-064.md).
+  validation does not fall back to the old PATH.
+  Setup failures preserve their original status, earlier common selections and
+  foreign installation locks. Failed candidates remain available for inspection;
+  resume through explicit setup after resolving the reported cause. See
+  [the current adoption record](evidence/adoption-065.md).
 - SHA-256 via `sha256sum` on Linux or `shasum -a 256` on macOS.
 - Library builds and named arithmetic tests have no third-party dependencies,
   network services or external IC runtime requirements. There is no platform

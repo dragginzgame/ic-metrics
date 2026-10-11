@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.5]
+
+### Fixed
+
+- Adopt Shared Tooling 0.6.2 so failed Cargo setup reports its original failure
+  without activating an incomplete common tool set or disturbing another
+  installer's lock. Earlier selections and failed build evidence remain retained.
+  Rerun `make install-tools`, then `make tools-check`
+  ([#61](https://github.com/dragginzgame/ic-metrics/issues/61),
+  [Shared #120](https://github.com/dragginzgame/shared-tooling/issues/120)).
+- Handle padded build counts in Cargo setup regression checks, including macOS
+  output ([Shared #124](https://github.com/dragginzgame/shared-tooling/issues/124)).
+- Identify interrupted-release source conflicts with the saved plan, phase,
+  versions and source commits, retaining the existing refusal and evidence
+  ([Shared #126](https://github.com/dragginzgame/shared-tooling/issues/126)).
+
 ## [0.6.4] - 2026-10-11
 
 ### Changed

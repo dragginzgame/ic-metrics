@@ -4,36 +4,63 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Latest publication and upstream observations
+## Pending 0.6.5 Shared Tooling repair adoption
 
-Read-only public verification still observes Metrics main at released 0.6.3
-`b51e30743ad23a74ef02fef0edcf2b3acca6d4e3`, with no public `v0.6.4` tag and no
-0.6.4 row in the official sparse registry index. Local 0.6.4 metadata and dated
-changelog remain prepared, alongside uncommitted documentation. The maintainer's
-reported publication is not yet independently confirmed; no release recovery or
-metadata mutation is performed by this review.
+Current snapshot is committed/public Shared Tooling 0.6.2
+`7f1ca16b0dfa98021d2671017ecb7de767409b0e`, canonically refreshed with the
+same 97 selections. It adds exact interrupted-release source-conflict diagnostics
+and guarded recovery guidance, plus distinct Audit/Machete invocation examples.
+Metrics has no Audit/Machete extension. Real saved plans remain untouched.
+The incoming maintainer lock now selects Host 0.13.5. [Its review](../evidence/host-dependencies-0135.md)
+verifies official archives/source and unchanged consumed read/inspection code;
+the new private-sidecar API has no Metrics caller. Selected ShellCheck and
+current/genuine Bash 3.2/Make 3.81 runner fixtures pass. Full `make ci` passes in
+296 seconds with both Clippy gates and the inspector CLI test; both package
+floors pass against Host 0.13.5. All 89 frozen technical inputs and incoming
+graph/pins retain their hashes. [The adoption record](../evidence/adoption-065.md#supplemental-shared-tooling-062-adoption)
+owns this qualification separately from the earlier Host 0.13.3 result below.
+The complete batch remains compatible pending 0.6.5; workspace metadata remains
+0.6.4. Upstream Shared/Host Linux jobs pass while their macOS lanes remain
+pending; owning delivered Metrics acceptance remains in
+[#61](https://github.com/dragginzgame/ic-metrics/issues/61).
 
-Released 0.6.3 now has independently verified
-[Apple Silicon acceptance](../evidence/release-063.md#supplemental-apple-silicon-acceptance),
-joining Linux and both Rust floors. Intel remains queued, so
-[#60](https://github.com/dragginzgame/ic-metrics/issues/60) stays open.
-The older exact-source gaps in #49/#50/#51 remain distinct; cancelled lanes
-are not replaced with later-release receipts.
+### Original Shared Tooling 0.6.1 qualification
 
-The adopted Shared 0.6.0 source is still the newest committed sibling revision.
-Its exact-source Apple Silicon regression fails in the canonical Rust fixture;
-[Shared #124](https://github.com/dragginzgame/shared-tooling/issues/124) owns the
-padded build-count correction. Shared's dirty pending 0.6.1 also strengthens
-Cargo setup failure propagation under
-[#120](https://github.com/dragginzgame/shared-tooling/issues/120).
-These fixes require clean committed canonical distribution before adoption;
-snapshot-owned files remain untouched. Private Host 0.13.3 changes contributor
-tooling, with the consumed artifacts/filesystem Rust source unchanged from 0.13.2.
-The maintainer's separate working lock now selects Host 0.13.3. Private inspector
-Clippy, all-target checks and Rust 1.88 pass against this prepared 0.6.4 graph,
-with the current Cargo metadata, lock and changelog preserved. These focused
-checks do not replace the earlier full gate or establish native release
-acceptance. No dependency update or sibling edit is performed by this review.
+The maintainer reports 0.6.4 published. Work resumes from clean local 0.6.4
+`9d374e098d43e1fa1f23230bc624b7b4db4bfa89`, preserving its dated notes,
+workspace metadata and selected Host 0.13.3 graph. Earlier public observations
+remain historical evidence; this continuation performs no release recovery.
+
+Adopted committed/public Shared Tooling 0.6.1
+`731909525038c58d6f80b498e80f8630b11c685d` canonically from a clean detached
+checkout. All 97 selections remain, with four scripts updated. The reviewed
+Cargo fixes stop conditional setup after preparation/admission/activation
+failure, preserve original statuses and protect foreign locks. Padded build
+counts use numeric comparison. Contributors rerun `make install-tools`, then
+`make tools-check`; earlier selections and failed evidence remain retained.
+The committed bytes match the separately reviewed source. Current Bash and
+genuine Bash 3.2 Cargo fixtures, ShellCheck, real setup/offline admission and
+two-checkout reuse without Cargo resolution or compilation pass. Full `make ci`
+passes in 315 seconds with both Clippy gates; both Rust floors pass against the
+preserved 0.6.4 metadata and Host 0.13.3 graph. All 86 frozen technical inputs
+and both earlier tool-file catalogs retain their hashes. The initial setup
+refusal of IC Host Tooling's active shared Cargo lock is retained; normal setup
+succeeds once its owner finishes. [The evidence owner](../evidence/adoption-065.md)
+distinguishes mock review, actual setup and exact-source native acceptance.
+
+The candidate is compatible 0.6.5. Arithmetic/API/attribution/endpoint contracts,
+pins and both package floors remain unchanged; no package/dependency selection,
+real staging, commit, release or sibling edit is performed.
+[#61](https://github.com/dragginzgame/ic-metrics/issues/61) retains delivered-source
+native acceptance for this Shared 0.6 adoption. The older #49/#50/#51 cancelled
+run gaps are superseded by the later recorded 0.6.3 matrix under the maintainer's
+accepted closeout policy. [The coverage record](../evidence/release-063.md#superseding-older-cancelled-run-acceptance)
+closes those issues while retaining their original cancelled-source identities.
+
+Released 0.6.3 now has independently verified Linux, Apple Silicon and Intel
+receipts plus both Rust floors. [Its Intel closeout](../evidence/release-063.md#supplemental-intel-acceptance-and-closeout)
+completes [#60](https://github.com/dragginzgame/ic-metrics/issues/60), without
+relabeling later Shared 0.6 or older cancelled-source evidence.
 
 ## Prepared 0.6.4 Shared Tooling 0.6.0 adoption
 

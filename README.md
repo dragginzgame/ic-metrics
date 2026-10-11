@@ -216,10 +216,12 @@ candidates. `tools-check` is offline; ordinary validation never installs
 tools. System bootstrap packages and installation behavior are documented in
 [local setup](https://github.com/dragginzgame/ic-metrics/blob/main/docs/local-setup.md).
 
-After Shared Tooling 0.6.0 adoption, rerun `make install-tools` and `make tools-check`.
+After Shared Tooling 0.6.1 adoption, rerun `make install-tools` and `make tools-check`.
 Cargo reuse requires matching compiler, native environment, published source/lock,
 target and profile; prior local installations and failed builds are preserved.
 Use the same optional `SHARED_TOOLING_STORE` setting for setup, checking and evidence.
+Setup failures stop common-tool activation and preserve the original failure
+status and another installer's locks. Resolve the reported cause, then rerun setup.
 
 The released 0.5.0 toolset cut removes the host installer's `--with-ripgrep` and
 `--with-cloc` flags; all four host tools are always required. Remove those flags
