@@ -25,7 +25,7 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -p "$fixture/bin" "$fixture/make" "$fixture/scripts/ci"
-cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" "$fixture/make/"
+cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" "$fixture/make/"
 cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/run-formatting.sh" "$fixture/scripts/ci/"
 real_bash="$(command -v bash)"
 export STANDARD_RELEASE_REAL_BASH="$real_bash"
@@ -35,7 +35,7 @@ real_make="$(command -v make)"
 for selection in default direct; do
     if [[ "$selection" == default ]]; then unset RELEASE_DELIVERY; else export RELEASE_DELIVERY=direct; fi
     TMPDIR="$fixture" "$real_bash" "$root/scripts/ci/check-release-commands.sh" "$root" \
-        make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
+        make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
         scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
 done
 
@@ -69,12 +69,12 @@ EXTERNAL
 cat > "$fixture/root-parent.mk" <<'MAKE'
 export SHARED_TOOLING_ROOT := $(EXTERNAL_ROOT)
 check:
-	+@bash "$(CHECKER)" "$(CONSUMER)" make/tools.mk make/release.mk make/rust-format.mk make/execution.mk scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh
+	+@bash "$(CHECKER)" "$(CONSUMER)" make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh
 MAKE
 : > "$EVENTS"
 SHARED_TOOLING_ROOT="$fixture/external" TMPDIR="$fixture" "$real_bash" \
     "$root/scripts/ci/check-release-commands.sh" "$root" \
-    make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
+    make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
     scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
 [[ ! -s "$EVENTS" ]] || exit 1
 TMPDIR="$fixture" "$real_make" -j2 --no-print-directory -f "$fixture/root-parent.mk" check \

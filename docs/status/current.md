@@ -4,7 +4,59 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.7.0 wide totals
+## Published 0.7.0 and pending 0.7.1 Make adoption
+
+[Published 0.7.0 verification](../evidence/release-070.md) binds both non-yanked
+official packages and exact source to `384046884365e3d73696e0813a43640d3b1f2cb4`.
+The core remains dependency-free on Rust 1.85; the separate stable adapter uses
+Rust 1.88. [#63](https://github.com/dragginzgame/ic-metrics/issues/63)'s arithmetic
+cut is delivered. The release's compiler-floor and all three native jobs now
+pass; downloaded receipt verification remains separate. Real IC upgrade/storage-cost
+evidence
+remains in [#64](https://github.com/dragginzgame/ic-metrics/issues/64).
+
+The [compatible 0.7.1 batch](../evidence/adoption-071.md) adopts committed/public
+Shared Tooling 0.6.5 through canonical distribution: all 100 selections verify
+against `42f2091768b5f71c98a684d3dab563f408ca2dd9`.
+Common setup/format/hooks/snapshot/release commands use one local entrypoint;
+product adapters, release authority and compiler floors remain unchanged.
+Focused formatting, hook, routing and release-admission checks pass, including
+retained input checkpoints and refusal of later gates after Cargo input drift.
+Full Linux CI passes in 298 seconds, with all three package-floor gates passing
+on unchanged prepared Cargo inputs. The release-admission and common Make fixtures
+also pass genuine Bash 3.2.57 on Linux; native adoption acceptance remains separate.
+The lock preserves all released rows except incoming IC Memory 0.35.13, published during
+review and separately verified against its official archive. Its library sources
+match 0.35.12 byte-for-byte. Host 0.14.2 is already in the released 0.7.0 graph
+and has no consumed source change. Package requirements and arithmetic stay unchanged.
+
+Both [0.6.6 macOS receipts](../evidence/release-066.md#complete-native-acceptance)
+are independently verified, completing #61's original Shared 0.6 criteria.
+The common-entrypoint follow-up remains there for delivered native acceptance.
+Canic's new successful dependency-audit run supplies no missing #10 runtime/native
+evidence. Package metadata remains 0.7.0; no agent release, publication, staging,
+commit, push or sibling edit is performed. Older preparation/qualification records
+below retain their original source scope.
+
+The subsequent read-only upstream check finds clean committed/public Shared
+0.6.6 `a15eb9d406d287697df9bc8fa96db8cda6721a71`. It selects derive formatter
+0.14.1 to preserve literal `$crate` paths; Metrics has no affected macro or
+workaround marker. Adoption would require an explicit local tool-pin selection
+and new-tool preparation with Rust 1.88 or newer, independently of library floors.
+The snapshot and formatter pin remain 0.6.5 and 0.13.0 in this inspection.
+
+The incoming lock now selects Host artifacts/filesystem 0.14.3. Both official
+archives/checksums and embedded source verify against released
+`543b137458feba0f6dfd3e458b680fb2be3d9e6d`; all 37 consumed library source files
+match 0.14.2 byte-for-byte. Inspector check, warning-denied Clippy, named tests,
+actual CLI and Rust 1.88 checks pass without changing the lock, manifest, pins or
+snapshot. This focused graph qualification is separate from the earlier full CI
+on Host 0.14.2. Shared 0.6.6 and Host 0.14.3 hosted CI are queued at observation;
+no native acceptance is inferred. Verification and focused logs are retained
+under `target/evidence/adoption-071/upstream-066` and
+`target/evidence/adoption-071/host-0143-focused.log`.
+
+## Original 0.7.0 wide-total preparation
 
 The accepted optional [one-map durable adapter](../evidence/stable-070.md) adds
 `ic-metrics-stable` outside the dependency-free arithmetic graph. The host owns

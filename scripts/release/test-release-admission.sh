@@ -470,9 +470,9 @@ done
 for scenario in retention fallback; do
     setup "logger-$scenario"
     mkdir -p scripts/ci make "$worktree/tmp"
-    cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
+    cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
     cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
-    cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
+    cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/verify-file-checksum.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
     cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
@@ -536,9 +536,9 @@ done
 # The second gate still runs after successful CI; its failures are retained too.
 setup logger-second-gate
 mkdir -p scripts/ci make
-cp "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
+cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
 cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
-cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
+cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/verify-file-checksum.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
 cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
@@ -601,6 +601,33 @@ make --no-print-directory -f "$root/Makefile" release-verify \
 cmp gate-events "$fixture/expected-gates"
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
 grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
+# Prepared Cargo inputs must stay fixed between release validation stages.
+setup logger-input-drift
+mkdir -p scripts/ci make "$worktree/tmp"
+cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
+cp "$root/scripts/ci/run-validation-targets.sh" "$root/scripts/ci/check-make-execution.sh" \
+    "$root/scripts/ci/verify-file-checksum.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
+cat > Makefile <<'MAKE'
+.PHONY: ci msrv stable-msrv wasm-inspect-msrv
+ci:
+	@echo ci >> gate-events
+	@printf '\n# changed during validation\n' >> Cargo.lock
+msrv stable-msrv wasm-inspect-msrv:
+	@echo unexpected >> gate-events
+	@exit 99
+MAKE
+if TMPDIR="$worktree/tmp" make --no-print-directory -f "$root/Makefile" release-verify \
+    > "$fixture/result.log" 2>&1; then
+    echo 'release-verify accepted changed prepared inputs' >&2
+    exit 1
+fi
+printf 'ci\n' > "$fixture/expected-gates"
+cmp gate-events "$fixture/expected-gates"
+set -- "$worktree"/tmp/validation.*
+[[ $# == 1 && -f "$1/inputs.json" && -f "$1/0-after-inputs.json" && -f "$1/0.log" ]] || exit 1
+jq -e -s '.[0]["Cargo.toml"] == .[1]["Cargo.toml"] and
+    .[0]["Cargo.lock"] != .[1]["Cargo.lock"]' "$1/inputs.json" "$1/0-after-inputs.json" > /dev/null
+
 # Admission at the actual logger entrypoint must precede every consumer target.
 # Fixtures above own the release adapter; this isolated target proves inherited
 # nesting metadata cannot make the selected logger skip dispatch and return zero.

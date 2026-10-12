@@ -36,14 +36,14 @@ differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-The working source prepares the **0.7.0 hard cut**: totals and integer means
-are `u128`, including raw-field helpers and intervals. Consumers must coordinate
+The published **0.7.0 hard cut** uses `u128` totals and integer means,
+including raw-field helpers and intervals. Consumers must coordinate
 report fields, codecs and public re-exports; narrower output needs checked
-conversion. The published 0.6 dependency below retains its released contract.
+conversion. The registry dependency below selects this contract.
 The arithmetic core adds no reader or endpoint. Consumers own reset identity
 and any once-per-window overflow log or alert.
 
-The pending [optional stable adapter](crates/ic-metrics-stable/README.md) stores
+The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
 aggregates, summaries and histograms in one host-owned stable B-tree map using
 `ic-memory`'s collection types. Namespaced records retain units, reset epochs,
 wide totals and overflow flags. Adding `ic-metrics-stable` is the opt-in; existing
@@ -133,6 +133,10 @@ when possible, rather than on every recorded observation.
 
 ## Development
 
+Common contributor commands use the reviewed [Shared Tooling Make
+interface](docs/make-interface.md). Product builds, compiler floors, validation,
+publication and release metadata remain owned here.
+
 Use rustup with the pinned Rust 1.99.0 toolchain, Git, GNU Make and Bash 3.2 or
 newer. Install `wasm32-unknown-unknown` for Wasm checks. The arithmetic library's
 minimum compiler is Rust 1.85.0.
@@ -178,7 +182,7 @@ Declare the current arithmetic contract in the consumer's root catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.6.5"
+ic-metrics = "0.7"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

@@ -9,9 +9,10 @@ IC_TOOL_PINS ?= ci/ic-tools.tsv
 HOST_TOOL_VERSIONS ?= ci/tool-versions.env
 export YQ := $(CURDIR)/.tools/host/bin/yq
 
-include make/tools.mk
-include make/release.mk
-include make/rust-format.mk
+# Common commands use this checkout's reviewed snapshot, including scratch exports.
+override SHARED_TOOLING_ROOT := $(CURDIR)
+export SHARED_TOOLING_ROOT
+include make/consumer.mk
 
 # PR delivery requires merged-checkout adapters and qualification we do not own.
 # Refuse it before dispatching any release runner or metadata operation.
@@ -34,7 +35,7 @@ release-preflight:
 
 release-verify:
 	+env -u IC_METRICS_RELEASE_CACHE_PREPARE CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
-		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv stable-msrv wasm-inspect-msrv
+		bash scripts/ci/run-validation-targets.sh --fail-fast --input Cargo.toml --input Cargo.lock ci msrv stable-msrv wasm-inspect-msrv
 
 release-prepare-version:
 	+@bash scripts/release/metadata.sh prepare
@@ -77,10 +78,8 @@ publish:
 publish-check:
 	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io --dry-run
 
-install-hooks:
-	bash scripts/dev/install-git-hooks.sh
-
 local-tools-test:
+	bash scripts/ci/test-make-consumer.sh
 	bash scripts/ci/test-host-tools.sh
 	bash scripts/ci/test-rust-tools.sh
 	bash scripts/ci/test-ic-tools.sh
@@ -151,9 +150,6 @@ stable-msrv:
 	rustc +$(STABLE_MSRV) --version
 	+cargo +$(STABLE_MSRV) check -p ic-metrics-stable --locked
 	+cargo +$(STABLE_MSRV) check -p ic-metrics-stable --locked --target wasm32-unknown-unknown
-
-shared-tooling-check:
-	bash scripts/ci/verify-shared-tooling-snapshot.sh
 
 check-pins:
 	bash scripts/ci/check-dependency-pins.sh --cargo-inheritance

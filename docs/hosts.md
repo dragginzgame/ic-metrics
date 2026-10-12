@@ -171,6 +171,10 @@ earlier Linux preparation or tagged host results.
   network services or external IC runtime requirements. There is no platform
   reader, IC feature, fixture or PocketIC harness in the current library graph.
 
+Common commands use the reviewed [Make entrypoint](make-interface.md). Setup,
+formatting, hooks and release routing retain their shared owners; product gates
+and all three compiler floors stay local.
+
 During implementation run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
 `make msrv` checks the declared floor on host and Wasm. Select

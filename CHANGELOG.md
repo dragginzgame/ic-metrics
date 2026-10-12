@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.1]
+
+### Changed
+
+- Adopt Shared Tooling 0.6.5's common Make entrypoint for setup, formatting,
+  hooks, snapshot checks and releases. Preserve the existing product gates,
+  compiler floors and publication/metadata adapters
+  ([#61](https://github.com/dragginzgame/ic-metrics/issues/61)).
+- Stop release validation between gates if its prepared Cargo manifest or lock
+  changes, retaining the canonical input checkpoints and failure evidence.
+- Qualify the incoming IC Memory 0.35.13 lock selection for the optional adapter;
+  its library code, durable format and Rust floor remain unchanged.
+
+### Fixed
+
+- Update adoption examples and documentation to the published 0.7 arithmetic
+  and optional durable-store contracts.
+
 ## [0.7.0] - 2026-10-12
 
 ### Breaking

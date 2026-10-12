@@ -49,13 +49,13 @@ jobs:
             uname -s
             uname -m
           } > target/evidence/native-ci/inputs.txt
-          git ls-files Cargo.toml Cargo.lock Makefile make/tools.mk make/release.mk make/rust-format.mk make/execution.mk .shared-tooling.snapshot \
+          git ls-files Cargo.toml Cargo.lock Makefile make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk .shared-tooling.snapshot \
             crates/ic-metrics crates/ic-metrics-stable crates/ic-metrics-wasm-inspect .github/workflows/ci.yml \
             .github/actions/retain-failure-evidence/action.yml ci/tool-versions.env ci/ic-tools.tsv \
             scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
             scripts/dev/install-rust-tools.sh scripts/ci/test-rust-tools.sh \
             scripts/dev/tool-store.sh scripts/dev/cargo-tool-build.sh scripts/ci/test-tool-store.sh \
-            scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh \
+            scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh scripts/ci/test-make-consumer.sh \
             scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
             scripts/ci/select-tool-evidence.sh scripts/ci/test-tool-evidence.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \

@@ -44,9 +44,9 @@ It establishes no unit, snapshot identity or input provenance and adds no storag
 The [packaged application guide](../crates/ic-metrics/src/application.md) shows
 consumer-owned named aggregates and their admission/reporting obligations.
 
-## Pending 0.7.0 wide totals
+## Released 0.7.0 wide totals
 
-The current working source uses `u128` accumulated totals and integer means in
+The published source uses `u128` accumulated totals and integer means in
 raw-field helpers, aggregates, ordered summaries and intervals. Samples,
 counts, maxima/latest, bounds and bucket counts remain `u64`. The largest exact
 sample count multiplied by the largest admitted observation fits `u128`.
@@ -64,12 +64,14 @@ This is a source/API cut, tracked in [#63](https://github.com/dragginzgame/ic-me
 Update consumer-owned raw totals, report DTOs, codecs and public re-exports as one
 owning batch. `u64` output requires checked conversion with an explicit unavailable
 representation; never truncate or silently reinterpret retained wire/storage bytes.
-The arithmetic library owns no retained format or migration. Package metadata stays 0.6.6
-until the maintainer selects the release; sibling edits/builds are not performed.
+The arithmetic library owns no retained format or migration. Both public packages
+are published at 0.7.0; [the release verification](evidence/release-070.md) binds
+their official archives and separate Rust floors. Publication does not establish
+consumer adoption or live durable-store upgrade/cost qualification.
 [The wide-total review](evidence/arithmetic-070.md) binds the read-only callers and
 local qualification. The released history below retains its original boundaries.
 
-## Optional durable store in pending 0.7.0
+## Optional durable store in released 0.7.0
 
 The separate [ic-metrics-stable package](../crates/ic-metrics-stable/README.md)
 owns a V1 snapshot codec and one host-supplied B-tree map. The host uses its

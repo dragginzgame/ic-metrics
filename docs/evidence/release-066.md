@@ -51,3 +51,26 @@ ignored local evidence is absent following maintainer cleanup; these fresh
 downloads do not reconstruct it. This verification performs no build, dependency
 resolution, installation, workflow dispatch, release, staging or sibling mutation.
 No behavior change requires a new pending changelog entry.
+
+## Complete native acceptance
+
+The same [exact-source run](https://github.com/dragginzgame/ic-metrics/actions/runs/38152311356)
+now completes successfully on Linux, Intel, Apple Silicon and MSRV. Both newly
+downloaded macOS ZIPs independently match their API digests:
+
+| Host | Artifact | ZIP SHA-256 | Inner archive SHA-256 |
+| --- | --- | --- | --- |
+| Intel | 11708426343 | `cac525d3179137dc61417118de22814c4226a5d0a80074a5f9e3946ff54552fb` | `47da41d6aef43a70774b60fba380012529ce2a0f0b466be1f346b8dfdc09ac69` |
+| Apple Silicon | 11708424068 | `5e2698d68f86d17908c13319f53a6752a50ea710dd01d17da6631152cab80bea` | `ef5c01e16069bd460670b6151f716806dbc1e88f92f2bc3fbb549bd915861b86` |
+
+Each receipt verifies all 75 source-file hashes against released `c651c09`, its
+source catalog, 14 payload hashes, exact run/host/architecture and seven successful
+outcomes. Logs execute committed-preparation restart, release metadata restoration,
+native collector and actual inspector CLI admission/publication cases. This
+completes [#61](https://github.com/dragginzgame/ic-metrics/issues/61)'s original
+Shared 0.6 native criteria. Its later common Make-entrypoint follow-up remains a
+separate adoption at [the current owner](adoption-071.md).
+
+Fresh API metadata, ZIPs, inner archives, receipt files and verification summaries
+are retained under `target/evidence/release-066-native`. Earlier observations above
+remain historical; no cancelled run or later graph is reclassified as qualified.
