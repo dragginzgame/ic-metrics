@@ -194,6 +194,37 @@ fn v1_encoding_is_explicit_and_rejects_invalid_numeric_state() {
 }
 
 #[test]
+fn inconsistent_summary_latest_rejects_load_and_save_without_overwrite() {
+    let memory = VectorMemory::default();
+    let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
+    let key = key("app");
+    let identity = identity();
+    let mut summary = Summary::EMPTY;
+    summary.record(10);
+    summary.record(10);
+    let mut bytes = codec::encode(&identity, &summary).unwrap();
+    // V1 stores latest as the final eight bytes. Zero contradicts two tens.
+    let latest_offset = bytes.len() - 8;
+    bytes[latest_offset..].copy_from_slice(&0_u64.to_le_bytes());
+    store.map.insert(key.0.clone(), bytes.clone());
+    drop(store);
+    let mut reopened = MetricsStore::new(BTreeMap::init(memory));
+    assert_eq!(
+        reopened.load(&key, &identity, &Summary::EMPTY),
+        Err(StoreError::InvalidState(
+            ic_metrics::MeasurementStateError::InvalidLatest,
+        ))
+    );
+    assert_eq!(
+        reopened.save(&key, &identity, &summary),
+        Err(StoreError::InvalidState(
+            ic_metrics::MeasurementStateError::InvalidLatest,
+        ))
+    );
+    assert_eq!(reopened.map.get(&key.0), Some(bytes));
+}
+
+#[test]
 fn bounded_inputs_empty_zero_and_idempotent_checkpoints() {
     assert_eq!(MetricKey::new("", "x"), Err(StoreError::InvalidIdentifier));
     assert_eq!(

@@ -59,7 +59,7 @@ jobs:
             scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
             scripts/ci/select-tool-evidence.sh scripts/ci/test-tool-evidence.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
-            scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh \
+            scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh scripts/ci/test-tool-downloads.sh \
             scripts/ci/test-tool-commands.sh scripts/ci/test-cloc.sh \
             scripts/dev/cloc.sh \
             scripts/distribution/refresh-consumer.sh scripts/ci/run-validation-targets.sh \

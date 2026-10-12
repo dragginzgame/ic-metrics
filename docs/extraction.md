@@ -9,7 +9,7 @@ Histogram bounds and units are caller-selected; invalid bounds return a typed
 error. Bucket counts saturate independently. These primitives never read
 platform counters, allocate labels, persist data or claim endpoints.
 
-## Prepared 0.8.0 tracked recording cut
+## Released 0.8.0 tracked recording cut
 
 [The approved cut](https://github.com/dragginzgame/ic-metrics/issues/66) removes
 `record_sample`, raw-field `checked_mean` and the raw-only
@@ -34,8 +34,10 @@ state and need graph/public-type qualification. Do not reconstruct flags from
 clipped historical report fields; owners choose an explicit window/epoch
 transition and retain their attribution/reset contracts.
 
-This breaks the public arithmetic API, selecting pending 0.8.0 and carrying
-unreleased tooling notes from 0.7.4. Package metadata remains 0.7.3. The stable
+Both non-yanked 0.8.0 packages are published at
+`71a29d8a4d7ecf6774d9715895ce9abd13b9e5d7`; their archives match that source.
+[Release verification](evidence/release-080.md) separates publication from the
+still-pending released-source native acceptance in #66. The stable
 V1 encoder, numeric state fields, memory/map/key/epoch contracts and restoration
 are unchanged; this library cut requires no durable-data reset. Consumer wire
 changes and their retained-data disposition stay with each owner. No sibling
