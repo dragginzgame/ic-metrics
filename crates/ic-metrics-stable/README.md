@@ -79,6 +79,10 @@ Neither persistence nor an upgrade establishes counter/call-context continuity;
 unfinished spans must be re-established by the consumer.
 
 Host-owned endpoints, resets, sample admission and synchronization remain local.
-Stable map reads/writes add allocation and IC costs; no current performance
-comparison qualifies them. The arithmetic-only cost evidence does not apply to
-this adapter. Native reopen tests are not proof of live canister upgrades.
+Stable map reads/writes add allocation and IC costs. The repository's frozen
+[IC store qualification](https://github.com/dragginzgame/ic-metrics/issues/64)
+checks upgrades, query discard, trap rollback and reset, with actual checkpoint
+costs under a matched workload. Batch observations before checkpointing at the
+owning message boundary; measured costs depend on workload, map state and cadence.
+The arithmetic-only cost evidence and native reopen tests retain their separate
+scope and do not qualify live consumer execution.

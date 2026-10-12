@@ -89,6 +89,13 @@ discard/reset disposition and never frees or reuses the allocation ID. Native
 map reopening qualifies codec/storage behavior, not live canister upgrade or IC
 performance. The adapter's separate native/Wasm floor is Rust 1.88.
 
+The subsequent [frozen IC storage qualification](evidence/stable-cost-072.md)
+checks actual mixed-row upgrades, retained memory ID, query discard, trap rollback
+and explicit reset against byte-exact released 0.7.1 source. Its matched workload
+measures checkpoint cadence with real instruction counters, cycle-balance changes
+and raw Wasm bytes. This evidence has its own locked graph and scope; it does not
+qualify existing consumer endpoints, async spans or mainnet costs.
+
 All six existing consumers remain opt-out and keep their own volatile contracts.
 No consumer dependency, endpoint, DTO or attribution policy changes here. In
 particular, IC Backup's host duration/chunk diagnostics do not become canister

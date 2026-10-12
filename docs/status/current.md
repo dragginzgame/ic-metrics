@@ -4,7 +4,58 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Published 0.7.0 and pending 0.7.1 Make adoption
+## Published 0.7.1 and pending 0.7.2 durable IC qualification
+
+Both non-yanked official 0.7.1 packages match released
+`569a388bb0066bb51ede6095d88b40a65f36e82a`; [publication verification](../evidence/release-071.md)
+retains their checksums and source identities. Its exact-source hosted Linux and
+package-floor jobs pass, with both macOS lanes queued, so #61's new-entrypoint
+native acceptance remains open.
+
+The compatible 0.7.2 batch adds [frozen durable IC evidence](../evidence/stable-cost-072.md)
+for #64: actual mixed-row upgrades, retained application ID, query discard, trap
+rollback, typed refusals, explicit reset and continued recording. Two independent
+runs and a fresh-extraction replay agree byte-for-byte; all four Wasms rebuild
+exactly. Matched checkpoint-cadence costs use actual instructions, cycles and raw
+Wasm bytes, separate from native reopening and arithmetic-only measurements.
+The package guide now explains the measured scope and batching consequences.
+
+The incoming lock selects Host artifacts/filesystem 0.14.4 and IC Memory 0.35.14.
+Their non-yanked official archives, checksums, embedded source and library files
+verify against released upstream revisions. The 37 consumed Host files match
+0.14.3, and all 46 Memory source files match 0.35.13. Inspector checks, named
+tests/actual CLI, warning-denied Clippy and both adapter native/Wasm/inspector
+Rust 1.88 floors pass. The explicitly approved full current-graph CI passes in
+313 seconds, followed by all three package-floor gates; canonical manifest,
+lock, snapshot and tool-pin checkpoints remain unchanged. The final delivery
+receipt retains those checks separately from IC replay. The prior 298-second
+CI retains its original graph. No manifest requirement,
+library Rust source, format or support-floor change is needed.
+
+The requested [Shared Tooling adoption](../evidence/adoption-072-shared.md) uses
+clean committed/public 0.8.1 `c97f9f9c7b7c706fffdcfc5925cf58759b58093f`, including
+entrypoint-derived companions and automatic retirement after unchanged-source
+ownership checks. All 100 existing payloads remain selected explicitly and verify,
+with no additions/retirements. Newer dirty upstream work is excluded.
+Canonical Rust setup/offline admission selects derive formatter 0.14.1, retaining
+older generations. Literal direct/conditional macros remain intact, compile from
+a separate crate on Rust 1.85 and sort stably. Metrics has no affected macro or
+workaround marker to remove. The 0.8.1 refresh updates six payloads; pins and
+prepared tools remain unchanged and pass offline admission. Strict field/parsing
+and compiler/native/policy drift-retention fixtures pass on Linux Bash 5 and
+genuine Bash 3.2.57. Final 0.8.1 CI passes in 274 seconds with all package-floor
+gates and unchanged canonical inputs under the existing 0.7.2 approval; the
+274-second 0.8.0 gate, intermediate 264-second entrypoint-source
+gate and earlier 313-second receipt retain their prior snapshot scopes.
+[#65](https://github.com/dragginzgame/ic-metrics/issues/65) owns new delivered-source
+native acceptance, separate from #61's previous adoption.
+
+Canic's public source and missing owning #10 evidence remain unchanged. Workspace
+metadata stays 0.7.1; no staging, commit, tag, push, publication, hook activation or
+sibling edit is performed. The explicit contributor-tool preparation above does
+not change frozen IC measurement inputs or authorize a release.
+
+## Original 0.7.1 Make adoption and upstream inspection
 
 [Published 0.7.0 verification](../evidence/release-070.md) binds both non-yanked
 official packages and exact source to `384046884365e3d73696e0813a43640d3b1f2cb4`.

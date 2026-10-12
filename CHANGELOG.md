@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.7.2]
+
+### Changed
+
+- Adopt Shared Tooling 0.8.1's entrypoint/companion snapshot interface and
+  automatic retirement of unchanged obsolete owned files,
+  retaining the complete existing selection. Refresh contributor Rust tools
+  with `make install-rust-tools`, then `make rust-tools-check`, to select
+  cargo-sort-derives 0.14.1 and preserve literal macro paths. Formatter builds
+  require Rust 1.88 or newer; library floors remain unchanged
+  ([#65](https://github.com/dragginzgame/ic-metrics/issues/65),
+  [Shared #113](https://github.com/dragginzgame/shared-tooling/issues/113),
+  [Shared #131](https://github.com/dragginzgame/shared-tooling/issues/131)).
+- Reject malformed snapshot fields consistently and retain both build-identity
+  observations when Rust-tool installation detects drift, preserving the previous
+  selection ([Shared #133](https://github.com/dragginzgame/shared-tooling/issues/133),
+  [Shared #134](https://github.com/dragginzgame/shared-tooling/issues/134)).
+- Qualify the incoming Host 0.14.4 inspector and IC Memory 0.35.14 adapter graph;
+  consumed library sources, stored layout and Rust floors remain unchanged.
+
+### Testing
+
+- Add replayable IC upgrade, query-discard, trap-rollback and reset qualification
+  for the optional one-map store, with matched volatile/checkpoint-cadence
+  instruction, cycle and raw Wasm evidence
+  ([#64](https://github.com/dragginzgame/ic-metrics/issues/64)).
+
 ## [0.7.1] - 2026-10-12
 
 ### Changed
