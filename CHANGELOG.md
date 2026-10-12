@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.7.3]
+
+### Changed
+
+- Adopt Shared Tooling 0.9.0, including the Cargo-tool freshness task. Run the read-only
+  checker from Shared Tooling; installation and offline admission remain separate.
+- Read workspace LOC counts as JSON with `bash scripts/dev/cloc.sh --json`;
+  the existing human-readable report remains unchanged.
+- Qualify Host 0.14.8 for the private Wasm inspector and Memory 0.35.17 for the
+  optional store; consumed library sources and Rust floors remain unchanged.
+
+### Fixed
+
+- Share snapshot syntax admission between refresh and verification, rejecting
+  NUL bytes before parsing and emitting no records for malformed input
+  ([Shared #133](https://github.com/dragginzgame/shared-tooling/issues/133)).
+- Use the selected Rust tool catalog for formatting admission and refuse
+  redirected build-observation files before writing diagnostics
+  ([Shared #135](https://github.com/dragginzgame/shared-tooling/issues/135),
+  [Shared #136](https://github.com/dragginzgame/shared-tooling/issues/136)).
+- Make shared snapshot payload replacement atomic and include common installers
+  in minimal Make exports, preserving retry after an interrupted copy
+  ([Shared #131](https://github.com/dragginzgame/shared-tooling/issues/131)).
+
 ## [0.7.2] - 2026-10-12
 
 ### Changed

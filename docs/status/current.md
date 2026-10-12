@@ -4,7 +4,93 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Published 0.7.1 and pending 0.7.2 durable IC qualification
+## Pending 0.7.3 Shared Tooling and Host qualification
+
+The current request adopts clean committed/public Shared 0.9.0
+`aec7a149f581a42b9531fc747b46024fc0314fcf`. Three files update, with the same 101
+payloads and no additions/retirements. Refresh and verification share syntax
+admission; NUL input rejects before parsing and malformed input emits no records.
+Payload integrity and committed-source ownership keep their separate checks.
+
+The lock advanced after the 0.8.4 gate to Host 0.14.8 and Memory 0.35.17. It is
+preserved for fresh qualification: official archives and upstream source verify,
+with all 37 Host and 46 Memory Rust files unchanged from the earlier versions.
+Fresh full CI passes in 262 seconds under the existing 0.7.3 approval, followed by
+all three package-floor gates. Canonical inputs remain unchanged throughout.
+Distribution and prepared fleet-reader integration fixtures pass; the initial
+missing-PATH failure is retained. The owning record retains a separate 0.9.0
+receipt binding the new graph. The old 0.8.4 receipt retains its exact earlier graph and checkpoints;
+it does not qualify the later lock. Package metadata stays 0.7.2 and the compatible
+draft remains 0.7.3. See the owning adoption record for separate source scopes.
+
+The latest requested refresh adopts clean committed/public Shared 0.8.4
+`dca2bdd018afa6be598f03bb3cce1bab79c66973`, excluding newer dirty sibling work.
+Three payloads update; all 101 remain selected and verify, with no additions or
+retirements. Workspace LOC gains complete JSON output using the same count path;
+the human report remains supported. Fleet aggregation stays in Shared Tooling.
+Actual JSON totals match the crate rows and the default table matches 0.8.3
+byte-for-byte. The adopted fixture and full CI pass, the latter in 246 seconds
+under the existing 0.7.3 approval, with unchanged gate inputs. The owning record
+retains a separate 0.8.4 receipt. Product Rust, Cargo graph, pins and older evidence
+retain their identities; unchanged compiler-floor results are reused. Previous
+0.8.2/0.8.3 gates below retain their original snapshot scopes.
+
+The requested continuation now selects clean committed/public Shared 0.8.3
+`8cca7e67b03ce6e701b6e7dcec2e9753eb98337e` through canonical refresh from an
+isolated detached copy. Ten payloads update, 91 remain unchanged and all 101
+verify, with no additions/retirements. Formatting follows selected Rust pins;
+redirected Cargo diagnostics refuse; minimal Make exports include their helpers;
+individual snapshot copies are replaced atomically with retry/conflict checks.
+Product Rust, Cargo graph, tool pins and earlier frozen archives retain their
+pre-refresh hashes. Exact-source distribution fixtures and full CI pass, the
+latter in 259 seconds under the existing 0.7.3 approval. Gate inputs remain
+unchanged, tools pass offline without reinstall and unaffected package-floor
+results are reused. The owning record retains a separate 0.8.3 receipt. The
+previous 263-second CI below keeps its exact 0.8.2 source scope.
+
+The requested [adoption](../evidence/adoption-073.md) selects clean committed
+Shared Tooling 0.8.2 `aaf75a37717357dd62f4b0b15001eaa3ba1629cf` through canonical
+distribution from an isolated detached copy. The original 100 payloads remain;
+three task/catalog files update and the new Cargo-tool freshness task is added.
+All 101 files verify. The online checker remains in Shared Tooling, separate from
+offline tool admission; no schedule or executable pin changes here.
+
+The already selected Host 0.14.7 artifacts/filesystem rows verify against official
+non-yanked archives and released upstream source. All 37 consumed Rust files match
+0.14.5 byte-for-byte. Released Memory 0.35.15, other lock rows, core arithmetic and
+the stored V1 layout remain unchanged. Inspector checks, Clippy, named/actual CLI
+tests and all three package-floor gates pass. Explicitly approved full CI passes
+in 263 seconds on unchanged canonical inputs; the owning adoption record retains
+its frozen receipt. Shared public main now matches the adopted 0.8.2 revision.
+The new changelog
+is compatible 0.7.3; package metadata stays 0.7.2. Prior dirty release documentation
+is preserved; no staging, commit, release, publication or sibling edit occurs.
+
+## Published 0.7.2 and initial follow-up
+
+Both non-yanked official 0.7.2 packages verify against released/public
+`711fbfa198fb16a3747441c0c1b0512a48047d77`, including every packaged Rust source.
+[Release verification](../evidence/release-072.md) binds their checksums and the
+four committed IC/Shared evidence archives. #64's frozen durable IC qualification
+is delivered with unchanged archive identities and measured scope.
+
+Exact-source Linux native and all package-floor CI jobs pass. Both macOS lanes
+remain queued; #65 retains the delivered Shared 0.8.1 native obligation. #61's
+cancelled 0.7.1 run can be superseded by later complete relevant receipts, without
+claiming that cancelled run passed. Canic #99/#447 remain open and supply no new
+#10 closeout evidence.
+
+The next useful compatible maintenance is reducing redundant snapshot roots by
+deriving internal helpers through the existing entrypoint closure, preserving all
+current payloads and direct callers. Official Host 0.14.6 and IC Memory 0.35.15
+are available for separate qualification; their release notes describe tooling
+changes, not new library contracts. The released lock selects Host 0.14.5/Memory
+0.35.15; the frozen preparation keeps its earlier graph. Shared's public committed
+source remains adopted 0.8.1 at that observation; newer sibling
+work is uncommitted and is not imported. This inspection changes no product
+code, dependency selection, package metadata, index or refs.
+
+## Original 0.7.2 preparation and qualification
 
 Both non-yanked official 0.7.1 packages match released
 `569a388bb0066bb51ede6095d88b40a65f36e82a`; [publication verification](../evidence/release-071.md)
