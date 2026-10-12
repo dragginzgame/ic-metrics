@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use crate::{MeasurementAggregate, add_count};
+use crate::{MeasurementAggregate, MeasurementStateError, add_count};
 
 #[cfg(test)]
 mod tests;
@@ -161,6 +161,81 @@ pub struct MeasurementHistogram<const N: usize> {
 }
 
 impl<const N: usize> MeasurementHistogram<N> {
+    /// Restore disjoint buckets and an admitted aggregate without replaying samples.
+    ///
+    /// This checks structural arithmetic consistency, not observation provenance.
+    /// Consumers retain units, attribution and reset identity.
+    ///
+    /// # Errors
+    /// Rejects invalid bounds, overflow flags without clipped caps, disagreement
+    /// between bucket counts and the aggregate, or an incompatible maximum.
+    pub const fn from_parts(
+        upper_bounds: [u64; N],
+        bucket_counts: [u64; N],
+        overflow: u64,
+        bucket_saturation: [bool; N],
+        overflow_saturated: bool,
+        aggregate: MeasurementAggregate,
+    ) -> Result<Self, MeasurementStateError> {
+        if Self::new(upper_bounds).is_err() {
+            return Err(MeasurementStateError::InvalidBounds);
+        }
+        if overflow_saturated && overflow != u64::MAX {
+            return Err(MeasurementStateError::InvalidSaturation);
+        }
+        let mut count = overflow;
+        let mut saturated = overflow_saturated;
+        let mut index = 0;
+        let mut highest = None;
+        while index < N {
+            if bucket_saturation[index] && bucket_counts[index] != u64::MAX {
+                return Err(MeasurementStateError::InvalidSaturation);
+            }
+            add_count(&mut count, &mut saturated, bucket_counts[index]);
+            saturated |= bucket_saturation[index];
+            if bucket_counts[index] != 0 {
+                highest = Some(index);
+            }
+            index += 1;
+        }
+        if count != aggregate.samples() || saturated != aggregate.samples_saturated() {
+            return Err(MeasurementStateError::InvalidDistribution);
+        }
+        if let Some(maximum) = aggregate.maximum() {
+            if overflow != 0 {
+                if N != 0 && maximum <= upper_bounds[N - 1] {
+                    return Err(MeasurementStateError::InvalidDistribution);
+                }
+            } else if let Some(index) = highest {
+                if maximum > upper_bounds[index]
+                    || (index != 0 && maximum <= upper_bounds[index - 1])
+                {
+                    return Err(MeasurementStateError::InvalidDistribution);
+                }
+            } else {
+                return Err(MeasurementStateError::InvalidDistribution);
+            }
+            if !valid_distribution_total(
+                &upper_bounds,
+                &bucket_counts,
+                overflow,
+                &bucket_saturation,
+                overflow_saturated,
+                aggregate,
+            ) {
+                return Err(MeasurementStateError::InvalidDistribution);
+            }
+        }
+        Ok(Self {
+            upper_bounds,
+            bucket_counts,
+            overflow,
+            bucket_saturation,
+            overflow_saturated,
+            aggregate,
+        })
+    }
+
     /// Construct an empty histogram with inclusive upper bounds.
     ///
     /// Bounds and observations must use the same unit. A bound of zero and an
@@ -417,4 +492,86 @@ const fn quantile_rank(
     Ok(Some(
         ((samples as u128) * (numerator as u128)).div_ceil(denominator as u128),
     ))
+}
+
+// Canonical range admission for restored counts, including clipped lower bounds.
+const fn valid_distribution_total<const N: usize>(
+    upper_bounds: &[u64; N],
+    bucket_counts: &[u64; N],
+    overflow: u64,
+    bucket_saturation: &[bool; N],
+    overflow_saturated: bool,
+    aggregate: MeasurementAggregate,
+) -> bool {
+    let Some(maximum) = aggregate.maximum() else {
+        return true;
+    };
+    let mut minimum_total = 0_u128;
+    let mut maximum_total = 0_u128;
+    let mut maximum_overflow = false;
+    let mut minimum_overflow = false;
+    let mut maximum_lower = 0_u64;
+    let mut index = 0;
+    // Counts retain a lower bound after clipping. Exact bucket counts
+    // also constrain totals; a clipped positive bucket has no upper
+    // count bound. Keep all admission arithmetic checked or saturating.
+    while index <= N {
+        let (count, lost, lower, upper) = if index < N {
+            let lower = if index == 0 {
+                0
+            } else {
+                upper_bounds[index - 1].saturating_add(1)
+            };
+            (
+                bucket_counts[index],
+                bucket_saturation[index],
+                lower,
+                if upper_bounds[index] < maximum {
+                    upper_bounds[index]
+                } else {
+                    maximum
+                },
+            )
+        } else {
+            let lower = if N == 0 {
+                0
+            } else {
+                upper_bounds[N - 1].saturating_add(1)
+            };
+            (overflow, overflow_saturated, lower, maximum)
+        };
+        if count != 0 {
+            maximum_lower = lower;
+            let minimum_count = count as u128 + lost as u128;
+            let minimum = minimum_count * lower as u128;
+            if let Some(next) = minimum_total.checked_add(minimum) {
+                minimum_total = next;
+            } else {
+                minimum_overflow = true;
+            }
+            if lost && upper != 0 {
+                maximum_overflow = true;
+            }
+            let upper_total = count as u128 * upper as u128;
+            if let Some(next) = maximum_total.checked_add(upper_total) {
+                maximum_total = next;
+            } else {
+                maximum_overflow = true;
+            }
+        }
+        index += 1;
+    }
+    // At least one observation actually attains the stored maximum.
+    if let Some(next) = minimum_total.checked_add(maximum.saturating_sub(maximum_lower) as u128) {
+        minimum_total = next;
+    } else {
+        minimum_overflow = true;
+    }
+    if aggregate.total_saturated() {
+        maximum_overflow
+    } else {
+        !minimum_overflow
+            && aggregate.total() >= minimum_total
+            && (maximum_overflow || aggregate.total() <= maximum_total)
+    }
 }

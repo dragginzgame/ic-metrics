@@ -112,7 +112,7 @@ assert_eq!(p95.upper_inclusive(), Some(262_144));
 // Check exact count/total availability before projecting ratios from summaries.
 let aggregate = bytes.aggregate();
 let mean_tenths = match aggregate.mean()? {
-    Some(_) => Some(checked_scaled_ratio(u128::from(aggregate.total()), aggregate.samples(), 10)?),
+    Some(_) => Some(checked_scaled_ratio(aggregate.total(), aggregate.samples(), 10)?),
     None => None,
 };
 assert_eq!(mean_tenths, Some(286_720)); // 28,672.0 bytes, in tenths
@@ -131,7 +131,9 @@ the aggregate availability check above establishes that before using it.
 
 An empty aggregate differs from measured zero. Tracked aggregates and ordered
 summaries return `None` when empty, floor exact means and record actual overflow.
-An exactly reached `u64::MAX` remains exact; adding zero does not lose exactness.
+Counts and individual observations use `u64`; accumulated totals and means use
+`u128`. Every possible exact sample count of `u64` observations fits the total.
+An exactly reached numeric cap remains exact; adding zero does not lose exactness.
 Inspect saturation flags before using clipped counts/totals in other arithmetic.
 Flags describe accumulation only: consumers must admit exact input observations
 and must not treat a clamped or otherwise lossy sample as an exact measurement.
@@ -141,6 +143,16 @@ than substituting zero. [`MeasurementSummary`] retains the latest ordered sample
 mergeable aggregates and histograms retain no latest value. Maximum remains an
 individual observation after overflow. Bucket counts saturate independently;
 they need not sum to a saturated sample count.
+
+Consumers own overflow reporting. Check `samples_saturated()` and
+`total_saturated()` on the aggregate, expose unavailable exact projections, and
+log or alert once when a flag first becomes true in a measurement window. Keep
+that transition state with the consumer's window/reset identity; logging on every
+record after overflow can flood logs and waste cycles. The arithmetic library
+never logs, traps or wraps on overflow. Raw-field helpers cannot distinguish an
+exact cap from overflow; use tracked accumulators when that distinction matters.
+When a report or codec still requires `u64`, use a checked conversion and an
+explicit unavailable/overflow representation rather than truncating the total.
 [`MeasurementHistogram::cumulative_count`] needs only its selected bucket prefix
 to remain exact; [`MeasurementHistogram::quantile_bucket`] requires an exact
 sample count and all buckets. A saturated value total alone does not invalidate

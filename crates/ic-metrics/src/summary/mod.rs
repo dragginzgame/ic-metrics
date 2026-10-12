@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use crate::MeasurementAggregate;
+use crate::{MeasurementAggregate, MeasurementStateError, mean_total};
 
 #[cfg(test)]
 mod tests;
@@ -40,7 +40,7 @@ impl core::error::Error for MeasurementMeanError {}
 /// # Errors
 ///
 /// Rejects a nonzero total with zero samples first. Otherwise a count or total
-/// at `u64::MAX` is unavailable, even when reached exactly. If both are at the
+/// at its respective cap (`u64::MAX` / `u128::MAX`) is unavailable, even when reached exactly. If both are at the
 /// cap, [`MeasurementMeanError::SaturatedSamples`] takes precedence.
 ///
 /// ```
@@ -49,9 +49,9 @@ impl core::error::Error for MeasurementMeanError {}
 /// assert_eq!(checked_mean(0, 0), Ok(None));
 /// assert_eq!(checked_mean(2, 0), Ok(Some(0)));
 /// assert_eq!(checked_mean(2, 9), Ok(Some(4)));
-/// assert_eq!(checked_mean(1, u64::MAX), Err(MeasurementMeanError::SaturatedTotal));
+/// assert_eq!(checked_mean(1, u128::MAX), Err(MeasurementMeanError::SaturatedTotal));
 /// ```
-pub const fn checked_mean(samples: u64, total: u64) -> Result<Option<u64>, MeasurementMeanError> {
+pub const fn checked_mean(samples: u64, total: u128) -> Result<Option<u128>, MeasurementMeanError> {
     if samples == 0 {
         return if total == 0 {
             Ok(None)
@@ -62,10 +62,10 @@ pub const fn checked_mean(samples: u64, total: u64) -> Result<Option<u64>, Measu
     if samples == u64::MAX {
         return Err(MeasurementMeanError::SaturatedSamples);
     }
-    if total == u64::MAX {
+    if total == u128::MAX {
         return Err(MeasurementMeanError::SaturatedTotal);
     }
-    Ok(Some(total / samples))
+    Ok(mean_total(samples, total))
 }
 
 /// Record one value into a sample count and total, saturating independently.
@@ -73,16 +73,19 @@ pub const fn checked_mean(samples: u64, total: u64) -> Result<Option<u64>, Measu
 /// Zero is a completed sample. `value` and `total` must use the same unit.
 /// This primitive supports consumer-owned report shapes without serialization
 /// dependencies. It does not validate continuity or make saturated counters
-/// suitable for exact interval arithmetic.
-pub const fn record_sample(samples: &mut u64, total: &mut u64, value: u64) {
+/// suitable for exact interval arithmetic. Counts clip at `u64::MAX` and totals
+/// at `u128::MAX`, without retaining overflow provenance. Use
+/// [`MeasurementAggregate`] when actual overflow must be distinguished from an
+/// exactly reached cap.
+pub const fn record_sample(samples: &mut u64, total: &mut u128, value: u64) {
     *samples = samples.saturating_add(1);
-    *total = total.saturating_add(value);
+    *total = total.saturating_add(value as u128);
 }
 
 /// Ordered observations with a mergeable aggregate and a separate latest value.
 ///
 /// Count and total saturate independently, tracking actual overflow. An exactly
-/// reached `u64::MAX` remains exact; inspect the aggregate's saturation flags
+/// reached numeric cap remains exact; inspect the aggregate's saturation flags
 /// before using raw counts/totals for exact arithmetic. Latest and maximum remain
 /// individual observations after overflow. Empty and measured zero are distinct.
 /// Consumers own units, identity, ordering and reset boundaries.
@@ -93,6 +96,36 @@ pub struct MeasurementSummary {
 }
 
 impl MeasurementSummary {
+    /// Restore an admitted aggregate and its latest ordered observation.
+    ///
+    /// The caller establishes identity and ordering; this validates numeric fields.
+    ///
+    /// # Errors
+    /// Rejects absent/nonempty latest values, values above the maximum and
+    /// observations inconsistent with the aggregate's exact total.
+    pub const fn from_parts(
+        aggregate: MeasurementAggregate,
+        latest: Option<u64>,
+    ) -> Result<Self, MeasurementStateError> {
+        if aggregate.samples() == 0 {
+            return if latest.is_none() {
+                Ok(Self::EMPTY)
+            } else {
+                Err(MeasurementStateError::InvalidLatest)
+            };
+        }
+        let (Some(latest), Some(maximum)) = (latest, aggregate.maximum()) else {
+            return Err(MeasurementStateError::InvalidLatest);
+        };
+        if latest > maximum
+            || (aggregate.samples() == 1 && latest != maximum)
+            || (latest < maximum && aggregate.total() < latest as u128 + maximum as u128)
+        {
+            return Err(MeasurementStateError::InvalidLatest);
+        }
+        Ok(Self { aggregate, latest })
+    }
+
     /// Empty summary, with no latest or maximum observation.
     pub const EMPTY: Self = Self {
         aggregate: MeasurementAggregate::EMPTY,
@@ -117,9 +150,9 @@ impl MeasurementSummary {
         self.aggregate.samples()
     }
 
-    /// Observation total, clipped at `u64::MAX`; saturation is in [`Self::aggregate`].
+    /// Observation total, clipped at `u128::MAX`; saturation is in [`Self::aggregate`].
     #[must_use]
-    pub const fn total(self) -> u64 {
+    pub const fn total(self) -> u128 {
         self.aggregate.total()
     }
 
@@ -127,7 +160,7 @@ impl MeasurementSummary {
     ///
     /// # Errors
     /// Returns [`MeasurementMeanError`] on actual count or total overflow.
-    pub const fn mean(self) -> Result<Option<u64>, MeasurementMeanError> {
+    pub const fn mean(self) -> Result<Option<u128>, MeasurementMeanError> {
         self.aggregate.mean()
     }
 

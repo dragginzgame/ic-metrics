@@ -3,7 +3,7 @@ set -euo pipefail
 unset MAKEFLAGS MFLAGS MAKEOVERRIDES GNUMAKEFLAGS MAKEFILES
 unset VALIDATION_REPOSITORY_ROOT VALIDATION_RUNNER_SNAPSHOT_PATH
 
-# Exercise this dependency-free consumer through the reviewed shared checker.
+# Exercise the arithmetic hook through the reviewed shared checker.
 # Only scratch Git state changes; tools are already prepared.
 root="${BASH_SOURCE[0]}"
 [[ "$root" == /* ]] || root="$PWD/$root"
@@ -30,11 +30,11 @@ trap cleanup EXIT
 # shellcheck source=ci/tool-versions.env
 source "$root/ci/tool-versions.env"
 bash "$root/scripts/ci/check-format-tools.sh" "$SHARED_TOOLING_CARGO_SORT_VERSION" > "$fixture/format-tools.log" 2>&1
-# Overlay the complete current arithmetic module tree, including new modules.
+# Overlay current arithmetic modules and the optional package, including new files.
 # The canonical checker starts from committed HEAD; lib.rs alone can refer to
 # modules absent from that export. Keep the producer's failure visible before
 # passing its NUL-delimited, checkout-relative regular files to the checker.
-(cd "$root"; rg --files --null -- crates/ic-metrics/src) > "$fixture/arithmetic-sources"
+(cd "$root"; rg --files --null -- crates/ic-metrics/src crates/ic-metrics-stable) > "$fixture/arithmetic-sources"
 arithmetic_sources=()
 while IFS= read -r -d '' path; do
     arithmetic_sources+=("$path")

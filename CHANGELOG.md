@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.0]
+
+### Breaking
+
+- Accumulate observation totals and project integer means as `u128`, retaining
+  `u64` individual samples and counts. Every exact counted batch now fits its
+  total; actual overflow remains explicit and never wraps. Update raw-field
+  totals, report/codec boundaries and public re-exports together, using checked
+  conversions when a narrower report is required
+  ([#63](https://github.com/dragginzgame/ic-metrics/issues/63)).
+
+
+### Added
+
+- Opt into durable metrics with the separate `ic-metrics-stable` package: one
+  host-owned stable map holds namespaced aggregates, summaries and histograms
+  across upgrades. Validate stored identities, bounds and numeric state; preserve
+  wide totals and overflow flags, and require explicit reset/retirement. The
+  adapter requires Rust 1.88; the arithmetic package stays dependency-free and
+  `no_std` on Rust 1.85. Publication now selects both public packages.
+
 ## [0.6.6] - 2026-10-11
 
 ### Fixed

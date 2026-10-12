@@ -11,15 +11,53 @@ fn aggregate(values: &[u64]) -> MeasurementAggregate {
 #[test]
 fn exact_caps_and_actual_overflow_have_distinct_projections() {
     let mut result = aggregate(&[u64::MAX]);
-    assert_eq!(result.mean(), Ok(Some(u64::MAX)));
-    assert!(!result.total_saturated());
+    assert_eq!(result.mean(), Ok(Some(u128::from(u64::MAX))));
     result.record(0);
-    assert_eq!(result.mean(), Ok(Some(u64::MAX / 2)));
     result.record(1);
-    assert_eq!(result.total(), u64::MAX);
-    assert!(result.total_saturated());
-    assert_eq!(result.mean(), Err(MeasurementMeanError::SaturatedTotal));
+    assert_eq!(result.total(), u128::from(u64::MAX) + 1);
+    assert!(!result.total_saturated());
+    assert_eq!(result.mean(), Ok(Some((u128::from(u64::MAX) + 1) / 3)));
     assert_eq!(result.maximum(), Some(u64::MAX));
+
+    // u64::MAX samples of the largest value still have an exact total and mean.
+    let mut largest_batch = MeasurementAggregate::EMPTY;
+    for _ in 0..64 {
+        largest_batch.merge(largest_batch);
+        largest_batch.record(u64::MAX);
+    }
+    assert_eq!(largest_batch.samples(), u64::MAX);
+    assert_eq!(largest_batch.total(), u128::from(u64::MAX).pow(2));
+    assert_eq!(largest_batch.mean(), Ok(Some(u128::from(u64::MAX))));
+    assert!(!largest_batch.samples_saturated());
+    assert!(!largest_batch.total_saturated());
+    let interval = largest_batch
+        .interval_since(MeasurementAggregate::EMPTY)
+        .unwrap();
+    assert_eq!(interval.total(), largest_batch.total());
+    assert_eq!(interval.mean(), Some(u128::from(u64::MAX)));
+
+    // Two further maximum observations reach u128::MAX exactly. Only the
+    // sample count has overflowed; another zero cannot lose total exactness.
+    largest_batch.record(u64::MAX);
+    largest_batch.record(u64::MAX);
+    assert_eq!(largest_batch.total(), u128::MAX);
+    assert!(largest_batch.samples_saturated());
+    assert!(!largest_batch.total_saturated());
+    largest_batch.record(0);
+    assert!(!largest_batch.total_saturated());
+    largest_batch.record(1);
+    assert!(largest_batch.total_saturated());
+    assert_eq!(largest_batch.total(), u128::MAX);
+    assert_eq!(
+        largest_batch.mean(),
+        Err(MeasurementMeanError::SaturatedSamples)
+    );
+    let mut inherited = MeasurementAggregate::EMPTY;
+    inherited.merge(largest_batch);
+    assert_eq!(inherited, largest_batch);
+    result.merge(largest_batch);
+    assert!(result.samples_saturated());
+    assert!(result.total_saturated());
     result.merge(MeasurementAggregate::EMPTY);
     assert!(result.total_saturated());
 
@@ -81,20 +119,28 @@ fn intervals_distinguish_no_work_zero_work_and_exact_cap() {
     assert_eq!((zero.samples(), zero.total(), zero.mean()), (1, 0, Some(0)));
     current.record(u64::MAX - 5);
     let added = current.interval_since(previous).unwrap();
-    assert_eq!((added.samples(), added.total()), (2, u64::MAX - 5));
-    assert_eq!(added.mean(), Some((u64::MAX - 5) / 2));
+    assert_eq!(
+        (added.samples(), added.total()),
+        (2, u128::from(u64::MAX) - 5)
+    );
+    assert_eq!(added.mean(), Some((u128::from(u64::MAX) - 5) / 2));
     let cap = aggregate(&[u64::MAX])
         .interval_since(MeasurementAggregate::EMPTY)
         .unwrap();
-    assert_eq!(cap.mean(), Some(u64::MAX));
+    assert_eq!(cap.mean(), Some(u128::from(u64::MAX)));
     current.record(1);
+    let wide = current.interval_since(previous).unwrap();
     assert_eq!(
-        current.interval_since(previous),
-        Err(MeasurementIntervalError::SaturatedTotal)
+        (wide.samples(), wide.total()),
+        (3, u128::from(u64::MAX) - 4)
     );
+    current.record(u64::MAX);
+    let wider = current.interval_since(previous).unwrap();
+    assert_eq!(wider.total(), 2 * u128::from(u64::MAX) - 4);
+    assert_eq!(wider.mean(), Some(wider.total() / 4));
     assert_eq!(
         previous.interval_since(current),
-        Err(MeasurementIntervalError::SaturatedTotal)
+        Err(MeasurementIntervalError::DecreasingSamples)
     );
 }
 

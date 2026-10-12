@@ -44,6 +44,56 @@ It establishes no unit, snapshot identity or input provenance and adds no storag
 The [packaged application guide](../crates/ic-metrics/src/application.md) shows
 consumer-owned named aggregates and their admission/reporting obligations.
 
+## Pending 0.7.0 wide totals
+
+The current working source uses `u128` accumulated totals and integer means in
+raw-field helpers, aggregates, ordered summaries and intervals. Samples,
+counts, maxima/latest, bounds and bucket counts remain `u64`. The largest exact
+sample count multiplied by the largest admitted observation fits `u128`.
+Tracked counts and totals still clip independently with sticky actual-overflow
+flags; means and intervals reject lost precision. Raw fields retain conservative
+cap admission at `u64::MAX` for samples and `u128::MAX` for totals.
+
+Consumers own overflow reporting: expose loss of exactness and alert once on a
+flag transition per window. Do not log each subsequent observation. Wider totals
+cannot repair clipped input samples, establish call-context identity or authorize
+combining overlapping spans. Histogram distributions and scaled-ratio semantics
+remain unchanged.
+
+This is a source/API cut, tracked in [#63](https://github.com/dragginzgame/ic-metrics/issues/63).
+Update consumer-owned raw totals, report DTOs, codecs and public re-exports as one
+owning batch. `u64` output requires checked conversion with an explicit unavailable
+representation; never truncate or silently reinterpret retained wire/storage bytes.
+The arithmetic library owns no retained format or migration. Package metadata stays 0.6.6
+until the maintainer selects the release; sibling edits/builds are not performed.
+[The wide-total review](evidence/arithmetic-070.md) binds the read-only callers and
+local qualification. The released history below retains its original boundaries.
+
+## Optional durable store in pending 0.7.0
+
+The separate [ic-metrics-stable package](../crates/ic-metrics-stable/README.md)
+owns a V1 snapshot codec and one host-supplied B-tree map. The host uses its
+existing `ic-memory` allocation pool/bootstrap and supplies one admitted map;
+its one permanent store key resolves to one application memory ID. Namespace/name
+keys distinguish component rows, without global registration or an ID per metric.
+Allocation-governance storage remains separate. The core gains validated
+`from_parts` restoration, with no serialization or stable-memory dependency.
+
+Rows retain kind, units, reset epoch, wide totals, maxima/latest and all overflow
+flags; histograms also retain exact finite bounds and disjoint counts. Unknown
+formats, malformed values, identity/configuration mismatches and numeric checkpoint
+regressions return typed errors without implicit reset. Explicit row removal owns
+discard/reset disposition and never frees or reuses the allocation ID. Native
+map reopening qualifies codec/storage behavior, not live canister upgrade or IC
+performance. The adapter's separate native/Wasm floor is Rust 1.88.
+
+All six existing consumers remain opt-out and keep their own volatile contracts.
+No consumer dependency, endpoint, DTO or attribution policy changes here. In
+particular, IC Backup's host duration/chunk diagnostics do not become canister
+stable state. Persistent lifetime totals do not establish call-context continuity
+or admit unfinished spans through upgrades. Owners select update-message write
+boundaries, synchronization, label cardinality, authorization and explicit resets.
+
 ## Released 0.6.0 arithmetic hard cut
 
 The one current source contract tracks actual overflow in accumulators. Exactly

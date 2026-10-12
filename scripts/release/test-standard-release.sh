@@ -192,7 +192,7 @@ CARGO
 chmod +x "$fixture/bin/cargo"
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
 chmod +x "$fixture/bin/rustc"
-cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv wasm-inspect-check wasm-inspect-msrv)
+cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv stable-check stable-msrv wasm-inspect-check wasm-inspect-msrv)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
 for target in release-patch release-minor release-major release-resume fmt fmt-check "${cargo_targets[@]}" "${metadata_targets[@]}"; do
@@ -282,7 +282,7 @@ for target in publish publish-check; do
         PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
             -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
         if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
-        printf '%s\n' publish -p ic-metrics --locked --registry crates-io > "$fixture/expected"
+        printf '%s\n' publish -p ic-metrics -p ic-metrics-stable --locked --registry crates-io > "$fixture/expected"
         if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
         cmp "$fixture/expected" "$EVENTS"
     done

@@ -4,7 +4,76 @@ ic-metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
 own platform reads, attribution, identities, registries, persistence and endpoints.
 See [the extraction contract](../extraction.md).
 
-## Pending 0.6.6 README cleanup
+## Pending 0.7.0 wide totals
+
+The accepted optional [one-map durable adapter](../evidence/stable-070.md) adds
+`ic-metrics-stable` outside the dependency-free arithmetic graph. The host owns
+one admitted `app.metrics.v1` map; namespaced rows retain kind, units, reset epoch,
+wide totals and all overflow flags. Core restoration and stored records reject
+malformed/inconsistent fields, configuration differences and regressing snapshots.
+Explicit reset/retirement never frees the allocation ID. The adapter needs Rust
+1.88 on native/Wasm, while the core stays on 1.85. Native reopening, including
+actual IC Memory bootstrap/rebootstrap, remains separate from
+[#64](https://github.com/dragginzgame/ic-metrics/issues/64)'s IC upgrade/cost evidence.
+
+Focused Clippy, restoration tests, both native/Wasm floors and release fixtures
+pass. Publication selects both public packages in dependency order; a disposable
+0.7.0 dry run builds both archives without uploads or real metadata changes.
+The initial full CI exposed its newly added floor missing from a substituted
+release fixture; that fixture now covers failure retention for all four gates.
+The hook fixture also exports the optional package with its workspace manifest,
+preserving success/failure evidence in its focused retention tests.
+Current-batch `make ci` passes, including 44 core tests/seven doctests and nine
+adapter tests/one doctest. All three package-floor gates pass, including native
+and Wasm for core and adapter. The final two-package dry run verifies both archives.
+[The frozen native bundle](../evidence/stable-store-070.tar.gz) retains exact source,
+lock, dry-run payloads and successful/failed logs; fresh extraction verifies every
+payload and reruns all 16 restoration/storage tests. These results are separate
+from the earlier arithmetic-only comparison below. Existing consumers remain
+opt-out and no sibling files change. Workspace metadata remains 0.6.6; the pending
+release stays 0.7.0. No staging, commit, tag, push or upload is performed.
+
+[#63](https://github.com/dragginzgame/ic-metrics/issues/63) owns the accepted
+correctness cut: totals and integer means become `u128`, while individual
+observations and counts remain `u64`. Exact count/value products fit the total;
+actual overflow remains sticky with typed exact-projection failures. Consumer
+logging remains once per flag transition in the owner's window.
+
+[The review](../evidence/arithmetic-070.md) binds the six read-only caller
+boundaries, durable IC inputs and measured footprint/cost. Focused tests,
+native/Wasm Clippy and Rust 1.85 checks pass. The explicitly approved `make ci`
+passes all documented gates, including 37 product tests and seven doctests.
+Two final independent IC runs each verify 841 measured replies and 17 typed
+rejections, including exact wide means/intervals beyond the old total limit.
+Results agree byte-for-byte; the initial direct-division candidate and earlier
+matched matrix remain separately retained. A fresh extraction verifies every payload, rebuilds all 16 byte-identical
+Wasms and reproduces both raw CSVs exactly; its delivery receipt is retained.
+
+All six consumer adoption issues are linked in the review; no sibling files or
+versions are changed. Pending notes select 0.7.0 for the total/mean API cut.
+Workspace/package metadata stays 0.6.6; no commit, tag, push or release is performed.
+
+## Published 0.6.6 and current acceptance
+
+[Published 0.6.6 verification](../evidence/release-066.md) binds local/public
+source, tag and the official dependency-free archive to
+`c651c095d5554e929a9cb96f5089226eda66ee90`. The README repair in
+[#62](https://github.com/dragginzgame/ic-metrics/issues/62) is delivered and
+verified. The current snapshot is Shared Tooling 0.6.3; the committed private
+lock selects Host 0.14.1. Linux and both Rust floors pass, with its downloaded
+Linux receipt's 75 source hashes and 14 payload hashes independently verified.
+Intel is running and Apple Silicon queued; remaining native acceptance stays in
+[#61](https://github.com/dragginzgame/ic-metrics/issues/61). The older 0.6.5 run is
+cancelled and retains its historical source scope.
+
+Host 0.14.1's upstream native matrix and MSRV now all pass. No newer committed
+Host or Shared source is available; dirty upstream guidance is not adopted.
+Canic's public source and unchecked runtime/native obligations are unchanged in
+[#10](https://github.com/dragginzgame/ic-metrics/issues/10). No additional root
+arithmetic repair is established by this inspection, and no pending release
+entry is created for qualification-only documentation.
+
+## Original 0.6.6 README cleanup
 
 [#62](https://github.com/dragginzgame/ic-metrics/issues/62) is repaired locally:
 the README keeps product examples, separate arithmetic/inspector Rust floors,

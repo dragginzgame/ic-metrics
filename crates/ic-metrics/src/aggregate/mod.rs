@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use crate::{MeasurementMeanError, add_count};
+use crate::{MeasurementMeanError, MeasurementStateError, add_count, add_total, mean_total};
 
 #[cfg(test)]
 mod tests;
@@ -44,7 +44,7 @@ impl core::error::Error for MeasurementIntervalError {}
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct MeasurementInterval {
     samples: u64,
-    total: u64,
+    total: u128,
 }
 
 impl MeasurementInterval {
@@ -56,33 +56,79 @@ impl MeasurementInterval {
 
     /// Exact sum of added observations in the consumer's unit.
     #[must_use]
-    pub const fn total(self) -> u64 {
+    pub const fn total(self) -> u128 {
         self.total
     }
 
     /// Floor-rounded mean, or `None` when no observations were added.
     #[must_use]
-    pub const fn mean(self) -> Option<u64> {
-        self.total.checked_div(self.samples)
+    pub const fn mean(self) -> Option<u128> {
+        mean_total(self.samples, self.total)
     }
 }
 
 /// Mergeable count, total and maximum in one consumer-selected unit.
 ///
-/// Counts and totals clip independently at `u64::MAX`; sticky flags record actual
+/// Counts clip at `u64::MAX` and totals at `u128::MAX`; sticky flags record actual
 /// overflow, so an exactly reached cap remains exact. Maximum is an individual
 /// observation and remains valid after overflow. There is no latest observation:
-/// unordered batches cannot establish ordering. No allocation or platform reads.
+/// unordered batches cannot establish ordering. Every `u64` sample fits in a
+/// `u128` total while the sample count remains exact. No allocation or platform reads.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct MeasurementAggregate {
     samples: u64,
-    total: u64,
+    total: u128,
     maximum: u64,
     samples_saturated: bool,
     total_saturated: bool,
 }
 
 impl MeasurementAggregate {
+    /// Restore explicit fields after numeric consistency checks.
+    ///
+    /// Exactly reached caps with false flags stay exact. This admits arithmetic
+    /// consistency only; the caller owns provenance, units and window identity.
+    ///
+    /// # Errors
+    /// Rejects invalid empty state, missing maxima, inconsistent saturation flags
+    /// and totals outside the range allowed by count and maximum.
+    pub const fn from_parts(
+        samples: u64,
+        total: u128,
+        maximum: Option<u64>,
+        samples_saturated: bool,
+        total_saturated: bool,
+    ) -> Result<Self, MeasurementStateError> {
+        if samples == 0 {
+            return if total == 0 && maximum.is_none() && !samples_saturated && !total_saturated {
+                Ok(Self::EMPTY)
+            } else {
+                Err(MeasurementStateError::InvalidEmpty)
+            };
+        }
+        let Some(maximum) = maximum else {
+            return Err(MeasurementStateError::MissingMaximum);
+        };
+        if (samples_saturated && samples != u64::MAX)
+            || (total_saturated && (total != u128::MAX || !samples_saturated))
+        {
+            return Err(MeasurementStateError::InvalidSaturation);
+        }
+        if total < maximum as u128
+            || (maximum == 0 && total != 0)
+            || (!samples_saturated && total > samples as u128 * maximum as u128)
+        {
+            return Err(MeasurementStateError::InvalidTotal);
+        }
+        Ok(Self {
+            samples,
+            total,
+            maximum,
+            samples_saturated,
+            total_saturated,
+        })
+    }
+
     /// Empty aggregate, without a maximum observation.
     pub const EMPTY: Self = Self {
         samples: 0,
@@ -95,7 +141,7 @@ impl MeasurementAggregate {
     /// Record one admitted observation, including zero, in the existing unit.
     pub const fn record(&mut self, value: u64) {
         add_count(&mut self.samples, &mut self.samples_saturated, 1);
-        add_count(&mut self.total, &mut self.total_saturated, value);
+        add_total(&mut self.total, &mut self.total_saturated, value as u128);
         if value > self.maximum {
             self.maximum = value;
         }
@@ -112,7 +158,7 @@ impl MeasurementAggregate {
             &mut self.samples_saturated,
             other.samples,
         );
-        add_count(&mut self.total, &mut self.total_saturated, other.total);
+        add_total(&mut self.total, &mut self.total_saturated, other.total);
         self.samples_saturated |= other.samples_saturated;
         self.total_saturated |= other.total_saturated;
         if other.maximum > self.maximum {
@@ -126,9 +172,9 @@ impl MeasurementAggregate {
         self.samples
     }
 
-    /// Total, clipped at `u64::MAX`; check [`Self::total_saturated`].
+    /// Total, clipped at `u128::MAX`; check [`Self::total_saturated`].
     #[must_use]
-    pub const fn total(self) -> u64 {
+    pub const fn total(self) -> u128 {
         self.total
     }
 
@@ -159,14 +205,14 @@ impl MeasurementAggregate {
     /// # Errors
     /// Returns [`MeasurementMeanError::SaturatedSamples`] before
     /// [`MeasurementMeanError::SaturatedTotal`] when actual overflow is recorded.
-    pub const fn mean(self) -> Result<Option<u64>, MeasurementMeanError> {
+    pub const fn mean(self) -> Result<Option<u128>, MeasurementMeanError> {
         if self.samples_saturated {
             return Err(MeasurementMeanError::SaturatedSamples);
         }
         if self.total_saturated {
             return Err(MeasurementMeanError::SaturatedTotal);
         }
-        Ok(self.total.checked_div(self.samples))
+        Ok(mean_total(self.samples, self.total))
     }
 
     /// Exact count/total difference from an earlier snapshot of this accumulator.

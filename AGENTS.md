@@ -10,6 +10,11 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 - Own small, allocation-free measurement arithmetic. Keep the library
   dependency-free and `no_std`; consumers own platform counter reads.
+- The separately opted-in `ic-metrics-stable` package owns one-map snapshot
+  encoding and validated restoration, using `ic-memory`'s exact collection types.
+  Its native/Wasm Rust floor is 1.88. Hosts own the allocation key, bootstrap,
+  collection lifecycle, identities, synchronization, write cadence and resets.
+  Never add stable-memory dependencies to the arithmetic package.
 - The private `ic-metrics-wasm-inspect` host binary owns bounded structural
   evidence inspection through IC Host libraries, outside the arithmetic graph.
   Its explicit Rust 1.88 floor is separate from the arithmetic Rust 1.85 floor.
@@ -50,7 +55,7 @@ and [the extraction contract](docs/extraction.md) before implementation.
   `target/` and locked dependencies; do not upgrade dependencies as a side effect.
 - After Rust edits, run `make fmt`, then selected package checks or named tests.
   Focused commands and host qualification are in [docs/hosts.md](docs/hosts.md).
-  Before delivering completed code as ready, run `make ci` and both documented
+  Before delivering completed code as ready, run `make ci` and all documented
   package-floor checks, reusing passing evidence for unchanged inputs. Inspection
   alone does not authorize that suite; documentation-only work needs link,
   consistency and diff checks. Releases remain separately authorized.

@@ -8,7 +8,8 @@ and `MeasurementSummary` for ordered observations with a latest value.
 `MeasurementHistogram` adds a mergeable fixed-size distribution with caller-selected bounds.
 Zero is a valid observation; an empty summary has no latest or maximum value.
 Tracked count and total clip independently, with sticky actual-overflow flags.
-An exactly reached `u64::MAX` remains exact. Consumers establish units, identity and
+Counts and individual samples use `u64`; totals and means use `u128`. Every
+exact counted batch fits its total. An exactly reached numeric cap remains exact. Consumers establish units, identity and
 reset boundaries before comparing observations; saturated totals cannot supply
 exact interval arithmetic.
 
@@ -23,7 +24,7 @@ assert_eq!(summary.latest(), Some(0));
 ```
 
 Tracked `MeasurementAggregate::mean()` and `MeasurementSummary::mean()` return
-`Result<Option<u64>, MeasurementMeanError>`: empty is `None`, measured zero is
+`Result<Option<u128>, MeasurementMeanError>`: empty is `None`, measured zero is
 `Some(0)`, and exact means round down. Actual overflow returns a typed error;
 exactly reaching the cap remains valid. The raw-field `checked_mean(samples,
 total)` stays conservative at either numeric cap because external fields do not
@@ -35,11 +36,20 @@ differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-Release **0.6.0 is a hard cut**: histogram `summary()` is replaced by `aggregate()`,
-which has no latest value. Callers that need latest must own that observation
-separately. Tracked projections now use actual overflow rather than rejecting
-exactly reached caps. No serialized format, reader or endpoint is added; consumers
-coordinate public re-exports and retain their own persistence/reset contracts.
+The working source prepares the **0.7.0 hard cut**: totals and integer means
+are `u128`, including raw-field helpers and intervals. Consumers must coordinate
+report fields, codecs and public re-exports; narrower output needs checked
+conversion. The published 0.6 dependency below retains its released contract.
+The arithmetic core adds no reader or endpoint. Consumers own reset identity
+and any once-per-window overflow log or alert.
+
+The pending [optional stable adapter](crates/ic-metrics-stable/README.md) stores
+aggregates, summaries and histograms in one host-owned stable B-tree map using
+`ic-memory`'s collection types. Namespaced records retain units, reset epochs,
+wide totals and overflow flags. Adding `ic-metrics-stable` is the opt-in; existing
+arithmetic callers remain volatile. The adapter requires Rust 1.88 on host and
+Wasm. Hosts own allocation/bootstrap, synchronization, write cadence and resets;
+the arithmetic core remains dependency-free and `no_std` on Rust 1.85.
 
 The [application guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md) is included in
 packaged crate documentation, with a compiled example of fixed named histograms,
@@ -152,7 +162,7 @@ vendored; normal commands need no Shared Tooling sibling checkout.
 without editing. `make help` lists focused commands. Select named tests during
 implementation, and use `make check`, `make check-wasm`, `make clippy` and
 `make wasm-inspect-check` for the affected package. Completed code delivery uses
-`make ci`, `make msrv` and `make wasm-inspect-msrv`; inspection and documentation
+`make ci`, `make msrv`, `make stable-msrv` and `make wasm-inspect-msrv`; inspection and documentation
 changes use narrower checks. The [host support and qualification guide](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks)
 owns local gates and native acceptance. [Agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md)
 own command authority.
@@ -195,7 +205,8 @@ make publish
 ```
 
 `publish-check` is Cargo's dry run; `publish` uploads only the existing
-`ic-metrics` package version to crates.io, using normal Cargo credentials and
+`ic-metrics` and `ic-metrics-stable` package versions to crates.io in dependency
+order, using normal Cargo credentials and
 locked dependencies. Both retain Cargo's package verification and dirty-tree
 rejection. Publication does not bump versions, create Git commits/tags or clean
 artifacts. See [Cargo's publication documentation](https://doc.rust-lang.org/cargo/commands/cargo-publish.html).

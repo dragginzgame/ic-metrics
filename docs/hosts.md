@@ -175,8 +175,14 @@ During implementation run `make shared-tooling-check`, `make fmt`, `make check`,
 `make check-wasm`, `make clippy`, and `make docs-check` for the library.
 `make msrv` checks the declared floor on host and Wasm. Select
 named tests relevant to the change rather than running the full suite by default.
+The optional stable package uses registry `ic-memory` 0.35.12 and its exact
+stable-structures re-export. `make stable-check` checks native/Wasm builds, both
+Clippy targets, documentation, named adapter tests and its compiled example.
+`make stable-msrv` checks the adapter's separate Rust 1.88 native/Wasm floor;
+install that compiler's Wasm target explicitly. Native reopening uses upstream
+`VectorMemory` to qualify records and collection reopening, not IC execution.
 Before delivering completed code, run the documented full suite `make ci`,
-`make msrv` and `make wasm-inspect-msrv`, reusing passing checks for unchanged
+`make msrv`, `make stable-msrv` and `make wasm-inspect-msrv`, reusing passing checks for unchanged
 inputs. Inspection-only and documentation-only work keep their narrower checks.
 Release and publication effects still require explicit authority.
 The separate `make wasm-inspect-check` checks and lints the private host package
@@ -435,7 +441,7 @@ change the acceptance of cancelled outcomes.
 
 The configured CI runs `make ci` natively on every declared host and
 `make msrv` on Linux. Completed code delivery requires `make ci`, `make msrv`
-and `make wasm-inspect-msrv` under the adopted baseline; inspection and
+plus `make stable-msrv` and `make wasm-inspect-msrv` under the adopted baseline; inspection and
 documentation-only work use narrower checks. Release command stubs run in native CI. Maintainer release preparation requires
 cargo-edit and does not implicitly publish or clean artifacts. Native release
 command-substitute and metadata/admission/retention fixtures pass on both macOS

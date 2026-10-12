@@ -53,7 +53,7 @@ fn no_bounds_count_all_samples_in_overflow() {
     assert_eq!(histogram.bucket_counts(), &[]);
     assert_eq!(histogram.overflow(), 3);
     assert_eq!(histogram.aggregate().samples(), 3);
-    assert_eq!(histogram.aggregate().total(), u64::MAX);
+    assert_eq!(histogram.aggregate().total(), u128::from(u64::MAX) + 7);
     assert_eq!(histogram.aggregate().maximum(), Some(u64::MAX));
 }
 
@@ -66,7 +66,7 @@ fn maximum_bound_includes_maximum_sample() {
     assert_eq!(histogram.bucket_counts(), &[1, 2]);
     assert_eq!(histogram.overflow(), 0);
     assert_eq!(histogram.aggregate().samples(), 3);
-    assert_eq!(histogram.aggregate().total(), u64::MAX);
+    assert_eq!(histogram.aggregate().total(), u128::from(u64::MAX) + 1);
 }
 
 #[test]
@@ -87,14 +87,21 @@ fn saturated_bucket_does_not_freeze_other_buckets_or_summary() {
 fn saturated_overflow_and_total_do_not_freeze_other_observations() {
     let mut histogram = MeasurementHistogram::new([1]).unwrap();
     histogram.overflow = u64::MAX - 1;
+    for _ in 0..64 {
+        histogram.aggregate.merge(histogram.aggregate);
+        histogram.aggregate.record(u64::MAX);
+    }
+    histogram.aggregate.record(u64::MAX);
+    histogram.aggregate.record(u64::MAX);
     histogram.record(u64::MAX);
     assert_eq!(histogram.overflow(), u64::MAX);
-    assert_eq!(histogram.aggregate().total(), u64::MAX);
+    assert_eq!(histogram.aggregate().total(), u128::MAX);
+    assert!(histogram.aggregate().total_saturated());
     histogram.record(u64::MAX);
     histogram.record(1);
     assert_eq!(histogram.bucket_counts(), &[1]);
     assert_eq!(histogram.overflow(), u64::MAX);
-    assert_eq!(histogram.aggregate().samples(), 3);
+    assert_eq!(histogram.aggregate().samples(), u64::MAX);
     assert_eq!(histogram.aggregate().maximum(), Some(u64::MAX));
 }
 
@@ -201,8 +208,8 @@ fn query_empty_zero_no_bounds_and_maximum_bound() {
     );
     histogram.record(u64::MAX);
     histogram.record(1);
-    // Saturated value totals do not invalidate exact distribution counts.
-    assert_eq!(histogram.aggregate().total(), u64::MAX);
+    // Wide value totals do not invalidate exact distribution counts.
+    assert_eq!(histogram.aggregate().total(), u128::from(u64::MAX) + 1);
     assert_eq!(histogram.cumulative_count(1), Ok(3));
     assert_eq!(
         histogram.quantile_bucket(1, 1),
@@ -424,9 +431,10 @@ fn merging_no_bounds_and_exact_value_caps_preserves_overflow_provenance() {
     left.merge(&right).unwrap();
     assert_eq!(left.overflow(), 2);
     assert!(!left.overflow_saturated());
-    assert_eq!(left.aggregate().mean(), Ok(Some(u64::MAX / 2)));
+    assert_eq!(left.aggregate().mean(), Ok(Some(u128::from(u64::MAX) / 2)));
     left.record(1);
-    assert!(left.aggregate().total_saturated());
+    assert!(!left.aggregate().total_saturated());
+    assert_eq!(left.aggregate().total(), u128::from(u64::MAX) + 1);
     assert_eq!(
         left.quantile_bucket(1, 1)
             .unwrap()
@@ -464,4 +472,30 @@ fn histogram_merge_and_atomic_rejection_support_constant_evaluation() {
     assert_eq!(merged.bucket_counts(), &[1]);
     assert_eq!(merged.overflow(), 1);
     assert_eq!(merged.aggregate().mean(), Ok(Some(5)));
+}
+
+#[test]
+fn maximum_count_of_maximum_values_retains_exact_total_and_distribution() {
+    let mut histogram = MeasurementHistogram::new([u64::MAX]).unwrap();
+    for _ in 0..64 {
+        histogram.merge(&histogram.clone()).unwrap();
+        histogram.record(u64::MAX);
+    }
+    assert_eq!(histogram.aggregate().samples(), u64::MAX);
+    assert_eq!(histogram.aggregate().total(), u128::from(u64::MAX).pow(2));
+    assert_eq!(histogram.aggregate().mean(), Ok(Some(u128::from(u64::MAX))));
+    assert_eq!(histogram.cumulative_count(0), Ok(u64::MAX));
+    assert_eq!(
+        histogram.quantile_bucket(95, 100),
+        Ok(Some(HistogramRange {
+            lower_exclusive: None,
+            upper_inclusive: Some(u64::MAX),
+        }))
+    );
+    histogram.record(1);
+    assert!(!histogram.aggregate().total_saturated());
+    assert_eq!(
+        histogram.quantile_bucket(95, 100),
+        Err(HistogramQueryError::SaturatedCount)
+    );
 }

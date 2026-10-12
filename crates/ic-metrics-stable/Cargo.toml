@@ -1,0 +1,18 @@
+[package]
+name = "ic-metrics-stable"
+edition.workspace = true
+rust-version = "1.88.0"
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Optional single-map stable storage for IC Metrics"
+readme = "README.md"
+publish = ["crates-io"]
+
+[dependencies]
+ic-memory.workspace = true
+ic-metrics.workspace = true
+
+[lints]
+workspace = true

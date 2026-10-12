@@ -3,6 +3,7 @@
 PACKAGE := ic-metrics
 MSRV ?= 1.85.0
 WASM_INSPECT_MSRV ?= 1.88.0
+STABLE_MSRV ?= 1.88.0
 export RELEASE_DELIVERY ?= direct
 IC_TOOL_PINS ?= ci/ic-tools.tsv
 HOST_TOOL_VERSIONS ?= ci/tool-versions.env
@@ -33,7 +34,7 @@ release-preflight:
 
 release-verify:
 	+env -u IC_METRICS_RELEASE_CACHE_PREPARE CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
-		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv wasm-inspect-msrv
+		bash scripts/ci/run-validation-targets.sh --fail-fast ci msrv stable-msrv wasm-inspect-msrv
 
 release-prepare-version:
 	+@bash scripts/release/metadata.sh prepare
@@ -50,13 +51,14 @@ release-files:
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 .PHONY: local-tools-test ci-evidence-check
 .PHONY: wasm-inspect-check wasm-inspect-msrv
+.PHONY: stable-check stable-msrv
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
 	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
-	@echo "Registry: publish-check (dry run), publish (upload ic-metrics to crates.io)"
+	@echo "Registry: publish-check (dry run), publish (upload arithmetic and stable adapter to crates.io)"
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
@@ -66,13 +68,14 @@ help:
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Wasm evidence tool: wasm-inspect-check; separate host minimum: wasm-inspect-msrv"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
-	@echo "Full delivery validation: ci, msrv, wasm-inspect-msrv; release commands remain explicit"
+	@echo "Durable adapter: stable-check; separate native/Wasm minimum: stable-msrv"
+	@echo "Full delivery validation: ci, msrv, stable-msrv, wasm-inspect-msrv; release commands remain explicit"
 
 publish:
-	+cargo publish -p $(PACKAGE) --locked --registry crates-io
+	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io
 
 publish-check:
-	+cargo publish -p $(PACKAGE) --locked --registry crates-io --dry-run
+	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io --dry-run
 
 install-hooks:
 	bash scripts/dev/install-git-hooks.sh
@@ -111,7 +114,7 @@ check-doc-links:
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md tasks/*.md
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
-		crates/ic-metrics/src/application.md crates/ic-metrics-wasm-inspect/README.md
+		crates/ic-metrics/src/application.md crates/ic-metrics-stable/README.md crates/ic-metrics-wasm-inspect/README.md
 
 test:
 	+cargo test -p $(PACKAGE) --locked
@@ -133,6 +136,21 @@ wasm-inspect-msrv:
 	rustc +$(WASM_INSPECT_MSRV) --version
 	+cargo +$(WASM_INSPECT_MSRV) --version
 	+cargo +$(WASM_INSPECT_MSRV) check -p ic-metrics-wasm-inspect --all-targets --locked
+
+stable-check:
+	+cargo check -p ic-metrics-stable --all-targets --locked
+	+cargo check -p ic-metrics-stable --locked --target wasm32-unknown-unknown
+	+cargo clippy -p ic-metrics-stable --all-targets --locked -- -D warnings
+	+cargo clippy -p ic-metrics-stable --lib --locked --target wasm32-unknown-unknown -- -D warnings
+	+RUSTDOCFLAGS="-D warnings" cargo doc -p ic-metrics-stable --locked --no-deps
+	+RUSTDOCFLAGS="-D warnings" cargo doc -p ic-metrics-stable --locked --no-deps --target wasm32-unknown-unknown
+	+cargo test -p ic-metrics-stable --locked tests::
+	+cargo test -p ic-metrics-stable --locked --doc
+
+stable-msrv:
+	rustc +$(STABLE_MSRV) --version
+	+cargo +$(STABLE_MSRV) check -p ic-metrics-stable --locked
+	+cargo +$(STABLE_MSRV) check -p ic-metrics-stable --locked --target wasm32-unknown-unknown
 
 shared-tooling-check:
 	bash scripts/ci/verify-shared-tooling-snapshot.sh
@@ -168,5 +186,6 @@ ci:
 	+$(MAKE) --no-print-directory check-wasm
 	+$(MAKE) --no-print-directory clippy
 	+$(MAKE) --no-print-directory wasm-inspect-check
+	+$(MAKE) --no-print-directory stable-check
 	+$(MAKE) --no-print-directory docs-check
 	+$(MAKE) --no-print-directory test

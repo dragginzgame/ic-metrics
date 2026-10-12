@@ -548,7 +548,11 @@ msrv:
 	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
 	@echo msrv >> gate-events
 	@if test "$(FAIL_MSRV)" = yes; then echo 'error: retained-msrv-failure'; exit 9; fi
-.PHONY: wasm-inspect-msrv
+.PHONY: stable-msrv wasm-inspect-msrv
+stable-msrv:
+	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
+	@echo stable-msrv >> gate-events
+	@if test "$(FAIL_STABLE_MSRV)" = yes; then echo 'error: retained-stable-msrv-failure'; exit 9; fi
 wasm-inspect-msrv:
 	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
 	@echo wasm-inspect-msrv >> gate-events
@@ -567,16 +571,29 @@ second_logs=(.git/release-state/validation-failures/*-1-msrv.log)
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
 : > gate-events
 if make --no-print-directory -f "$root/Makefile" release-verify \
+    RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=no FAIL_STABLE_MSRV=yes \
+    > "$fixture/result.log" 2>&1; then
+    echo 'release-verify unexpectedly passed failed stable minimum gate' >&2
+    exit 1
+fi
+printf 'ci\nmsrv\nstable-msrv\n' > "$fixture/expected-gates"
+cmp gate-events "$fixture/expected-gates"
+stable_logs=(.git/release-state/validation-failures/*-2-stable-msrv.log)
+[[ "${#stable_logs[@]}" == 1 ]] || exit 1
+grep -F retained-stable-msrv-failure "${stable_logs[0]}" >/dev/null
+: > gate-events
+if make --no-print-directory -f "$root/Makefile" release-verify \
     RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=no FAIL_HOST_MSRV=yes \
     > "$fixture/result.log" 2>&1; then
     echo 'release-verify unexpectedly passed failed host minimum gate' >&2
     exit 1
 fi
-printf 'ci\nmsrv\nwasm-inspect-msrv\n' > "$fixture/expected-gates"
+printf 'ci\nmsrv\nstable-msrv\nwasm-inspect-msrv\n' > "$fixture/expected-gates"
 cmp gate-events "$fixture/expected-gates"
-host_logs=(.git/release-state/validation-failures/*-2-wasm-inspect-msrv.log)
+host_logs=(.git/release-state/validation-failures/*-3-wasm-inspect-msrv.log)
 [[ "${#host_logs[@]}" == 1 ]] || exit 1
 grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
+grep -F retained-stable-msrv-failure "${stable_logs[0]}" >/dev/null
 : > gate-events
 make --no-print-directory -f "$root/Makefile" release-verify \
     RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=no \

@@ -9,9 +9,12 @@ fn checked_mean_preserves_empty_zero_and_floor_division() {
         (1, 0, Some(0)),
         (7, 0, Some(0)),
         (2, 9, Some(4)),
+        (2, u128::from(u64::MAX), Some(u128::from(u64::MAX) / 2)),
+        (2, u128::from(u64::MAX) + 1, Some(1_u128 << 63)),
+        (2, u128::MAX - 1, Some((u128::MAX - 1) / 2)),
         (4, 3, Some(0)),
-        (1, u64::MAX - 1, Some(u64::MAX - 1)),
-        (u64::MAX - 1, u64::MAX - 1, Some(1)),
+        (1, u128::MAX - 1, Some(u128::MAX - 1)),
+        (u64::MAX - 1, u128::from(u64::MAX) - 1, Some(1)),
     ] {
         assert_eq!(checked_mean(samples, total), Ok(expected));
     }
@@ -22,11 +25,11 @@ fn checked_mean_rejects_inconsistent_and_saturated_fields() {
     use MeasurementMeanError::{SaturatedSamples, SaturatedTotal, TotalWithoutSamples};
     for (samples, total, error) in [
         (0, 1, TotalWithoutSamples),
-        (0, u64::MAX, TotalWithoutSamples),
+        (0, u128::MAX, TotalWithoutSamples),
         (u64::MAX, 0, SaturatedSamples),
         (u64::MAX, 9, SaturatedSamples),
-        (1, u64::MAX, SaturatedTotal),
-        (u64::MAX, u64::MAX, SaturatedSamples),
+        (1, u128::MAX, SaturatedTotal),
+        (u64::MAX, u128::MAX, SaturatedSamples),
     ] {
         assert_eq!(checked_mean(samples, total), Err(error));
     }
@@ -41,11 +44,12 @@ fn summary_mean_preserves_recording_and_saturation_contracts() {
     summary.record(9);
     assert_eq!(summary.mean(), Ok(Some(4)));
     summary.record(u64::MAX - 9);
-    assert_eq!(summary.total(), u64::MAX);
-    assert_eq!(summary.mean(), Ok(Some(u64::MAX / 3)));
+    assert_eq!(summary.total(), u128::from(u64::MAX));
+    assert_eq!(summary.mean(), Ok(Some(u128::from(u64::MAX) / 3)));
     assert!(!summary.aggregate().total_saturated());
     summary.record(1);
-    assert_eq!(summary.mean(), Err(MeasurementMeanError::SaturatedTotal));
+    assert_eq!(summary.mean(), Ok(Some((u128::from(u64::MAX) + 1) / 4)));
+    assert!(!summary.aggregate().total_saturated());
     assert_eq!(summary.latest(), Some(1));
     let mut saturated_count = MeasurementSummary {
         aggregate: maximum_zero_count(),
@@ -61,17 +65,20 @@ fn summary_mean_preserves_recording_and_saturation_contracts() {
 
 #[test]
 fn checked_mean_is_available_in_constant_evaluation() {
-    const RAW: Result<Option<u64>, MeasurementMeanError> = checked_mean(2, 9);
-    const EMPTY: Result<Option<u64>, MeasurementMeanError> = checked_mean(0, 0);
-    const INVALID: Result<Option<u64>, MeasurementMeanError> = checked_mean(0, 1);
-    const SATURATED: Result<Option<u64>, MeasurementMeanError> = checked_mean(1, u64::MAX);
-    const SUMMARY: Result<Option<u64>, MeasurementMeanError> = {
+    const RAW: Result<Option<u128>, MeasurementMeanError> = checked_mean(2, 9);
+    const WIDE: Result<Option<u128>, MeasurementMeanError> =
+        checked_mean(2, 2 * (u64::MAX as u128));
+    const EMPTY: Result<Option<u128>, MeasurementMeanError> = checked_mean(0, 0);
+    const INVALID: Result<Option<u128>, MeasurementMeanError> = checked_mean(0, 1);
+    const SATURATED: Result<Option<u128>, MeasurementMeanError> = checked_mean(1, u128::MAX);
+    const SUMMARY: Result<Option<u128>, MeasurementMeanError> = {
         let mut summary = MeasurementSummary::EMPTY;
         summary.record(9);
         summary.record(0);
         summary.mean()
     };
     assert_eq!(RAW, Ok(Some(4)));
+    assert_eq!(WIDE, Ok(Some(u128::from(u64::MAX))));
     assert_eq!(EMPTY, Ok(None));
     assert_eq!(INVALID, Err(MeasurementMeanError::TotalWithoutSamples));
     assert_eq!(SATURATED, Err(MeasurementMeanError::SaturatedTotal));
@@ -108,13 +115,25 @@ fn latest_and_maximum_follow_individual_observations() {
 
 #[test]
 fn total_saturation_preserves_count_latest_and_maximum() {
-    let mut summary = MeasurementSummary::EMPTY;
-    summary.record(u64::MAX);
-    assert_eq!(summary.total(), u64::MAX);
+    let mut aggregate = MeasurementAggregate::EMPTY;
+    for _ in 0..64 {
+        aggregate.merge(aggregate);
+        aggregate.record(u64::MAX);
+    }
+    aggregate.record(u64::MAX);
+    aggregate.record(u64::MAX);
+    let mut summary = MeasurementSummary {
+        aggregate,
+        latest: u64::MAX,
+    };
+    assert_eq!(summary.total(), u128::MAX);
+    assert!(!summary.aggregate().total_saturated());
     summary.record(1);
     summary.record(2);
-    assert_eq!(summary.samples(), 3);
-    assert_eq!(summary.total(), u64::MAX);
+    assert_eq!(summary.samples(), u64::MAX);
+    assert_eq!(summary.total(), u128::MAX);
+    assert!(summary.aggregate().samples_saturated());
+    assert!(summary.aggregate().total_saturated());
     assert_eq!(summary.latest(), Some(2));
     assert_eq!(summary.maximum(), Some(u64::MAX));
 }
@@ -142,11 +161,18 @@ fn consumer_owned_count_and_total_saturate_independently() {
     assert_eq!((samples, total), (u64::MAX, 10));
 
     samples = 0;
-    total = u64::MAX - 1;
+    total = 0;
+    record_sample(&mut samples, &mut total, u64::MAX);
+    record_sample(&mut samples, &mut total, u64::MAX);
+    assert_eq!(total, 2 * u128::from(u64::MAX));
+    assert_eq!(checked_mean(samples, total), Ok(Some(u128::from(u64::MAX))));
+
+    samples = 0;
+    total = u128::MAX - 1;
     record_sample(&mut samples, &mut total, 1);
-    assert_eq!((samples, total), (1, u64::MAX));
+    assert_eq!((samples, total), (1, u128::MAX));
     record_sample(&mut samples, &mut total, 1);
-    assert_eq!((samples, total), (2, u64::MAX));
+    assert_eq!((samples, total), (2, u128::MAX));
 }
 
 #[test]
