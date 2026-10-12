@@ -59,7 +59,8 @@ impl MeasurementSummary {
     ///
     /// # Errors
     /// Rejects absent/nonempty latest values, values above the maximum and
-    /// observations inconsistent with the aggregate's exact total.
+    /// observations inconsistent with the aggregate's exact total. With an exact
+    /// count, the other observations cannot contribute more than their maximum.
     pub const fn from_parts(
         aggregate: MeasurementAggregate,
         latest: Option<u64>,
@@ -75,8 +76,10 @@ impl MeasurementSummary {
             return Err(MeasurementStateError::InvalidLatest);
         };
         if latest > maximum
-            || (aggregate.samples() == 1 && latest != maximum)
             || (latest < maximum && aggregate.total() < latest as u128 + maximum as u128)
+            || (!aggregate.samples_saturated()
+                && aggregate.total()
+                    > (aggregate.samples() - 1) as u128 * maximum as u128 + latest as u128)
         {
             return Err(MeasurementStateError::InvalidLatest);
         }
@@ -121,7 +124,7 @@ impl MeasurementSummary {
         self.aggregate.mean()
     }
 
-    /// Floor-rounded mean multiplied by `scale`, retaining the fractional part.
+    /// Compute `floor(total * scale / samples)`, retaining fractional information.
     ///
     /// Uses the aggregate's checked projection; a scale of ten reports tenths.
     /// Empty remains `None`, and scale zero does not conceal actual overflow.

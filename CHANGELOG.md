@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.8.1]
+
+### Fixed
+
+- Reject restored summaries whose exact total cannot include the latest sample
+  without exceeding the maximum for another observation. Durable loads and saves
+  preserve inconsistent stored bytes and return the existing typed state error
+  ([#67](https://github.com/dragginzgame/ic-metrics/issues/67)).
+
+### Changed
+
+- Adopt Shared Tooling 0.9.6: retry transient tool downloads within bounded
+  limits and reject malformed Git identities before snapshot/release effects
+  ([Shared #138](https://github.com/dragginzgame/shared-tooling/issues/138),
+  [Shared #133](https://github.com/dragginzgame/shared-tooling/issues/133),
+  [Shared #139](https://github.com/dragginzgame/shared-tooling/issues/139)).
+- Reject newline-suffixed PR release identities before shell extraction or saved
+  state writes through the shared adapter; Metrics retains direct-only releases.
+
+### Testing
+
+- Exercise the real download retry classifier with a local HTTP fixture, covering
+  transient recovery, terminal refusals and checksum rejection.
+
 ## [0.8.0] - 2026-10-12
 
 ### Breaking

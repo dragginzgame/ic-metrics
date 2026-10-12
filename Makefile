@@ -83,6 +83,7 @@ local-tools-test:
 	bash scripts/ci/test-host-tools.sh
 	bash scripts/ci/test-rust-tools.sh
 	bash scripts/ci/test-ic-tools.sh
+	bash scripts/ci/test-tool-downloads.sh
 	bash scripts/ci/test-evidence-checksums.sh
 	bash scripts/ci/test-tool-commands.sh
 	bash scripts/ci/test-cloc.sh

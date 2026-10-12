@@ -36,15 +36,15 @@ differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-The prepared **0.8.0 hard cut** removes `record_sample`, raw-field `checked_mean`
+The published **0.8.0 hard cut** removes `record_sample`, raw-field `checked_mean`
 and `MeasurementMeanError::TotalWithoutSamples`. Record into a tracked aggregate,
 summary or histogram; project consumer-owned reports from that state and preserve
 its overflow flags or explicit unavailable results. Means return a typed
 `Projection` error if the exact ratio owner rejects a scaled result. Units,
 identity, attribution, reset windows and any once-per-window alert remain local.
 The stable V1 bytes, map/key/epoch contract and allocation lifecycle are unchanged;
-this cut requires no stored-data reset. The dependency example selects 0.8 after
-publication; package metadata remains on the prior release during preparation.
+this cut requires no stored-data reset. The dependency example selects the
+published 0.8 contract.
 
 The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
 aggregates, summaries and histograms in one host-owned stable B-tree map using
