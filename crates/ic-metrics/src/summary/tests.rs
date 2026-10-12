@@ -1,39 +1,6 @@
 use crate::MeasurementAggregate;
 
-use super::{MeasurementMeanError, MeasurementSummary, checked_mean, record_sample};
-
-#[test]
-fn checked_mean_preserves_empty_zero_and_floor_division() {
-    for (samples, total, expected) in [
-        (0, 0, None),
-        (1, 0, Some(0)),
-        (7, 0, Some(0)),
-        (2, 9, Some(4)),
-        (2, u128::from(u64::MAX), Some(u128::from(u64::MAX) / 2)),
-        (2, u128::from(u64::MAX) + 1, Some(1_u128 << 63)),
-        (2, u128::MAX - 1, Some((u128::MAX - 1) / 2)),
-        (4, 3, Some(0)),
-        (1, u128::MAX - 1, Some(u128::MAX - 1)),
-        (u64::MAX - 1, u128::from(u64::MAX) - 1, Some(1)),
-    ] {
-        assert_eq!(checked_mean(samples, total), Ok(expected));
-    }
-}
-
-#[test]
-fn checked_mean_rejects_inconsistent_and_saturated_fields() {
-    use MeasurementMeanError::{SaturatedSamples, SaturatedTotal, TotalWithoutSamples};
-    for (samples, total, error) in [
-        (0, 1, TotalWithoutSamples),
-        (0, u128::MAX, TotalWithoutSamples),
-        (u64::MAX, 0, SaturatedSamples),
-        (u64::MAX, 9, SaturatedSamples),
-        (1, u128::MAX, SaturatedTotal),
-        (u64::MAX, u128::MAX, SaturatedSamples),
-    ] {
-        assert_eq!(checked_mean(samples, total), Err(error));
-    }
-}
+use super::{MeasurementMeanError, MeasurementSummary};
 
 #[test]
 fn summary_mean_preserves_recording_and_saturation_contracts() {
@@ -64,25 +31,31 @@ fn summary_mean_preserves_recording_and_saturation_contracts() {
 }
 
 #[test]
-fn checked_mean_is_available_in_constant_evaluation() {
-    const RAW: Result<Option<u128>, MeasurementMeanError> = checked_mean(2, 9);
-    const WIDE: Result<Option<u128>, MeasurementMeanError> =
-        checked_mean(2, 2 * (u64::MAX as u128));
-    const EMPTY: Result<Option<u128>, MeasurementMeanError> = checked_mean(0, 0);
-    const INVALID: Result<Option<u128>, MeasurementMeanError> = checked_mean(0, 1);
-    const SATURATED: Result<Option<u128>, MeasurementMeanError> = checked_mean(1, u128::MAX);
-    const SUMMARY: Result<Option<u128>, MeasurementMeanError> = {
+fn summary_means_are_available_in_constant_evaluation() {
+    const PROJECTIONS: (Option<u128>, Option<u128>) = {
         let mut summary = MeasurementSummary::EMPTY;
         summary.record(9);
         summary.record(0);
-        summary.mean()
+        let Ok(mean) = summary.mean() else {
+            panic!("exact mean")
+        };
+        let Ok(scaled) = summary.scaled_mean(10) else {
+            panic!("exact scaled mean")
+        };
+        (mean, scaled)
     };
-    assert_eq!(RAW, Ok(Some(4)));
-    assert_eq!(WIDE, Ok(Some(u128::from(u64::MAX))));
-    assert_eq!(EMPTY, Ok(None));
-    assert_eq!(INVALID, Err(MeasurementMeanError::TotalWithoutSamples));
-    assert_eq!(SATURATED, Err(MeasurementMeanError::SaturatedTotal));
-    assert_eq!(SUMMARY, RAW);
+    assert_eq!(PROJECTIONS, (Some(4), Some(45)));
+    let mut summary = MeasurementSummary::EMPTY;
+    assert_eq!(summary.scaled_mean(10), Ok(None));
+    summary.record(0);
+    assert_eq!(summary.scaled_mean(10), Ok(Some(0)));
+    summary = MeasurementSummary::from_parts(maximum_zero_count(), Some(0)).unwrap();
+    assert_eq!(summary.scaled_mean(u64::MAX), Ok(Some(0)));
+    summary.record(0);
+    assert_eq!(
+        summary.scaled_mean(0),
+        Err(MeasurementMeanError::SaturatedSamples)
+    );
 }
 
 #[test]
@@ -149,30 +122,6 @@ fn count_saturation_does_not_freeze_other_observations() {
     assert_eq!(summary.total(), 4);
     assert_eq!(summary.latest(), Some(4));
     assert_eq!(summary.maximum(), Some(4));
-}
-
-#[test]
-fn consumer_owned_count_and_total_saturate_independently() {
-    let mut samples = u64::MAX - 1;
-    let mut total = 4;
-    record_sample(&mut samples, &mut total, 0);
-    assert_eq!((samples, total), (u64::MAX, 4));
-    record_sample(&mut samples, &mut total, 6);
-    assert_eq!((samples, total), (u64::MAX, 10));
-
-    samples = 0;
-    total = 0;
-    record_sample(&mut samples, &mut total, u64::MAX);
-    record_sample(&mut samples, &mut total, u64::MAX);
-    assert_eq!(total, 2 * u128::from(u64::MAX));
-    assert_eq!(checked_mean(samples, total), Ok(Some(u128::from(u64::MAX))));
-
-    samples = 0;
-    total = u128::MAX - 1;
-    record_sample(&mut samples, &mut total, 1);
-    assert_eq!((samples, total), (1, u128::MAX));
-    record_sample(&mut samples, &mut total, 1);
-    assert_eq!((samples, total), (2, u128::MAX));
 }
 
 #[test]

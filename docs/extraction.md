@@ -1,7 +1,6 @@
 # Measurement extraction contract
 
 ic-metrics owns only allocation-free, dependency-free `no_std` arithmetic:
-`record_sample` updates consumer-owned count/total fields, and
 `MeasurementAggregate` owns mergeable samples, total and maximum with actual-overflow
 flags. `MeasurementSummary` adds the latest ordered observation; the separate
 `MeasurementHistogram` adds mergeable fixed disjoint buckets and overflow around
@@ -9,6 +8,39 @@ an aggregate, without inventing a latest observation.
 Histogram bounds and units are caller-selected; invalid bounds return a typed
 error. Bucket counts saturate independently. These primitives never read
 platform counters, allocate labels, persist data or claim endpoints.
+
+## Prepared 0.8.0 tracked recording cut
+
+[The approved cut](https://github.com/dragginzgame/ic-metrics/issues/66) removes
+`record_sample`, raw-field `checked_mean` and the raw-only
+`MeasurementMeanError::TotalWithoutSamples` variant. Record through
+`MeasurementAggregate`, `MeasurementSummary` or the histogram's existing
+aggregate. Consumers project their own DTOs/codecs/reports from that retained
+state; clipped numbers without flags are unsuitable for exact derived results.
+Aggregate/summary `scaled_mean(scale)` admits actual overflow before computing
+`floor(total * scale / samples)`. Empty is `None`, measured zero is `Some(0)`;
+scale zero does not hide loss. Ratio failures retain their typed cause through
+`MeasurementMeanError::Projection`. Exact caps stay exact. The generic
+`checked_scaled_ratio` remains available for independently admitted proportions.
+
+Owning adoption issues are [IcyDB #354](https://github.com/dragginzgame/icydb/issues/354),
+[Canic #523](https://github.com/dragginzgame/canic/issues/523),
+[Blob probe #62](https://github.com/dragginzgame/ic-blob-storage/issues/62),
+[Toko #48](https://github.com/dragginzgame/toko-miner/issues/48),
+[Timers #50](https://github.com/dragginzgame/ic-timers/issues/50) and
+[Backup #41](https://github.com/dragginzgame/ic-backup/issues/41). The first four
+require raw recording/report propagation; the latter two already use tracked
+state and need graph/public-type qualification. Do not reconstruct flags from
+clipped historical report fields; owners choose an explicit window/epoch
+transition and retain their attribution/reset contracts.
+
+This breaks the public arithmetic API, selecting pending 0.8.0 and carrying
+unreleased tooling notes from 0.7.4. Package metadata remains 0.7.3. The stable
+V1 encoder, numeric state fields, memory/map/key/epoch contracts and restoration
+are unchanged; this library cut requires no durable-data reset. Consumer wire
+changes and their retained-data disposition stay with each owner. No sibling
+edit or completed consumer adoption is implied. Historical released contracts
+below retain their original scope.
 
 The private host [Wasm inspector](../crates/ic-metrics-wasm-inspect/README.md)
 uses IC Host libraries for bounded artifact inspection. It is a separate workspace
@@ -105,7 +137,8 @@ boundaries, synchronization, label cardinality, authorization and explicit reset
 
 ## Released 0.6.0 arithmetic hard cut
 
-The one current source contract tracks actual overflow in accumulators. Exactly
+Release 0.6.0 introduced actual-overflow tracking in accumulators; its historical
+raw-helper contract below is superseded by the prepared 0.8 cut. Exactly
 reaching `u64::MAX` remains exact; adding zero to an exact total does not saturate it.
 Tracked means and histogram queries use these flags. Consumer-owned raw-field
 `record_sample` and `checked_mean` retain their existing conservative cap contract:
@@ -165,7 +198,7 @@ counter identity, sample admission, replication, reset/restart identity, registr
 labels, synchronization, serialization, persistence and lifecycle remain consumer-owned.
 There are no global consumer IDs or stable-memory allocations in this crate.
 
-| Known consumer | Local measurement policy | Shared arithmetic |
+| Known consumer | Local measurement policy | Reviewed usage before 0.8 adoption |
 | --- | --- | --- |
 | IcyDB | Inclusive overlapping spans; native zero substitute; maximum/report fields and CLI mean projection | `record_sample`, `checked_mean` |
 | Canic | Exclusive endpoint accounting and invocation-owned async checkpoints; native zero substitute | `record_sample` |

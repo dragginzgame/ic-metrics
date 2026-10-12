@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use crate::{MeasurementAggregate, MeasurementStateError, mean_total};
+use crate::{MeasurementAggregate, MeasurementRatioError, MeasurementStateError};
 
 #[cfg(test)]
 mod tests;
@@ -10,76 +10,33 @@ mod tests;
 /// Why a measurement aggregate cannot supply an integer mean.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeasurementMeanError {
-    /// A nonzero total has no observations to account for it.
-    TotalWithoutSamples,
-    /// Tracked samples overflowed, or a raw count is at the ambiguous numeric cap.
+    /// The tracked sample count has actually overflowed.
     SaturatedSamples,
-    /// The tracked total overflowed, or a raw total is at the ambiguous numeric cap.
+    /// The tracked total has actually overflowed.
     SaturatedTotal,
+    /// The exact scaled-ratio projector rejected the result.
+    Projection(MeasurementRatioError),
 }
 
 impl fmt::Display for MeasurementMeanError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(match self {
-            Self::TotalWithoutSamples => "nonzero measurement total without samples",
-            Self::SaturatedSamples => "measurement sample count is saturated",
-            Self::SaturatedTotal => "measurement total is saturated",
-        })
+        match self {
+            Self::SaturatedSamples => formatter.write_str("measurement sample count is saturated"),
+            Self::SaturatedTotal => formatter.write_str("measurement total is saturated"),
+            Self::Projection(error) => {
+                write!(formatter, "measurement mean projection failed: {error}")
+            }
+        }
     }
 }
 
-impl core::error::Error for MeasurementMeanError {}
-
-/// Project the integer mean of consumer-owned sample count and total fields.
-///
-/// Returns `Ok(None)` for `(0, 0)` and `Ok(Some(0))` for nonempty measured zero.
-/// Other unsaturated nonempty inputs use floor division, in the total's unit.
-/// Consumers must establish that both fields describe the same observations,
-/// unit and window; this function cannot establish their identity or provenance.
-///
-/// # Errors
-///
-/// Rejects a nonzero total with zero samples first. Otherwise a count or total
-/// at its respective cap (`u64::MAX` / `u128::MAX`) is unavailable, even when reached exactly. If both are at the
-/// cap, [`MeasurementMeanError::SaturatedSamples`] takes precedence.
-///
-/// ```
-/// use ic_metrics::{checked_mean, MeasurementMeanError};
-///
-/// assert_eq!(checked_mean(0, 0), Ok(None));
-/// assert_eq!(checked_mean(2, 0), Ok(Some(0)));
-/// assert_eq!(checked_mean(2, 9), Ok(Some(4)));
-/// assert_eq!(checked_mean(1, u128::MAX), Err(MeasurementMeanError::SaturatedTotal));
-/// ```
-pub const fn checked_mean(samples: u64, total: u128) -> Result<Option<u128>, MeasurementMeanError> {
-    if samples == 0 {
-        return if total == 0 {
-            Ok(None)
-        } else {
-            Err(MeasurementMeanError::TotalWithoutSamples)
-        };
+impl core::error::Error for MeasurementMeanError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Projection(error) => Some(error),
+            _ => None,
+        }
     }
-    if samples == u64::MAX {
-        return Err(MeasurementMeanError::SaturatedSamples);
-    }
-    if total == u128::MAX {
-        return Err(MeasurementMeanError::SaturatedTotal);
-    }
-    Ok(mean_total(samples, total))
-}
-
-/// Record one value into a sample count and total, saturating independently.
-///
-/// Zero is a completed sample. `value` and `total` must use the same unit.
-/// This primitive supports consumer-owned report shapes without serialization
-/// dependencies. It does not validate continuity or make saturated counters
-/// suitable for exact interval arithmetic. Counts clip at `u64::MAX` and totals
-/// at `u128::MAX`, without retaining overflow provenance. Use
-/// [`MeasurementAggregate`] when actual overflow must be distinguished from an
-/// exactly reached cap.
-pub const fn record_sample(samples: &mut u64, total: &mut u128, value: u64) {
-    *samples = samples.saturating_add(1);
-    *total = total.saturating_add(value as u128);
 }
 
 /// Ordered observations with a mergeable aggregate and a separate latest value.
@@ -162,6 +119,18 @@ impl MeasurementSummary {
     /// Returns [`MeasurementMeanError`] on actual count or total overflow.
     pub const fn mean(self) -> Result<Option<u128>, MeasurementMeanError> {
         self.aggregate.mean()
+    }
+
+    /// Floor-rounded mean multiplied by `scale`, retaining the fractional part.
+    ///
+    /// Uses the aggregate's checked projection; a scale of ten reports tenths.
+    /// Empty remains `None`, and scale zero does not conceal actual overflow.
+    ///
+    /// # Errors
+    /// Returns [`MeasurementMeanError`] for inexact counts/totals or a failed
+    /// scaled projection, with the same precedence as the aggregate.
+    pub const fn scaled_mean(self, scale: u64) -> Result<Option<u128>, MeasurementMeanError> {
+        self.aggregate.scaled_mean(scale)
     }
 
     /// Latest observation, or `None` when empty. Summaries cannot be merged.

@@ -2,8 +2,8 @@
 
 Allocation-free, dependency-free measurement arithmetic.
 
-The `no_std` library exports `record_sample` for consumer-owned
-count/total fields, `MeasurementAggregate` for mergeable count/total/maximum,
+The `no_std` library exports `MeasurementAggregate` for mergeable
+count/total/maximum with sticky actual-overflow flags,
 and `MeasurementSummary` for ordered observations with a latest value.
 `MeasurementHistogram` adds a mergeable fixed-size distribution with caller-selected bounds.
 Zero is a valid observation; an empty summary has no latest or maximum value.
@@ -26,9 +26,9 @@ assert_eq!(summary.latest(), Some(0));
 Tracked `MeasurementAggregate::mean()` and `MeasurementSummary::mean()` return
 `Result<Option<u128>, MeasurementMeanError>`: empty is `None`, measured zero is
 `Some(0)`, and exact means round down. Actual overflow returns a typed error;
-exactly reaching the cap remains valid. The raw-field `checked_mean(samples,
-total)` stays conservative at either numeric cap because external fields do not
-carry overflow provenance. Accumulator flags cannot restore a clamped input sample.
+exactly reaching the cap remains valid. `scaled_mean(scale)` checks the same
+flags and retains fractional information: samples 3 and 4 yield 35 at scale ten.
+Accumulator flags cannot restore a clamped input sample.
 
 `MeasurementAggregate::merge` combines count/total and maximum without claiming
 ordering or deduplication. `interval_since(previous)` returns checked count/total
@@ -36,12 +36,15 @@ differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-The published **0.7.0 hard cut** uses `u128` totals and integer means,
-including raw-field helpers and intervals. Consumers must coordinate
-report fields, codecs and public re-exports; narrower output needs checked
-conversion. The registry dependency below selects this contract.
-The arithmetic core adds no reader or endpoint. Consumers own reset identity
-and any once-per-window overflow log or alert.
+The prepared **0.8.0 hard cut** removes `record_sample`, raw-field `checked_mean`
+and `MeasurementMeanError::TotalWithoutSamples`. Record into a tracked aggregate,
+summary or histogram; project consumer-owned reports from that state and preserve
+its overflow flags or explicit unavailable results. Means return a typed
+`Projection` error if the exact ratio owner rejects a scaled result. Units,
+identity, attribution, reset windows and any once-per-window alert remain local.
+The stable V1 bytes, map/key/epoch contract and allocation lifecycle are unchanged;
+this cut requires no stored-data reset. The dependency example selects 0.8 after
+publication; package metadata remains on the prior release during preparation.
 
 The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
 aggregates, summaries and histograms in one host-owned stable B-tree map using
@@ -182,7 +185,7 @@ Declare the current arithmetic contract in the consumer's root catalog:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.7"
+ic-metrics = "0.8"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

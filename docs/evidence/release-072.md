@@ -42,3 +42,32 @@ owning job. Native macOS receipts remain separate.
 Raw official rows, downloaded archives, CI observation and verification results
 remain under `target/evidence/release-072`. This review changes no package
 metadata, lock selection, index or refs and executes no release/publication.
+
+## Complete native acceptance
+
+The subsequent observation of run `38235066759` confirms all three native jobs
+and the package-floor job succeed for the exact released source. Both downloaded
+macOS artifacts verify independently:
+
+| Host | Artifact | API ZIP SHA-256 |
+| --- | --- | --- |
+| macOS 15 Intel | `11742537350` | `646065a4457b3a2b8208bd9bd07a878e7ebb472484f2d7610493c76c5af20048` |
+| macOS 15 Apple Silicon | `11741723483` | `d36daa1712da207409af6615b794fb215bb0a88b64022ad8780773ff950be78c` |
+
+Each verifies its inner archive checksum, all 86 released-source hashes, all 14
+payload hashes, Darwin/architecture and run/attempt identities, and seven successful
+outcomes. Together with the previously verified Linux receipt, this completes
+[#65](https://github.com/dragginzgame/ic-metrics/issues/65)'s original adoption.
+The same complete suite carries forward common-entrypoint/checkpoint, setup,
+staged hook and release fixture coverage, satisfying
+[#61](https://github.com/dragginzgame/ic-metrics/issues/61)'s remaining follow-up
+under the maintainer's later-coverage policy. The cancelled 0.7.1 run remains
+cancelled; its historical observation is preserved above.
+
+The [compact macOS receipt](native-closeout-072.tar.gz) and
+[checksum](native-closeout-072.tar.gz.sha256) retain every authenticated top-level
+payload and API/source/outcome identities. Complete original uploads, including
+nested disposable fixture trees, remain separately under
+`target/evidence/release-072/native-closeout`. The compact receipt does not reproduce
+the original ZIP/tar bytes. Later 0.7.3 graphs and tooling retain their own scope;
+they do not reopen completed original adoption or qualify Canic's runtime contract.

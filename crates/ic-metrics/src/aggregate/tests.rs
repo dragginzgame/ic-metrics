@@ -191,3 +191,62 @@ fn recording_merging_and_interval_queries_support_constant_evaluation() {
     assert_eq!(RESULT.0, aggregate(&[0, 7]));
     assert_eq!(RESULT.1.unwrap().mean(), Some(3));
 }
+
+#[test]
+fn scaled_means_keep_fractional_information_and_admitted_wide_products() {
+    let inputs = [0, 1, 3, 4, 10_001, u64::MAX];
+    for left in inputs {
+        for right in inputs {
+            let value = aggregate(&[left, right]);
+            for scale in [0, 1, 10, 10_000, u64::MAX] {
+                // An independent decomposition avoids multiplying the wide total.
+                let total = u128::from(left) + u128::from(right);
+                let expected =
+                    (total / 2) * u128::from(scale) + (total % 2) * u128::from(scale) / 2;
+                assert_eq!(value.scaled_mean(scale), Ok(Some(expected)));
+            }
+        }
+    }
+    let value = aggregate(&[3, 4]);
+    assert_eq!(value.mean(), Ok(Some(3)));
+    assert_eq!(value.scaled_mean(10), Ok(Some(35)));
+    assert_eq!(MeasurementAggregate::EMPTY.scaled_mean(0), Ok(None));
+    assert_eq!(aggregate(&[0]).scaled_mean(10), Ok(Some(0)));
+}
+
+#[test]
+fn scaled_means_admit_exact_caps_and_reject_loss_even_with_zero_scale() {
+    const VALUE: Result<Option<u128>, MeasurementMeanError> = {
+        let mut value = MeasurementAggregate::EMPTY;
+        value.record(u64::MAX);
+        value.record(u64::MAX);
+        value.scaled_mean(u64::MAX)
+    };
+    let mut exact = MeasurementAggregate::from_parts(
+        u64::MAX,
+        u128::from(u64::MAX).pow(2),
+        Some(u64::MAX),
+        false,
+        false,
+    )
+    .unwrap();
+    assert_eq!(
+        exact.scaled_mean(u64::MAX),
+        Ok(Some(u128::from(u64::MAX).pow(2)))
+    );
+    exact.record(0);
+    assert_eq!(
+        exact.scaled_mean(0),
+        Err(MeasurementMeanError::SaturatedSamples)
+    );
+    exact.record(u64::MAX);
+    exact.record(u64::MAX);
+    assert!(!exact.total_saturated());
+    exact.record(1);
+    assert!(exact.total_saturated());
+    assert_eq!(
+        exact.scaled_mean(10),
+        Err(MeasurementMeanError::SaturatedSamples)
+    );
+    assert_eq!(VALUE, Ok(Some(u128::from(u64::MAX).pow(2))));
+}

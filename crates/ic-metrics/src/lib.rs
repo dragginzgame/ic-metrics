@@ -21,7 +21,7 @@ pub use histogram::{
 };
 pub use ratio::{MeasurementRatioError, checked_scaled_ratio};
 pub use state::MeasurementStateError;
-pub use summary::{MeasurementMeanError, MeasurementSummary, checked_mean, record_sample};
+pub use summary::{MeasurementMeanError, MeasurementSummary};
 
 // One owner for tracked overflow; flags never infer loss from the numeric cap.
 const fn add_count(value: &mut u64, saturated: &mut bool, increment: u64) {

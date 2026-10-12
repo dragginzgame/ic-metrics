@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.8.0]
+
+### Breaking
+
+- Remove `record_sample`, raw-field `checked_mean` and the raw-only
+  `MeasurementMeanError::TotalWithoutSamples` variant. Record with tracked
+  aggregates, summaries or histograms, then preserve overflow quality in reports.
+  The stable V1 encoding remains unchanged; no library-owned data reset is needed
+  ([#66](https://github.com/dragginzgame/ic-metrics/issues/66)).
+
+### Added
+
+- Project fractional averages with aggregate/summary `scaled_mean(scale)`, checking
+  actual overflow before scaling; empty and measured zero remain distinct.
+  Ratio failures retain a typed cause in `MeasurementMeanError::Projection`
+  ([#66](https://github.com/dragginzgame/ic-metrics/issues/66)).
+
+### Changed
+
+- Adopt Shared Tooling 0.9.2: installers share lock and cleanup ownership,
+  reject invalid checkout paths before setup, and checksum verification rejects
+  NUL bytes before hashing evidence.
+- Derive internal Shared Tooling companions from their canonical entrypoints,
+  retaining the complete reviewed payload and existing commands.
+
 ## [0.7.3] - 2026-10-12
 
 ### Changed

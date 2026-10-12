@@ -2,7 +2,10 @@
 
 use core::fmt;
 
-use crate::{MeasurementMeanError, MeasurementStateError, add_count, add_total, mean_total};
+use crate::{
+    MeasurementMeanError, MeasurementStateError, add_count, add_total, checked_scaled_ratio,
+    mean_total,
+};
 
 #[cfg(test)]
 mod tests;
@@ -213,6 +216,45 @@ impl MeasurementAggregate {
             return Err(MeasurementMeanError::SaturatedTotal);
         }
         Ok(mean_total(self.samples, self.total))
+    }
+
+    /// Compute `floor(total * scale / samples)` after checking actual overflow.
+    ///
+    /// Scales the exact total before division, retaining fractional information
+    /// that multiplying the integer mean would lose. A scale of ten reports
+    /// tenths; callers own units and display. Empty is `None`, measured zero is
+    /// `Some(0)`, and an exactly reached count cap remains exact.
+    ///
+    /// # Errors
+    /// Rejects sample overflow, then total overflow, even with scale zero.
+    /// A failed exact-ratio projection is [`MeasurementMeanError::Projection`].
+    ///
+    /// ```
+    /// use ic_metrics::MeasurementAggregate;
+    /// # fn main() -> Result<(), ic_metrics::MeasurementMeanError> {
+    /// let mut values = MeasurementAggregate::EMPTY;
+    /// assert_eq!(values.scaled_mean(10)?, None);
+    /// values.record(3);
+    /// values.record(4);
+    /// assert_eq!(values.mean()?, Some(3));
+    /// assert_eq!(values.scaled_mean(10)?, Some(35));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub const fn scaled_mean(self, scale: u64) -> Result<Option<u128>, MeasurementMeanError> {
+        if self.samples_saturated {
+            return Err(MeasurementMeanError::SaturatedSamples);
+        }
+        if self.total_saturated {
+            return Err(MeasurementMeanError::SaturatedTotal);
+        }
+        if self.samples == 0 {
+            return Ok(None);
+        }
+        match checked_scaled_ratio(self.total, self.samples, scale) {
+            Ok(value) => Ok(Some(value)),
+            Err(error) => Err(MeasurementMeanError::Projection(error)),
+        }
     }
 
     /// Exact count/total difference from an earlier snapshot of this accumulator.

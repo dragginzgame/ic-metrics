@@ -109,12 +109,9 @@ assert_eq!(small_chunks, 3);
 let p95 = bytes.quantile_bucket(95, 100)?.unwrap();
 assert_eq!(p95.lower_exclusive(), Some(32_768));
 assert_eq!(p95.upper_inclusive(), Some(262_144));
-// Check exact count/total availability before projecting ratios from summaries.
+// The tracked projection checks exactness before scaling the full total.
 let aggregate = bytes.aggregate();
-let mean_tenths = match aggregate.mean()? {
-    Some(_) => Some(checked_scaled_ratio(aggregate.total(), aggregate.samples(), 10)?),
-    None => None,
-};
+let mean_tenths = aggregate.scaled_mean(10)?;
 assert_eq!(mean_tenths, Some(286_720)); // 28,672.0 bytes, in tenths
 assert_eq!(checked_scaled_ratio(u128::from(small_chunks), aggregate.samples(), 10_000)?, 7_500);
 # Ok(())
@@ -125,7 +122,7 @@ assert_eq!(checked_scaled_ratio(u128::from(small_chunks), aggregate.samples(), 1
 It accepts exact `u128` totals and does not infer saturation from their numeric
 value. Callers must admit count/total provenance first, choose the scale and
 unit, and handle empty data before supplying a denominator. It neither formats
-decimals nor replaces the stricter availability contract of [`checked_mean`].
+decimals nor checks an accumulator's quality; use `scaled_mean` for tracked means.
 For the histogram example, the proportion's denominator also must be known exact;
 the aggregate availability check above establishes that before using it.
 
@@ -137,9 +134,9 @@ An exactly reached numeric cap remains exact; adding zero does not lose exactnes
 Inspect saturation flags before using clipped counts/totals in other arithmetic.
 Flags describe accumulation only: consumers must admit exact input observations
 and must not treat a clamped or otherwise lossy sample as an exact measurement.
-The raw-field [`checked_mean`] remains conservative at either numeric cap because
-external fields have no overflow provenance. Display unavailable means rather
-than substituting zero. [`MeasurementSummary`] retains the latest ordered sample;
+Record into a tracked accumulator and display unavailable means rather than
+substituting zero. Project report fields from that state; raw numeric caps cannot
+establish whether overflow occurred. [`MeasurementSummary`] retains the latest ordered sample;
 mergeable aggregates and histograms retain no latest value. Maximum remains an
 individual observation after overflow. Bucket counts saturate independently;
 they need not sum to a saturated sample count.
@@ -149,8 +146,8 @@ Consumers own overflow reporting. Check `samples_saturated()` and
 log or alert once when a flag first becomes true in a measurement window. Keep
 that transition state with the consumer's window/reset identity; logging on every
 record after overflow can flood logs and waste cycles. The arithmetic library
-never logs, traps or wraps on overflow. Raw-field helpers cannot distinguish an
-exact cap from overflow; use tracked accumulators when that distinction matters.
+never logs, traps or wraps on overflow. Its recording contract retains actual
+overflow flags; do not discard them when projecting or restoring reports.
 When a report or codec still requires `u64`, use a checked conversion and an
 explicit unavailable/overflow representation rather than truncating the total.
 [`MeasurementHistogram::cumulative_count`] needs only its selected bucket prefix
