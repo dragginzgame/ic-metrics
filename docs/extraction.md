@@ -13,7 +13,7 @@ crate documentation and supplies compiled examples.
 | `MeasurementAggregate` | Mergeable sample count, wide total, maximum and actual-overflow flags; checked means and count/total intervals. |
 | `MeasurementSummary` | An aggregate plus the latest ordered observation; no merge that invents ordering. |
 | `MeasurementHistogram<N>` | Immutable finite bounds, disjoint counts, overflow and an aggregate; equal-bound merging and checked cumulative counts/nearest-rank ranges. |
-| Pending 0.8.2 `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics or durable encoding. |
+| `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics or durable encoding. |
 
 Individual observations, sample counts and bucket counts use `u64`; accumulated
 quantities and means use `u128`. Zero is a valid observation. Empty aggregates
@@ -100,7 +100,8 @@ owned durable-data reset. Consumer wire changes and retained-data disposition
 stay at their owner.
 
 [The current handoff](status/current.md) separates local preparation, package
-publication and hosted qualification. [Released 0.8.1](evidence/release-081.md)
+publication and hosted qualification. [Published 0.8.2](evidence/release-082.md)
+retains its exact source and initial CI observation; [released 0.8.1](evidence/release-081.md)
 has complete source-bound native acceptance; historical cancelled runs keep
 their original status. [The tracked cut](evidence/tracked-080.md),
 [durable IC experiment](evidence/stable-cost-072.md) and

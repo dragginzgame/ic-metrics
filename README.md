@@ -13,7 +13,7 @@ exact counted batch fits its total. An exactly reached numeric cap remains exact
 reset boundaries before comparing observations; saturated totals cannot supply
 exact interval arithmetic.
 
-Pending 0.8.2 adds `MeasurementCounter` for scalar event, item or byte totals.
+From 0.8.2, `MeasurementCounter` supports scalar event, item or byte totals.
 It holds a `u128` total and sticky actual-overflow flag, with `add`, `merge`,
 validated `from_parts`, `exact_total` and identity-qualified `delta_since`.
 Zero is an exact scalar value; an absent metric stays consumer-owned. An exactly

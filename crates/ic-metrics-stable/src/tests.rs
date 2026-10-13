@@ -330,12 +330,9 @@ fn ic_memory_bootstrap_retains_one_application_binding_for_all_metrics() {
     let pool =
         MemoryAllocationPool::new(vec![MemoryAuthority::new("app", "app.").unwrap()], vec![])
             .unwrap();
-    let declarations = SealedDeclarationSnapshot::new(&[MemoryRequest::new(
-        "app",
-        "app.metrics.v1",
-        SchemaMetadata::default(),
-    )
-    .unwrap()])
+    let declarations = SealedDeclarationSnapshot::new(vec![
+        MemoryRequest::new("app", "app.metrics.v1", SchemaMetadata::default()).unwrap(),
+    ])
     .unwrap();
     let mut host = MemoryRuntime::new(backing.clone()).unwrap();
     host.bootstrap(&declarations, &pool, &GenericAllocationPolicy)

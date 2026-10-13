@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.3]
+
+### Changed
+
+- Adopt the incoming Memory 0.36.0 and private inspector Host 0.16.0 selections.
+  The stable bootstrap fixture supplies an owned explicit request list; hosts
+  still own composition and bootstrap. Exact collection types, V1 snapshot bytes
+  and package Rust floors remain unchanged; constructor dependencies are removed
+  from the stable graph.
+- Decode stable snapshot fields through one checked slice split, preserving
+  typed truncation failures and V1 bytes. Current guides identify the scalar
+  counter as released and distinguish publication from native qualification.
+
 ## [0.8.2] - 2026-10-13
 
 ### Added

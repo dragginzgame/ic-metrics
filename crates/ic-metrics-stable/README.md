@@ -6,8 +6,10 @@ namespace/name keys. Adding this package is the opt-in: `ic-metrics` alone stays
 allocation-free, dependency-free, `no_std` and volatile. This adapter uses `std`,
 allocates bounded records and supports native hosts and Wasm with Rust 1.88.
 
-The host owns one `ic-memory` allocation pool and bootstrap. Declare one permanent
-store key such as `app.metrics.v1`, then open its admitted memory and one
+The host owns one `ic-memory` allocation pool and bootstrap. With Memory 0.36,
+include a `MemoryRequest` for one permanent store key such as `app.metrics.v1`
+in the host's complete owned request list, then seal that list with
+`SealedDeclarationSnapshot::new(requests)`. After bootstrap, open its admitted memory and one
 `MetricsMap`. Pass that map to `MetricsStore::new`; pass access to the same store
 to each component. No numeric ID per metric or component is needed. `ic-memory`'s
 governance allocations are separate. This package never initializes memory,
