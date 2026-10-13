@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.4]
+
+### Changed
+
+- Keep native/wide mean projection inside the aggregate/interval owner and
+  refresh the current handoff after 0.8.3. Current README guidance leaves release
+  history with the changelog. Public APIs and stored bytes remain unchanged.
+- Qualify the incoming Memory 0.36.1 lock selection for the optional stable store,
+  preserving exact collection types, bootstrap ownership and Rust floors.
+
 ## [0.8.3] - 2026-10-13
 
 ### Changed
