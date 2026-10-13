@@ -198,6 +198,16 @@ fn zero_bound_histogram_and_bucket_count_overflow_restore() {
         Histogram::from_parts([], [], 1, [], false, original.aggregate()),
         Ok(original)
     );
+    let exact = Aggregate::from_parts(u64::MAX, 0, Some(0), false, false).unwrap();
+    // A lost bucket cannot enter a histogram with an exact aggregate count.
+    assert_eq!(
+        Histogram::from_parts([0], [u64::MAX], 0, [true], false, exact),
+        Err(Error::InvalidDistribution)
+    );
+    assert_eq!(
+        Histogram::from_parts([], [], u64::MAX, [], true, exact),
+        Err(Error::InvalidDistribution)
+    );
     let aggregate = Aggregate::from_parts(u64::MAX, 0, Some(0), true, false).unwrap();
     let value = Histogram::from_parts([0], [u64::MAX], 0, [true], false, aggregate).unwrap();
     assert!(value.bucket_saturation()[0]);

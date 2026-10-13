@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.8.2]
+
+### Added
+
+- Accumulate scalar diagnostic quantities with `MeasurementCounter`: a wide total
+  with actual-overflow tracking, validated restoration, batch merging and checked
+  totals/differences. Event, item and byte units stay consumer-owned; existing
+  observation APIs and stable V1 records remain unchanged
+  ([#68](https://github.com/dragginzgame/ic-metrics/issues/68)).
+
+### Changed
+
+- Adopt the incoming Host 0.15.2 selection for the private Wasm inspector and
+  Memory 0.35.19 for the optional store, retaining existing package Rust floors
+  and the dependency-free arithmetic graph.
+- Adopt Shared Tooling 0.9.10: reject non-boolean Cargo offline configuration and
+  isolate tool fixtures from consumer compiler settings and commit effects.
+  Run explicit `make install-rust-tools` after updating the build policy; prior
+  tool sets remain retained
+  ([Shared #140](https://github.com/dragginzgame/shared-tooling/issues/140),
+  [Shared #143](https://github.com/dragginzgame/shared-tooling/issues/143),
+  [Shared #144](https://github.com/dragginzgame/shared-tooling/issues/144)).
+- Consolidate current integration and host guidance, preserving historical
+  evidence separately. Boundary fixtures use validated public state and retain
+  independent checks without duplicate arithmetic tests.
+- Histogram quantile reporting uses admitted aggregate count quality instead of
+  scanning the same overflow flags again; recording, ranges and typed failures
+  remain unchanged.
+
 ## [0.8.1] - 2026-10-12
 
 ### Fixed

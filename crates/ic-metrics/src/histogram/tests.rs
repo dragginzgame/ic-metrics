@@ -1,6 +1,7 @@
 use super::{
     HistogramBoundsError, HistogramQueryError, HistogramRange, MeasurementHistogram, quantile_rank,
 };
+use crate::MeasurementAggregate;
 
 #[test]
 fn rejects_first_duplicate_or_descending_bound() {
@@ -70,29 +71,54 @@ fn maximum_bound_includes_maximum_sample() {
 }
 
 #[test]
-fn saturated_bucket_does_not_freeze_other_buckets_or_summary() {
-    let mut histogram = MeasurementHistogram::new([2, 4]).unwrap();
-    histogram.bucket_counts[0] = u64::MAX - 1;
+fn saturated_bucket_does_not_freeze_other_buckets_or_aggregate() {
+    let aggregate = MeasurementAggregate::from_parts(
+        u64::MAX - 1,
+        2 * u128::from(u64::MAX - 1),
+        Some(2),
+        false,
+        false,
+    )
+    .unwrap();
+    let mut histogram = MeasurementHistogram::from_parts(
+        [2, 4],
+        [u64::MAX - 1, 0],
+        0,
+        [false; 2],
+        false,
+        aggregate,
+    )
+    .unwrap();
     for value in [1, 2, 3, 5] {
         histogram.record(value);
     }
     assert_eq!(histogram.bucket_counts(), &[u64::MAX, 1]);
     assert_eq!(histogram.overflow(), 1);
-    assert_eq!(histogram.aggregate().samples(), 4);
-    assert_eq!(histogram.aggregate().total(), 11);
+    assert_eq!(histogram.bucket_saturation(), &[true, false]);
+    assert_eq!(histogram.aggregate().samples(), u64::MAX);
+    assert!(histogram.aggregate().samples_saturated());
+    assert_eq!(
+        histogram.aggregate().total(),
+        2 * u128::from(u64::MAX - 1) + 11
+    );
     assert_eq!(histogram.aggregate().maximum(), Some(5));
 }
 
 #[test]
 fn saturated_overflow_and_total_do_not_freeze_other_observations() {
-    let mut histogram = MeasurementHistogram::new([1]).unwrap();
-    histogram.overflow = u64::MAX - 1;
-    for _ in 0..64 {
-        histogram.aggregate.merge(histogram.aggregate);
-        histogram.aggregate.record(u64::MAX);
-    }
-    histogram.aggregate.record(u64::MAX);
-    histogram.aggregate.record(u64::MAX);
+    let aggregate = MeasurementAggregate::from_parts(
+        u64::MAX,
+        u128::from(u64::MAX).pow(2),
+        Some(u64::MAX),
+        false,
+        false,
+    )
+    .unwrap();
+    let mut histogram =
+        MeasurementHistogram::from_parts([1], [0], u64::MAX, [false], false, aggregate).unwrap();
+    histogram.record(u64::MAX);
+    histogram.record(u64::MAX);
+    assert!(!histogram.aggregate().total_saturated());
     histogram.record(u64::MAX);
     assert_eq!(histogram.overflow(), u64::MAX);
     assert_eq!(histogram.aggregate().total(), u128::MAX);
@@ -148,19 +174,41 @@ fn cumulative_counts_use_only_the_requested_finite_prefix() {
             buckets: 3
         })
     );
-    histogram.bucket_counts[2] = u64::MAX;
-    histogram.bucket_saturation[2] = true;
-    histogram.overflow = u64::MAX;
+    let aggregate = MeasurementAggregate::from_parts(
+        u64::MAX,
+        201 * u128::from(u64::MAX) + 120,
+        Some(101),
+        true,
+        false,
+    )
+    .unwrap();
+    let histogram = MeasurementHistogram::from_parts(
+        [0, 10, 100],
+        [2, 2, u64::MAX],
+        u64::MAX,
+        [false, false, true],
+        false,
+        aggregate,
+    )
+    .unwrap();
     assert_eq!(histogram.cumulative_count(1), Ok(4));
     assert_eq!(
         histogram.cumulative_count(2),
         Err(HistogramQueryError::SaturatedCount)
     );
-    histogram.bucket_counts = [u64::MAX - 1, 1, 0];
-    histogram.bucket_saturation = [false; 3];
+    let aggregate = MeasurementAggregate::from_parts(u64::MAX, 1, Some(1), false, false).unwrap();
+    let mut histogram = MeasurementHistogram::from_parts(
+        [0, 10, 100],
+        [u64::MAX - 1, 1, 0],
+        0,
+        [false; 3],
+        false,
+        aggregate,
+    )
+    .unwrap();
     assert_eq!(histogram.cumulative_count(0), Ok(u64::MAX - 1));
     assert_eq!(histogram.cumulative_count(1), Ok(u64::MAX));
-    histogram.bucket_counts[1] = 2;
+    histogram.record(1);
     assert_eq!(
         histogram.cumulative_count(1),
         Err(HistogramQueryError::SaturatedCount)
@@ -246,35 +294,24 @@ fn quantiles_reject_invalid_fractions_and_all_required_saturated_counts() {
             Err(HistogramQueryError::InvalidQuantile)
         );
     }
-    histogram.record(0);
-    // A later saturated count cannot be ignored just because rank 1 is earlier.
-    histogram.bucket_counts[1] = u64::MAX;
-    histogram.bucket_saturation[1] = true;
+    let aggregate = MeasurementAggregate::from_parts(u64::MAX, 0, Some(0), true, false).unwrap();
+    histogram = MeasurementHistogram::from_parts(
+        [10, 100],
+        [u64::MAX, 0],
+        0,
+        [true, false],
+        false,
+        aggregate,
+    )
+    .unwrap();
     assert_eq!(
         histogram.quantile_bucket(1, 100),
         Err(HistogramQueryError::SaturatedCount)
     );
-    histogram.bucket_counts[1] = 0;
-    histogram.bucket_saturation[1] = false;
-    histogram.overflow = u64::MAX;
-    histogram.overflow_saturated = true;
     assert_eq!(
-        histogram.quantile_bucket(1, 100),
-        Err(HistogramQueryError::SaturatedCount)
-    );
-    assert_eq!(
-        quantile_rank(u64::MAX, 1, 2),
-        Ok(Some(u128::from(u64::MAX).div_ceil(2)))
-    );
-    assert_eq!(
-        quantile_rank(u64::MAX, 0, 0),
+        histogram.quantile_bucket(0, 0),
         Err(HistogramQueryError::InvalidQuantile)
     );
-    assert_eq!(
-        quantile_rank(u64::MAX - 1, u64::MAX - 1, u64::MAX),
-        Ok(Some(u128::from(u64::MAX - 1)))
-    );
-    assert_eq!(quantile_rank(u64::MAX - 1, 1, u64::MAX), Ok(Some(1)));
 }
 
 #[test]
@@ -443,8 +480,15 @@ fn merging_no_bounds_and_exact_value_caps_preserves_overflow_provenance() {
         None
     );
     // Distribution-count overflow propagates even into an empty destination.
-    left.overflow = u64::MAX;
-    left.overflow_saturated = true;
+    let aggregate = MeasurementAggregate::from_parts(
+        u64::MAX,
+        u128::from(u64::MAX),
+        Some(u64::MAX),
+        true,
+        false,
+    )
+    .unwrap();
+    left = MeasurementHistogram::from_parts([], [], u64::MAX, [], true, aggregate).unwrap();
     let mut destination = MeasurementHistogram::new([]).unwrap();
     destination.merge(&left).unwrap();
     assert!(destination.overflow_saturated());
@@ -455,7 +499,7 @@ fn merging_no_bounds_and_exact_value_caps_preserves_overflow_provenance() {
 }
 
 #[test]
-fn histogram_merge_and_atomic_rejection_support_constant_evaluation() {
+fn histogram_merging_supports_constant_evaluation() {
     const MERGED: Result<MeasurementHistogram<1>, super::HistogramMergeError> = {
         let Ok(mut left) = MeasurementHistogram::new([10]) else {
             panic!("test bounds");

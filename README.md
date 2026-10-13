@@ -13,6 +13,13 @@ exact counted batch fits its total. An exactly reached numeric cap remains exact
 reset boundaries before comparing observations; saturated totals cannot supply
 exact interval arithmetic.
 
+Pending 0.8.2 adds `MeasurementCounter` for scalar event, item or byte totals.
+It holds a `u128` total and sticky actual-overflow flag, with `add`, `merge`,
+validated `from_parts`, `exact_total` and identity-qualified `delta_since`.
+Zero is an exact scalar value; an absent metric stays consumer-owned. An exactly
+reached cap remains exact, and narrow reports use checked conversions. This
+counter retains no observation statistics and has no stable-store encoding.
+
 ```rust
 use ic_metrics::MeasurementSummary;
 
@@ -101,38 +108,18 @@ remain different consumer contracts.
 ## Measuring cost
 
 Measure raw canister Wasm bytes, IC instructions and actual cycle charges
-separately. The shared arithmetic allocates nothing; labels, map updates and
-report encoding are consumer costs. Build profiles belong to the consumer
-workspace. The [performance audit](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/performance-audit.md)
-records historical compiler checks and size/instruction/cycle comparisons for
-the retired reader test canister, with their workload limits. It does not establish consumer savings.
+separately. Shared arithmetic allocates nothing; registry lookups, labels,
+encoding and stable writes are separate consumer costs. Build profiles belong
+to each application, and native timing is not IC measurement evidence.
 
-The separate [consumer lookup measurements](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/consumer-lookups.md)
-cover IcyDB and Canic's borrowed-key changes. Their isolated IC fixtures show
-lower instruction work and cycle charges for repeated keys, but higher costs
-for first insertions. Use the recorded workload and artifact identities when
-assessing those consumer changes; upgrading ic-metrics alone does not apply them.
-
-The [two-bound histogram cost experiment](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/histogram-cost-026.md)
-compares Canic's source-copied recording path with count/total, summary and
-histogram storage. It measures IC instructions and actual cycle charges in
-Linux PocketIC, plus raw Wasm bytes and target-specific slot sizes. Its repeated-key,
-two-bound workload does not establish whole-application cost or histogram adoption.
-Its original replay inputs are unavailable. The separate
-[durable arithmetic replay](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/histogram-replay-029.md)
-provides a checksum-bound bundle of new fixture sources, locks, raw results and
-measured Wasms. It measures direct arithmetic without Canic lookup or attribution;
-its observations have their own source and workload identity.
-
-The [0.6 arithmetic comparison](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/arithmetic-cost-061.md)
-measures recording, merging already prepared batches and reporting queries on
-exact released sources. The separate
-[quantile fast-path comparison](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/quantile-cost-062.md)
-isolates the checked narrow-product improvement and its wide-product fallback
-cost. Both retain reproducible sources, locks, Wasms and raw IC readings.
-Batch preparation is excluded from merge costs; these synthetic workloads do not
-qualify consumer applications. Compute distribution queries during reporting
-when possible, rather than on every recorded observation.
+The [tracked-recording comparison](docs/evidence/tracked-080.md),
+[quantile comparison](docs/evidence/quantile-cost-062.md) and
+[durable-store experiment](docs/evidence/stable-cost-072.md) retain reproducible
+sources, locked graphs, Wasms and raw IC readings. Their bounded workloads do
+not establish whole-application or mainnet savings. Original reader, histogram
+and consumer-lookup evidence remains unchanged under `docs/evidence`; the
+[cleanup receipt](docs/evidence/cleanup-082.md) retains the previous guide text.
+Compute distribution queries during reporting when possible.
 
 ## Development
 

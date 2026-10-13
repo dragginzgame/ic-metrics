@@ -436,19 +436,10 @@ impl<const N: usize> MeasurementHistogram<N> {
         if self.aggregate.samples_saturated() {
             return Err(HistogramQueryError::SaturatedCount);
         }
-        // Check every count before returning a whole-distribution projection.
+        // Recording, merging and restoration carry every bucket's count loss
+        // into the aggregate. An exact aggregate count admits the distribution.
         let mut index = 0;
-        while index < N {
-            if self.bucket_saturation[index] {
-                return Err(HistogramQueryError::SaturatedCount);
-            }
-            index += 1;
-        }
-        if self.overflow_saturated {
-            return Err(HistogramQueryError::SaturatedCount);
-        }
         let mut cumulative = 0_u128;
-        index = 0;
         while index < N {
             cumulative += self.bucket_counts[index] as u128;
             if cumulative >= rank {

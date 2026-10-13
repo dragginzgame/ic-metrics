@@ -166,7 +166,7 @@ cmp "$fixture/cache-entry-expected" "$EVENTS"
 
 # The actual consumer includes reject unsafe Make modes before any substituted
 # release/formatter operation, including an inherited marker claiming admission.
-# Publication remains a separate single-package Cargo operation. Substitute it
+# Publication remains a separate Cargo operation. Substitute it
 # before admission cases so even a broken guard cannot reach a registry.
 export JOBSERVER_PROBE="$fixture/jobserver-probe.pl"
 cat > "$JOBSERVER_PROBE" <<'PERL'

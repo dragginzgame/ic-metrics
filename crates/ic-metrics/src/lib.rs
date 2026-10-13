@@ -9,12 +9,14 @@
 #![no_std]
 
 mod aggregate;
+mod counter;
 mod histogram;
 mod ratio;
 mod state;
 mod summary;
 
 pub use aggregate::{MeasurementAggregate, MeasurementInterval, MeasurementIntervalError};
+pub use counter::{MeasurementCounter, MeasurementCounterError};
 pub use histogram::{
     HistogramBoundsError, HistogramMergeError, HistogramQueryError, HistogramRange,
     MeasurementHistogram,

@@ -7,7 +7,7 @@ receives already admitted instruction values; it does not read an IC counter.
 Bounds are illustrative, not recommended budgets or measured cost limits.
 
 ```rust
-use ic_metrics::{HistogramBoundsError, MeasurementHistogram, MeasurementSummary};
+use ic_metrics::{HistogramBoundsError, MeasurementCounter, MeasurementHistogram, MeasurementSummary};
 
 #[derive(Clone, Copy)]
 enum Span {
@@ -27,7 +27,7 @@ impl Span {
 struct ApplicationMetrics {
     instructions: [MeasurementHistogram<2>; 2],
     rows_per_batch: MeasurementSummary,
-    budget_stops: u64,
+    budget_stops: MeasurementCounter,
 }
 
 impl ApplicationMetrics {
@@ -35,7 +35,7 @@ impl ApplicationMetrics {
         Ok(Self {
             instructions: [MeasurementHistogram::new([10_000, 100_000])?; 2],
             rows_per_batch: MeasurementSummary::EMPTY,
-            budget_stops: 0,
+            budget_stops: MeasurementCounter::ZERO,
         })
     }
 
@@ -44,7 +44,7 @@ impl ApplicationMetrics {
     }
 
     fn record_budget_stop(&mut self) {
-        self.budget_stops = self.budget_stops.saturating_add(1);
+        self.budget_stops.add(1);
     }
 }
 
@@ -64,7 +64,7 @@ assert_eq!(readiness.aggregate().maximum(), Some(12_000));
 assert_eq!(readiness.aggregate().mean()?, Some(6_000));
 assert_eq!(metrics.instructions[Span::Mint.index()].overflow(), 1);
 assert_eq!(metrics.rows_per_batch.latest(), Some(128));
-assert_eq!(metrics.budget_stops, 1);
+assert_eq!(metrics.budget_stops.exact_total()?, 1);
 # Ok(())
 # }
 ```
@@ -75,6 +75,31 @@ for the same observations. Separate rows, bytes, instructions and outcome
 counts. Independent summaries do not retain per-call correlations: a mean of
 per-call instructions per item differs from total instructions divided by total
 items. Buckets describe ranges, not exact percentiles.
+
+### Scalar totals
+
+Use [`MeasurementCounter`] when only the accumulated quantity matters: retries,
+items processed or bytes transferred. Its `u128` total and sticky actual-overflow
+flag retain no sample count, maximum, latest value or distribution. `add(amount)`
+accepts an already exact quantity in the existing unit; `merge(other)` adds a
+deliberately attributed batch and carries its quality. Both include zero.
+
+`exact_total()` returns zero for a zero counter and a typed error after actual
+overflow. An absent metric remains the consumer registry's decision; the scalar
+does not have a separate empty-observation state. For a narrow report, use a
+checked conversion of the admitted total and explicitly represent a failed
+projection. A total above `u64::MAX` is still exact when it fits `u128`.
+`delta_since(previous)` checks actual overflow before decreasing totals; consumers
+must first establish common counter/window identity, units and append-only
+continuity. Reset by replacing the counter with `MeasurementCounter::ZERO` at
+the same owning boundary as its identity change.
+
+For per-operation means, maxima or distributions, keep aggregates, summaries or
+histograms. Counting events with `MeasurementAggregate::record(1)` also preserves
+quality, but retains observation statistics that a scalar total does not need.
+The optional stable adapter currently admits only those three observation types;
+it does not encode the scalar counter. Do not reinterpret an existing stored kind
+or extract persistence and lifecycle policy into this arithmetic type.
 
 ### Admission and attribution
 
