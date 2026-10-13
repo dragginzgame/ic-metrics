@@ -13,14 +13,11 @@ pub struct Decoder<'a> {
 
 impl<'a> Decoder<'a> {
     fn take(&mut self, length: usize) -> Result<&'a [u8], StoreError> {
-        let bytes = self
+        let (bytes, remaining) = self
             .remaining
-            .get(..length)
+            .split_at_checked(length)
             .ok_or(StoreError::MalformedRecord)?;
-        self.remaining = self
-            .remaining
-            .get(length..)
-            .ok_or(StoreError::MalformedRecord)?;
+        self.remaining = remaining;
         Ok(bytes)
     }
 
