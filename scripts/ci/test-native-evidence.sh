@@ -225,8 +225,8 @@ for scenario in success rust-install rust-check rust-store rust-store-invalid ru
     esac
     # No later set/check/native effect can follow the first refused leaf.
     phases=(install-tools install-ic-tools-preflight install-rust-tools-preflight
-            install-host-tools install-ic-tools install-rust-tools
-            tools-check host-tools-check ic-tools-check rust-tools-check ci)
+            install-host-tools install-ic-tools install-rust-tools install-wasm-inspector
+            tools-check host-tools-check ic-tools-check rust-tools-check wasm-inspector-tools-check ci)
     : > expected-commands
     for phase in "${phases[@]}"; do
         printf '%s\n' "$phase" >> expected-commands

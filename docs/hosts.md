@@ -22,7 +22,6 @@ targets, for the advertised package floors:
 | --- | --- | --- |
 | `ic-metrics` | 1.85, native and Wasm | `make msrv` |
 | `ic-metrics-stable` | 1.88, native and Wasm | `make stable-msrv` |
-| Private `ic-metrics-wasm-inspect` | 1.88, native | `make wasm-inspect-msrv` |
 
 Use Git, GNU Make, Bash 3.2 or newer and standard Unix utilities. The
 [local setup guide](local-setup.md#bootstrap-prerequisites) owns system bootstrap,
@@ -37,8 +36,16 @@ export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin
 make install-hooks
 ```
 
-Setup is explicit; checks never install tools or unlock the selected graph. Pins
-live in `ci/tool-versions.env` and `ci/ic-tools.tsv`. Use the same optional
+Setup is explicit; checks never install tools or unlock the selected graph. The ordered
+local extension installs/checks published `ic-host-wasm-inspect` 0.17.4 through
+the shared Cargo-tool installer. `make install-wasm-inspector` prepares that
+selection explicitly; `make wasm-inspector-tools-check` verifies it offline.
+`bash scripts/dev/wasm-inspector.sh run PATH MAX_BYTES MAX_SECTIONS MAX_EXPORTS MAX_CUSTOM_SECTIONS`
+consumes only the admitted executable path. IC Host owns its compiler floor,
+implementation and complete CLI test suite; it is not a Metrics workspace package.
+The reviewed snapshot owns default pins in `ci/tool-versions.env` and
+`ci/ic-tools.tsv`; host, Rust and IC exceptions are independently selected
+under the shared catalog contract. Use the same optional
 `SHARED_TOOLING_STORE` setting for setup, checking and evidence collection.
 Host/IC/Cargo paths select admitted shared generations; earlier sets and failed
 candidates remain retained. Build-policy/compiler/native identity changes require
@@ -63,21 +70,23 @@ builds before source mutation or compilation. Bare Cargo commands select the
 arithmetic package. Builds use locked dependencies. The arithmetic graph has no
 third-party dependency, platform reader, IC feature or server harness. Native
 stable tests use `VectorMemory` for storage/codec reopening, not IC execution.
-The inspector tests argument/file/budget admission, report publication and typed
-output failure; invocation inputs remain under `target/evidence/wasm-inspect-cli/`.
+The upstream inspector tests argument/file/budget admission, report publication and typed
+output failure at its IC Host owner. Metrics checks offline tool admission and
+actual dispatch to the published CLI; smoke inputs remain under
+`target/evidence/wasm-inspector/`.
 
 ## Full delivery and release gates
 
-Before delivering completed code, run `make ci`, then `make msrv`,
-`make stable-msrv` and `make wasm-inspect-msrv`, reusing passing evidence only
-for unchanged inputs. Full CI admits tools and pins before compilation, denies
-Clippy warnings, and checks builds, docs and tests for all three packages.
+Before delivering completed code, run `make ci`, then `make msrv` and
+`make stable-msrv`, reusing passing evidence only for unchanged inputs. Full CI admits tools and pins before compilation, denies
+Clippy warnings, and checks builds, docs and tests for both packages.
 Inspection and documentation-only work use narrower checks. Validation authority
 and release effects are governed by [AGENTS.md](../AGENTS.md).
 
 Release/publication are separate maintainer actions under
 [the release contract](releases.md). Standard release preflight prepares the
-locked dependency cache and selected Cargo tools before offline validation;
+locked dependency cache, common Cargo tools and the selected Wasm inspector
+before offline validation;
 standalone preflight only fetches/checks offline. Preparation and late checks
 bind the selected release commit rather than newer working-tree metadata.
 Neither validation nor release performs artifact cleanup.

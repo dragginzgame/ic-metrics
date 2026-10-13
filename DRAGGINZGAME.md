@@ -197,9 +197,13 @@ Consumer choices described in those guides remain subject to this baseline.
 - Check for active builds before compilation or source mutation. Do not change
   source under active validation or compete for its build lock. Use the owning
   repository's build directory; preserve unrelated artifacts.
-- For offline validation, prepare caches for the selected lockfile explicitly
-  before validation or release mutation. Preserve lock selection and report
-  preparation failures. An authorized dependency update includes the registry/Git
+- Authorized development, tests and validation include `cargo fetch --locked`
+  for missing dependency sources in the affected workspace's existing lockfile;
+  no separate maintainer approval is needed. Preserve lock selection and report
+  preparation failures. A missing or inconsistent lockfile does not authorize
+  an unlocked update. Honour explicit offline settings and actual environment
+  network restrictions. For offline gates, prepare caches before validation.
+  An authorized dependency update includes the registry/Git
   access needed for that selected update; do not require separate network approval
   or add `--offline`, `--frozen` or `CARGO_NET_OFFLINE=true` by habit. Offline
   validation is not a blanket policy for dependency preparation. Follow the
@@ -209,8 +213,10 @@ Consumer choices described in those guides remain subject to this baseline.
   A selected standard release includes its documented locked cache and selected
   executable-tool preparation under the [release contract](docs/releases.md),
   including required cache preparation before compiled
-  adapter startup. Explicit offline settings remain authoritative; ordinary
-  checks and standalone helper reads do not gain network permission.
+  adapter startup. Locked source preparation does not authorize executable-tool
+  installation, runtime network access, new credentials/targets, paid operations
+  or release effects. Keep offline checks and standalone helper reads offline;
+  prepare missing sources separately rather than adding implicit fetches to them.
 - Test maintained observable behavior, typed failures and genuine architectural
   boundaries. Delete tests that only prohibit a removed name or remember an old
   implementation. Source inspection can enforce a live architectural invariant;
@@ -312,6 +318,11 @@ Consumer choices described in those guides remain subject to this baseline.
   formatter command inputs for extra workspaces/frontends instead of replacing
   the shared recipes; preserve all existing checks during adoption.
 - Shared Tooling owns common executable storage as well as installation commands.
+  Its reviewed snapshot also owns the default common tool versions and digests.
+  Adopt those catalogs with the installers; do not maintain independent default
+  copies. A consumer exception requires an explicitly selected catalog and a
+  documented reason and native qualification. Host, IC and Rust exceptions are
+  independent. Product tools, PocketIC selection and compiler policy stay local.
   Host, IC and Cargo installers share verified bundles per user across checkouts
   while retaining each repository's pinned selection. Cargo tools use the standard
   tool-build environment and exact build identities; application compiler flags
@@ -371,12 +382,18 @@ Consumer choices described in those guides remain subject to this baseline.
 - Keep shell wrappers small and declare dependencies and effects. Use the
   project's maintained implementation language for substantial tooling. Do not
   add Python tooling. Fail on invalid inputs rather than hiding broken assumptions.
+- Do not use directory paths containing carriage returns or newlines (CR/LF)
+  for checkouts, tooling, state or artifacts. Reject those inputs before trimming
+  or normalizing them, and check resolved directory aliases as well. Never repair
+  an invalid path by stripping characters: that can select a different directory.
+  This restriction does not prohibit ordinary spaces in paths.
 - CI/release tools use [reviewed snapshots](docs/consuming-snapshots.md), not symlinks
   or mutable sibling/network sources. Do not patch vendored copies; fix upstream
   or keep an explicit consumer-owned adapter outside the snapshot.
 - Portable scripts use Bash strict mode and preserve Bash 3.2 compatibility unless
   the support matrix is deliberately changed. Downloaded executables need exact
-  consumer-owned versions, pinned digests, HTTPS, verification before extraction
+  reviewed snapshot versions or explicit consumer exceptions, pinned digests,
+  HTTPS, verification before extraction
   and a version check before installation. No implicit credentials or targets.
 
 ## Host support

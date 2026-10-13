@@ -12,7 +12,7 @@ The separately implemented private host binary is based on checkout `4ad5837`
 plus the working changes bound by [source hashes](wasm-inspection-0215/source.sha256).
 It selects published `ic-host-artifacts` and `ic-host-fs` 0.8.1 in the root
 Cargo lock, enabling artifact Wasm inspection only for the private package.
-The [guide](../../crates/ic-metrics-wasm-inspect/README.md) defines its explicit
+The [frozen guide](owner-convergence-091.md#retired-source) defines its explicit
 arguments, byte/count units and caller responsibilities. The arithmetic library
 still has no dependencies and no platform reader. Source-less lock identities
 are workspace-owned; the release adapter uses those canonical identities to

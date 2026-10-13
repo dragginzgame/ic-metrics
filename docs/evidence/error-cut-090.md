@@ -59,8 +59,15 @@ Initial lint failures and the fixture-only unused-field observation are retained
 alongside their corrected passing outcomes. Library/native checks establish no
 later macOS or actual application acceptance.
 
-The [frozen receipt](error-cut-090.tar.gz) and
-[checksum](error-cut-090.tar.gz.sha256) retain exact before/after inputs, probes,
-compiler identities, results, rejected experiment, consumer source observations,
+The [frozen receipt](error-cut-090.public.tar.gz) and
+[checksum](error-cut-090.public.tar.gz.sha256) retain exact before/after inputs, probes,
+compiler identities, results, rejected experiment, public consumer source observations,
 issue feedback and complete validation logs. Archive readback verifies payloads,
 source checkpoints and all final Wasm hashes. Historical evidence is untouched.
+
+The public distribution omits private-consumer material and projects mixed review
+records onto the five public consumers. Its `distribution-provenance.json` binds
+unchanged retained bytes to the original archive. [The distribution record](archive-distribution-072.md)
+identifies the privately retained original/checksum and the remaining published
+history scope; this replacement does not establish the omitted consumer
+acceptance or qualify a later source or dependency graph.

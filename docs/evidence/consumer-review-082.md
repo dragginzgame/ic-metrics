@@ -64,10 +64,18 @@ has no production Rust delta from 0.35.18. Neither fact replaces selected-graph
 validation. Shared 0.9.7 is available; Metrics retains its reviewed 0.9.6 snapshot.
 No package version, Git index/ref, release or publication effect occurs here.
 
-The [frozen review](consumer-review-082.tar.gz) and
-[checksum](consumer-review-082.tar.gz.sha256) retain 23 selected consumer files,
-committed/working graph identities, issue observations and feedback, current
+The [public review](consumer-review-082.public.tar.gz) and
+[checksum](consumer-review-082.public.tar.gz.sha256) retain the public subset of
+the original 23 selected consumer files, committed/working graph identities,
+issue observations and feedback, current
 Metrics inputs, official archives and publication/CI observations. Fresh readback
 verifies the frozen source hashes and both package checksums. The preparation
 receipts for [the restoration fix](summary-restoration-081.md) and
 [Shared 0.9.6](adoption-081-shared-096.md) retain their original pre-release scope.
+
+The public distribution omits private-consumer material and projects mixed review
+records onto the five public consumers. Its `distribution-provenance.json` binds
+unchanged retained bytes to the original archive. [The distribution record](archive-distribution-072.md)
+identifies the privately retained original/checksum and the remaining published
+history scope; this replacement does not establish the omitted consumer
+acceptance or qualify a later source or dependency graph.

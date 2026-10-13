@@ -1,4 +1,7 @@
 //! The single bounded V1 stored-record encoder and decoder.
+//!
+//! Store entrypoints admit the static metric size before codec dispatch.
+//! This module admits stored bytes, identities and numeric state.
 
 use ic_metrics::MeasurementAggregate;
 
@@ -102,7 +105,6 @@ pub fn encode<T: DurableMetric>(
     identity: &MetricIdentity,
     value: &T,
 ) -> Result<Vec<u8>, StoreError> {
-    T::check_size(crate::metric::ACCESS)?;
     let length = u8::try_from(identity.unit.len()).map_err(|_| StoreError::InvalidIdentifier)?;
     let mut bytes = Vec::new();
     bytes.extend_from_slice(MAGIC);
@@ -121,7 +123,6 @@ pub fn decode<T: DurableMetric>(
     identity: &MetricIdentity,
     configuration: &T,
 ) -> Result<T, StoreError> {
-    T::check_size(crate::metric::ACCESS)?;
     let (kind, mut decoder) = envelope(bytes, identity)?;
     if kind != T::kind(crate::metric::ACCESS) {
         return Err(StoreError::KindMismatch);

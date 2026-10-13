@@ -47,9 +47,16 @@ checkpoints match the 138 frozen/current validation inputs, including both new
 untracked counter files. This qualifies the complete selected local graph;
 earlier source/graph and hosted native receipts keep their own identities.
 
-The [frozen receipt](counter-082.tar.gz) and [checksum](counter-082.tar.gz.sha256)
+The [frozen receipt](counter-082.public.tar.gz) and [checksum](counter-082.public.tar.gz.sha256)
 retain focused/full logs, compiler identities, source/checkpoint hashes, frozen
-validation inputs and six read-only consumer source reviews. Fresh archive
-readback verifies all validation/consumer bytes and completed checkpoints. No
-check fails in this batch. There is no IC performance claim or new owning
+validation inputs and the public subset of six read-only consumer source reviews.
+Original archive readback verifies all validation/consumer bytes and completed
+checkpoints. No check fails in this batch. There is no IC performance claim or new owning
 consumer adoption/macOS acceptance. No library-owned data reset is required.
+
+The public distribution omits private-consumer material and projects mixed review
+records onto the five public consumers. Its `distribution-provenance.json` binds
+unchanged retained bytes to the original archive. [The distribution record](archive-distribution-072.md)
+identifies the privately retained original/checksum and the remaining published
+history scope; this replacement does not establish the omitted consumer
+acceptance or qualify a later source or dependency graph.

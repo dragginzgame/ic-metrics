@@ -260,14 +260,27 @@ fn bounded_inputs_empty_zero_and_idempotent_checkpoints() {
         Some(0)
     );
     let bounds = std::array::from_fn::<_, 257, _>(|index| u64::try_from(index).unwrap());
+    let unsupported = Histogram::new(bounds).unwrap();
+    let oversized_key = crate::MetricKey::new("app", "oversize").unwrap();
     assert_eq!(
-        store.save(
-            &crate::MetricKey::new("app", "oversize").unwrap(),
-            &identity(),
-            &Histogram::new(bounds).unwrap()
-        ),
+        store.load(&oversized_key, &identity(), &unsupported),
         Err(StoreError::TooManyBounds)
     );
+    assert_eq!(
+        store.save(&oversized_key, &identity(), &unsupported),
+        Err(StoreError::TooManyBounds)
+    );
+    assert!(store.map.get(&oversized_key.0).is_none());
+    store.map.insert(oversized_key.0.clone(), vec![0]);
+    assert_eq!(
+        store.load(&oversized_key, &identity(), &unsupported),
+        Err(StoreError::TooManyBounds)
+    );
+    assert_eq!(
+        store.save(&oversized_key, &identity(), &unsupported),
+        Err(StoreError::TooManyBounds)
+    );
+    assert_eq!(store.map.get(&oversized_key.0), Some(vec![0]));
     let bytes = vec![0; 4609];
     assert_eq!(
         codec::decode(&bytes, &identity(), &Aggregate::EMPTY),

@@ -307,7 +307,10 @@ Document the affected workspace graphs and exact preparation commands in the
 consumer's release guide. An explicit request for that documented release
 includes this network preparation, but never dependency upgrades or lock repairs.
 Cargo's explicit offline environment/configuration settings remain authoritative.
-Ordinary validation and standalone adapter commands remain offline.
+Authorized development and validation also include separate locked source-cache
+preparation under the Cargo network policy below. Deliberately offline gates and
+standalone adapter commands retain their offline contract; a missing cache does
+not enable an implicit online retry inside them.
 Do not hard-code `--offline` onto the authorized preparation step or export an
 offline setting across both preparation and validation. `--locked` preserves
 the selected dependency graph while allowing missing inputs to be downloaded.
@@ -370,8 +373,8 @@ The complete validation gate and standalone qualification commands also run thei
 offline tool checks before dependent builds/tests, even when release preparation
 was bypassed. Enforce sequencing under parallel Make with ordered recipes or real
 dependency edges; unordered sibling prerequisites do not establish order. Ordinary
-checks never install or download. A caller adds its own explicit setup command to
-the shared installer's selection diagnostic, preserving the failed status.
+tool checks never install or download tools. A caller adds its own explicit setup
+command to the shared installer's selection diagnostic, preserving the failed status.
 
 For adoption, prove an installed version N / selected N+1 prepares N+1 before
 builds, reuses it on retry and leaves locks, older installations and server bytes
@@ -731,3 +734,26 @@ of live package publication or a native host release.
 Supplement effect/interruption stubs with real Git index/tree checks at staging
 boundaries. Shared Tooling's metadata fixture reuses existing history without
 creating commits and exercises the actual adapter's failed-log retention.
+
+## Coordinated Cargo metadata adapter
+
+`scripts/ci/cargo-release-metadata.sh prepare|check PRIMARY_PACKAGE` owns
+the reusable Cargo-only metadata flow. Adopt it as a snapshot root; its version
+reader, lock rewriter and changelog finalizer are required companions. It requires
+root `Cargo.toml`, `Cargo.lock`, `CHANGELOG.md`, workspace-inherited package versions
+and no source-less packages outside the workspace. It admits actual workspace
+and lock identities before mutation; independently versioned packages need their
+consumer-owned adapter. Existing adapters are not replaced by adoption alone.
+
+The caller supplies `RELEASE_PREVIOUS`, `RELEASE_VERSION`, `RELEASE_DATE`, prepared
+Cargo-edit/Cargo-sort, jq and Mike Farah yq. Preparation uses the locked offline
+graph, restores all three original files on failure and retains failure custody.
+The `check` operation uses `RELEASE_COMMIT` when selected, exporting that exact
+committed source instead of reading newer working metadata. No version selection,
+fetch, tool installation, Git staging/ref mutation or publication is implicit.
+Consumer preflight and late source/index admission remain outside this helper.
+
+IC Metrics is the first prepared consumer. Its live adapter remains until the
+reviewed helper is committed and refreshed through normal snapshot distribution.
+Other Cargo consumers must retain their own file set, recovery and metadata policy
+when qualifying this adapter; it is not a fleet-wide automatic replacement.

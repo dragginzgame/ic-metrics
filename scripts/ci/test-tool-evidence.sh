@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared companions: scripts/ci/select-tool-evidence.sh scripts/ci/archive-evidence.sh .github/actions/retain-failure-evidence/action.yml
+# Shared companions: scripts/ci/select-tool-evidence.sh scripts/ci/archive-evidence.sh .github/actions/retain-failure-evidence/action.yml scripts/ci/fixture-lifecycle.sh
 set -euo pipefail
 [[ $# == 3 ]] || { echo 'usage: test-tool-evidence.sh CONSUMER host|ic CALLER-PINS' >&2; exit 2; }
 ROOT="${BASH_SOURCE[0]}"
@@ -8,16 +8,10 @@ ROOT="$(cd -P "${ROOT%/*}/../.." && printf '%s/.' "$PWD")"
 ROOT="${ROOT%/.}"
 consumer="$1"; kind="$2"; pins="$3"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/tool-evidence-test.XXXXXX")"
-# Bash 3.2 can enter EXIT with status zero after nounset; require completion too.
+# shellcheck source=scripts/ci/fixture-lifecycle.sh
+source "$ROOT/scripts/ci/fixture-lifecycle.sh"
 fixture_complete=false
-finish() {
-    local status=$?
-    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
-    if [[ "$status" == 0 ]]; then rm -rf "$fixture"
-    else printf "Tool evidence fixture retained: %s\n" "$fixture" >&2; fi
-    exit "$status"
-}
-trap finish EXIT
+trap 'fixture_finish "$?" "$fixture" "Tool evidence fixture retained"' EXIT
 active="$(readlink "$consumer/.tools/$kind")"
 physical="$(cd "$consumer/.tools/$active" && pwd -P)"
 stored_parent="${physical%/*}"
@@ -130,6 +124,21 @@ EVIDENCE_TEMP_ROOT="$fixture/action-temp" EVIDENCE_REPOSITORY_ROOT="$consumer" \
     GITHUB_OUTPUT="$fixture/action-output" RUNNER_TEMP="$fixture/action-temp" \
     "$BASH" --noprofile --norc -e -o pipefail "$fixture/collector.sh"
 output="$(sed -n 's/^path=//p' "$fixture/action-output")"
+# With no exception inputs, the actual collector uses catalogs beside its action,
+# even when the inspected repository carries different or missing catalogs.
+snapshot="$fixture/snapshot"
+mkdir -p "$snapshot/.github/actions/retain-failure-evidence" "$snapshot/ci" "$fixture/default-temp"
+ln -s "$ROOT/scripts" "$snapshot/scripts"
+cp "$pins" "$snapshot/ci/tool-versions.env"
+cp "$pins" "$snapshot/ci/ic-tools.tsv"
+EVIDENCE_TEMP_ROOT="$fixture/default-temp" EVIDENCE_REPOSITORY_ROOT="$consumer" \
+    EVIDENCE_ACTION_ROOT="$snapshot/.github/actions/retain-failure-evidence" \
+    EVIDENCE_COMPACT=true EVIDENCE_HOST_VERSIONS='' EVIDENCE_IC_PINS='' \
+    GITHUB_OUTPUT="$fixture/default-output" RUNNER_TEMP="$fixture/default-temp" \
+    "$BASH" --noprofile --norc -e -o pipefail "$fixture/collector.sh"
+default_details=("$fixture/default-temp"/tool-evidence.*/"$kind")
+[[ ${#default_details[@]} == 1 && -f "${default_details[0]}/selection.txt" ]] || exit 1
+cmp "$pins" "${default_details[0]}/caller-pins"
 mkdir "$fixture/action-unpacked"
 tar -xzf "$output" -C "$fixture/action-unpacked"
 cmp "$fixture/action-temp/portable-regression.log" "$fixture/action-unpacked/portable-regression.log"

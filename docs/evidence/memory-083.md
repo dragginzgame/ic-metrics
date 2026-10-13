@@ -47,9 +47,16 @@ All ten adapter tests, its compiled example, 50 core tests and eight core doctes
 pass. Eight checkpoints agree on all 140 captured inputs. Native reopen tests
 establish storage behavior rather than IC execution or later macOS acceptance.
 
-The [frozen receipt](memory-083.tar.gz) and [checksum](memory-083.tar.gz.sha256)
+The [frozen receipt](memory-083.public.tar.gz) and [checksum](memory-083.public.tar.gz.sha256)
 retain source inputs, initial working bytes, exact registry packages/indexes,
 resolved metadata, public identities, focused/full logs and owning issue reads.
 Archive readback verifies retained bytes and checkpoints. Real Git index/ref,
 snapshot/pins and incoming dependency selections remain unchanged; no release
 or publication effect is performed.
+
+The public distribution omits private-consumer checkout observations and their
+file-inventory rows. Its `distribution-provenance.json` binds
+unchanged retained bytes to the original archive. [The distribution record](archive-distribution-072.md)
+identifies the privately retained original/checksum and the remaining published
+history scope; this replacement does not establish the omitted consumer
+acceptance or qualify a later source or dependency graph.

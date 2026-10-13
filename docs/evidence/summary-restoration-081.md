@@ -43,10 +43,10 @@ hosted macOS or IC performance claims.
 
 The first delivery launch selected snapshot digests instead of paths and stopped
 before any gates. Its input errors and launch log are retained; the corrected
-selection passes all four gates. The [frozen receipt](summary-restoration-081.tar.gz)
-and [checksum](summary-restoration-081.tar.gz.sha256) retain failed reproductions,
+selection passes all four gates. The [frozen receipt](summary-restoration-081.public.tar.gz)
+and [checksum](summary-restoration-081.public.tar.gz.sha256) retain failed reproductions,
 focused/full logs, both delivery attempts, source/checkpoint hashes, frozen
-validation and consumer source bytes, exact upstream review identities and
+validation and public consumer source bytes, exact upstream review identities and
 verification records. Fresh archive readback verifies all 136 source inputs,
 selected consumer files and eight completed checkpoints. The initial readback
 used canonical member names against rg paths retaining `./`; normalizing lookup
@@ -58,3 +58,10 @@ Memory 0.35.18 changes no production Rust source from 0.35.17. Neither read-only
 review changes Metrics' graph or qualifies those upstream releases here.
 Package metadata remains 0.8.0; compatible pending notes remain 0.8.1. No Git
 index/ref, release, publication or sibling-edit effect occurs.
+
+The public distribution omits private-consumer material and projects mixed review
+records onto the five public consumers. Its `distribution-provenance.json` binds
+unchanged retained bytes to the original archive. [The distribution record](archive-distribution-072.md)
+identifies the privately retained original/checksum and the remaining published
+history scope; this replacement does not establish the omitted consumer
+acceptance or qualify a later source or dependency graph.

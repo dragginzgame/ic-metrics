@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`7e55adecf6f0b196c050f104b37f8c69b6bf434e` and file digests are recorded in
+`7a7430bd30902dc655a025be61696ce19417c54a` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -15,11 +15,11 @@ and [the extraction contract](docs/extraction.md) before implementation.
   Its native/Wasm Rust floor is 1.88. Hosts own the allocation key, bootstrap,
   collection lifecycle, identities, synchronization, write cadence and resets.
   Never add stable-memory dependencies to the arithmetic package.
-- The private `ic-metrics-wasm-inspect` host binary owns bounded structural
-  evidence inspection through IC Host libraries, outside the arithmetic graph.
-  Its explicit Rust 1.88 floor is separate from the arithmetic Rust 1.85 floor.
+- IC Host owns the published `ic-host-wasm-inspect` CLI and its Rust floor.
+  Metrics selects it through the shared managed Cargo-tool installer; it remains
+  outside this workspace and the arithmetic/stable dependency graphs.
   Source-less lock packages must be workspace-owned; external path dependencies
-  are not permitted. Release metadata advances all local workspace rows together.
+  are not permitted. Release metadata advances both local workspace rows together.
 - Consumer code owns measurement attribution, registries, labels, replication
   policy, reset/restart identity, persistence, lifecycle hooks, and endpoints.
   Do not add dependencies on IcyDB, Canic, `ic-timers`, or `ic-backup`.
@@ -31,6 +31,10 @@ and [the extraction contract](docs/extraction.md) before implementation.
 - Native substitutes are not IC measurements. Never add timing benchmarks or
   convert instruction counts into estimated cycles. Permitted performance
   evidence is instruction counts, IC cycles, and raw Wasm bytes.
+- Public evidence must exclude private sibling source, search excerpts and issue
+  bodies. Select payloads explicitly; read access is not export authority. Follow
+  [the archive distribution record](docs/evidence/archive-distribution-072.md)
+  for original retention and separately identified sanitized receipts.
 
 ## Work and validation
 
@@ -73,8 +77,10 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 ## Dependency qualification
 
-- `make check-pins` requires prepared Git, jq and Mike Farah yq; consumer-selected
-  tool versions/digests are in the reviewed `ci/tool-versions.env`. Explicit
+- `make check-pins` requires prepared Git, jq and Mike Farah yq. Default common
+  tool versions/digests are snapshot-owned in `ci/tool-versions.env`. Host, IC
+  and Rust exceptions require independent explicit selection and qualification.
+  Explicit
   `make install-host-tools` prepares jq, yq, ripgrep with PCRE2 and cloc under
   `.tools/host/bin`; `make host-tools-check` verifies the complete set offline.
   Host/IC/Cargo payloads live in the canonical per-user store; checkout paths select
@@ -92,8 +98,9 @@ and [the extraction contract](docs/extraction.md) before implementation.
   Rust sets in order, including under parallel Make; product extensions use the
   shared ordered target lists rather than aggregate prerequisites.
   Shared `make/consumer.mk` composes setup/check, formatting, hooks and releases;
-  its included owners retain their contracts. IC executable pins live only in
-  `ci/ic-tools.tsv`. The checker and release gates never install tools or unlock graphs.
+  its included owners retain their contracts. Default IC executable pins are
+  snapshot-owned in `ci/ic-tools.tsv`; this consumer needs no exception catalog.
+  The checker and release gates never install tools or unlock graphs.
 - Shared structural reviews use [the common methods](audits/README.md), with
   this overlay's allocation, units, counter identity and ownership constraints.
   Source scope is `crates/ic-metrics`, owning tooling and the affected downstream

@@ -64,7 +64,16 @@ set -euo pipefail
 if [[ "${1:-}" == locate-project ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
 printf '%s\n' "$*" >> "$ADMISSION_CARGO_EVENTS"
 case "$*" in
-    'set-version --help'|'sort --help'|'metadata --locked --offline --format-version 1') ;;
+    'set-version --help'|'sort --help') ;;
+    'metadata --locked --offline --format-version 1')
+        if grep -q '^members = \[\]' Cargo.toml; then
+            # Synthetic index-admission cases substitute graph facts. Selected
+            # committed-source cases below use real locked Cargo metadata.
+            printf '{"workspace_members":["fixture"],"packages":[{"id":"fixture","name":"ic-metrics","source":null,"version":"0.1.1"}]}\n'
+        else
+            exec "$ADMISSION_REAL_CARGO" "$@"
+        fi ;;
+
     'fetch --locked'|'fetch --locked --offline')
         if [[ "${ADMISSION_REAL_FETCH:-0}" == 1 ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
         if [[ ! -e "$ADMISSION_CACHE/input" ]]; then
@@ -85,12 +94,12 @@ cat >> "$fixture/bin/make" <<'MAKE'
 set -euo pipefail
 if [[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$3" == "$ADMISSION_TOOL_ROOT" ]]; then
     case "$4" in
-        install-rust-tools|rust-tools-check)
+        install-rust-tools|rust-tools-check|install-wasm-inspector|wasm-inspector-tools-check)
             printf '%s\n' "$4" >> "$ADMISSION_CARGO_EVENTS"
             [[ "${ADMISSION_TOOL_FAIL:-}" != "$4" ]] || exit 49
-            if [[ "$4" == install-rust-tools ]]; then
+            if [[ "$4" == install-rust-tools || "$4" == install-wasm-inspector ]]; then
                 if [[ ! -f "$ADMISSION_CACHE/tool" && "${CARGO_NET_OFFLINE:-false}" == true ]]; then exit 57; fi
-                [[ "${ADMISSION_TOOL_CHANGE:-no}" != yes ]] || printf '\n# changed selection\n' >> "$ADMISSION_TOOL_ROOT/ci/tool-versions.env"
+                [[ "${ADMISSION_TOOL_CHANGE:-no}" != yes ]] || printf '\n# changed selection\n' >> "${RUST_TOOL_VERSIONS:-$ADMISSION_TOOL_ROOT/ci/tool-versions.env}"
                 printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
             else
                 [[ -f "$ADMISSION_CACHE/tool" ]] || exit 53
@@ -127,7 +136,7 @@ TOML
     : > "$ADMISSION_CARGO_EVENTS"
     unset RELEASE_COMMIT ADMISSION_FAIL_GIT IC_METRICS_RELEASE_CACHE_PREPARE
     unset CARGO_NET_OFFLINE ADMISSION_CONFIG_OFFLINE ADMISSION_FETCH_FAILURE ADMISSION_REAL_FETCH
-    unset ADMISSION_TOOL_FAIL ADMISSION_TOOL_CHANGE
+    unset ADMISSION_TOOL_FAIL ADMISSION_TOOL_CHANGE RUST_TOOL_VERSIONS
     export ADMISSION_TOOL_ROOT="$root"
     if [[ -n "$original_cargo_home_set" ]]; then export CARGO_HOME="$original_cargo_home";
     else unset CARGO_HOME; fi
@@ -172,7 +181,7 @@ for scenario in cold standalone-offline environment-offline config-offline netwo
     [[ "$status" == "$expected_status" ]] || exit 1
     printf '%s\n' 'set-version --help' "$expected_fetch" > "$fixture/expected-cache-events"
     if [[ "$expected_status" == 0 ]]; then
-        printf '%s\n' install-rust-tools rust-tools-check >> "$fixture/expected-cache-events"
+        printf '%s\n' install-rust-tools rust-tools-check install-wasm-inspector wasm-inspector-tools-check >> "$fixture/expected-cache-events"
     fi
     cmp "$fixture/expected-cache-events" "$ADMISSION_CARGO_EVENTS"
     if [[ "$expected_status" == 0 ]]; then [[ -f "$ADMISSION_CACHE/input" ]] || exit 1;
@@ -255,7 +264,7 @@ for scenario in cold offline network-failure tool-setup-failure tool-check-failu
     printf '%s\n' 'set-version --help' 'fetch --locked' > "$fixture/runner-cache-events"
     if [[ "$scenario" == cold ]]; then
         [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]] || exit 1
-        printf '%s\n' install-rust-tools rust-tools-check validation >> "$fixture/runner-cache-events"
+        printf '%s\n' install-rust-tools rust-tools-check install-wasm-inspector wasm-inspector-tools-check validation >> "$fixture/runner-cache-events"
     elif [[ "$scenario" == tool-* ]]; then
         [[ "$status" == 1 && -e "$ADMISSION_CACHE/input" ]] || exit 1
         printf '%s\n' install-rust-tools >> "$fixture/runner-cache-events"
@@ -270,7 +279,7 @@ done
 
 # Actual preflight/runner routing admits selected executables after source/cache
 # admission and before the gate. Setup/check effects remain substituted.
-for scenario in cold reuse setup-failure check-failure standalone-missing offline-missing pins-changed; do
+for scenario in cold reuse setup-failure check-failure inspector-setup-failure inspector-check-failure standalone-missing offline-missing pins-changed explicit-pins-changed; do
     setup "tool-$scenario"
     originals="$fixture/tool-originals-$scenario"
     mkdir "$originals"
@@ -279,11 +288,13 @@ for scenario in cold reuse setup-failure check-failure standalone-missing offlin
     printf 'old installed executable\n' > "$ADMISSION_CACHE/old-tool"
     export IC_METRICS_RELEASE_CACHE_PREPARE=1
     expected_status=0
-    expected_targets=(install-rust-tools rust-tools-check)
+    expected_targets=(install-rust-tools rust-tools-check install-wasm-inspector wasm-inspector-tools-check)
     case "$scenario" in
         cold) rm "$ADMISSION_CACHE/tool" ;;
         setup-failure) export ADMISSION_TOOL_FAIL=install-rust-tools; expected_status=49; expected_targets=(install-rust-tools) ;;
-        check-failure) export ADMISSION_TOOL_FAIL=rust-tools-check; expected_status=49 ;;
+        check-failure) export ADMISSION_TOOL_FAIL=rust-tools-check; expected_status=49; expected_targets=(install-rust-tools rust-tools-check) ;;
+        inspector-setup-failure) export ADMISSION_TOOL_FAIL=install-wasm-inspector; expected_status=49; expected_targets=(install-rust-tools rust-tools-check install-wasm-inspector) ;;
+        inspector-check-failure) export ADMISSION_TOOL_FAIL=wasm-inspector-tools-check; expected_status=49 ;;
         standalone-missing)
             unset IC_METRICS_RELEASE_CACHE_PREPARE
             rm "$ADMISSION_CACHE/tool"
@@ -292,17 +303,25 @@ for scenario in cold reuse setup-failure check-failure standalone-missing offlin
             export CARGO_NET_OFFLINE=true
             rm "$ADMISSION_CACHE/tool"
             expected_status=57; expected_targets=(install-rust-tools) ;;
-        pins-changed)
+        pins-changed|explicit-pins-changed)
             # Copy the script owners, so the controlled mutation cannot touch
             # the real repository's reviewed tool pins.
-            tool_root="$fixture/changed-tool-root"
+            tool_root="$fixture/changed-tool-root-$scenario"
             mkdir -p "$tool_root/scripts/release" "$tool_root/scripts/ci" "$tool_root/ci"
+            # Metadata owners resolve physical paths; scratch may traverse a
+            # target-directory symlink in a disposable source qualification.
+            tool_root="$(cd -P "$tool_root" && printf '%s/.' "$PWD")"
+            tool_root="${tool_root%/.}"
             cp "$root/scripts/release/metadata.sh" "$tool_root/scripts/release/"
             for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh; do
                 cp "$root/scripts/ci/$helper" "$tool_root/scripts/ci/"
             done
             cp "$root/ci/tool-versions.env" "$tool_root/ci/"
             export ADMISSION_TOOL_ROOT="$tool_root" ADMISSION_TOOL_CHANGE=yes
+            if [[ "$scenario" == explicit-pins-changed ]]; then
+                export RUST_TOOL_VERSIONS="$fixture/selected Rust pins.env"
+                cp "$root/ci/tool-versions.env" "$RUST_TOOL_VERSIONS"
+            fi
             expected_status=1; expected_targets=(install-rust-tools) ;;
     esac
     status=0
@@ -315,6 +334,9 @@ for scenario in cold reuse setup-failure check-failure standalone-missing offlin
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
     cmp .git/index "$originals/index"
     [[ "$(cat "$ADMISSION_CACHE/old-tool")" == 'old installed executable' ]] || exit 1
+    if [[ "$scenario" == explicit-pins-changed ]]; then
+        cmp "$root/ci/tool-versions.env" "$ADMISSION_TOOL_ROOT/ci/tool-versions.env"
+    fi
     [[ ! -e .git/release-state ]] || exit 1
 done
 
@@ -413,16 +435,18 @@ setup selected-older-commit
 export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" RELEASE_DATE="$selected_date"
 printf 'Newer unrelated worktree metadata.\n' > Cargo.toml
 bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1
-[[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
+printf 'metadata --locked --offline --format-version 1\n' > "$fixture/expected-selected-events"
+cmp "$fixture/expected-selected-events" "$ADMISSION_CARGO_EVENTS"
+: > "$ADMISSION_CARGO_EVENTS"
 for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done
 export RELEASE_VERSION=9.8.7
 reject check
-set -- "$TMPDIR"/metrics-committed-metadata.*
+set -- "$TMPDIR"/cargo-release-check.*
 [[ $# == 1 && -d "$1" ]] || exit 1
-grep -F "failed selected-commit metadata retained: $1" "$fixture/result.log" >/dev/null
+grep -F "failed Cargo metadata check retained: $1" "$fixture/result.log" >/dev/null
 for path in Cargo.toml Cargo.lock CHANGELOG.md; do
     git show "$selected_commit:$path" > "$fixture/expected-metadata"
-    cmp "$fixture/expected-metadata" "$1/$path"
+    cmp "$fixture/expected-metadata" "$1/source/$path"
 done
 export RELEASE_VERSION="$selected_version" RELEASE_DATE=1999-01-01
 reject check
@@ -455,12 +479,12 @@ for scenario in type export missing-version missing-date; do
     if [[ "$scenario" == type ]]; then
         for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done
     else
-        set -- "$TMPDIR"/metrics-committed-metadata.*
-        [[ $# == 1 && -f "$1/Cargo.toml" ]] || exit 1
-        grep -F "failed selected-commit metadata retained: $1" "$fixture/result.log" >/dev/null
+        set -- "$TMPDIR"/cargo-release-check.*
+        [[ $# == 1 && -f "$1/source/Cargo.toml" ]] || exit 1
+        grep -F "failed Cargo metadata check retained: $1" "$fixture/result.log" >/dev/null
         for path in Cargo.toml Cargo.lock CHANGELOG.md; do
             git show "$selected_commit:$path" > "$fixture/expected-metadata"
-            cmp "$fixture/expected-metadata" "$1/$path"
+            cmp "$fixture/expected-metadata" "$1/source/$path"
         done
     fi
 done
@@ -548,15 +572,11 @@ msrv:
 	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
 	@echo msrv >> gate-events
 	@if test "$(FAIL_MSRV)" = yes; then echo 'error: retained-msrv-failure'; exit 9; fi
-.PHONY: stable-msrv wasm-inspect-msrv
+.PHONY: stable-msrv
 stable-msrv:
 	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
 	@echo stable-msrv >> gate-events
 	@if test "$(FAIL_STABLE_MSRV)" = yes; then echo 'error: retained-stable-msrv-failure'; exit 9; fi
-wasm-inspect-msrv:
-	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
-	@echo wasm-inspect-msrv >> gate-events
-	@if test "$(FAIL_HOST_MSRV)" = yes; then echo 'error: retained-host-msrv-failure'; exit 9; fi
 MAKE
 if make --no-print-directory -f "$root/Makefile" release-verify \
     RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=yes \
@@ -582,25 +602,11 @@ stable_logs=(.git/release-state/validation-failures/*-2-stable-msrv.log)
 [[ "${#stable_logs[@]}" == 1 ]] || exit 1
 grep -F retained-stable-msrv-failure "${stable_logs[0]}" >/dev/null
 : > gate-events
-if make --no-print-directory -f "$root/Makefile" release-verify \
-    RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=no FAIL_HOST_MSRV=yes \
-    > "$fixture/result.log" 2>&1; then
-    echo 'release-verify unexpectedly passed failed host minimum gate' >&2
-    exit 1
-fi
-printf 'ci\nmsrv\nstable-msrv\nwasm-inspect-msrv\n' > "$fixture/expected-gates"
-cmp gate-events "$fixture/expected-gates"
-host_logs=(.git/release-state/validation-failures/*-3-wasm-inspect-msrv.log)
-[[ "${#host_logs[@]}" == 1 ]] || exit 1
-grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
-grep -F retained-stable-msrv-failure "${stable_logs[0]}" >/dev/null
-: > gate-events
 make --no-print-directory -f "$root/Makefile" release-verify \
     RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit FAIL_MSRV=no \
     > "$fixture/result.log" 2>&1
 cmp gate-events "$fixture/expected-gates"
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
-grep -F retained-host-msrv-failure "${host_logs[0]}" >/dev/null
 # Prepared Cargo inputs must stay fixed between release validation stages.
 setup logger-input-drift
 mkdir -p scripts/ci make "$worktree/tmp"
@@ -608,11 +614,11 @@ cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root
 cp "$root/scripts/ci/run-validation-targets.sh" "$root/scripts/ci/check-make-execution.sh" \
     "$root/scripts/ci/verify-file-checksum.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
 cat > Makefile <<'MAKE'
-.PHONY: ci msrv stable-msrv wasm-inspect-msrv
+.PHONY: ci msrv stable-msrv
 ci:
 	@echo ci >> gate-events
 	@printf '\n# changed during validation\n' >> Cargo.lock
-msrv stable-msrv wasm-inspect-msrv:
+msrv stable-msrv:
 	@echo unexpected >> gate-events
 	@exit 99
 MAKE

@@ -34,7 +34,7 @@ ranges, not exact observed percentiles.
 
 For admitted aggregates, total overflow implies sample-count overflow. Mean and
 interval queries reject count overflow first; exact counts bound totals and
-scaled means. Pending 0.9 removes the unreachable mean `SaturatedTotal`/`Projection`
+scaled means. The 0.9 API removes the unreachable mean `SaturatedTotal`/`Projection`
 and interval `SaturatedTotal` cases. The generic ratio still owns zero-denominator
 and result-overflow errors for independently supplied scalar inputs; the scalar
 counter retains its actual-total-overflow error. Flags now use `*_overflowed`
@@ -67,21 +67,21 @@ continuity dispatch require an adapter-private capability. The core has no
 serialization or stable-memory dependency. Scalar counters have
 no stored kind; an existing kind must never be repurposed for them.
 
-The private [Wasm inspector](../crates/ic-metrics-wasm-inspect/README.md) owns
-bounded structural inspection through IC Host libraries. It is outside the
-arithmetic graph and does not execute canisters or estimate instruction/cycle
-costs. PocketIC provisioning and lifecycle belong to IC Testkit; this workspace
-has no maintained server caller.
+The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
+owns bounded structural inspection. Metrics selects its exact CLI through the
+shared managed installer, outside both library graphs. It does not execute
+canisters or estimate instruction/cycle costs. PocketIC provisioning and lifecycle
+belong to IC Testkit; this workspace has no maintained server caller.
 
 ## Downstream contract checks
 
 | Consumer | Owning contracts to preserve | Adoption owner |
 | --- | --- | --- |
-| IcyDB | Inclusive overlapping spans, zero, overflow/report fields, CLI means, reset identity and journal-debt separation. | [#354](https://github.com/dragginzgame/icydb/issues/356) |
+| IcyDB | Inclusive overlapping spans, zero, overflow/report fields, CLI means, reset identity and journal-debt separation. | [#356](https://github.com/dragginzgame/icydb/issues/356) |
 | Canic | Exclusive nesting, async call-context identity, invocation checkpoints, zero, report ordering and quality propagation. | [#523](https://github.com/dragginzgame/canic/issues/523) |
-| IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/overflow projections. | [#50](https://github.com/dragginzgame/ic-timers/issues/51) |
+| IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/overflow projections. | [#51](https://github.com/dragginzgame/ic-timers/issues/51) |
 | IC Backup | Nanosecond/byte separation, success/rejection samples, zero/repeated chunks, clamped durations, copied views, `Send + Sync` and empty create/open state. | [#41](https://github.com/dragginzgame/ic-backup/issues/41) |
-| Blob restoration test probe | Restoration-operation attribution, call-context identity, zero, bounded reports and reset behavior; not production storage instrumentation. | [#62](https://github.com/dragginzgame/ic-blob-storage/issues/65) |
+| Blob restoration test probe | Restoration-operation attribution, call-context identity, zero, bounded reports and reset behavior; not production storage instrumentation. | [#65](https://github.com/dragginzgame/ic-blob-storage/issues/65) |
 | Toko Miner game shard | Action-count cohort admission, separate attempt/instruction units, trap/outcome policy, bounded reports and window/reset identity. | [#48](https://github.com/dragginzgame/toko-miner/issues/48) |
 
 Review affected producers, DTOs, codecs, generated views and callers when shared

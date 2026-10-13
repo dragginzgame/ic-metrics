@@ -43,7 +43,8 @@ if [[ "${1:-}" == set-version ]]; then
     awk -v version="$4" '/^version = / { $0="version = \"" version "\"" } { print }' Cargo.toml > Cargo.toml.fixture
     mv Cargo.toml.fixture Cargo.toml
 else
-    if [[ "${1:-}" == "${FIXTURE_FAIL_STEP:-}" ]]; then
+    if [[ "${1:-}" == "${FIXTURE_FAIL_STEP:-}" ]] &&
+        { [[ "$1" != metadata ]] || grep -q "^version = \"$RELEASE_VERSION\"" Cargo.toml; }; then
         printf '%s\n' "$1" > failure-reached
         exit 9
     fi
@@ -63,7 +64,7 @@ chmod +x "$fixture/bin/git"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/make"
 cat >> "$fixture/bin/make" <<'MAKE'
 set -euo pipefail
-[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$4" == rust-tools-check ]] || exit 1
+[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && ( "$4" == rust-tools-check || "$4" == wasm-inspector-tools-check ) ]] || exit 1
 MAKE
 chmod +x "$fixture/bin/make"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/yq"
@@ -80,7 +81,7 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/cp"
 cat >> "$fixture/bin/cp" <<'CP'
 set -euo pipefail
 if [[ "${FIXTURE_FAIL_RESTORE:-}" == yes && "$1" == -p &&
-    "$2" == "$TMPDIR"/metrics-release-backup.*/Cargo.lock ]]; then
+    "$2" == "$TMPDIR"/cargo-release-backup.*/Cargo.lock ]]; then
     echo 'controlled lockfile restoration failure' >&2
     exit 43
 fi
@@ -126,14 +127,14 @@ done
 
 for scenario in prepared undated-history history-no-lf dated-notes conflicting-date sort metadata lock conflicting-notes version-before version-after restore-failure missing-date missing-version; do
     worktree="$fixture/$scenario"
-    mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/crates/ic-metrics-stable/src" "$worktree/crates/ic-metrics-wasm-inspect/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
+    mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/crates/ic-metrics-stable/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
     cp "$root/scripts/ci/finalize-release-changelog.awk" "$worktree/scripts/ci/"
     cp "$root/scripts/ci/rewrite-local-lock-versions.pl" "$worktree/scripts/ci/"
     cd "$worktree"
     export CARGO_TARGET_DIR="$worktree/target" FIXTURE_FAIL_STEP="" FIXTURE_FAIL_VERSION="" FIXTURE_FAIL_RESTORE="" TMPDIR="$worktree/attempts"
     cat > Cargo.toml <<'TOML'
 [workspace]
-members = ["crates/ic-metrics", "crates/ic-metrics-stable", "crates/ic-metrics-wasm-inspect"]
+members = ["crates/ic-metrics", "crates/ic-metrics-stable"]
 resolver = "3"
 
 [workspace.package]
@@ -160,14 +161,6 @@ edition.workspace = true
 ic-metrics.workspace = true
 TOML
     printf '// Stable adapter fixture.\n' > crates/ic-metrics-stable/src/lib.rs
-    cat > crates/ic-metrics-wasm-inspect/Cargo.toml <<'TOML'
-[package]
-name = "ic-metrics-wasm-inspect"
-version.workspace = true
-edition.workspace = true
-publish = false
-TOML
-    printf 'fn main() {}\n' > crates/ic-metrics-wasm-inspect/src/main.rs
     cat > CHANGELOG.md <<'NOTES'
 # Changelog
 
@@ -232,21 +225,19 @@ NOTES
             > failed-check.log 2>&1 || status=$?
         [[ "$status" == 1 ]] || exit 1 # The shared reader rejects the failed parser.
         bash "$root/scripts/release/metadata.sh" check >> result.log 2>&1
-        # Current arithmetic must not conceal a stale adapter or private package.
-        for stale_package in ic-metrics-stable ic-metrics-wasm-inspect; do
-            cp Cargo.lock prepared.lock
-            awk -v previous="$RELEASE_PREVIOUS" -v package="$stale_package" '
-                /^\[\[package\]\]$/ { host=0 }
-                $0 == "name = \"" package "\"" { host=1 }
-                host && /^version = / { $0="version = \"" previous "\"" }
-                { print }
-            ' prepared.lock > Cargo.lock
-            status=0
-            FIXTURE_FAIL_STEP=metadata bash "$root/scripts/release/metadata.sh" check \
-                > stale-host-check.log 2>&1 || status=$?
-            [[ "$status" == 1 ]] || exit 1 # Refused before dispatching Cargo metadata (status 9).
-            cp prepared.lock Cargo.lock
-        done
+        # Current arithmetic must not conceal a stale adapter.
+        cp Cargo.lock prepared.lock
+        awk -v previous="$RELEASE_PREVIOUS" -v package=ic-metrics-stable '
+            /^\[\[package\]\]$/ { host=0 }
+            $0 == "name = \"" package "\"" { host=1 }
+            host && /^version = / { $0="version = \"" previous "\"" }
+            { print }
+        ' prepared.lock > Cargo.lock
+        status=0
+        FIXTURE_FAIL_STEP=metadata bash "$root/scripts/release/metadata.sh" check \
+            > stale-host-check.log 2>&1 || status=$?
+        [[ "$status" == 5 ]] || exit 1 # Native jq admission refusal precedes Cargo metadata (status 9).
+        cp prepared.lock Cargo.lock
         cargo sort --workspace --check >> result.log 2>&1
         [[ "$(bash "$root/scripts/release/metadata.sh" version)" == "$RELEASE_VERSION" ]] || exit 1
         awk -v heading="## [$RELEASE_VERSION] - $RELEASE_DATE" \
@@ -283,18 +274,11 @@ NOTES
                 ;;
             missing-date|missing-version)
                 [[ "$status" == 1 ]] || exit 1
-                set -- attempts/metrics-release-backup.*
+                set -- attempts/cargo-release-backup.*
                 [[ $# == 1 ]] || exit 1
                 for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$1/$path"; done
-                if [[ "$scenario" == missing-date ]]; then
-                    # The abort follows mutation of both manifest and lock.
-                    [[ -f "$1/candidate.lock" ]] || exit 1
-                    if cmp -s originals/Cargo.lock "$1/candidate.lock"; then
-                        echo 'missing-date fixture did not reach lock preparation' >&2; exit 1
-                    fi
-                else
-                    [[ ! -e "$1/candidate.lock" ]] || exit 1
-                fi
+                # Shared admission rejects missing selections before mutation.
+                [[ ! -e "$1/candidate.lock" ]] || exit 1
                 ;;
         esac
         if [[ "$scenario" == restore-failure ]]; then
@@ -306,7 +290,7 @@ NOTES
                 echo 'controlled failed restore unexpectedly replaced the lockfile' >&2
                 exit 1
             fi
-            set -- "$TMPDIR"/metrics-release-backup.*
+            set -- "$TMPDIR"/cargo-release-backup.*
             [[ $# == 1 && -f "$1/candidate.lock" ]] || exit 1
             cmp "$1/candidate.lock" Cargo.lock
             for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$1/$path"; done
@@ -319,15 +303,15 @@ NOTES
             if [[ "$scenario" == version-before ]]; then
                 for remaining in attempts/*; do [[ ! -e "$remaining" ]] || exit 1; done
             else
-                set -- attempts/metrics-release-backup.*
+                set -- attempts/cargo-release-backup.*
                 [[ $# == 1 && -f "$1/candidate.lock" ]] || exit 1
                 for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "originals/$path" "$1/$path"; done
             fi
         fi
         if [[ "$scenario" == lock ]]; then
-            grep -F 'local package version mismatch: ic-metrics' result.log >/dev/null
-            set -- attempts/metrics-release-backup.*
-            [[ $# == 1 && -f "$1/Cargo.lock" && -f "$1/candidate.lock" && ! -s "$1/candidate.lock" ]] || exit 1
+            grep -F 'invalid coordinated workspace lock identities' result.log >/dev/null
+            set -- attempts/cargo-release-backup.*
+            [[ $# == 1 && -f "$1/Cargo.lock" && ! -e "$1/candidate.lock" ]] || exit 1
             cmp originals/Cargo.lock "$1/Cargo.lock"
         fi
     fi

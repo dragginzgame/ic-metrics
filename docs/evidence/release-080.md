@@ -31,9 +31,16 @@ These API outcomes are distinct from downloaded native-receipt acceptance. Root
 [#66](https://github.com/dragginzgame/ic-metrics/issues/66) remains open for
 native acceptance. Owning consumer adoption remains separate from publication.
 
-The [frozen publication receipt](release-080.tar.gz) and
-[checksum](release-080.tar.gz.sha256) retain registry rows, official package
+The [frozen publication receipt](release-080.public.tar.gz) and
+[checksum](release-080.public.tar.gz.sha256) retain registry rows, official package
 archives, all 15 frozen Rust sources and their hashes, API observations and the
 six consumer publication notifications. Fresh archive readback verifies the
 package checksums and all frozen Rust source hashes. No release,
 publication, staging, Git effect or sibling edit is performed by this review.
+
+The public distribution omits private-consumer material and projects mixed review
+records onto the five public consumers. Its `distribution-provenance.json` binds
+unchanged retained bytes to the original archive. [The distribution record](archive-distribution-072.md)
+identifies the privately retained original/checksum and the remaining published
+history scope; this replacement does not establish the omitted consumer
+acceptance or qualify a later source or dependency graph.

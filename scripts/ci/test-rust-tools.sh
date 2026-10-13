@@ -99,7 +99,11 @@ case "$1" in -vV|--version) echo 'cargo fixture'; exit 0 ;; esac
 [[ -z "${RUSTFLAGS+x}${RUSTC_WRAPPER+x}${CARGO_ENCODED_RUSTFLAGS+x}${UNMODELLED_SECRET+x}" ]] || exit 71
 [[ "$CARGO_HOME" == "$fixture/store/cargo-cache" && "$RUSTC" == "$fixture/compiler/bin/rustc" ]] || exit 72
 if [[ "$1" == info ]]; then
-    [[ ! -f "$fixture/no-info" ]] || exit 91
+    if [[ -f "$fixture/no-info" ]]; then
+        printf 'refused\n' >> "$fixture/info-refusals"
+        echo 'injected Cargo source acquisition failure' >&2
+        exit 91
+    fi
     identity="${2/@/-}"
     mkdir -p "$CARGO_HOME/registry/cache/index.crates.io-fixture"
     cp "$fixture/assets/$identity.crate" "$CARGO_HOME/registry/cache/index.crates.io-fixture/"
@@ -201,7 +205,33 @@ cache_before="$(bash "$cache_owner" "$cache_pins")"
 [[ "$cache_before" == key=*$'\n'root="$SHARED_TOOLING_STORE" ]] || exit 1
 [[ "$(bash "$cache_owner" "$cache_pins")" == "$cache_before" && ! -e "$SHARED_TOOLING_STORE" && ! -e "$consumer/.tools" ]] || exit 1
 printf '\n# Changed pins\n' >> "$cache_pins"
+printf 'export SHARED_TOOLING_JQ_VERSION=99.9.9\nexport SHARED_TOOLING_JQ_SHA256_LINUX_AMD64=abc123\n' >> "$cache_pins"
+[[ "$(bash "$cache_owner" "$cache_pins")" == "$cache_before" ]] || exit 1
+awk '{ rows[NR]=$0 } END { for (i=NR; i>0; i--) print rows[i] }' "$cache_pins" > "$fixture/reordered-pins"
+[[ "$(bash "$cache_owner" "$fixture/reordered-pins")" == "$cache_before" ]] || exit 1
+# Shell comments need whitespace after an assignment; a glued # is value data.
+sed 's/$/ # comment/' "$fixture/versions" > "$cache_pins"
+[[ "$(bash "$cache_owner" "$cache_pins")" == "$cache_before" ]] || exit 1
+sed 's/$/#suffix/' "$fixture/versions" > "$cache_pins"
 [[ "$(bash "$cache_owner" "$cache_pins")" != "$cache_before" ]] || exit 1
+# CR in a shell assignment is part of its value, not harmless whitespace.
+awk '{ printf "%s\r\n", $0 }' "$fixture/versions" > "$cache_pins"
+[[ "$(bash "$cache_owner" "$cache_pins")" != "$cache_before" ]] || exit 1
+for pin in CARGO_SORT CARGO_SORT_DERIVES CANDID_EXTRACTOR; do
+    sed "s/SHARED_TOOLING_${pin}_VERSION=.*/SHARED_TOOLING_${pin}_VERSION=98.0.0/" "$fixture/versions" > "$cache_pins"
+    [[ "$(bash "$cache_owner" "$cache_pins")" != "$cache_before" ]] || exit 1
+done
+# Executable configuration is opaque: retain all bytes without running it.
+# shellcheck disable=SC2016 # Literal shell text must never be evaluated by the cache reader.
+for opaque in 'touch "$CACHE_KEY_SIDE_EFFECT"' 'export RUSTUP_TOOLCHAIN=nightly' \
+    'export SHARED_TOOLING_CARGO_SORT_VERSION=99.1.0'; do
+    cp "$fixture/versions" "$cache_pins"
+    printf '%s\n' "$opaque" >> "$cache_pins"
+    opaque_key="$(CACHE_KEY_SIDE_EFFECT="$fixture/unexpected-cache-effect" bash "$cache_owner" "$cache_pins")"
+    [[ "$opaque_key" != "$cache_before" && ! -e "$fixture/unexpected-cache-effect" ]] || exit 1
+    printf '# Opaque catalog changed\n' >> "$cache_pins"
+    [[ "$(bash "$cache_owner" "$cache_pins")" != "$opaque_key" ]] || exit 1
+done
 cp "$fixture/versions" "$cache_pins"
 for file in scripts/dev/cargo-tool-build.sh scripts/dev/install-rust-tools.sh; do
     printf '\n# Changed cache input\n' >> "$fixture/cache-source/$file"
@@ -430,6 +460,34 @@ extension_path="$(CARGO_NET_OFFLINE=true bash "$installer" --consumer "$fixture/
    "$(perl -MCwd=abs_path -e 'print abs_path(shift)' "$path")" ]] || exit 1
 rm "$fixture/no-info"
 physical="$(perl -MCwd=abs_path -e 'print abs_path(shift)' "$path")"; bundle="${physical%/bin/*}"
+# Missing source must preserve Cargo's status through both installer call shapes,
+# without a build, retry, activation or loss of previously retained evidence.
+cp "$fixture/versions" "$fixture/missing-source-versions"
+printf 'SHARED_TOOLING_CARGO_SORT_VERSION=99.9.9\n' >> "$fixture/missing-source-versions"
+cp -R "$SHARED_TOOLING_STORE" "$fixture/before-source-store"
+cp -R "$consumer/.tools" "$fixture/before-source-tools"
+source_common="$(readlink "$consumer/.tools/rust/common")"
+: > "$fixture/info-refusals"
+touch "$fixture/no-info"
+attempts=0
+for mode in common selected; do
+    status=0
+    if [[ "$mode" == common ]]; then
+        common --versions "$fixture/missing-source-versions" > "$fixture/source-$mode.out" 2> "$fixture/source-$mode.err" || status=$?
+    else
+        bash "$installer" "${selected_args[@]}" --version 9.9.9 > "$fixture/source-$mode.out" 2> "$fixture/source-$mode.err" || status=$?
+    fi
+    attempts=$((attempts + 1))
+    [[ "$status" -eq 91 && ! -s "$fixture/source-$mode.out" &&
+       "$(wc -l < "$fixture/info-refusals")" -eq "$attempts" &&
+       "$(wc -l < "$fixture/builds")" == "$builds_before" &&
+       "$(readlink "$consumer/.tools/rust/common")" == "$source_common" &&
+       "$(perl -MCwd=abs_path -e 'print abs_path(shift)' "$path")" == "$physical" ]] || exit 1
+    grep -Fx 'injected Cargo source acquisition failure' "$fixture/source-$mode.err" >/dev/null
+    diff -r "$fixture/before-source-store" "$SHARED_TOOLING_STORE"
+    diff -r "$fixture/before-source-tools" "$consumer/.tools"
+done
+rm "$fixture/no-info"
 for field in bin/prepare .crates2.json inputs.json selection.json source.crate Cargo.lock; do
     cp "$bundle/$field" "$fixture/saved"
     printf '\nchanged\n' >> "$bundle/$field"
