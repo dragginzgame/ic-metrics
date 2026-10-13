@@ -15,7 +15,9 @@ mod ratio;
 mod state;
 mod summary;
 
-pub use aggregate::{MeasurementAggregate, MeasurementInterval, MeasurementIntervalError};
+pub use aggregate::{
+    MeasurementAggregate, MeasurementInterval, MeasurementIntervalError, MeasurementMeanError,
+};
 pub use counter::{MeasurementCounter, MeasurementCounterError};
 pub use histogram::{
     HistogramBoundsError, HistogramMergeError, HistogramQueryError, HistogramRange,
@@ -23,24 +25,24 @@ pub use histogram::{
 };
 pub use ratio::{MeasurementRatioError, checked_scaled_ratio};
 pub use state::MeasurementStateError;
-pub use summary::{MeasurementMeanError, MeasurementSummary};
+pub use summary::MeasurementSummary;
 
 // One owner for tracked overflow; flags never infer loss from the numeric cap.
-const fn add_count(value: &mut u64, saturated: &mut bool, increment: u64) {
+const fn add_count(value: &mut u64, overflowed: &mut bool, increment: u64) {
     if let Some(next) = value.checked_add(increment) {
         *value = next;
     } else {
         *value = u64::MAX;
-        *saturated = true;
+        *overflowed = true;
     }
 }
 
 // Wide totals can represent every admitted u64 observation while count is exact.
-const fn add_total(value: &mut u128, saturated: &mut bool, increment: u128) {
+const fn add_total(value: &mut u128, overflowed: &mut bool, increment: u128) {
     if let Some(next) = value.checked_add(increment) {
         *value = next;
     } else {
         *value = u128::MAX;
-        *saturated = true;
+        *overflowed = true;
     }
 }

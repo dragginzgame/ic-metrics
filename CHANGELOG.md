@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.9.0]
+
+### Breaking
+
+- Remove unreachable `MeasurementMeanError::{SaturatedTotal, Projection}` and
+  `MeasurementIntervalError::SaturatedTotal`; update matches or construction of
+  these variants. Exact sample counts already guarantee exact totals and bounded
+  scaled means. Numeric overflow handling and stable V1 bytes remain unchanged;
+  no stored-data reset is needed
+  ([#69](https://github.com/dragginzgame/ic-metrics/issues/69)).
+
+- Rename actual-overflow flags from saturation names to `*_overflowed`, with
+  histogram `bucket_overflowed()` and `overflow_count_overflowed()`. Update
+  remaining error cases to `SampleCountOverflow`, `TotalOverflow`, `CountOverflow`
+  and `InvalidOverflowFlag`; an exactly reached numeric cap is still exact.
+- Keep raw stable codec/kind/continuity dispatch internal to the adapter; use
+  `MetricsStore` with the supported `DurableMetric` bound. Stored V1 bytes,
+  identity validation and host lifecycle stay unchanged
+  ([#71](https://github.com/dragginzgame/ic-metrics/issues/71)).
+
+### Changed
+
+- Qualify the incoming Host 0.17.0 selection for the private Wasm inspector;
+  arithmetic and stable dependency boundaries and Rust floors stay unchanged.
+
 ## [0.8.4] - 2026-10-13
 
 ### Changed

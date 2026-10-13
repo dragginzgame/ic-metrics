@@ -144,7 +144,7 @@ assert_eq!(checked_scaled_ratio(u128::from(small_chunks), aggregate.samples(), 1
 ```
 
 [`checked_scaled_ratio`] floors the scaled result using exact integer arithmetic.
-It accepts exact `u128` totals and does not infer saturation from their numeric
+It accepts exact `u128` totals and does not infer overflow from their numeric
 value. Callers must admit count/total provenance first, choose the scale and
 unit, and handle empty data before supplying a denominator. It neither formats
 decimals nor checks an accumulator's quality; use `scaled_mean` for tracked means.
@@ -156,7 +156,7 @@ summaries return `None` when empty, floor exact means and record actual overflow
 Counts and individual observations use `u64`; accumulated totals and means use
 `u128`. Every possible exact sample count of `u64` observations fits the total.
 An exactly reached numeric cap remains exact; adding zero does not lose exactness.
-Inspect saturation flags before using clipped counts/totals in other arithmetic.
+Inspect overflow flags before using clipped counts/totals in other arithmetic.
 Flags describe accumulation only: consumers must admit exact input observations
 and must not treat a clamped or otherwise lossy sample as an exact measurement.
 Record into a tracked accumulator and display unavailable means rather than
@@ -164,10 +164,10 @@ substituting zero. Project report fields from that state; raw numeric caps canno
 establish whether overflow occurred. [`MeasurementSummary`] retains the latest ordered sample;
 mergeable aggregates and histograms retain no latest value. Maximum remains an
 individual observation after overflow. Bucket counts saturate independently;
-they need not sum to a saturated sample count.
+they need not sum to a overflowed sample count.
 
-Consumers own overflow reporting. Check `samples_saturated()` and
-`total_saturated()` on the aggregate, expose unavailable exact projections, and
+Consumers own overflow reporting. Check `samples_overflowed()` and
+`total_overflowed()` on the aggregate, expose unavailable exact projections, and
 log or alert once when a flag first becomes true in a measurement window. Keep
 that transition state with the consumer's window/reset identity; logging on every
 record after overflow can flood logs and waste cycles. The arithmetic library
@@ -177,15 +177,15 @@ When a report or codec still requires `u64`, use a checked conversion and an
 explicit unavailable/overflow representation rather than truncating the total.
 [`MeasurementHistogram::cumulative_count`] needs only its selected bucket prefix
 to remain exact; [`MeasurementHistogram::quantile_bucket`] requires an exact
-sample count and all buckets. A saturated value total alone does not invalidate
+sample count and all buckets. A overflowed value total alone does not invalidate
 quantile ranges. Overflow has no configured upper bound, and a zero-bound-count
 histogram covers all unsigned values. Invalid indices/fractions and required
-saturation produce [`HistogramQueryError`].
+overflow produce [`HistogramQueryError`].
 
 The application owns window/reset identity. Reset an accumulator by replacing
 it with a newly constructed empty one and update its window identity at the
 same owning boundary. Establish matching units, bounds and identities before
-comparing snapshots; saturated counters cannot supply exact interval deltas.
+comparing snapshots; overflowed counters cannot supply exact interval deltas.
 
 ### Batches and intervals
 

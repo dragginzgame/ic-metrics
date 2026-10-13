@@ -32,6 +32,17 @@ fractional information that multiplying an integer mean loses. The generic
 identity, overflow provenance or empty observations. Quantiles identify bucket
 ranges, not exact observed percentiles.
 
+For admitted aggregates, total overflow implies sample-count overflow. Mean and
+interval queries reject count overflow first; exact counts bound totals and
+scaled means. Pending 0.9 removes the unreachable mean `SaturatedTotal`/`Projection`
+and interval `SaturatedTotal` cases. The generic ratio still owns zero-denominator
+and result-overflow errors for independently supplied scalar inputs; the scalar
+counter retains its actual-total-overflow error. Flags now use `*_overflowed`
+names, and the remaining error cases are `SampleCountOverflow`, `TotalOverflow`,
+`CountOverflow` and `InvalidOverflowFlag`. Histogram `overflow()` remains the
+beyond-last-bound count; `overflow_count_overflowed()` reports its lost quality.
+Consumer-owned DTO/wire names need not follow these Rust API names.
+
 Merging adds deliberately attributed batches without deduplication. Before
 intervals or scalar deltas, establish matching units, counter/window identity
 and append-only continuity. Numeric success cannot detect a reset followed by
@@ -51,7 +62,9 @@ V1 snapshots for aggregates, summaries and histograms in one host-supplied
 namespace/name keys distinguish rows. Hosts own bootstrap, map initialization,
 update-message synchronization, write cadence, authorization and resets. Queries
 cannot make stable writes durable, and adapter errors never silently reset data.
-The core has no serialization or stable-memory dependency. Scalar counters have
+Generic `DurableMetric` bounds support store operations; raw codec/kind and
+continuity dispatch require an adapter-private capability. The core has no
+serialization or stable-memory dependency. Scalar counters have
 no stored kind; an existing kind must never be repurposed for them.
 
 The private [Wasm inspector](../crates/ic-metrics-wasm-inspect/README.md) owns
@@ -64,11 +77,11 @@ has no maintained server caller.
 
 | Consumer | Owning contracts to preserve | Adoption owner |
 | --- | --- | --- |
-| IcyDB | Inclusive overlapping spans, zero, overflow/report fields, CLI means, reset identity and journal-debt separation. | [#354](https://github.com/dragginzgame/icydb/issues/354) |
+| IcyDB | Inclusive overlapping spans, zero, overflow/report fields, CLI means, reset identity and journal-debt separation. | [#354](https://github.com/dragginzgame/icydb/issues/356) |
 | Canic | Exclusive nesting, async call-context identity, invocation checkpoints, zero, report ordering and quality propagation. | [#523](https://github.com/dragginzgame/canic/issues/523) |
-| IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/overflow projections. | [#50](https://github.com/dragginzgame/ic-timers/issues/50) |
+| IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/overflow projections. | [#50](https://github.com/dragginzgame/ic-timers/issues/51) |
 | IC Backup | Nanosecond/byte separation, success/rejection samples, zero/repeated chunks, clamped durations, copied views, `Send + Sync` and empty create/open state. | [#41](https://github.com/dragginzgame/ic-backup/issues/41) |
-| Blob restoration test probe | Restoration-operation attribution, call-context identity, zero, bounded reports and reset behavior; not production storage instrumentation. | [#62](https://github.com/dragginzgame/ic-blob-storage/issues/62) |
+| Blob restoration test probe | Restoration-operation attribution, call-context identity, zero, bounded reports and reset behavior; not production storage instrumentation. | [#62](https://github.com/dragginzgame/ic-blob-storage/issues/65) |
 | Toko Miner game shard | Action-count cohort admission, separate attempt/instruction units, trap/outcome policy, bounded reports and window/reset identity. | [#48](https://github.com/dragginzgame/toko-miner/issues/48) |
 
 Review affected producers, DTOs, codecs, generated views and callers when shared

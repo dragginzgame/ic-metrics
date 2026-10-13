@@ -110,7 +110,7 @@ fn exact_caps_and_overflow_flags_survive_storage_and_continue() {
         .load(&key, &identity(), &Aggregate::EMPTY)
         .unwrap()
         .unwrap();
-    assert!(!exact.samples_saturated());
+    assert!(!exact.samples_overflowed());
     value.record(0);
     store.save(&key, &identity(), &value).unwrap();
     assert_eq!(

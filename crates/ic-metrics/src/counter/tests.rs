@@ -13,7 +13,7 @@ fn zero_events_and_wide_quantities_are_exact() {
     counter.add(1);
     counter.add(u128::from(u64::MAX));
     assert_eq!(counter.total(), u128::from(u64::MAX) + 1);
-    assert!(!counter.total_saturated());
+    assert!(!counter.total_overflowed());
     assert!(u64::try_from(counter.exact_total().unwrap()).is_err());
 }
 
@@ -27,11 +27,11 @@ fn exact_caps_and_actual_overflow_remain_distinct_and_sticky() {
     assert_eq!(counter.exact_total(), Ok(u128::MAX));
     counter.add(1);
     assert_eq!(counter.total(), u128::MAX);
-    assert!(counter.total_saturated());
-    assert_eq!(counter.exact_total(), Err(Error::SaturatedTotal));
+    assert!(counter.total_overflowed());
+    assert_eq!(counter.exact_total(), Err(Error::TotalOverflow));
     counter.add(0);
     counter.merge(Counter::ZERO);
-    assert_eq!(counter.exact_total(), Err(Error::SaturatedTotal));
+    assert_eq!(counter.exact_total(), Err(Error::TotalOverflow));
 }
 
 #[test]
@@ -48,14 +48,14 @@ fn merge_adds_batches_without_deduplication_and_propagates_loss() {
     exact.merge(Counter::from_parts(u128::MAX, false).unwrap());
     assert_eq!(exact.exact_total(), Ok(u128::MAX));
     exact.merge(batch);
-    assert!(exact.total_saturated());
+    assert!(exact.total_overflowed());
 
     let lost = Counter::from_parts(u128::MAX, true).unwrap();
     let mut destination = Counter::ZERO;
     destination.merge(lost);
     assert_eq!(destination.total(), u128::MAX);
-    assert!(destination.total_saturated());
-    assert_eq!(destination.exact_total(), Err(Error::SaturatedTotal));
+    assert!(destination.total_overflowed());
+    assert_eq!(destination.exact_total(), Err(Error::TotalOverflow));
 }
 
 #[test]
@@ -64,7 +64,7 @@ fn restoration_admits_numeric_quality_and_recording_continues() {
     for total in [0, 1, u128::from(u64::MAX), u128::MAX - 1] {
         assert_eq!(
             Counter::from_parts(total, true),
-            Err(MeasurementStateError::InvalidSaturation)
+            Err(MeasurementStateError::InvalidOverflowFlag)
         );
         assert_eq!(
             Counter::from_parts(total, false).unwrap().exact_total(),
@@ -74,7 +74,7 @@ fn restoration_admits_numeric_quality_and_recording_continues() {
     let mut exact = Counter::from_parts(u128::MAX, false).unwrap();
     exact.add(1);
     assert_eq!(Counter::from_parts(exact.total(), true), Ok(exact));
-    let mut restored = Counter::from_parts(exact.total(), exact.total_saturated()).unwrap();
+    let mut restored = Counter::from_parts(exact.total(), exact.total_overflowed()).unwrap();
     restored.add(9);
     assert_eq!(restored, exact);
 }
@@ -90,9 +90,9 @@ fn differences_check_loss_before_numeric_discontinuity() {
     let exact_cap = Counter::from_parts(u128::MAX, false).unwrap();
     assert_eq!(exact_cap.delta_since(previous), Ok(u128::MAX - 7));
     let lost = Counter::from_parts(u128::MAX, true).unwrap();
-    assert_eq!(lost.delta_since(previous), Err(Error::SaturatedTotal));
-    assert_eq!(current.delta_since(lost), Err(Error::SaturatedTotal));
-    assert_eq!(lost.delta_since(lost), Err(Error::SaturatedTotal));
+    assert_eq!(lost.delta_since(previous), Err(Error::TotalOverflow));
+    assert_eq!(current.delta_since(lost), Err(Error::TotalOverflow));
+    assert_eq!(lost.delta_since(lost), Err(Error::TotalOverflow));
 }
 
 #[test]

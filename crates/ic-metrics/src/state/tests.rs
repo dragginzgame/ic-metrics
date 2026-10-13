@@ -14,8 +14,8 @@ fn restored_observations_continue_without_replay() {
         aggregate.samples(),
         aggregate.total(),
         aggregate.maximum(),
-        aggregate.samples_saturated(),
-        aggregate.total_saturated(),
+        aggregate.samples_overflowed(),
+        aggregate.total_overflowed(),
     )
     .unwrap();
     let mut restored = Summary::from_parts(restored, original.latest()).unwrap();
@@ -36,10 +36,10 @@ fn restored_caps_preserve_exactness_and_sticky_loss() {
         Ok(lost)
     );
     let wide = Aggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, true).unwrap();
-    assert!(wide.total_saturated());
+    assert!(wide.total_overflowed());
     assert_eq!(
         Aggregate::from_parts(1, u128::MAX, Some(u64::MAX), false, true),
-        Err(Error::InvalidSaturation)
+        Err(Error::InvalidOverflowFlag)
     );
 }
 
@@ -59,7 +59,7 @@ fn inconsistent_aggregate_and_ordered_fields_are_rejected() {
     );
     assert_eq!(
         Aggregate::from_parts(1, 0, Some(0), true, false),
-        Err(Error::InvalidSaturation)
+        Err(Error::InvalidOverflowFlag)
     );
     let mut aggregate = Aggregate::EMPTY;
     aggregate.record(9);
@@ -106,7 +106,7 @@ fn summary_restoration_rejects_totals_incompatible_with_latest() {
     // After count overflow, the clipped count cannot bound the actual total.
     let mut summary = Summary::from_parts(full, Some(u64::MAX)).unwrap();
     summary.record(u64::MAX - 1);
-    assert!(summary.aggregate().samples_saturated());
+    assert!(summary.aggregate().samples_overflowed());
     assert_eq!(
         Summary::from_parts(summary.aggregate(), summary.latest()),
         Ok(summary)
@@ -158,8 +158,8 @@ fn histogram_restoration_preserves_distribution_and_rejects_disagreement() {
         *original.upper_bounds(),
         *original.bucket_counts(),
         original.overflow(),
-        *original.bucket_saturation(),
-        original.overflow_saturated(),
+        *original.bucket_overflowed(),
+        original.overflow_count_overflowed(),
         original.aggregate(),
     )
     .unwrap();
@@ -181,7 +181,7 @@ fn histogram_restoration_preserves_distribution_and_rejects_disagreement() {
             false,
             original.aggregate()
         ),
-        Err(Error::InvalidSaturation)
+        Err(Error::InvalidOverflowFlag)
     );
     let zero = Aggregate::from_parts(1, 0, Some(0), false, false).unwrap();
     assert_eq!(
@@ -210,7 +210,7 @@ fn zero_bound_histogram_and_bucket_count_overflow_restore() {
     );
     let aggregate = Aggregate::from_parts(u64::MAX, 0, Some(0), true, false).unwrap();
     let value = Histogram::from_parts([0], [u64::MAX], 0, [true], false, aggregate).unwrap();
-    assert!(value.bucket_saturation()[0]);
+    assert!(value.bucket_overflowed()[0]);
 }
 
 #[test]
@@ -249,8 +249,8 @@ fn every_small_observation_sequence_restores_including_wide_values() {
                         *histogram.upper_bounds(),
                         *histogram.bucket_counts(),
                         histogram.overflow(),
-                        *histogram.bucket_saturation(),
-                        histogram.overflow_saturated(),
+                        *histogram.bucket_overflowed(),
+                        histogram.overflow_count_overflowed(),
                         histogram.aggregate()
                     ),
                     Ok(histogram)

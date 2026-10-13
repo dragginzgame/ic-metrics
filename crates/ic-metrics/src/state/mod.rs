@@ -12,8 +12,8 @@ pub enum MeasurementStateError {
     InvalidEmpty,
     /// A nonempty count must have a maximum observation.
     MissingMaximum,
-    /// An overflow flag requires its corresponding clipped numeric cap.
-    InvalidSaturation,
+    /// An overflow flag disagrees with the clipped cap or tracked sample count.
+    InvalidOverflowFlag,
     /// The total is inconsistent with the count and maximum.
     InvalidTotal,
     /// The latest observation is absent or inconsistent with the aggregate.
@@ -29,7 +29,7 @@ impl fmt::Display for MeasurementStateError {
         formatter.write_str(match self {
             Self::InvalidEmpty => "nonempty state without observations",
             Self::MissingMaximum => "observations without a maximum",
-            Self::InvalidSaturation => "overflow flag without a clipped cap",
+            Self::InvalidOverflowFlag => "overflow flag disagrees with numeric state",
             Self::InvalidTotal => "total disagrees with count or maximum",
             Self::InvalidLatest => "latest observation disagrees with aggregate",
             Self::InvalidBounds => "histogram bounds are not strictly increasing",

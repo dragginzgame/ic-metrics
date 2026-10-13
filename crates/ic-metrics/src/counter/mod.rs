@@ -11,7 +11,7 @@ mod tests;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeasurementCounterError {
     /// A required counter total has actually overflowed.
-    SaturatedTotal,
+    TotalOverflow,
     /// The current total is below the previous total.
     DecreasingTotal,
 }
@@ -19,7 +19,7 @@ pub enum MeasurementCounterError {
 impl fmt::Display for MeasurementCounterError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(match self {
-            Self::SaturatedTotal => "counter total has overflowed",
+            Self::TotalOverflow => "counter total has overflowed",
             Self::DecreasingTotal => "counter total decreased",
         })
     }
@@ -58,14 +58,14 @@ impl core::error::Error for MeasurementCounterError {}
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct MeasurementCounter {
     total: u128,
-    total_saturated: bool,
+    total_overflowed: bool,
 }
 
 impl MeasurementCounter {
     /// Zero total with no actual overflow; zero additions remain exact.
     pub const ZERO: Self = Self {
         total: 0,
-        total_saturated: false,
+        total_overflowed: false,
     };
 
     /// Restore a total and its actual-overflow flag after numeric admission.
@@ -74,18 +74,18 @@ impl MeasurementCounter {
     /// and identity; missing or previously discarded quality cannot be inferred.
     ///
     /// # Errors
-    /// Returns [`MeasurementStateError::InvalidSaturation`] when a true flag
+    /// Returns [`MeasurementStateError::InvalidOverflowFlag`] when a true flag
     /// accompanies a total below its clipped cap.
     pub const fn from_parts(
         total: u128,
-        total_saturated: bool,
+        total_overflowed: bool,
     ) -> Result<Self, MeasurementStateError> {
-        if total_saturated && total != u128::MAX {
-            return Err(MeasurementStateError::InvalidSaturation);
+        if total_overflowed && total != u128::MAX {
+            return Err(MeasurementStateError::InvalidOverflowFlag);
         }
         Ok(Self {
             total,
-            total_saturated,
+            total_overflowed,
         })
     }
 
@@ -94,7 +94,7 @@ impl MeasurementCounter {
     /// Use one for an event; larger quantities can account for a whole batch.
     /// This never wraps or clears an existing overflow flag.
     pub const fn add(&mut self, amount: u128) {
-        add_total(&mut self.total, &mut self.total_saturated, amount);
+        add_total(&mut self.total, &mut self.total_overflowed, amount);
     }
 
     /// Add a counter's total while preserving any source overflow.
@@ -103,10 +103,10 @@ impl MeasurementCounter {
     /// addition, not deduplication: merging the same batch twice counts it twice.
     pub const fn merge(&mut self, other: Self) {
         self.add(other.total);
-        self.total_saturated |= other.total_saturated;
+        self.total_overflowed |= other.total_overflowed;
     }
 
-    /// Total clipped at `u128::MAX`; check [`Self::total_saturated`].
+    /// Total clipped at `u128::MAX`; check [`Self::total_overflowed`].
     #[must_use]
     pub const fn total(self) -> u128 {
         self.total
@@ -114,8 +114,8 @@ impl MeasurementCounter {
 
     /// Whether addition or merging has actually overflowed the total.
     #[must_use]
-    pub const fn total_saturated(self) -> bool {
-        self.total_saturated
+    pub const fn total_overflowed(self) -> bool {
+        self.total_overflowed
     }
 
     /// Exact total, including zero and an exactly reached cap.
@@ -124,10 +124,10 @@ impl MeasurementCounter {
     /// a narrowing failure is distinct from this accumulator's overflow.
     ///
     /// # Errors
-    /// Returns [`MeasurementCounterError::SaturatedTotal`] on actual overflow.
+    /// Returns [`MeasurementCounterError::TotalOverflow`] on actual overflow.
     pub const fn exact_total(self) -> Result<u128, MeasurementCounterError> {
-        if self.total_saturated {
-            Err(MeasurementCounterError::SaturatedTotal)
+        if self.total_overflowed {
+            Err(MeasurementCounterError::TotalOverflow)
         } else {
             Ok(self.total)
         }
@@ -142,8 +142,8 @@ impl MeasurementCounter {
     /// # Errors
     /// Rejects actual overflow in either snapshot before a decreasing total.
     pub const fn delta_since(self, previous: Self) -> Result<u128, MeasurementCounterError> {
-        if self.total_saturated || previous.total_saturated {
-            return Err(MeasurementCounterError::SaturatedTotal);
+        if self.total_overflowed || previous.total_overflowed {
+            return Err(MeasurementCounterError::TotalOverflow);
         }
         match self.total.checked_sub(previous.total) {
             Some(delta) => Ok(delta),
