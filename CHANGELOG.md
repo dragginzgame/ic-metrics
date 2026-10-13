@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.9.1]
+
+### Changed
+
+- Admit supported metric sizes once at the stable-store boundary, preserving
+  oversized-histogram rejection before absent or corrupt rows are inspected.
+  Stored V1 bytes and public errors stay unchanged.
+- Adopt Shared Tooling 0.11.1 snapshot-owned common catalogs, preserving selected
+  tool versions and digests. Host overrides no longer select Rust pins; release
+  preflight binds the selected Rust catalog. Lock failures retain native errors
+  and statuses ([#70](https://github.com/dragginzgame/ic-metrics/issues/70),
+  [Shared #153](https://github.com/dragginzgame/shared-tooling/issues/153)).
+- Keep Cargo-tool CI cache keys stable across unrelated literal catalog edits;
+  Cargo pins, compiler/native/build identities and opaque catalogs still bind
+  cache selection ([Shared #154](https://github.com/dragginzgame/shared-tooling/issues/154)).
+- Select published `ic-host-wasm-inspect` 0.17.4 through the managed tool installer
+  and remove the private CLI package and its duplicate gates. Structural report
+  behavior stays with IC Host; arithmetic/stable graphs no longer include Host.
+- Delegate transactional Cargo metadata preparation and selected-commit checks to
+  Shared Tooling, retaining Metrics source admission, cache/tool setup and delivery
+  policy locally ([Shared #167](https://github.com/dragginzgame/shared-tooling/issues/167)).
+- Replace six current-tree evidence distributions with separately named public
+  receipts that omit private consumer material. Preserve original archives and
+  checksums privately and record the published-history disposition separately
+  ([#72](https://github.com/dragginzgame/ic-metrics/issues/72)).
+
 ## [0.9.0] - 2026-10-13
 
 ### Breaking

@@ -1,0 +1,108 @@
+{
+  "format": 1,
+  "reviewed_head": "fe4d14f2a24138794878a17a354885a1e7222487",
+  "public_remote_head": "fe4d14f2a24138794878a17a354885a1e7222487",
+  "scope": "Current-tree archive distribution only; originals remain in published history.",
+  "receipts": [
+    {
+      "original": "docs/evidence/consumer-review-082.tar.gz",
+      "original_sha256": "de6e8c0513e4752950ee4c117e0c74b188e99acf89b3ada9077754651f39fb68",
+      "original_git_blob": "b4c8f943288788569cc7e364bbb3e466be185ac4",
+      "public": "docs/evidence/consumer-review-082.public.tar.gz",
+      "public_sha256": "a901f6141ed32d5284d3ebf084593aed64cfb469492a6cab3233f27c800d7cf5",
+      "omitted_files": 12,
+      "projected_files": 1,
+      "byte_identical_files": 45,
+      "first_added_commit": "dc37a1a70561cf58f4aa10df63cfb35684c56c19",
+      "local_tags_containing_original": [
+        "v0.8.2",
+        "v0.8.3",
+        "v0.8.4",
+        "v0.9.0"
+      ]
+    },
+    {
+      "original": "docs/evidence/counter-082.tar.gz",
+      "original_sha256": "959a56f7683ae690702d909b3d20dff43bb3d1c98b2954e79bd96e0adb0ada91",
+      "original_git_blob": "e5f4d6f9d6988749594242669d92f5b16ab0b0c3",
+      "public": "docs/evidence/counter-082.public.tar.gz",
+      "public_sha256": "057fc43707b39ec51afcd02aadce136eca9ff2a174c9ff4d63301aafe32c3e0a",
+      "omitted_files": 1,
+      "projected_files": 1,
+      "byte_identical_files": 175,
+      "first_added_commit": "dc37a1a70561cf58f4aa10df63cfb35684c56c19",
+      "local_tags_containing_original": [
+        "v0.8.2",
+        "v0.8.3",
+        "v0.8.4",
+        "v0.9.0"
+      ]
+    },
+    {
+      "original": "docs/evidence/error-cut-090.tar.gz",
+      "original_sha256": "8393ccf831f42f6527bcd6df7338344f34223a6c6d9e86c4be7af3557ad2e056",
+      "original_git_blob": "8dfa7e59d3c5aa1d322acc5fb45b45ceacdb268b",
+      "public": "docs/evidence/error-cut-090.public.tar.gz",
+      "public_sha256": "ccb1bb4484bb8fa8b07387eb6800dc8cae9d8a53e0f883790c6852ba761d303c",
+      "omitted_files": 13,
+      "projected_files": 1,
+      "byte_identical_files": 431,
+      "first_added_commit": "b708b4ffc5898918f2bf2ebad6481208a9f560d8",
+      "local_tags_containing_original": [
+        "v0.9.0"
+      ]
+    },
+    {
+      "original": "docs/evidence/memory-083.tar.gz",
+      "original_sha256": "2b02a180b6da34d29c1e421da8df9aae2d77a0dfb5bf5391f320c09919e96cb3",
+      "original_git_blob": "17bcdc0f53574b3bd55943af4a16ffe4b552c596",
+      "public": "docs/evidence/memory-083.public.tar.gz",
+      "public_sha256": "b2213db48d3b12f3d321bc47939b202149192c1dfe90d714c99bcde44501471b",
+      "omitted_files": 2,
+      "projected_files": 1,
+      "byte_identical_files": 202,
+      "first_added_commit": "cd197af22ec5f3bedf2b79f4f031b6ee4020d248",
+      "local_tags_containing_original": [
+        "v0.8.3",
+        "v0.8.4",
+        "v0.9.0"
+      ]
+    },
+    {
+      "original": "docs/evidence/release-080.tar.gz",
+      "original_sha256": "e17a3fc3f0f5be11c0243900d125a8c57314a51dd7acd61af44ad0880dff2cf2",
+      "original_git_blob": "a16756204460d686fc6e30633e0dd4783901dc7f",
+      "public": "docs/evidence/release-080.public.tar.gz",
+      "public_sha256": "7dd709eda32001d9b2eac6bb51a48eb535cbb35c05a6a3f86fc7029930570ade",
+      "omitted_files": 1,
+      "projected_files": 1,
+      "byte_identical_files": 31,
+      "first_added_commit": "83f2858a1d7822abb4b96795e8c5b0f3a130dd5b",
+      "local_tags_containing_original": [
+        "v0.8.1",
+        "v0.8.2",
+        "v0.8.3",
+        "v0.8.4",
+        "v0.9.0"
+      ]
+    },
+    {
+      "original": "docs/evidence/summary-restoration-081.tar.gz",
+      "original_sha256": "0f6f3a8866152dee75fd4808352cbbce9bd7168c78d02a6aef6d5566531089fb",
+      "original_git_blob": "7cd0d9dea43438f7517359419b6e3a29715acd91",
+      "public": "docs/evidence/summary-restoration-081.public.tar.gz",
+      "public_sha256": "1f15e8cd0bcba43800251d59b6a14b092d8ee9bccbce53802f6c58a124b60f60",
+      "omitted_files": 3,
+      "projected_files": 2,
+      "byte_identical_files": 196,
+      "first_added_commit": "83f2858a1d7822abb4b96795e8c5b0f3a130dd5b",
+      "local_tags_containing_original": [
+        "v0.8.1",
+        "v0.8.2",
+        "v0.8.3",
+        "v0.8.4",
+        "v0.9.0"
+      ]
+    }
+  ]
+}

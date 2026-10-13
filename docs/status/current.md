@@ -5,48 +5,76 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.9.0
+## Pending 0.9.1
 
-The prepared arithmetic API removes unreachable mean/interval cases under the
+Shared Tooling 0.11.1 `7a7430bd30902dc655a025be61696ce19417c54a` is adopted
+through the reviewed exporter from a clean committed checkout. The snapshot
+has 106 payloads and 92 roots; selected common tool versions/digests are unchanged.
+Metrics delegates coordinated Cargo preparation/rollback and selected-commit
+metadata checks to the corrected upstream helper. Source admission, locked cache
+preparation, selected tool admission, direct delivery and publication remain local.
+
+The published Host CLI 0.17.4 is admitted through the shared selected Cargo-tool
+installer. Metrics no longer maintains its private inspector package, tests or
+floor; IC Host owns those. The local tool extension explicitly installs/checks the
+exact published selection, and offline dispatch smoke tests use its returned path.
+The workspace now owns only arithmetic and stable packages; pruning removes the
+inspector's unneeded registry graph without upgrading retained packages.
+
+Stable size admission now occurs once before row lookup. Unsupported histograms
+still fail before absent/corrupt rows; failed saves leave the map unchanged.
+Stored V1 bytes and public error ordering are preserved.
+[The owner-convergence receipt](../evidence/owner-convergence-091.md) separates
+upstream qualification, actual consumer checks and retired historical sources.
+Full Linux CI passes in 301 seconds; arithmetic/stable native and Wasm floors
+pass in one/two seconds. The exact 100-input working source is qualified in a
+disposable checkout, preserving the real staged tree/refs.
+Earlier [upstream qualification](../evidence/upstreams-091.md) and
+[Shared 0.10 adoption](../evidence/shared-010-adoption.md) retain their original
+inputs; their three-package gates do not qualify the current two-package graph.
+
+This contributor-tooling batch is compatible with the published libraries; notes
+select 0.9.1 without changing Cargo versions. Native macOS acceptance remains
+with [#70](https://github.com/dragginzgame/ic-metrics/issues/70); Linux execution
+and cross-compilation do not establish hosted macOS acceptance. No release,
+commit or publication is performed by this batch.
+
+Six earlier evidence archives now have separately named sanitized distributions.
+Their private-consumer payloads and mixed review rows are omitted; retained
+measurement, source and validation bytes are unchanged. Exact originals and
+checksums remain in ignored `.private-evidence/archive-review-072/`, outside Cargo
+clean. [The distribution record](../evidence/archive-distribution-072.md) binds
+original/replacement identities and the public Git blobs. This fixes the local
+distribution; published main and v0.8.1–v0.9.0 history still contain originals.
+[#72](https://github.com/dragginzgame/ic-metrics/issues/72) remains open for the
+source-owner export decision and separately authorized history disposition.
+
+## Delivered 0.9.0
+
+Local finalized release source is `fe4d14f2a24138794878a17a354885a1e7222487`.
+The current arithmetic API removes unreachable mean/interval cases under the
 exact-count invariant ([#69](https://github.com/dragginzgame/ic-metrics/issues/69))
-and names actual loss of precision explicitly. Flags use `*_overflowed`; histogram
-flags are `bucket_overflowed()` and `overflow_count_overflowed()`, while
-`overflow()` remains the count above the last bound. Remaining overflow errors
-use `SampleCountOverflow`, `TotalOverflow`, `CountOverflow` and `InvalidOverflowFlag`.
-Update core calls and matches when selecting 0.9. Consumer-owned DTO/wire names
-and policies remain at their owner.
+and names actual overflow explicitly. Flags use `*_overflowed`; histogram flags
+are `bucket_overflowed()` and `overflow_count_overflowed()`, while `overflow()`
+remains the count above the last bound. Remaining overflow errors use
+`SampleCountOverflow`, `TotalOverflow`, `CountOverflow` and `InvalidOverflowFlag`.
+Consumer-owned DTO/wire names and policies remain at their owner.
 
-Raw stable kind/codec/continuity dispatch now requires a privately constructible
+Stable kind/codec/continuity dispatch requires a privately constructible
 zero-sized capability ([#71](https://github.com/dragginzgame/ic-metrics/issues/71)).
-Supported generic `DurableMetric` store operations remain available. Numeric
-quality, clipping, exact caps, empty/zero observations, V1 bytes and host lifecycle
-stay unchanged; no compatibility aliases or data reset are introduced.
+Generic `DurableMetric` store operations remain supported. Clipping, exact caps,
+empty/zero observations, V1 bytes and host lifecycle stay unchanged; no data reset
+or compatibility alias is introduced. The six read-only consumer reviews remain
+bound to their original inputs and [owning issues](../extraction.md#downstream-contract-checks).
 
-The incoming Host 0.17.0 manifest/lock selection is qualified against published
-checksums and committed release `93a0ecc2afb7d4b8d8a252a21ed10d7e58b35901`;
-41 authored source/manifest/README files match. The private inspector needs no
-API or feature change. Memory remains 0.36.1; arithmetic stays on Rust 1.85 and
-stable/inspector stay on 1.88. Full CI passes in 254 seconds and all three floor
-gates pass; eight checkpoints match all 144 frozen inputs. This is local
-Linux qualification, not hosted macOS or application acceptance.
-
-Nine matched raw Wasm probes are byte-identical through these two further cuts,
-including all three generic stable round trips; seven representative stored
-records match before/after, including overflow flags. The copied IcyDB numeric
-projection preserves consumer DTO names and passes native/Rust 1.85 Wasm checks.
-[The API-boundary receipt](../evidence/api-cut-090.md) binds these sources,
-commands, refusal checks and limits. [The earlier error-cut receipt](../evidence/error-cut-090.md)
-retains its original Host 0.16 graph and measured mean/scaled/interval reductions;
-its inputs are not relabelled as the latest graph.
-
-All six consumers were reviewed read-only. IcyDB, Timers, Backup and the Blob
-probe need old core flag calls updated. Canic currently has no such calls;
-its quality/attribution obligations remain. Toko still imports `record_sample`
-and needs its earlier tracked-state adoption. Dependency selection, exposed
-shared type identity and runtime/native acceptance stay with the
-[owning issues](../extraction.md#downstream-contract-checks).
-Package versions remain 0.8.4. The incoming dependency selection is preserved;
-no real Git index/ref, release or publication effect is performed.
+[The API-boundary receipt](../evidence/api-cut-090.md) retains its original
+Host 0.17.0/Memory 0.36.1 graph, 254-second CI, byte-identical nine Wasm probes
+and seven V1 records. [The earlier error-cut receipt](../evidence/error-cut-090.md)
+retains its original Host 0.16 graph and measured mean/scaled/interval reductions.
+Those records do not qualify later dependency graphs, IC costs or applications.
+[Archive distribution review](https://github.com/dragginzgame/ic-metrics/issues/72)
+stays separate from this tooling adoption; frozen originals remain privately
+retained and unchanged.
 
 ## Delivered 0.8.4
 
@@ -78,12 +106,11 @@ and [cleanup record](../evidence/cleanup-082.md) retain their pre-release source
 including the 261-second final CI/floor proof and separate raw Wasm comparison.
 Historical measurements do not establish later application costs.
 
-The current lock selects Host 0.17.0, Memory 0.36.1 and Syn 3.0.9. Arithmetic
-stays on Rust 1.85; stable and private inspector stay on 1.88. Shared Tooling
-0.9.10 `7e55adecf6f0b196c050f104b37f8c69b6bf434e` retains all 104 payloads and
-91 roots. [Its adoption receipt](../evidence/adoption-082-shared-0910.md) keeps the
-earlier graph/slice scope. Metrics retains complete native validation and
-direct-only release delivery; older tool generations and evidence remain retained.
+The current library lock selects Memory 0.36.3 and Syn 3.0.9; Host is a separately
+managed executable. Arithmetic stays on Rust 1.85 and stable stays on 1.88.
+Current qualification is recorded above. [The earlier tooling receipt](../evidence/adoption-082-shared-0910.md)
+retains its original revision and graph; later snapshots do not relabel its proof.
+Metrics retains direct-only release delivery and all earlier evidence/tool generations.
 
 ## Consumer and API follow-up
 
@@ -98,4 +125,5 @@ retain the scoped repair and Auth blocker; no new passing runtime/macOS proof
 is claimed. Logs remain in Canic's `.tmp/metrics-qualification-20261012/`.
 [#69](https://github.com/dragginzgame/ic-metrics/issues/69) and
 [#71](https://github.com/dragginzgame/ic-metrics/issues/71) own the selected
-error and stable-boundary cuts. This batch edits Metrics only and performs no release effects.
+error and stable-boundary cuts. The selected extractions also changed their authorized upstream owners; this batch
+performs no release effects.

@@ -2,16 +2,15 @@
 
 PACKAGE := ic-metrics
 MSRV ?= 1.85.0
-WASM_INSPECT_MSRV ?= 1.88.0
 STABLE_MSRV ?= 1.88.0
 export RELEASE_DELIVERY ?= direct
-IC_TOOL_PINS ?= ci/ic-tools.tsv
-HOST_TOOL_VERSIONS ?= ci/tool-versions.env
 export YQ := $(CURDIR)/.tools/host/bin/yq
 
 # Common commands use this checkout's reviewed snapshot, including scratch exports.
 override SHARED_TOOLING_ROOT := $(CURDIR)
 export SHARED_TOOLING_ROOT
+LOCAL_TOOL_INSTALL_TARGETS += install-wasm-inspector
+LOCAL_TOOL_CHECK_TARGETS += wasm-inspector-tools-check
 include make/consumer.mk
 
 # PR delivery requires merged-checkout adapters and qualification we do not own.
@@ -31,11 +30,11 @@ release-version:
 	@bash scripts/release/metadata.sh version
 
 release-preflight:
-	+@bash scripts/release/metadata.sh preflight
+	+@RUST_TOOL_VERSIONS="$(RUST_TOOL_VERSIONS)" bash scripts/release/metadata.sh preflight
 
 release-verify:
 	+env -u IC_METRICS_RELEASE_CACHE_PREPARE CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
-		bash scripts/ci/run-validation-targets.sh --fail-fast --input Cargo.toml --input Cargo.lock ci msrv stable-msrv wasm-inspect-msrv
+		bash scripts/ci/run-validation-targets.sh --fail-fast --input Cargo.toml --input Cargo.lock ci msrv stable-msrv
 
 release-prepare-version:
 	+@bash scripts/release/metadata.sh prepare
@@ -51,7 +50,7 @@ release-files:
 
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins pin-tools-check release-tools-check ci
 .PHONY: local-tools-test ci-evidence-check
-.PHONY: wasm-inspect-check wasm-inspect-msrv
+.PHONY: wasm-inspect-check install-wasm-inspector wasm-inspector-tools-check
 .PHONY: stable-check stable-msrv
 
 help:
@@ -67,10 +66,10 @@ help:
 	@echo "Local tool fixtures: local-tools-test (substitute downloads, no network)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute Make effects, no hosted run)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
-	@echo "Wasm evidence tool: wasm-inspect-check; separate host minimum: wasm-inspect-msrv"
+	@echo "Wasm evidence tool: install-wasm-inspector, wasm-inspector-tools-check, wasm-inspect-check"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
 	@echo "Durable adapter: stable-check; separate native/Wasm minimum: stable-msrv"
-	@echo "Full delivery validation: ci, msrv, stable-msrv, wasm-inspect-msrv; release commands remain explicit"
+	@echo "Full delivery validation: ci, msrv, stable-msrv; release commands remain explicit"
 
 publish:
 	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io
@@ -114,7 +113,7 @@ check-doc-links:
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md tasks/*.md
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
-		crates/ic-metrics/src/application.md crates/ic-metrics-stable/README.md crates/ic-metrics-wasm-inspect/README.md
+		crates/ic-metrics/src/application.md crates/ic-metrics-stable/README.md
 
 test:
 	+cargo test -p $(PACKAGE) --locked
@@ -125,17 +124,14 @@ msrv:
 	+cargo +$(MSRV) check -p $(PACKAGE) --locked
 	+cargo +$(MSRV) check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
 
-wasm-inspect-check:
-	+cargo check -p ic-metrics-wasm-inspect --all-targets --locked
-	+cargo clippy -p ic-metrics-wasm-inspect --all-targets --locked -- -D warnings
-	+cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect args::tests
-	+cargo test -p ic-metrics-wasm-inspect --locked --bin ic-metrics-wasm-inspect report::tests
-	+cargo test -p ic-metrics-wasm-inspect --locked --test cli input_admission_controls_exit_and_report_publication -- --exact
+install-wasm-inspector:
+	+bash scripts/dev/wasm-inspector.sh install
 
-wasm-inspect-msrv:
-	rustc +$(WASM_INSPECT_MSRV) --version
-	+cargo +$(WASM_INSPECT_MSRV) --version
-	+cargo +$(WASM_INSPECT_MSRV) check -p ic-metrics-wasm-inspect --all-targets --locked
+wasm-inspector-tools-check:
+	+bash scripts/dev/wasm-inspector.sh check
+
+wasm-inspect-check:
+	+bash scripts/dev/test-wasm-inspector.sh
 
 stable-check:
 	+cargo check -p ic-metrics-stable --all-targets --locked

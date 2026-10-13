@@ -1,4 +1,5 @@
 /target/
+/.private-evidence/
 /.tools/
 .DS_Store
 .shared-tooling-refresh.*

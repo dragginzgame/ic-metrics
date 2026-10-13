@@ -45,7 +45,7 @@ differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-Pending 0.9 removes the unreachable mean `SaturatedTotal`/`Projection` and interval
+The 0.9 API removes the unreachable mean `SaturatedTotal`/`Projection` and interval
 `SaturatedTotal` variants. Update matches or explicit construction of those errors
 when selecting 0.9. Overflow flags use `*_overflowed` names, including
 `bucket_overflowed()` and `overflow_count_overflowed()` for histogram counts.
@@ -133,10 +133,12 @@ Use rustup with the pinned Rust 1.99.0 toolchain, Git, GNU Make and Bash 3.2 or
 newer. Install `wasm32-unknown-unknown` for Wasm checks. The arithmetic library's
 minimum compiler is Rust 1.85.0.
 
-The private [Wasm evidence inspector](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics-wasm-inspect/README.md)
-requires Rust 1.88.0. It uses IC Host libraries to report raw/encoded bytes and
-structural counts for explicitly supplied Wasms with caller-selected bounds,
-without executing a canister. Bare Cargo commands select the arithmetic package.
+The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
+reports raw/encoded bytes and structural counts for explicitly supplied Wasms
+with caller-selected bounds. Metrics selects version 0.17.4 as a managed tool,
+separate from both library dependency graphs. After explicit tool setup, run
+`bash scripts/dev/wasm-inspector.sh run module.wasm 20000000 1000 10000 1000`.
+It executes no canister; bare Cargo commands select the arithmetic package.
 
 Prepare and check the reviewed tools, select their paths, then install the
 repository's formatting hook:
@@ -156,9 +158,10 @@ vendored; normal commands need no Shared Tooling sibling checkout.
 
 `make fmt` sorts workspace manifests and formats Rust; `make fmt-check` checks
 without editing. `make help` lists focused commands. Select named tests during
-implementation, and use `make check`, `make check-wasm`, `make clippy` and
-`make wasm-inspect-check` for the affected package. Completed code delivery uses
-`make ci`, `make msrv`, `make stable-msrv` and `make wasm-inspect-msrv`; inspection and documentation
+implementation, and use `make check`, `make check-wasm` and `make clippy` for
+the affected package. `make wasm-inspect-check` checks the selected host tool.
+Completed code delivery uses `make ci`, `make msrv` and `make stable-msrv`;
+inspection and documentation
 changes use narrower checks. The [host support and qualification guide](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks)
 owns local gates and native acceptance. [Agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md)
 own command authority.

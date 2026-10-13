@@ -89,6 +89,11 @@ cat >> "$fixture/bin/bash" <<'BASH'
 case "${1:-}" in
     */scripts/ci/check-make-execution.sh) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
     scripts/release/metadata.sh)
+        if [[ "${REQUIRE_RUST_CATALOG:-0}" == 1 ]]; then
+            [[ "$2" == preflight && "$RUST_TOOL_VERSIONS" == "$EXPECTED_RUST_CATALOG" ]] || exit 1
+            printf '%s\n' "$RUST_TOOL_VERSIONS" >> "$EVENTS"
+            exit 0
+        fi
         if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then
             perl "$JOBSERVER_PROBE" || exit $?
             printf 'metadata %s\n' "$2" >> "$EVENTS"
@@ -99,6 +104,17 @@ printf 'unexpected dispatch\n' >> "$EVENTS"
 exit 0
 BASH
 chmod +x "$fixture/bin/bash"
+# Preflight binds the same independently selected Rust catalog as installation;
+# a host-only override must not change it. Exercise actual Make child routing.
+selected_rust="$fixture/selected Rust pins.env"
+cp "$root/ci/tool-versions.env" "$selected_rust"
+: > "$EVENTS"
+PATH="$fixture/bin:$PATH" RELEASE_DELIVERY=direct REQUIRE_RUST_CATALOG=1 \
+    EXPECTED_RUST_CATALOG="$selected_rust" "$real_make" --no-print-directory \
+    -f "$root/Makefile" release-preflight "RUST_TOOL_VERSIONS=$selected_rust" \
+    "HOST_TOOL_VERSIONS=$fixture/other-host-catalog" > "$fixture/output" 2>&1
+printf '%s\n' "$selected_rust" > "$fixture/expected-rust-catalog"
+cmp "$fixture/expected-rust-catalog" "$EVENTS"
 for policy in pr invalid ''; do
     for selection in environment command; do
         for target in release-patch release-minor release-major release-resume release-preflight release-prepare-version; do
@@ -192,10 +208,11 @@ CARGO
 chmod +x "$fixture/bin/cargo"
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
 chmod +x "$fixture/bin/rustc"
-cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv stable-check stable-msrv wasm-inspect-check wasm-inspect-msrv)
+cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv stable-check stable-msrv)
+tool_targets=(install-wasm-inspector wasm-inspector-tools-check wasm-inspect-check)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
-for target in release-patch release-minor release-major release-resume fmt fmt-check "${cargo_targets[@]}" "${metadata_targets[@]}"; do
+for target in release-patch release-minor release-major release-resume fmt fmt-check "${cargo_targets[@]}" "${tool_targets[@]}" "${metadata_targets[@]}"; do
     for mode in -i --ignore-errors -n --dry-run --just-print --recon -t --touch -q --question -kin; do
         for selection in direct inherited cleared replaced both-hidden; do
             : > "$EVENTS"
