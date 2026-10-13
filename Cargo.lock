@@ -162,11 +162,11 @@ dependencies = [
 
 [[package]]
 name = "ic-metrics"
-version = "0.8.3"
+version = "0.8.4"
 
 [[package]]
 name = "ic-metrics-stable"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "ic-memory",
  "ic-metrics",
@@ -174,7 +174,7 @@ dependencies = [
 
 [[package]]
 name = "ic-metrics-wasm-inspect"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "ic-host-artifacts",
  "ic-host-fs",
