@@ -64,7 +64,8 @@ contracts; typed adapter errors cover identifiers, values and numeric admission.
   the core's typed numeric admission. Unknown formats, truncation, trailing bytes
   and malformed state are errors; they never silently create an empty metric.
 - Save replaces a full snapshot rather than adding it again. Repeated identical
-  saves are idempotent. Numeric regressions and clearing overflow flags are
+  saves validate the retained row and skip encoding/map writes when unchanged.
+  Numeric regressions and clearing overflow flags are
   rejected before writing. Supply the latest retained state before recording;
   numeric checks do not establish sample attribution, ordering or provenance.
 - Deliberate reset/retirement uses `remove` with the old identity. It verifies the

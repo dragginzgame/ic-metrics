@@ -177,7 +177,7 @@ impl<const N: usize> MeasurementHistogram<N> {
         overflow_count_overflowed: bool,
         aggregate: MeasurementAggregate,
     ) -> Result<Self, MeasurementStateError> {
-        if Self::new(upper_bounds).is_err() {
+        if validate_bounds(&upper_bounds).is_err() {
             return Err(MeasurementStateError::InvalidBounds);
         }
         if overflow_count_overflowed && overflow != u64::MAX {
@@ -246,13 +246,8 @@ impl<const N: usize> MeasurementHistogram<N> {
     /// Returns [`HistogramBoundsError`] for the first duplicate or descending
     /// bound. The error identifies the right-hand bound in that pair.
     pub const fn new(upper_bounds: [u64; N]) -> Result<Self, HistogramBoundsError> {
-        let mut index = 1;
-        while index < N {
-            // Both indices are within the array, including when N is zero.
-            if upper_bounds[index - 1] >= upper_bounds[index] {
-                return Err(HistogramBoundsError { index });
-            }
-            index += 1;
+        if let Err(error) = validate_bounds(&upper_bounds) {
+            return Err(error);
         }
         Ok(Self {
             upper_bounds,
@@ -463,6 +458,21 @@ impl<const N: usize> MeasurementHistogram<N> {
             upper_inclusive: None,
         }))
     }
+}
+
+// Borrow bounds for both construction and restoration, without temporary state.
+const fn validate_bounds<const N: usize>(
+    upper_bounds: &[u64; N],
+) -> Result<(), HistogramBoundsError> {
+    let mut index = 1;
+    while index < N {
+        // Both indices are within the array, including when N is zero.
+        if upper_bounds[index - 1] >= upper_bounds[index] {
+            return Err(HistogramBoundsError { index });
+        }
+        index += 1;
+    }
+    Ok(())
 }
 
 // Use native-width division when the product fits; otherwise retain exact wide ranks.

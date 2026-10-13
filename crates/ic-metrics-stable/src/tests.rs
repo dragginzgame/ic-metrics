@@ -1,4 +1,6 @@
-use ic_memory::ic_stable_structures::{BTreeMap, VectorMemory};
+use std::{cell::Cell, rc::Rc};
+
+use ic_memory::ic_stable_structures::{BTreeMap, Memory, VectorMemory};
 use ic_metrics::{
     MeasurementAggregate as Aggregate, MeasurementHistogram as Histogram,
     MeasurementSummary as Summary,
@@ -371,5 +373,123 @@ fn ic_memory_bootstrap_retains_one_application_binding_for_all_metrics() {
             store.load(&key(namespace), &identity(), &Aggregate::EMPTY),
             Ok(Some(aggregate))
         );
+    }
+}
+
+// Observe native Memory effects, not IC instructions, cycles or timings.
+#[derive(Clone, Default)]
+struct WriteCountingMemory {
+    memory: VectorMemory,
+    writes: Rc<Cell<usize>>,
+}
+
+impl Memory for WriteCountingMemory {
+    fn size(&self) -> u64 {
+        self.memory.size()
+    }
+
+    fn grow(&self, pages: u64) -> i64 {
+        self.memory.grow(pages)
+    }
+
+    fn read(&self, offset: u64, dst: &mut [u8]) {
+        self.memory.read(offset, dst);
+    }
+
+    fn write(&self, offset: u64, src: &[u8]) {
+        self.writes.set(self.writes.get() + 1);
+        self.memory.write(offset, src);
+    }
+}
+
+#[test]
+fn identical_checkpoints_validate_without_stable_writes() {
+    fn check<T: crate::DurableMetric>(initial: &T, changed: &T) {
+        let memory = WriteCountingMemory::default();
+        let writes = memory.writes.clone();
+        let mut store = MetricsStore::new(BTreeMap::init(memory));
+        let key = key("app");
+        writes.set(0);
+        store.save(&key, &identity(), initial).unwrap();
+        assert!(writes.get() > 0); // Absent is different from a retained empty row.
+        for (value, changed) in [(initial, false), (changed, true)] {
+            writes.set(0);
+            store.save(&key, &identity(), value).unwrap();
+            assert_eq!(writes.get() > 0, changed);
+            writes.set(0);
+            store.save(&key, &identity(), value).unwrap();
+            assert_eq!(writes.get(), 0);
+            assert!(store.load(&key, &identity(), value).unwrap().as_ref() == Some(value));
+        }
+        writes.set(0);
+        assert_eq!(
+            store.save(&key, &MetricIdentity::new("bytes", 0).unwrap(), changed),
+            Err(StoreError::IdentityMismatch)
+        );
+        assert_eq!(writes.get(), 0);
+        store.map.insert(key.0.clone(), vec![0]);
+        writes.set(0);
+        assert_eq!(
+            store.save(&key, &identity(), changed),
+            Err(StoreError::MalformedRecord)
+        );
+        assert_eq!(writes.get(), 0);
+        assert_eq!(store.map.get(&key.0), Some(vec![0]));
+    }
+    let mut aggregate = Aggregate::EMPTY;
+    aggregate.record(0);
+    check(&Aggregate::EMPTY, &aggregate);
+    let mut summary = Summary::EMPTY;
+    summary.record(1);
+    check(&Summary::EMPTY, &summary);
+    let mut histogram = Histogram::new([0; 0]).unwrap();
+    histogram.record(0);
+    check(&Histogram::new([]).unwrap(), &histogram);
+    let bounds = std::array::from_fn::<_, 256, _>(|index| u64::try_from(index).unwrap());
+    let mut histogram = Histogram::new(bounds).unwrap();
+    histogram.record(255);
+    check(&Histogram::new(bounds).unwrap(), &histogram);
+}
+
+#[test]
+fn histogram_checkpoints_preserve_each_bucket_count_and_flag() {
+    let exact = Aggregate::from_parts(2, 1, Some(1), false, false).unwrap();
+    let redistributed = Aggregate::from_parts(3, 3, Some(1), false, false).unwrap();
+    let zero = Aggregate::from_parts(u64::MAX, 1, Some(1), true, false).unwrap();
+    let total = u128::from(u64::MAX) + 12;
+    let overflow = Aggregate::from_parts(u64::MAX, total, Some(11), true, false).unwrap();
+    let later_overflow =
+        Aggregate::from_parts(u64::MAX, total + 11, Some(11), true, false).unwrap();
+    // Every candidate passes core restoration. Other increasing fields cannot
+    // compensate for a bucket decrease or a cleared flag in either array slot.
+    let pairs = [
+        (
+            Histogram::from_parts([0, 10], [1, 1], 0, [false; 2], false, exact).unwrap(),
+            Histogram::from_parts([0, 10], [0, 3], 0, [false; 2], false, redistributed).unwrap(),
+        ),
+        (
+            Histogram::from_parts([0, 10], [u64::MAX, 1], 0, [true, false], false, zero).unwrap(),
+            Histogram::from_parts([0, 10], [u64::MAX, 1], 0, [false; 2], false, zero).unwrap(),
+        ),
+        (
+            Histogram::from_parts([0, 10], [0, u64::MAX], 1, [false, true], false, overflow)
+                .unwrap(),
+            Histogram::from_parts([0, 10], [0, u64::MAX], 2, [false; 2], false, later_overflow)
+                .unwrap(),
+        ),
+    ];
+    for (previous, regressing) in pairs {
+        let memory = WriteCountingMemory::default();
+        let writes = memory.writes.clone();
+        let mut store = MetricsStore::new(BTreeMap::init(memory));
+        let key = key("app");
+        store.save(&key, &identity(), &previous).unwrap();
+        writes.set(0);
+        assert_eq!(
+            store.save(&key, &identity(), &regressing),
+            Err(StoreError::StateRegression)
+        );
+        assert_eq!(writes.get(), 0);
+        assert_eq!(store.load(&key, &identity(), &previous), Ok(Some(previous)));
     }
 }

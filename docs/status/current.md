@@ -5,7 +5,31 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.9.1
+## Pending 0.9.2
+
+Identical durable checkpoints validate the retained record, then return without
+encoding or stable-map writes. Absent rows still get persisted, including empty
+snapshots. The sealed durable bound carries the exact equality already provided
+by its three supported core types. Store call signatures and V1 bytes are unchanged.
+Histogram construction/restoration share borrowed bounds admission; restoration
+no longer constructs an unused empty histogram. Durable histogram continuity
+checks each bucket's count and sticky flag together in one pass.
+
+Focused Clippy and named no-write, bucket-regression, constructor and restoration
+tests pass. Full real-checkout CI passes in 296 seconds, arithmetic/stable native
+and Wasm floors in one/13 seconds, with all 100 guarded inputs unchanged.
+[The frozen qualification](../evidence/checkpoint-cleanup-092.md) retains exact
+before/after source and gate evidence. Native Memory write-call assertions
+establish behavior, not IC costs. Six consumer reviews require no caller edits;
+attribution, reset identity, lifecycle and checkpoint cadence stay consumer-owned.
+
+## Delivered 0.9.1
+
+Finalized source is `804ca4727b74d641bbe3be9155e20de914eb3ad9`.
+Its exact-source hosted run is queued at inspection; no new native acceptance is
+claimed. The following preparation evidence retains its original inputs, before
+the maintainer's release commit and version change.
+
 
 Shared Tooling 0.11.1 `7a7430bd30902dc655a025be61696ce19417c54a` is adopted
 through the reviewed exporter from a clean committed checkout. The snapshot
