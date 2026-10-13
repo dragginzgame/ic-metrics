@@ -69,7 +69,7 @@ pub fn aggregate(bytes: &mut Vec<u8>, value: MeasurementAggregate) {
     bytes.extend_from_slice(&value.samples().to_le_bytes());
     bytes.extend_from_slice(&value.total().to_le_bytes());
     bytes.extend_from_slice(&value.maximum().unwrap_or(0).to_le_bytes());
-    bytes.push(u8::from(value.samples_saturated()) | (u8::from(value.total_saturated()) << 1));
+    bytes.push(u8::from(value.samples_overflowed()) | (u8::from(value.total_overflowed()) << 1));
 }
 
 pub fn envelope<'a>(
@@ -102,14 +102,14 @@ pub fn encode<T: DurableMetric>(
     identity: &MetricIdentity,
     value: &T,
 ) -> Result<Vec<u8>, StoreError> {
-    T::check_size()?;
+    T::check_size(crate::metric::ACCESS)?;
     let length = u8::try_from(identity.unit.len()).map_err(|_| StoreError::InvalidIdentifier)?;
     let mut bytes = Vec::new();
     bytes.extend_from_slice(MAGIC);
-    bytes.extend_from_slice(&[T::KIND, length]);
+    bytes.extend_from_slice(&[T::kind(crate::metric::ACCESS), length]);
     bytes.extend_from_slice(identity.unit.as_bytes());
     bytes.extend_from_slice(&identity.epoch.to_le_bytes());
-    value.encode_state(&mut bytes)?;
+    value.encode_state(crate::metric::ACCESS, &mut bytes)?;
     if bytes.len() > MAX_RECORD_BYTES {
         return Err(StoreError::RecordTooLarge);
     }
@@ -121,12 +121,12 @@ pub fn decode<T: DurableMetric>(
     identity: &MetricIdentity,
     configuration: &T,
 ) -> Result<T, StoreError> {
-    T::check_size()?;
+    T::check_size(crate::metric::ACCESS)?;
     let (kind, mut decoder) = envelope(bytes, identity)?;
-    if kind != T::KIND {
+    if kind != T::kind(crate::metric::ACCESS) {
         return Err(StoreError::KindMismatch);
     }
-    let value = T::decode_state(configuration, &mut decoder)?;
+    let value = T::decode_state(configuration, crate::metric::ACCESS, &mut decoder)?;
     if !decoder.remaining.is_empty() {
         return Err(StoreError::MalformedRecord);
     }

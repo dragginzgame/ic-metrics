@@ -2,9 +2,7 @@
 
 use core::fmt;
 
-use crate::{
-    MeasurementMeanError, MeasurementStateError, add_count, add_total, checked_scaled_ratio,
-};
+use crate::{MeasurementStateError, add_count, add_total};
 
 #[cfg(test)]
 mod tests;
@@ -27,13 +25,26 @@ const fn mean_total(samples: u64, total: u128) -> Option<u128> {
     }
 }
 
+/// Why a measurement aggregate cannot supply an integer or scaled mean.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MeasurementMeanError {
+    /// The tracked sample count has actually overflowed.
+    SampleCountOverflow,
+}
+
+impl fmt::Display for MeasurementMeanError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("measurement sample count has overflowed")
+    }
+}
+
+impl core::error::Error for MeasurementMeanError {}
+
 /// Why two tracked snapshots cannot supply an exact count/total interval.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeasurementIntervalError {
     /// A sample count has actually overflowed.
-    SaturatedSamples,
-    /// An observation total has actually overflowed.
-    SaturatedTotal,
+    SampleCountOverflow,
     /// The current sample count is below the previous count.
     DecreasingSamples,
     /// The current total is below the previous total.
@@ -45,8 +56,7 @@ pub enum MeasurementIntervalError {
 impl fmt::Display for MeasurementIntervalError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(match self {
-            Self::SaturatedSamples => "interval sample count has overflowed",
-            Self::SaturatedTotal => "interval total has overflowed",
+            Self::SampleCountOverflow => "interval sample count has overflowed",
             Self::DecreasingSamples => "interval sample count decreased",
             Self::DecreasingTotal => "interval total decreased",
             Self::TotalWithoutSamples => "interval total changed without samples",
@@ -99,8 +109,8 @@ pub struct MeasurementAggregate {
     samples: u64,
     total: u128,
     maximum: u64,
-    samples_saturated: bool,
-    total_saturated: bool,
+    samples_overflowed: bool,
+    total_overflowed: bool,
 }
 
 impl MeasurementAggregate {
@@ -110,17 +120,17 @@ impl MeasurementAggregate {
     /// consistency only; the caller owns provenance, units and window identity.
     ///
     /// # Errors
-    /// Rejects invalid empty state, missing maxima, inconsistent saturation flags
+    /// Rejects invalid empty state, missing maxima, inconsistent overflow flags
     /// and totals outside the range allowed by count and maximum.
     pub const fn from_parts(
         samples: u64,
         total: u128,
         maximum: Option<u64>,
-        samples_saturated: bool,
-        total_saturated: bool,
+        samples_overflowed: bool,
+        total_overflowed: bool,
     ) -> Result<Self, MeasurementStateError> {
         if samples == 0 {
-            return if total == 0 && maximum.is_none() && !samples_saturated && !total_saturated {
+            return if total == 0 && maximum.is_none() && !samples_overflowed && !total_overflowed {
                 Ok(Self::EMPTY)
             } else {
                 Err(MeasurementStateError::InvalidEmpty)
@@ -129,14 +139,14 @@ impl MeasurementAggregate {
         let Some(maximum) = maximum else {
             return Err(MeasurementStateError::MissingMaximum);
         };
-        if (samples_saturated && samples != u64::MAX)
-            || (total_saturated && (total != u128::MAX || !samples_saturated))
+        if (samples_overflowed && samples != u64::MAX)
+            || (total_overflowed && (total != u128::MAX || !samples_overflowed))
         {
-            return Err(MeasurementStateError::InvalidSaturation);
+            return Err(MeasurementStateError::InvalidOverflowFlag);
         }
         if total < maximum as u128
             || (maximum == 0 && total != 0)
-            || (!samples_saturated && total > samples as u128 * maximum as u128)
+            || (!samples_overflowed && total > samples as u128 * maximum as u128)
         {
             return Err(MeasurementStateError::InvalidTotal);
         }
@@ -144,8 +154,8 @@ impl MeasurementAggregate {
             samples,
             total,
             maximum,
-            samples_saturated,
-            total_saturated,
+            samples_overflowed,
+            total_overflowed,
         })
     }
 
@@ -154,14 +164,14 @@ impl MeasurementAggregate {
         samples: 0,
         total: 0,
         maximum: 0,
-        samples_saturated: false,
-        total_saturated: false,
+        samples_overflowed: false,
+        total_overflowed: false,
     };
 
     /// Record one admitted observation, including zero, in the existing unit.
     pub const fn record(&mut self, value: u64) {
-        add_count(&mut self.samples, &mut self.samples_saturated, 1);
-        add_total(&mut self.total, &mut self.total_saturated, value as u128);
+        add_count(&mut self.samples, &mut self.samples_overflowed, 1);
+        add_total(&mut self.total, &mut self.total_overflowed, value as u128);
         if value > self.maximum {
             self.maximum = value;
         }
@@ -175,24 +185,24 @@ impl MeasurementAggregate {
     pub const fn merge(&mut self, other: Self) {
         add_count(
             &mut self.samples,
-            &mut self.samples_saturated,
+            &mut self.samples_overflowed,
             other.samples,
         );
-        add_total(&mut self.total, &mut self.total_saturated, other.total);
-        self.samples_saturated |= other.samples_saturated;
-        self.total_saturated |= other.total_saturated;
+        add_total(&mut self.total, &mut self.total_overflowed, other.total);
+        self.samples_overflowed |= other.samples_overflowed;
+        self.total_overflowed |= other.total_overflowed;
         if other.maximum > self.maximum {
             self.maximum = other.maximum;
         }
     }
 
-    /// Sample count, clipped at `u64::MAX`; check [`Self::samples_saturated`].
+    /// Sample count, clipped at `u64::MAX`; check [`Self::samples_overflowed`].
     #[must_use]
     pub const fn samples(self) -> u64 {
         self.samples
     }
 
-    /// Total, clipped at `u128::MAX`; check [`Self::total_saturated`].
+    /// Total, clipped at `u128::MAX`; check [`Self::total_overflowed`].
     #[must_use]
     pub const fn total(self) -> u128 {
         self.total
@@ -200,14 +210,14 @@ impl MeasurementAggregate {
 
     /// Whether recording or merging has actually overflowed the sample count.
     #[must_use]
-    pub const fn samples_saturated(self) -> bool {
-        self.samples_saturated
+    pub const fn samples_overflowed(self) -> bool {
+        self.samples_overflowed
     }
 
     /// Whether recording or merging has actually overflowed the value total.
     #[must_use]
-    pub const fn total_saturated(self) -> bool {
-        self.total_saturated
+    pub const fn total_overflowed(self) -> bool {
+        self.total_overflowed
     }
 
     /// Largest observation, or `None` when empty, including after overflow.
@@ -223,14 +233,11 @@ impl MeasurementAggregate {
     /// Floor-rounded mean, or `None` when empty. Exactly reached caps are valid.
     ///
     /// # Errors
-    /// Returns [`MeasurementMeanError::SaturatedSamples`] before
-    /// [`MeasurementMeanError::SaturatedTotal`] when actual overflow is recorded.
+    /// Returns [`MeasurementMeanError::SampleCountOverflow`] on actual count overflow.
+    /// An exact count guarantees that the accumulated total is also exact.
     pub const fn mean(self) -> Result<Option<u128>, MeasurementMeanError> {
-        if self.samples_saturated {
-            return Err(MeasurementMeanError::SaturatedSamples);
-        }
-        if self.total_saturated {
-            return Err(MeasurementMeanError::SaturatedTotal);
+        if self.samples_overflowed {
+            return Err(MeasurementMeanError::SampleCountOverflow);
         }
         Ok(mean_total(self.samples, self.total))
     }
@@ -243,8 +250,8 @@ impl MeasurementAggregate {
     /// `Some(0)`, and an exactly reached count cap remains exact.
     ///
     /// # Errors
-    /// Rejects sample overflow, then total overflow, even with scale zero.
-    /// A failed exact-ratio projection is [`MeasurementMeanError::Projection`].
+    /// Returns [`MeasurementMeanError::SampleCountOverflow`] on actual count overflow,
+    /// even with scale zero. An exact count bounds the scaled result within `u128`.
     ///
     /// ```
     /// use ic_metrics::MeasurementAggregate;
@@ -259,19 +266,20 @@ impl MeasurementAggregate {
     /// # }
     /// ```
     pub const fn scaled_mean(self, scale: u64) -> Result<Option<u128>, MeasurementMeanError> {
-        if self.samples_saturated {
-            return Err(MeasurementMeanError::SaturatedSamples);
-        }
-        if self.total_saturated {
-            return Err(MeasurementMeanError::SaturatedTotal);
+        if self.samples_overflowed {
+            return Err(MeasurementMeanError::SampleCountOverflow);
         }
         if self.samples == 0 {
             return Ok(None);
         }
-        match checked_scaled_ratio(self.total, self.samples, scale) {
-            Ok(value) => Ok(Some(value)),
-            Err(error) => Err(MeasurementMeanError::Projection(error)),
-        }
+        let samples = self.samples as u128;
+        let scale = scale as u128;
+        // Admitted exact state has total <= samples * maximum. The quotient
+        // is at most u64::MAX, and the final result is at most maximum * scale.
+        // Decomposition avoids a potentially overflowing total * scale product.
+        Ok(Some(
+            (self.total / samples) * scale + (self.total % samples) * scale / samples,
+        ))
     }
 
     /// Exact count/total difference from an earlier snapshot of this accumulator.
@@ -282,17 +290,15 @@ impl MeasurementAggregate {
     /// subtractable and are not returned. Empty intervals differ from added zeros.
     ///
     /// # Errors
-    /// Rejects sample overflow, total overflow, decreasing samples, decreasing
-    /// totals, then a changed total with no added samples, in that order.
+    /// Rejects sample overflow, decreasing samples, decreasing totals, then a
+    /// changed total with no added samples, in that order. An exact sample count
+    /// guarantees total exactness in both snapshots.
     pub const fn interval_since(
         self,
         previous: Self,
     ) -> Result<MeasurementInterval, MeasurementIntervalError> {
-        if self.samples_saturated || previous.samples_saturated {
-            return Err(MeasurementIntervalError::SaturatedSamples);
-        }
-        if self.total_saturated || previous.total_saturated {
-            return Err(MeasurementIntervalError::SaturatedTotal);
+        if self.samples_overflowed || previous.samples_overflowed {
+            return Err(MeasurementIntervalError::SampleCountOverflow);
         }
         let Some(samples) = self.samples.checked_sub(previous.samples) else {
             return Err(MeasurementIntervalError::DecreasingSamples);

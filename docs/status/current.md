@@ -5,35 +5,58 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.8.4
+## Pending 0.9.0
 
-Native/wide mean projection now lives with its aggregate and interval callers;
-the implementation and public contract stay unchanged. Existing empty/zero,
-exact-cap, overflow, interval and constant-evaluation checks retain their owners.
-Standalone aggregate/interval mean Wasms are byte-identical before and after the
-move; this is raw byte evidence, not an IC instruction or cycle measurement.
-The incoming lock selects Memory 0.36.1; its published sources and unchanged
-exact collection types verify. Package metadata stays 0.8.3 and the real Git
-index/ref is unchanged. Qualification belongs to this source and graph.
+The prepared arithmetic API removes unreachable mean/interval cases under the
+exact-count invariant ([#69](https://github.com/dragginzgame/ic-metrics/issues/69))
+and names actual loss of precision explicitly. Flags use `*_overflowed`; histogram
+flags are `bucket_overflowed()` and `overflow_count_overflowed()`, while
+`overflow()` remains the count above the last bound. Remaining overflow errors
+use `SampleCountOverflow`, `TotalOverflow`, `CountOverflow` and `InvalidOverflowFlag`.
+Update core calls and matches when selecting 0.9. Consumer-owned DTO/wire names
+and policies remain at their owner.
 
-Full `make ci` passes in 377 seconds and all three package-floor gates pass.
-Eight checkpoints agree on the 140 frozen/current inputs. The
-[frozen qualification](../evidence/cleanup-084.tar.gz) and
-[checksum](../evidence/cleanup-084.tar.gz.sha256) retain before/after sources,
-registry/graph verification, mean probes, compiler identities and validation logs.
-Final documentation edits pass link, consistency and diff checks separately.
+Raw stable kind/codec/continuity dispatch now requires a privately constructible
+zero-sized capability ([#71](https://github.com/dragginzgame/ic-metrics/issues/71)).
+Supported generic `DurableMetric` store operations remain available. Numeric
+quality, clipping, exact caps, empty/zero observations, V1 bytes and host lifecycle
+stay unchanged; no compatibility aliases or data reset are introduced.
 
-## Delivered 0.8.3
+The incoming Host 0.17.0 manifest/lock selection is qualified against published
+checksums and committed release `93a0ecc2afb7d4b8d8a252a21ed10d7e58b35901`;
+41 authored source/manifest/README files match. The private inspector needs no
+API or feature change. Memory remains 0.36.1; arithmetic stays on Rust 1.85 and
+stable/inspector stay on 1.88. Full CI passes in 254 seconds and all three floor
+gates pass; eight checkpoints match all 144 frozen inputs. This is local
+Linux qualification, not hosted macOS or application acceptance.
 
-Public main, peeled v0.8.3 and local release commit agree on
-`39d7e0dd579231b61cca71bb713f3ba5afef4227`. The release contains the checked
-stable decoder and explicit Memory 0.36.0 request fixture with Host 0.16.0.
-[The decoder receipt](../evidence/decoder-083.md) retains its earlier graph;
-[the Memory adoption receipt](../evidence/memory-083.md) retains the final
-282-second local CI/floor qualification. Those preparation receipts do not
-qualify the pending Memory 0.36.1 graph or establish hosted release acceptance.
-Exact `ic-stable-structures` 0.7.2 types, V1 bytes and retained allocation IDs
-remain unchanged; arithmetic stays dependency-free.
+Nine matched raw Wasm probes are byte-identical through these two further cuts,
+including all three generic stable round trips; seven representative stored
+records match before/after, including overflow flags. The copied IcyDB numeric
+projection preserves consumer DTO names and passes native/Rust 1.85 Wasm checks.
+[The API-boundary receipt](../evidence/api-cut-090.md) binds these sources,
+commands, refusal checks and limits. [The earlier error-cut receipt](../evidence/error-cut-090.md)
+retains its original Host 0.16 graph and measured mean/scaled/interval reductions;
+its inputs are not relabelled as the latest graph.
+
+All six consumers were reviewed read-only. IcyDB, Timers, Backup and the Blob
+probe need old core flag calls updated. Canic currently has no such calls;
+its quality/attribution obligations remain. Toko still imports `record_sample`
+and needs its earlier tracked-state adoption. Dependency selection, exposed
+shared type identity and runtime/native acceptance stay with the
+[owning issues](../extraction.md#downstream-contract-checks).
+Package versions remain 0.8.4. The incoming dependency selection is preserved;
+no real Git index/ref, release or publication effect is performed.
+
+## Delivered 0.8.4
+
+Local finalized release source is `0baae3a49b0bb2c42b32dfe8005b33d07e7e11d7`.
+The release contains private mean ownership cleanup and Memory 0.36.1 selection.
+[Its frozen preparation](../evidence/cleanup-084.tar.gz) retains the 377-second
+CI/floor qualification and byte-identical mean probes on its original inputs.
+Earlier [decoder](../evidence/decoder-083.md) and
+[Memory adoption](../evidence/memory-083.md) receipts retain their earlier graphs.
+None qualifies pending 0.9 or establishes later hosted release acceptance.
 
 Hosts coordinate their Memory 0.36 adoption through
 [Canic #527](https://github.com/dragginzgame/canic/issues/527),
@@ -55,7 +78,7 @@ and [cleanup record](../evidence/cleanup-082.md) retain their pre-release source
 including the 261-second final CI/floor proof and separate raw Wasm comparison.
 Historical measurements do not establish later application costs.
 
-The selected lock retains Host 0.16.0, Memory 0.36.1 and Syn 3.0.9. Arithmetic
+The current lock selects Host 0.17.0, Memory 0.36.1 and Syn 3.0.9. Arithmetic
 stays on Rust 1.85; stable and private inspector stay on 1.88. Shared Tooling
 0.9.10 `7e55adecf6f0b196c050f104b37f8c69b6bf434e` retains all 104 payloads and
 91 roots. [Its adoption receipt](../evidence/adoption-082-shared-0910.md) keeps the
@@ -73,6 +96,6 @@ original held-HTTP/native qualification. [Canic #450](https://github.com/draggin
 and [#491](https://github.com/dragginzgame/canic/issues/491#issuecomment-6126296804)
 retain the scoped repair and Auth blocker; no new passing runtime/macOS proof
 is claimed. Logs remain in Canic's `.tmp/metrics-qualification-20261012/`.
-Public error-surface removal remains in [#69](https://github.com/dragginzgame/ic-metrics/issues/69)
-and needs a separately selected API cut. This batch edits Metrics only and
-performs no release effects.
+[#69](https://github.com/dragginzgame/ic-metrics/issues/69) and
+[#71](https://github.com/dragginzgame/ic-metrics/issues/71) own the selected
+error and stable-boundary cuts. This batch edits Metrics only and performs no release effects.

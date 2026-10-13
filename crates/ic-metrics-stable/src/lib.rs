@@ -27,6 +27,59 @@ mod tests;
 ///
 /// Implemented only for `MeasurementAggregate`, `MeasurementSummary` and
 /// `MeasurementHistogram<N>`. Histograms support at most 256 finite bounds.
+/// The bound supports generic store operations; raw codec and continuity
+/// dispatch require an adapter-private capability.
+///
+/// ```
+/// use ic_memory::ic_stable_structures::Memory;
+/// use ic_metrics_stable::{DurableMetric, MetricIdentity, MetricKey, MetricsStore, StoreError};
+/// fn checkpoint<M: Memory, T: DurableMetric>(
+///     store: &mut MetricsStore<M>, key: &MetricKey, identity: &MetricIdentity, value: &T,
+/// ) -> Result<Option<T>, StoreError> {
+///     store.save(key, identity, value)?;
+///     store.load(key, identity, value)
+/// }
+/// ```
+///
+/// The sealed bound alone cannot dispatch raw state encoding, size admission,
+/// kind selection or continuity checks:
+///
+/// ```compile_fail,E0061
+/// use ic_metrics_stable::DurableMetric;
+/// fn raw<T: DurableMetric>(value: &T) {
+///     let _ = value.encode_state(&mut Vec::new());
+/// }
+/// ```
+///
+/// ```compile_fail,E0061
+/// use ic_metrics_stable::DurableMetric;
+/// fn raw<T: DurableMetric>() {
+///     let _ = T::check_size();
+/// }
+/// ```
+///
+/// ```compile_fail,E0061
+/// use ic_metrics_stable::DurableMetric;
+/// fn raw<T: DurableMetric>() {
+///     let _ = T::kind();
+/// }
+/// ```
+///
+/// ```compile_fail,E0061
+/// use ic_metrics_stable::DurableMetric;
+/// fn raw<T: DurableMetric>(value: &T) {
+///     let _ = value.continues(value);
+/// }
+/// ```
+///
+/// An inferred argument cannot manufacture the private capability:
+///
+/// ```compile_fail,E0277
+/// use ic_metrics_stable::DurableMetric;
+/// fn raw<T: DurableMetric>(value: &T) {
+///     let _ = value.encode_state(Default::default(), &mut Vec::new());
+/// }
+/// ```
 pub trait DurableMetric: metric::Sealed {}
 
 /// Maximum finite bounds per stored histogram, bounding codec work and records.
@@ -184,7 +237,7 @@ impl<M: Memory> MetricsStore<M> {
         identity: &MetricIdentity,
         configuration: &T,
     ) -> Result<Option<T>, StoreError> {
-        T::check_size()?;
+        T::check_size(crate::metric::ACCESS)?;
         self.map
             .get(&key.0)
             .map(|bytes| codec::decode(&bytes, identity, configuration))
@@ -208,7 +261,7 @@ impl<M: Memory> MetricsStore<M> {
     ) -> Result<(), StoreError> {
         if self
             .load(key, identity, value)?
-            .is_some_and(|previous| !value.continues(&previous))
+            .is_some_and(|previous| !value.continues(crate::metric::ACCESS, &previous))
         {
             return Err(StoreError::StateRegression);
         }

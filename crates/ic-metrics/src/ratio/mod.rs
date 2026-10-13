@@ -34,8 +34,8 @@ impl core::error::Error for MeasurementRatioError {}
 /// an overflowing intermediate product does not reject a representable result.
 ///
 /// Inputs must already be exact and comparable. This function does not establish
-/// units, sample/window identity, or saturation provenance. In particular, it
-/// accepts `u128::MAX` as an exact input; never pass a saturated diagnostic total
+/// units, sample/window identity, or overflow provenance. In particular, it
+/// accepts `u128::MAX` as an exact input; never pass an overflowed diagnostic total
 /// as though it were exact. Empty measurement sets remain consumer-owned and
 /// must be handled before calling with their zero sample count.
 ///

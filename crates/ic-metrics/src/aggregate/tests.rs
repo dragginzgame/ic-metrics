@@ -15,7 +15,7 @@ fn exact_caps_and_actual_overflow_have_distinct_projections() {
     result.record(0);
     result.record(1);
     assert_eq!(result.total(), u128::from(u64::MAX) + 1);
-    assert!(!result.total_saturated());
+    assert!(!result.total_overflowed());
     assert_eq!(result.mean(), Ok(Some((u128::from(u64::MAX) + 1) / 3)));
     assert_eq!(result.maximum(), Some(u64::MAX));
 
@@ -28,8 +28,8 @@ fn exact_caps_and_actual_overflow_have_distinct_projections() {
     assert_eq!(largest_batch.samples(), u64::MAX);
     assert_eq!(largest_batch.total(), u128::from(u64::MAX).pow(2));
     assert_eq!(largest_batch.mean(), Ok(Some(u128::from(u64::MAX))));
-    assert!(!largest_batch.samples_saturated());
-    assert!(!largest_batch.total_saturated());
+    assert!(!largest_batch.samples_overflowed());
+    assert!(!largest_batch.total_overflowed());
     let interval = largest_batch
         .interval_since(MeasurementAggregate::EMPTY)
         .unwrap();
@@ -41,25 +41,34 @@ fn exact_caps_and_actual_overflow_have_distinct_projections() {
     largest_batch.record(u64::MAX);
     largest_batch.record(u64::MAX);
     assert_eq!(largest_batch.total(), u128::MAX);
-    assert!(largest_batch.samples_saturated());
-    assert!(!largest_batch.total_saturated());
+    assert!(largest_batch.samples_overflowed());
+    assert!(!largest_batch.total_overflowed());
     largest_batch.record(0);
-    assert!(!largest_batch.total_saturated());
+    assert!(!largest_batch.total_overflowed());
     largest_batch.record(1);
-    assert!(largest_batch.total_saturated());
+    assert!(largest_batch.total_overflowed());
     assert_eq!(largest_batch.total(), u128::MAX);
+    for (current, previous) in [
+        (largest_batch, MeasurementAggregate::EMPTY),
+        (MeasurementAggregate::EMPTY, largest_batch),
+    ] {
+        assert_eq!(
+            current.interval_since(previous),
+            Err(MeasurementIntervalError::SampleCountOverflow)
+        );
+    }
     assert_eq!(
         largest_batch.mean(),
-        Err(MeasurementMeanError::SaturatedSamples)
+        Err(MeasurementMeanError::SampleCountOverflow)
     );
     let mut inherited = MeasurementAggregate::EMPTY;
     inherited.merge(largest_batch);
     assert_eq!(inherited, largest_batch);
     result.merge(largest_batch);
-    assert!(result.samples_saturated());
-    assert!(result.total_saturated());
+    assert!(result.samples_overflowed());
+    assert!(result.total_overflowed());
     result.merge(MeasurementAggregate::EMPTY);
-    assert!(result.total_saturated());
+    assert!(result.total_overflowed());
 
     let mut count = MeasurementAggregate::EMPTY;
     for _ in 0..64 {
@@ -67,11 +76,11 @@ fn exact_caps_and_actual_overflow_have_distinct_projections() {
         count.record(0);
     }
     assert_eq!(count.samples(), u64::MAX);
-    assert!(!count.samples_saturated());
+    assert!(!count.samples_overflowed());
     assert_eq!(count.mean(), Ok(Some(0)));
     count.record(0);
-    assert!(count.samples_saturated());
-    assert_eq!(count.mean(), Err(MeasurementMeanError::SaturatedSamples));
+    assert!(count.samples_overflowed());
+    assert_eq!(count.mean(), Err(MeasurementMeanError::SampleCountOverflow));
     let mut empty = MeasurementAggregate::EMPTY;
     empty.merge(count);
     assert_eq!(empty, count);
@@ -167,11 +176,11 @@ fn intervals_reject_numeric_discontinuity_and_all_required_overflow() {
     lost_count.record(0);
     assert_eq!(
         lost_count.interval_since(MeasurementAggregate::EMPTY),
-        Err(SaturatedSamples)
+        Err(SampleCountOverflow)
     );
     assert_eq!(
         MeasurementAggregate::EMPTY.interval_since(lost_count),
-        Err(SaturatedSamples)
+        Err(SampleCountOverflow)
     );
 }
 
@@ -199,10 +208,10 @@ fn scaled_means_keep_fractional_information_and_admitted_wide_products() {
         for right in inputs {
             let value = aggregate(&[left, right]);
             for scale in [0, 1, 10, 10_000, u64::MAX] {
-                // An independent decomposition avoids multiplying the wide total.
-                let total = u128::from(left) + u128::from(right);
-                let expected =
-                    (total / 2) * u128::from(scale) + (total % 2) * u128::from(scale) / 2;
+                // Each scaled observation fits; midpoint avoids overflowing their sum.
+                let left = u128::from(left) * u128::from(scale);
+                let right = u128::from(right) * u128::from(scale);
+                let expected = left.midpoint(right);
                 assert_eq!(value.scaled_mean(scale), Ok(Some(expected)));
             }
         }
@@ -237,16 +246,60 @@ fn scaled_means_admit_exact_caps_and_reject_loss_even_with_zero_scale() {
     exact.record(0);
     assert_eq!(
         exact.scaled_mean(0),
-        Err(MeasurementMeanError::SaturatedSamples)
+        Err(MeasurementMeanError::SampleCountOverflow)
     );
     exact.record(u64::MAX);
     exact.record(u64::MAX);
-    assert!(!exact.total_saturated());
+    assert!(!exact.total_overflowed());
     exact.record(1);
-    assert!(exact.total_saturated());
+    assert!(exact.total_overflowed());
+    assert_eq!(
+        exact.scaled_mean(0),
+        Err(MeasurementMeanError::SampleCountOverflow)
+    );
     assert_eq!(
         exact.scaled_mean(10),
-        Err(MeasurementMeanError::SaturatedSamples)
+        Err(MeasurementMeanError::SampleCountOverflow)
     );
     assert_eq!(VALUE, Ok(Some(u128::from(u64::MAX).pow(2))));
+}
+
+#[test]
+fn scaled_means_cover_restored_count_and_total_boundaries() {
+    for samples in [1, 2, 3, u64::from(u32::MAX) + 1, u64::MAX] {
+        for maximum in [0, 1, 2, 17, u64::MAX] {
+            for scale in [0, 1, 10, 10_000, u64::MAX] {
+                let scaled_maximum = u128::from(maximum) * u128::from(scale);
+                let full_total = u128::from(samples) * u128::from(maximum);
+                for (total, expected) in [
+                    (u128::from(maximum), scaled_maximum / u128::from(samples)),
+                    (full_total, scaled_maximum),
+                ] {
+                    let value = MeasurementAggregate::from_parts(
+                        samples,
+                        total,
+                        Some(maximum),
+                        false,
+                        false,
+                    )
+                    .unwrap();
+                    assert_eq!(value.scaled_mean(scale), Ok(Some(expected)));
+                }
+                if full_total > u128::from(maximum) {
+                    let value = MeasurementAggregate::from_parts(
+                        samples,
+                        full_total - 1,
+                        Some(maximum),
+                        false,
+                        false,
+                    )
+                    .unwrap();
+                    assert_eq!(
+                        value.scaled_mean(scale),
+                        Ok(Some(scaled_maximum - u128::from(scale.div_ceil(samples))))
+                    );
+                }
+            }
+        }
+    }
 }

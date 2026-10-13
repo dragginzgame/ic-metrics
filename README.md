@@ -10,7 +10,7 @@ Zero is a valid observation; an empty summary has no latest or maximum value.
 Tracked count and total clip independently, with sticky actual-overflow flags.
 Counts and individual samples use `u64`; totals and means use `u128`. Every
 exact counted batch fits its total. An exactly reached numeric cap remains exact. Consumers establish units, identity and
-reset boundaries before comparing observations; saturated totals cannot supply
+reset boundaries before comparing observations; overflowed totals cannot supply
 exact interval arithmetic.
 
 `MeasurementCounter` supports scalar event, item or byte totals.
@@ -32,9 +32,11 @@ assert_eq!(summary.latest(), Some(0));
 
 Tracked `MeasurementAggregate::mean()` and `MeasurementSummary::mean()` return
 `Result<Option<u128>, MeasurementMeanError>`: empty is `None`, measured zero is
-`Some(0)`, and exact means round down. Actual overflow returns a typed error;
-exactly reaching the cap remains valid. `scaled_mean(scale)` checks the same
-flags and retains fractional information: samples 3 and 4 yield 35 at scale ten.
+`Some(0)`, and exact means round down. Actual sample-count overflow returns
+`SampleCountOverflow`; an exact count guarantees an exact total. Exactly reaching
+the cap remains valid. `scaled_mean(scale)` checks count quality and retains
+fractional information: samples 3 and 4 yield 35 at scale ten. Admitted scaled
+means fit `u128` without a ratio-projection failure.
 Accumulator flags cannot restore a clamped input sample.
 
 `MeasurementAggregate::merge` combines count/total and maximum without claiming
@@ -42,6 +44,16 @@ ordering or deduplication. `interval_since(previous)` returns checked count/tota
 differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
+
+Pending 0.9 removes the unreachable mean `SaturatedTotal`/`Projection` and interval
+`SaturatedTotal` variants. Update matches or explicit construction of those errors
+when selecting 0.9. Overflow flags use `*_overflowed` names, including
+`bucket_overflowed()` and `overflow_count_overflowed()` for histogram counts.
+Remaining overflow errors use `SampleCountOverflow`, `TotalOverflow`,
+`CountOverflow` and `InvalidOverflowFlag`; arithmetic and quality stay unchanged.
+Generic-ratio errors remain unchanged. Raw stable codec dispatch is internal;
+use the supported generic `MetricsStore` operations.
+The stable V1 encoding and host allocation lifecycle require no reset.
 
 The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
 aggregates, summaries and histograms in one host-owned stable B-tree map using
@@ -66,16 +78,16 @@ configured number of bounds, and every bucket saturates independently. Buckets
 describe ranges; they do not provide exact percentiles. Units, thresholds and
 export encoding remain consumer-owned. `merge(&other)` requires matching bounds
 and returns a typed mismatch without changing the destination. Bucket and overflow
-saturation flags distinguish exact caps from lost counts.
+overflow flags distinguish exact caps from lost counts.
 
 `cumulative_count(index)` provides exact counts through a configured
 bound and `quantile_bucket(numerator, denominator)` for nearest-rank ranges, such
-as p95 with `(95, 100)`. Empty quantiles are `None`; required count saturation
+as p95 with `(95, 100)`. Empty quantiles are `None`; required count overflow
 returns `HistogramQueryError`. Overflow has no configured ceiling.
 `checked_scaled_ratio(numerator, denominator, scale)` floors an exact scaled
 integer ratio from a `u128` numerator, without floating point or overflowing
 intermediate multiplication. Callers establish exact inputs and handle empty or
-saturated diagnostics before using it. Consumer adoption remains separately qualified.
+overflowed diagnostics before using it. Consumer adoption remains separately qualified.
 
 Known callers are IcyDB, Canic, ic-timers, ic-backup, IC Blob Storage's
 restoration test probe and Toko Miner's production game-shard action metrics. Their

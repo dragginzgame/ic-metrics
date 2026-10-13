@@ -1,48 +1,14 @@
 //! Saturating arithmetic without sampling or attribution policy.
 
-use core::fmt;
-
-use crate::{MeasurementAggregate, MeasurementRatioError, MeasurementStateError};
+use crate::{MeasurementAggregate, MeasurementMeanError, MeasurementStateError};
 
 #[cfg(test)]
 mod tests;
 
-/// Why a measurement aggregate cannot supply an integer mean.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum MeasurementMeanError {
-    /// The tracked sample count has actually overflowed.
-    SaturatedSamples,
-    /// The tracked total has actually overflowed.
-    SaturatedTotal,
-    /// The exact scaled-ratio projector rejected the result.
-    Projection(MeasurementRatioError),
-}
-
-impl fmt::Display for MeasurementMeanError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::SaturatedSamples => formatter.write_str("measurement sample count is saturated"),
-            Self::SaturatedTotal => formatter.write_str("measurement total is saturated"),
-            Self::Projection(error) => {
-                write!(formatter, "measurement mean projection failed: {error}")
-            }
-        }
-    }
-}
-
-impl core::error::Error for MeasurementMeanError {
-    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
-        match self {
-            Self::Projection(error) => Some(error),
-            _ => None,
-        }
-    }
-}
-
 /// Ordered observations with a mergeable aggregate and a separate latest value.
 ///
 /// Count and total saturate independently, tracking actual overflow. An exactly
-/// reached numeric cap remains exact; inspect the aggregate's saturation flags
+/// reached numeric cap remains exact; inspect the aggregate's overflow flags
 /// before using raw counts/totals for exact arithmetic. Latest and maximum remain
 /// individual observations after overflow. Empty and measured zero are distinct.
 /// Consumers own units, identity, ordering and reset boundaries.
@@ -77,7 +43,7 @@ impl MeasurementSummary {
         };
         if latest > maximum
             || (latest < maximum && aggregate.total() < latest as u128 + maximum as u128)
-            || (!aggregate.samples_saturated()
+            || (!aggregate.samples_overflowed()
                 && aggregate.total()
                     > (aggregate.samples() - 1) as u128 * maximum as u128 + latest as u128)
         {
@@ -104,13 +70,13 @@ impl MeasurementSummary {
         self.aggregate
     }
 
-    /// Sample count, clipped at `u64::MAX`; saturation is in [`Self::aggregate`].
+    /// Sample count, clipped at `u64::MAX`; overflow is in [`Self::aggregate`].
     #[must_use]
     pub const fn samples(self) -> u64 {
         self.aggregate.samples()
     }
 
-    /// Observation total, clipped at `u128::MAX`; saturation is in [`Self::aggregate`].
+    /// Observation total, clipped at `u128::MAX`; overflow is in [`Self::aggregate`].
     #[must_use]
     pub const fn total(self) -> u128 {
         self.aggregate.total()
@@ -119,7 +85,7 @@ impl MeasurementSummary {
     /// Floor-rounded mean, or `None` when empty. An exactly reached cap is valid.
     ///
     /// # Errors
-    /// Returns [`MeasurementMeanError`] on actual count or total overflow.
+    /// Returns [`MeasurementMeanError::SampleCountOverflow`] on actual count overflow.
     pub const fn mean(self) -> Result<Option<u128>, MeasurementMeanError> {
         self.aggregate.mean()
     }
@@ -130,8 +96,7 @@ impl MeasurementSummary {
     /// Empty remains `None`, and scale zero does not conceal actual overflow.
     ///
     /// # Errors
-    /// Returns [`MeasurementMeanError`] for inexact counts/totals or a failed
-    /// scaled projection, with the same precedence as the aggregate.
+    /// Returns [`MeasurementMeanError::SampleCountOverflow`] on actual count overflow.
     pub const fn scaled_mean(self, scale: u64) -> Result<Option<u128>, MeasurementMeanError> {
         self.aggregate.scaled_mean(scale)
     }

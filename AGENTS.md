@@ -25,8 +25,8 @@ and [the extraction contract](docs/extraction.md) before implementation.
   Do not add dependencies on IcyDB, Canic, `ic-timers`, or `ic-backup`.
 - IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
   remain separate consumer contracts. Do not add an attribution-mode switch.
-- Units and saturation are explicit. Zero is a valid sample; no samples is a
-  different state. Saturated totals are unsuitable for exact interval arithmetic.
+- Units and overflow are explicit. Zero is a valid sample; no samples is a
+  different state. Overflowed totals are unsuitable for exact interval arithmetic.
   Counter identity must be established before comparing snapshots.
 - Native substitutes are not IC measurements. Never add timing benchmarks or
   convert instruction counts into estimated cycles. Permitted performance
