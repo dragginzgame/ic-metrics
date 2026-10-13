@@ -15,7 +15,7 @@ pub struct Access(());
 
 pub const ACCESS: Access = Access(());
 
-pub trait Sealed: Sized {
+pub trait Sealed: Sized + Eq {
     fn kind(access: Access) -> u8;
     fn check_size(_: Access) -> Result<(), StoreError> {
         Ok(())
@@ -172,12 +172,15 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
             && self
                 .bucket_counts()
                 .iter()
-                .zip(previous.bucket_counts())
-                .all(|(now, before)| now >= before)
-            && self
-                .bucket_overflowed()
-                .iter()
-                .zip(previous.bucket_overflowed())
-                .all(|(now, before)| !before || *now)
+                .zip(self.bucket_overflowed())
+                .zip(
+                    previous
+                        .bucket_counts()
+                        .iter()
+                        .zip(previous.bucket_overflowed()),
+                )
+                .all(|((now, now_overflowed), (before, before_overflowed))| {
+                    now >= before && (!before_overflowed || *now_overflowed)
+                })
     }
 }

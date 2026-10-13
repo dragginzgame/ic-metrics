@@ -27,6 +27,7 @@ mod tests;
 ///
 /// Implemented only for `MeasurementAggregate`, `MeasurementSummary` and
 /// `MeasurementHistogram<N>`. Histograms support at most 256 finite bounds.
+/// Supported snapshots have exact structural equality.
 /// The bound supports generic store operations; raw codec and continuity
 /// dispatch require an adapter-private capability.
 ///
@@ -246,7 +247,8 @@ impl<M: Memory> MetricsStore<M> {
 
     /// Checkpoint a complete snapshot, preserving append-only numeric continuity.
     ///
-    /// Rewriting an identical snapshot is idempotent. This is replacement, not
+    /// An identical retained snapshot succeeds without encoding or writing again.
+    /// This is replacement, not
     /// merging; hosts own sample admission and commit cadence. Batch observations
     /// within an update message, then save at its chosen attribution boundary.
     ///
@@ -259,11 +261,13 @@ impl<M: Memory> MetricsStore<M> {
         identity: &MetricIdentity,
         value: &T,
     ) -> Result<(), StoreError> {
-        if self
-            .load(key, identity, value)?
-            .is_some_and(|previous| !value.continues(crate::metric::ACCESS, &previous))
-        {
-            return Err(StoreError::StateRegression);
+        if let Some(previous) = self.load(key, identity, value)? {
+            if *value == previous {
+                return Ok(());
+            }
+            if !value.continues(crate::metric::ACCESS, &previous) {
+                return Err(StoreError::StateRegression);
+            }
         }
         let bytes = codec::encode(identity, value)?;
         self.map.insert(key.0.clone(), bytes);

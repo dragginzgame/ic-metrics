@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.2]
+
+### Changed
+
+- Skip encoding and stable-map writes for an identical admitted checkpoint,
+  preserving identity/configuration and corruption checks before the no-op.
+- Validate histogram bounds directly during restoration instead of constructing
+  an empty temporary histogram; preserve constant evaluation and error order.
+- Check each histogram bucket's count and overflow flag together during durable
+  continuity admission. Existing store signatures and V1 bytes remain unchanged;
+  the sealed durable bound carries its supported snapshots’ exact equality.
+
 ## [0.9.1] - 2026-10-13
 
 ### Changed
