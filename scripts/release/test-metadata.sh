@@ -99,9 +99,9 @@ cp Cargo.toml original.toml
 actual="$(bash "$root/scripts/release/metadata.sh" version)"
 [[ "$actual" == "$RELEASE_PREVIOUS" ]] || exit 1
 cmp original.toml Cargo.toml
-# Resolve both relative and absolute entry points from a physical checkout
-# ending in a newline, without CDPATH output becoming part of the helper path.
-bootstrap="$fixture/checkout"$'\n'
+# Resolve both relative and absolute entry points from a checkout with spaces,
+# without CDPATH output becoming part of the helper path.
+bootstrap="$fixture/checkout with spaces"
 mkdir -p "$bootstrap/scripts/release" "$bootstrap/scripts/ci"
 cp "$root/scripts/release/metadata.sh" "$bootstrap/scripts/release/"
 cp "$root/scripts/ci/read-cargo-workspace-version.sh" "$bootstrap/scripts/ci/"

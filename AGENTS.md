@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`7e9f062f53baad2059a8585e2fffe2b98f03bafd` and file digests are recorded in
+`7e55adecf6f0b196c050f104b37f8c69b6bf434e` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.

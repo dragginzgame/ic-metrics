@@ -18,10 +18,8 @@ fn summary_mean_preserves_recording_and_saturation_contracts() {
     assert_eq!(summary.mean(), Ok(Some((u128::from(u64::MAX) + 1) / 4)));
     assert!(!summary.aggregate().total_saturated());
     assert_eq!(summary.latest(), Some(1));
-    let mut saturated_count = MeasurementSummary {
-        aggregate: maximum_zero_count(),
-        latest: 0,
-    };
+    let mut saturated_count =
+        MeasurementSummary::from_parts(maximum_zero_count(), Some(0)).unwrap();
     assert_eq!(saturated_count.mean(), Ok(Some(0)));
     saturated_count.record(9);
     assert_eq!(
@@ -32,7 +30,7 @@ fn summary_mean_preserves_recording_and_saturation_contracts() {
 
 #[test]
 fn summary_means_are_available_in_constant_evaluation() {
-    const PROJECTIONS: (Option<u128>, Option<u128>) = {
+    const PROJECTIONS: (MeasurementSummary, Option<u128>, Option<u128>) = {
         let mut summary = MeasurementSummary::EMPTY;
         summary.record(9);
         summary.record(0);
@@ -42,9 +40,13 @@ fn summary_means_are_available_in_constant_evaluation() {
         let Ok(scaled) = summary.scaled_mean(10) else {
             panic!("exact scaled mean")
         };
-        (mean, scaled)
+        (summary, mean, scaled)
     };
-    assert_eq!(PROJECTIONS, (Some(4), Some(45)));
+    assert_eq!((PROJECTIONS.1, PROJECTIONS.2), (Some(4), Some(45)));
+    assert_eq!(PROJECTIONS.0.samples(), 2);
+    assert_eq!(PROJECTIONS.0.total(), 9);
+    assert_eq!(PROJECTIONS.0.latest(), Some(0));
+    assert_eq!(PROJECTIONS.0.maximum(), Some(9));
     let mut summary = MeasurementSummary::EMPTY;
     assert_eq!(summary.scaled_mean(10), Ok(None));
     summary.record(0);
@@ -95,10 +97,7 @@ fn total_saturation_preserves_count_latest_and_maximum() {
     }
     aggregate.record(u64::MAX);
     aggregate.record(u64::MAX);
-    let mut summary = MeasurementSummary {
-        aggregate,
-        latest: u64::MAX,
-    };
+    let mut summary = MeasurementSummary::from_parts(aggregate, Some(u64::MAX)).unwrap();
     assert_eq!(summary.total(), u128::MAX);
     assert!(!summary.aggregate().total_saturated());
     summary.record(1);
@@ -113,10 +112,7 @@ fn total_saturation_preserves_count_latest_and_maximum() {
 
 #[test]
 fn count_saturation_does_not_freeze_other_observations() {
-    let mut summary = MeasurementSummary {
-        aggregate: maximum_zero_count(),
-        latest: 0,
-    };
+    let mut summary = MeasurementSummary::from_parts(maximum_zero_count(), Some(0)).unwrap();
     summary.record(4);
     assert_eq!(summary.samples(), u64::MAX);
     assert_eq!(summary.total(), 4);
@@ -124,27 +120,6 @@ fn count_saturation_does_not_freeze_other_observations() {
     assert_eq!(summary.maximum(), Some(4));
 }
 
-#[test]
-fn recording_is_available_in_constant_evaluation() {
-    const SUMMARY: MeasurementSummary = {
-        let mut summary = MeasurementSummary::EMPTY;
-        summary.record(9);
-        summary.record(2);
-        summary
-    };
-    assert_eq!(SUMMARY.samples(), 2);
-    assert_eq!(SUMMARY.total(), 11);
-    assert_eq!(SUMMARY.latest(), Some(2));
-    assert_eq!(SUMMARY.maximum(), Some(9));
-}
-
-// Repeated disjoint zero-sample batches construct an exact cap without a fake
-// production path or an impractically large recording loop.
 fn maximum_zero_count() -> MeasurementAggregate {
-    let mut aggregate = MeasurementAggregate::EMPTY;
-    for _ in 0..64 {
-        aggregate.merge(aggregate);
-        aggregate.record(0);
-    }
-    aggregate
+    MeasurementAggregate::from_parts(u64::MAX, 0, Some(0), false, false).unwrap()
 }

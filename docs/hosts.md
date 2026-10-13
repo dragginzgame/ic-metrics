@@ -1,467 +1,109 @@
 # Host support and qualification
 
-| Native host | Required support | Configured CI |
+| Native host | Required support | Configured runner |
 | --- | --- | --- |
-| Ubuntu 24.04 x86-64 | Library build and development tooling | `ubuntu-24.04` |
-| macOS 15 Intel | Library build and development tooling | `macos-15-intel` |
-| macOS 15 Apple Silicon | Library build and development tooling | `macos-15` |
+| Linux x86_64 | Library build and development tooling | `ubuntu-24.04` |
+| macOS Intel | Library build and development tooling | `macos-15-intel` |
+| macOS Apple Silicon | Library build and development tooling | `macos-15` |
 
-The [initial CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37329280018)
-at commit `975dabc` passed the native Linux gate and Linux MSRV checks. Both
-macOS jobs failed at snapshot verification because Bash 3.2 treated an empty
-array expansion as unset; neither reached the Rust checks.
-
-The refreshed Shared Tooling snapshot at
-`b8537873ac124ad17b30e32aa23e9006a3e6ec21` includes the upstream verifier fix.
-The maintainer's tagged `0.1.1` revision
-`e3d4b0c3b3d19dbaa7b4e5763bea1144cb6570bc` passed
-[CI run 37339148886](https://github.com/dragginzgame/ic-metrics/actions/runs/37339148886):
-the complete native gate succeeded on Ubuntu 24.04, macOS 15 Intel and macOS 15
-Apple Silicon, and the Linux MSRV job passed. This qualifies the arithmetic and
-command-stub tooling at that exact revision; later worktrees and live maintainer
-release-adapter execution need their own evidence. The initial failed run remains
-historical evidence rather than the current qualification state.
-
-The published `0.1.3` revision
-`a45c6fb156139efda8cfdfe7fbea1372cc11e559` passed
-[CI run 37351475035](https://github.com/dragginzgame/ic-metrics/actions/runs/37351475035):
-Ubuntu 24.04, macOS 15 Intel, macOS 15 Apple Silicon and Linux MSRV all succeeded.
-This qualifies the maintained library and tooling at that tag, including the
-f52c0e2 snapshot, manifest formatting and hook fixtures. A separately downloaded
-registry-dependent `no_std` fixture also passes locked offline Rust 1.88 host
-and Wasm checks on Linux; its archive checksum, sources, license and embedded Git
-revision match the tag. These checks supply compilation and tooling evidence,
-not IC instruction measurements or native qualification of consumer releases.
-
-The published `0.1.4` revision
-`1a144139a2b84e7a389d721febe79aaac3775b0c` also passed
-[CI run 37353066599](https://github.com/dragginzgame/ic-metrics/actions/runs/37353066599)
-on Ubuntu 24.04, both declared macOS 15 architectures and Linux MSRV. Its registry
-archive matches the tagged Rust sources, license and embedded Git identity, and
-an isolated registry-dependent `no_std` fixture passes locked offline Rust 1.88
-host and Wasm compilation. Consumer worktrees retain their own qualification.
-
-The default library core is `no_std` and targets `wasm32-unknown-unknown` in addition
-to native host compilation. A Wasm check proves compilation only, not IC
-instruction accounting; runtime measurement needs canister execution evidence.
-
-The 0.1.5 reader has focused Linux runtime qualification in PocketIC
-16.0.0: shared reads lie between direct counter-1 reads, increase after measured
-work, and retain call-context continuity across a replicated self-call callback.
-The [execution record](evidence/ic-reader.md) binds readings to the exact source,
-lockfile, server binary and Wasm artifact. This is IC instruction evidence from
-PocketIC, not native timing, mainnet evidence or a performance comparison.
-Composite-query execution and consumer lifecycle behavior were outside that fixture.
-The source in that pre-release record matches the published 0.1.5 library.
-The 0.1.5 archive, embedded Git revision, license and source match tag
-`bb28e217c5b3069715c1a58322b7900bec7fbb84`; a registry-dependent IC-feature fixture
-passes Rust 1.88 host/Wasm checks. The exact-release
-[CI run](https://github.com/dragginzgame/ic-metrics/actions/runs/37370018375)
-passed the complete native gate on macOS 15 Intel and Apple Silicon, and the
-Linux MSRV checks. Its first Linux native job never acquired a hosted runner;
-GitHub reported cancellation without executing any repository steps. A targeted
-job retry then passed the complete Ubuntu native gate. The successful second
-attempt qualifies the 0.1.5 library and development tooling on all declared
-native hosts, plus MSRV. The initial runner-admission failure is retained as
-evidence; ordinary native CI does not execute the opt-in PocketIC fixture.
-
-The 0.1.6 fixture extends the same focused target to ordinary and composite
-queries. Linux PocketIC 16.0.0 execution passes direct-counter bracketing, query
-callback continuity and downstream-work exclusion; the reader library source is
-unchanged from published 0.1.5. Strict host/Wasm Clippy and Rust 1.88 Wasm example
-compilation pass. See the separate [query execution record](evidence/ic-reader-query.md).
-That pre-release evidence is Linux-only; the older tagged native CI above proves
-library/tooling gates rather than opt-in server execution.
-
-The 0.1.6 workflow explicitly provisions PocketIC 16.0.0 and invokes
-`make reader-check` after the native gate on all three hosts. The consumer-owned
-[earlier installer](https://github.com/dragginzgame/ic-metrics/blob/v0.1.6/scripts/ci/install-reader-pocketic.sh) selects the exact platform
-asset and verifies its SHA-256 before extraction, then checks the version before
-returning the binary path. Archive pins were checked against the official
-[16.0.0 release metadata](https://api.github.com/repos/dfinity/pocketic/releases/tags/16.0.0).
-The harness independently verifies the extracted binary's existing platform pin
-before launching the server. Unsupported hosts fail without downloading.
-
-CI prepares the selected lockfile cache explicitly, runs the reader offline and
-uploads per-host evidence for 30 days on success or failure. Evidence includes
-the checked-out revision, toolchain/host, source and lock hashes, provisioning and
-execution logs, step outcomes, server/harness hashes and the built Wasm fixture.
-Only the workflow's explicit provisioning step downloads PocketIC; `make ci` and
-ordinary local tests continue to ignore the server-dependent reader test.
-The [CI preparation record](evidence/reader-ci.md) retains the failed initial
-installer attempt and corrected Linux execution. The published 0.1.6 tag at
-`6cf2c3851019b1e989e42c5f79a4845ae911dc7f` has passed hosted Linux native CI,
-MSRV, reader execution and artifact upload in
-[run 37431032911](https://github.com/dragginzgame/ic-metrics/actions/runs/37431032911).
-Both macOS native gates, reader execution and evidence uploads also passed.
-All four jobs succeeded on attempt 1, completing the declared host/MSRV matrix
-for exact 0.1.6, including actual ordinary/composite-query execution on each host.
-Downloaded evidence ZIP, source, server and log/Wasm identities were independently
-verified for all three hosts. The fixture artifacts and absolute readings differ
-by host; each run establishes its own context intervals, without a cross-host
-identity or performance claim. Later worktrees and consumer releases retain their
-own qualification.
-See the separate [release record](evidence/release-016.md)
-for exact hosted and registry inputs rather than relabelling earlier evidence.
-
-The exact 0.1.7 source `adf9c3f5676b8ce7983fe2f35724c800d1b00a59` also passed
-[CI run 37441090866](https://github.com/dragginzgame/ic-metrics/actions/runs/37441090866)
-on attempt 1: all three native jobs and Linux MSRV succeeded, including each
-host's explicit reader execution and evidence upload. This review inspected job
-and step outcomes without downloading the 0.1.7 artifacts. The runtime library
-remains unchanged from 0.1.5; consumer releases and the subsequent uncommitted
-Shared Tooling adoption require their own evidence.
-
-The published 0.1.9 source `083254a6a7c24f1e07d1e952a867059746f6feb5` has
-passed MSRV and all three declared native hosts in
-[run 37452356472](https://github.com/dragginzgame/ic-metrics/actions/runs/37452356472).
-Each native job includes the recovery/admission fixtures, explicit local parser/IC
-setup, actual reader execution and evidence upload. All three downloaded artifact
-ZIPs, bundled logs/Wasm, 21 tagged source hashes per host and IC pins were
-independently verified; recorded
-harness/server binary hashes remain distinct from downloaded binary proof.
-This establishes the adoption's native Linux, Intel macOS and Apple Silicon
-qualification. Recovery fixtures use explicit command substitutes and real Git;
-they do not claim live interrupted releases. Publication/archive evidence is recorded in
-[the tagged handoff](https://github.com/dragginzgame/ic-metrics/blob/v0.2.3/docs/status/current.md#released-019), without relabelling the
-earlier Linux preparation or tagged host results.
+All three hosts run the complete native suite. Bash 3.2 checks on Linux and Wasm
+cross-compilation do not establish native macOS acceptance. Routine CI retains
+the latest workflow/ref run through cancellation; a cancelled run never qualifies
+its source. Native jobs have a 60-minute budget for cold setup and validation.
+The [shared host rules](supported-hosts.md) own the common support contract.
 
 ## Prerequisites and focused checks
 
-- The reviewed shared Make include provides `make install-tools` and offline
-  `make tools-check`. Host tool pins live in the reviewed `ci/tool-versions.env`;
-  IC executable pins live in `ci/ic-tools.tsv`. Make selects `.tools/host/bin`
-  `.tools/ic/bin` and `.tools/rust/common/bin`. `make check-pins` and release validation never install tools.
-  Explicit CI setup uses the same aggregate: host, five IC executables and
-  three Cargo tools in order, followed by a separate offline aggregate check.
-  Both setup/check logs survive failures, with one common tool outcome. New hosted
-  results must qualify this consumer wiring. `make cloc` reports this workspace;
-  fleet tooling inventories run centrally from Shared Tooling.
-- rustup with pinned Rust 1.99.0, rustfmt, and Clippy; Rust 1.85.0 for arithmetic
-  MSRV checks and Rust 1.88.0 for the private host inspector.
-- Install the `wasm32-unknown-unknown` target for each checked toolchain.
-- Git, GNU Make (`make`), Bash 3.2 or newer, and standard Unix utilities.
-- curl, Perl and tar/gzip/xz for explicit local setup; pinned ripgrep and cloc
-  are supplied by `make install-host-tools` for tooling
-  fixtures. Follow the [system bootstrap instructions](local-setup.md#bootstrap-prerequisites)
-  for Linux Mint/Ubuntu or macOS; these packages are separate from pinned local tools.
-- The pinned cargo-sort, cargo-sort-derives and candid-extractor set, installed
-  explicitly with `make install-rust-tools` and verified offline with
-  `make rust-tools-check`. Pins are owned by `ci/tool-versions.env`; interactive
-  commands select `.tools/rust/common/bin` on PATH. Formatting, CI and release
-  validation check all workspace manifests before Rust formatting.
-  Existing checkouts must rerun explicit `make install-tools` followed by
-  `make tools-check` after adopting Shared Tooling 0.6.1. Host/IC/Cargo paths select
-  verified shared-store generations; older physical local bundles are retained
-  but no longer admitted as active installations. Use the same optional
-  `SHARED_TOOLING_STORE` setting for setup, checks and failure collection. Cargo
-  sharing requires exact compiler/native/source/packaged-lock identities under
-  the [standard tool-build environment](local-setup.md#standard-cargo-tool-build-environment).
-  Application flags and wrappers do not configure these builds. The managed
-  source cache is also required for offline admission. The common Rust PATH
-  activates only after all three shared selections pass receipt, byte and version
-  checks. Previous sets, in-place tools and failed build evidence are retained;
-  validation does not fall back to the old PATH.
-  Setup failures preserve their original status, earlier common selections and
-  foreign installation locks. Failed candidates remain available for inspection;
-  resume through explicit setup after resolving the reported cause. See
-  [the current adoption record](evidence/adoption-065.md).
-- SHA-256 via `sha256sum` on Linux or `shasum -a 256` on macOS.
-- Library builds and named arithmetic tests have no third-party dependencies,
-  network services or external IC runtime requirements. There is no platform
-  reader, IC feature, fixture or PocketIC harness in the current library graph.
+Prepare the pinned Rust 1.99.0 development toolchain with rustfmt, Clippy and
+`wasm32-unknown-unknown`. Prepare Rust 1.85.0 and 1.88.0, including their Wasm
+targets, for the advertised package floors:
 
-Common commands use the reviewed [Make entrypoint](make-interface.md). Setup,
-formatting, hooks and release routing retain their shared owners; product gates
-and all three compiler floors stay local.
+| Package | Rust floor | Floor gate |
+| --- | --- | --- |
+| `ic-metrics` | 1.85, native and Wasm | `make msrv` |
+| `ic-metrics-stable` | 1.88, native and Wasm | `make stable-msrv` |
+| Private `ic-metrics-wasm-inspect` | 1.88, native | `make wasm-inspect-msrv` |
 
-During implementation run `make shared-tooling-check`, `make fmt`, `make check`,
-`make check-wasm`, `make clippy`, and `make docs-check` for the library.
-`make msrv` checks the declared floor on host and Wasm. Select
-named tests relevant to the change rather than running the full suite by default.
-The optional stable package uses registry `ic-memory` 0.35.12 and its exact
-stable-structures re-export. `make stable-check` checks native/Wasm builds, both
-Clippy targets, documentation, named adapter tests and its compiled example.
-`make stable-msrv` checks the adapter's separate Rust 1.88 native/Wasm floor;
-install that compiler's Wasm target explicitly. Native reopening uses upstream
-`VectorMemory` to qualify records and collection reopening, not IC execution.
-Before delivering completed code, run the documented full suite `make ci`,
-`make msrv`, `make stable-msrv` and `make wasm-inspect-msrv`, reusing passing checks for unchanged
-inputs. Inspection-only and documentation-only work keep their narrower checks.
-Release and publication effects still require explicit authority.
-The separate `make wasm-inspect-check` checks and lints the private host package
-and runs its named argument/report tests plus the actual CLI admission/publication
-test. That executable test checks admitted files' digests/reports, each of the
-four budget limits, invalid/surplus arguments, malformed/missing/non-file inputs,
-closed-pipe output failure, and empty stdout on rejected admission. Inputs are
-retained under `target/evidence/wasm-inspect-cli/`.
-`make wasm-inspect-msrv` checks its
-Rust 1.88 dependency path; both minimum-version commands log compiler/Cargo
-identities. Native CI includes the host checks on all three hosts, and Linux
-checks both package floors. Bare Cargo commands select arithmetic only.
-The explicitly requested release gate also checks both floors after native CI;
-ordinary development runs the focused commands separately.
-Standard release preflight prepares the selected locked graph before invoking
-`make install-rust-tools` and then offline `make rust-tools-check`; it stops for
-setup/check failure or changed pins before the gate and version preparation.
-Standalone preflight fetches/checks offline and never installs tools. Full CI's
-ordered complete tool admission already precedes dependent builds/tests.
-Common setup now checks platform/pins and Rust/Cargo availability before
-installation, with Rustup auto-installation disabled. The
-[0.5.2 fixture repair](evidence/adoption-052.md) qualifies early-refusal archive
-behavior and explicit fixture completion under both local Make/Bash profiles.
-[The inspector guide](../crates/ic-metrics-wasm-inspect/README.md) explains input
-admission and output units; [the inspection record](evidence/wasm-inspection-0215.md)
-binds local Linux results separately from future committed native acceptance in
-[#36](https://github.com/dragginzgame/ic-metrics/issues/36).
-The 0.2.15 preparation qualified Rust 1.85 for native/Wasm compilation,
-selected unit tests and public doctests on Linux while keeping Rust 1.99 as the
-development compiler. [The minimum-version record](evidence/msrv-0215.md) binds
-that local evidence; published 0.2.14's declared minimum remains Rust 1.88.
-Published 0.2.0 source `8657c35e441a0f2e6add7f784892e85c9b5e1117` passed
-MSRV and all three native jobs in
-[CI run 37461297392](https://github.com/dragginzgame/ic-metrics/actions/runs/37461297392).
-Earlier results above remain evidence for their original tags, including the
-retired reader. Tagged 0.2.1 source `009592f93d4014b079f7c31de51c244bc7df6564`
-passes Linux and MSRV in
-[CI run 37488116668](https://github.com/dragginzgame/ic-metrics/actions/runs/37488116668),
-but both macOS gates stop in the host-tool fixture and their evidence uploads
-reject a colon in a retained fixture filename. The 0.2.2 fixes adopt the shared
-archive-restoration fixture correction and pack native evidence before upload;
-tagged source `057d98813300d741d5782a6cab7c51507f63c55a` passes all three native
-hosts and MSRV in
-[CI run 37493725240](https://github.com/dragginzgame/ic-metrics/actions/runs/37493725240).
-Native retention and uploads pass, and the downloaded tarball/source receipts
-and retained fixture outcomes were verified in the
-[release record](evidence/release-022.md).
-
-Published 0.2.3 source `89f8c6947fb3253991c65479f04bf14acb676328` has passed
-all three native hosts and MSRV in
-[CI run 37502954597](https://github.com/dragginzgame/ic-metrics/actions/runs/37502954597).
-Its downloaded registry archive, embedded identity and maintained package files
-match the tag. All three native tarball receipts, tagged source hashes, retained
-fixture outcomes and hidden Git indexes verify, as recorded in the
-[0.2.3 release record](evidence/release-023.md).
-
-The prepared 0.2.4 snapshot adopted Shared Tooling `e378671` through its clean
-committed export, including its workspace rule. Focused Bash 3.2 Linux release,
-snapshot-integrity and installer checks plus locked metadata and formatting
-pass in the [adoption record](evidence/adoption-024.md). The upstream native
-pass does not establish new consumer native qualification for this dirty batch.
-
-The same prepared 0.2.4 added a separate fixed-size histogram. Focused Linux
-host/Wasm Clippy, named histogram and sample-count saturation tests, the public
-histogram example, warning-denied documentation and Rust 1.88 host/Wasm checks
-pass in [the histogram record](evidence/histogram-024.md). Existing summary-only
-callers retain their current arithmetic. These local checks do not establish
-macOS execution or IC instruction, cycle or Wasm-size improvements.
-
-Published 0.2.4 at `21e980b3ed4f1a8d9b6203079ef1e457a3fea588` now passes
-Linux, both native macOS hosts and MSRV in
-[CI run 37587072330](https://github.com/dragginzgame/ic-metrics/actions/runs/37587072330).
-Its registry checksum, embedded source, Rust files, original manifest, license,
-README and lock match the release, as recorded in
-[the 0.2.4 release record](evidence/release-024.md).
-
-Prepared 0.2.5 adopted reviewed Shared Tooling `25e7ce8` (0.1.14), including
-the Make execution guard and complete caller dependency set. Focused Linux
-GNU Bash 3.2 release/logger/hook rejection, preservation and recovery checks pass
-in [the adoption record](evidence/adoption-025.md). Native upstream CI passes all
-three hosts; that preparation evidence does not qualify the later consumer release.
-
-Published 0.2.5 at `d8b3a46f24518a033cd36e40bf1f1895099b809f` matches
-the official registry archive. Its exact-source Linux, both native macOS hosts
-and MSRV jobs now pass in
-[CI run 37589261498](https://github.com/dragginzgame/ic-metrics/actions/runs/37589261498).
-See [the release record](evidence/release-025.md) for source and qualification scope.
-
-The recorded 0.2.6 inspection found a checkout-local LOC fixture failure before
-native Rust gates; [its release record](evidence/release-026.md) preserves that
-observation. The prepared repair is bound in [adoption-027.md](evidence/adoption-027.md).
-Published 0.2.7 at `09c6786c3b68759ea0ead4d1b987b5a9b472bdbb` now passes
-Linux, both native macOS hosts and MSRV in
-[CI run 37602306391](https://github.com/dragginzgame/ic-metrics/actions/runs/37602306391),
-as recorded in [release-027.md](evidence/release-027.md).
-
-Prepared 0.2.8 adopted reviewed Shared Tooling 0.1.18, including target admission,
-LOC fixture isolation and common checkout-local Rust setup. Its focused Linux
-checks and original source boundary are recorded in
-[adoption-028.md](evidence/adoption-028.md). Published 0.2.8 at
-`0eac2b0baa9d03b8f2430a24dfe596d93f5bfc16` now passes Linux, both macOS
-architectures and MSRV in
-[CI run 37617053341](https://github.com/dragginzgame/ic-metrics/actions/runs/37617053341);
-[release-028.md](evidence/release-028.md) binds that separate released observation.
-
-Released 0.2.9 adopts committed Shared Tooling 0.1.19 to reject redirected Rust
-installation paths, normalize temporary-directory aliases and preserve changelog
-admission/history. Focused source-bound checks and the new IC pin-parser export
-are recorded in [adoption-029.md](evidence/adoption-029.md). The subsequent
-source-matching CI observation is recorded separately in
-[release-029.md](evidence/release-029.md).
-
-Released 0.2.10 adopts committed Shared Tooling 0.1.20 contribution authority.
-[adoption-0210.md](evidence/adoption-0210.md) binds the documentation review and
-focused checks for that initial adoption. The subsequent
-[0.1.22 release-tooling adoption](evidence/adoption-0210-shared022.md) refreshes
-the runner while retaining direct-only delivery. Its focused Linux/Bash checks
-retain their preparation scope. The subsequent
-[0.2.10 release record](evidence/release-0210.md) verifies the actual release's
-complete native/MSRV matrix and all three native source/payload receipts.
-Arithmetic and supported hosts remain unchanged.
-The upstream's real Prettier and failure-upload qualification does not impose
-Node/npm or another hosted failure-injection gate on this arithmetic library.
-
-Released 0.2.11 adopts Shared Tooling 0.1.23's release-integrity corrections.
-[Its adoption record](evidence/adoption-0211.md) binds passing focused Linux
-Bash 5/3.2 release fixtures and static checks to the selected bytes. Upstream
-0.1.23 passes all native hosts. The subsequent
-[consumer release observation](evidence/release-0211.md) binds the complete
-Linux, Intel, Apple Silicon and MSRV matrix and three verified native receipts,
-finishing [#28](https://github.com/dragginzgame/ic-metrics/issues/28).
-
-Prepare tools explicitly before local validation:
+Use Git, GNU Make, Bash 3.2 or newer and standard Unix utilities. The
+[local setup guide](local-setup.md#bootstrap-prerequisites) owns system bootstrap,
+installer dependencies and the pinned common host, IC and Cargo-tool inventory.
+The reviewed [Make interface](make-interface.md) routes common setup, formatting,
+hooks and releases; product gates remain local.
 
 ```sh
 make install-tools
 make tools-check
-make check-pins
 export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin:$PATH"
+make install-hooks
 ```
 
-`make local-tools-test`, `make pin-tools-check`, `make release-tools-check` and `make hook-check` run
-focused tooling fixtures without creating commits, tags or pushes. Release
-fixtures substitute Cargo-edit or cheap gates where declared, exercise actual
-Git index/selected-commit checks and the actual Make/logger adapter, and preserve
-normal nested release selections while isolating independent fixture inputs.
-The hook adapter uses the reviewed shared checker with
-`--no-dependency-tables`, preserving actual formatting and index/working-edit
-checks without introducing test dependencies. `make check-pins` also selects
-the shared Cargo inheritance checks for the actual workspace graph.
-`bash scripts/release/test-fixture-retention.sh` checks successful scratch cleanup
-and unexpected child/assertion failures in release, metadata and formatting-hook
-fixtures. Failed inputs, outputs and reported scratch paths remain under
-`target/evidence/native-ci/fixture-retention.*/`, included in native CI artifacts.
-Native CI also puts ordinary fixture TMPDIR scratch under
-`target/evidence/native-ci/scratch/` and includes hidden files so failed Git
-index and configuration evidence survive the job. Success cleanup stays
-invocation-owned. The admission fixture clears inherited validation log/failure
-destinations and GitHub summaries; the retention regression seeds parent evidence
-and verifies it is untouched ([#53](https://github.com/dragginzgame/ic-metrics/issues/53)).
-Bash 3.2 execution on Linux is shell-portability evidence;
-supported native macOS qualification still requires the owning CI jobs.
-`make ci-evidence-check` runs the shared evidence-archive fixture and the consumer
-workflow's actual shell bodies using
-substitute recursive leaf effects through the actual consumer Make aggregate
-under parallel Make, proving source-first capture, ordered setup/check routing
-and failure/archive IO under Linux Bash 5.2/3.2. It does not install tools, compile product Rust or
-execute hosted CI. Native collection follows successful checkout even when setup
-fails; raw setup/check logs, source receipts and the common tool outcome remain in the
-archive. Failed tool candidates are inside `tool-candidates.tar.gz` in that same
-archive, replacing the separate direct candidate upload. Committed qualification
-is recorded in [release-029.md](evidence/release-029.md) and tracked in
-[#25](https://github.com/dragginzgame/ic-metrics/issues/25).
-Released 0.2.12 uses the shared archiver for tool candidates, preserving literal
-names, modes and links while excluding candidate Git metadata. The outer archive
-retains failed release intent/index state. Partial writes and occupied candidate
-archives preserve inputs and recorded setup failure outcomes. The
-[preparation record](evidence/adoption-0212.md) binds passing focused Bash 5.2/3.2
-checks; this changed collector has committed native/download
-acceptance at 0.2.13 in
-[#30](https://github.com/dragginzgame/ic-metrics/issues/30) and
-[the release record](evidence/release-0213.md). The 0.2.14 preparation recorded the added
-installer evidence-fixture inputs in source receipts; its locally expanded
-75-file snapshot retains separate committed native acceptance in
-[#33](https://github.com/dragginzgame/ic-metrics/issues/33).
-Native uploads contain `native-ci.tar.gz` and its checksum; unpack the tarball
-to inspect the complete evidence tree, including filenames rejected by direct
-artifact uploads. `make format-tools-check` verifies the reviewed cargo-sort pin
-and prepared rustfmt offline before either formatting target. The shared reporter
-prints one success line, or a failure summary and retained log path with the
-command's failing status. Its logs prefer `RUNNER_TEMP`, otherwise `TMPDIR` or
-`/tmp`. Native collection packs remaining `formatting.*` logs as
-`formatting-logs.tar.gz` inside the outer native archive, covering logs outside
-the fixture scratch tree. The focused native-evidence fixture verifies complete
-stdout/stderr recovery and status preservation through the actual reporter and
-workflow archive bodies with substituted formatter/Make effects. Release metadata
-uses the shared read-only TOML version reader and prepared local jq/yq.
-The released 0.3.7 [Make admission qualification](evidence/adoption-037-make.md)
-covers hidden unsafe modes through the actual consumer Makefile under GNU Make
-4.3/Bash 5 and GNU Make 3.81/Bash 3.2. Leave `MFLAGS` generated by Make; explicit
-assignments are refused. [Its completed native acceptance](evidence/release-037.md)
-verifies source-bound receipts on all three hosts; the Linux profiles alone do
-not establish native macOS acceptance.
-The released 0.5.1 [owned Cargo jobserver repair](evidence/adoption-051-make.md)
-adds descriptor probes through the actual consumer Makefile on both Make/Bash
-profiles, preserving unsafe-mode refusal and first-failure routing. The direct
-Cargo and metadata effects in that fixture are substitutes. Actual parallel
-locked Cargo checks and full delivery validation have their own logs.
-[Complete native acceptance](evidence/release-051.md#complete-native-acceptance)
-verifies all three released-source receipts and completes
-[#48](https://github.com/dragginzgame/ic-metrics/issues/48).
-`make check-doc-links` checks maintained Markdown references with the shared
-local-link helper; public URL availability and historical source scope are
-reviewed separately. Those tooling changes are included in released 0.2.2.
+Setup is explicit; checks never install tools or unlock the selected graph. Pins
+live in `ci/tool-versions.env` and `ci/ic-tools.tsv`. Use the same optional
+`SHARED_TOOLING_STORE` setting for setup, checking and evidence collection.
+Host/IC/Cargo paths select admitted shared generations; earlier sets and failed
+candidates remain retained. Build-policy/compiler/native identity changes require
+explicit Cargo-tool setup. Application flags and wrappers remain separate from
+[the standard tool-build environment](local-setup.md#standard-cargo-tool-build-environment).
 
-Actual instruction-counter execution belongs to each consumer's platform and
-attribution checks. The old `make reader-check` and its CI artifacts qualify
-only the tagged pre-0.2 reader; they are not arithmetic-only qualification.
-Current native CI explicitly verifies the common pinned IC tool setup without
-running a reader canister, retaining source hashes, outcomes and logs for 30 days.
-Released 0.5.5 adopts Shared Tooling 0.3.7 and its Binaryen 133 selection.
-Prepare it explicitly with `make install-ic-tools` before offline checks;
-prior toolsets remain retained. [The adoption record](evidence/adoption-055.md)
-distinguishes the Linux optimizer smoke from hosted consumer qualification and
-the original frozen IC measurements. The existing retention gate also covers
-the completion-aware shared formatting checker.
-Mandatory comparisons in owned release fixtures/adapters and the native host
-gate explicitly refuse failures on Bash 3.2. Existing regressions execute actual
-wrong-version admission, contradictory parser output and host refusals; their
-substituted effects remain separate from hosted acceptance. Routine CI uses the
-common workflow/ref group to cancel superseded runs, retaining the full matrix.
-The [complete released-source native receipts](evidence/release-055.md#complete-native-acceptance)
-verify these checks and the actual Host 0.12.7 graph on all three hosts. Released
-0.5.6 also rejects incomplete preparation and selected-commit checks during EXIT cleanup;
-[its qualification](evidence/release-preparation-056.md) distinguishes genuine
-Bash 3.2 behavior from substituted release effects; [publication verification](evidence/release-056.md)
-retains that source's separate native acceptance. Released 0.6.0's
-[private Host 0.12.9 qualification](evidence/host-dependencies-0129.md) leaves
-arithmetic and both package floors unchanged.
-The opt-in [frozen histogram replay](evidence/histogram-replay-029.md) has separate
-Linux PocketIC execution and durable inputs. It is not a CI gate, product reader
-or native macOS measurement claim; ordinary library qualification stays separate.
-The separate [released 0.6 arithmetic experiment](evidence/arithmetic-cost-061.md)
-retains recording, prepared-batch merge, query and rejection costs with IC Testkit
-0.33.3-owned admission/startup and an exact PocketIC 16.1.0 executable. Its fresh
-extraction rebuilds all 11 Wasms and reproduces raw instruction/balance/projection
-CSV bytes. It adds no maintained server caller or arithmetic dependency; each
-frozen artifact keeps its own source, graph, server and measurement identity.
+After Rust edits, run `make fmt`. It sorts workspace manifests and formats Rust;
+`make fmt-check` is read-only. Select the affected package's focused checks:
 
-Native jobs have a bounded 60-minute budget for cold tool setup, the complete
-suite and evidence collection. The earlier 30-minute budget expired on Intel
-at released 0.5.0; [#52](https://github.com/dragginzgame/ic-metrics/issues/52)
-is corrected and [qualified on all three hosts](evidence/release-054-native.md#complete-native-acceptance)
-at released 0.5.4. The budget does not remove checks or
-change the acceptance of cancelled outcomes.
+| Scope | Commands |
+| --- | --- |
+| Arithmetic | `make check check-wasm clippy docs-check`; named `cargo test -p ic-metrics --locked <test-name>` |
+| Durable adapter | `make stable-check`; named `cargo test -p ic-metrics-stable --locked <test-name>` |
+| Host inspector | `make wasm-inspect-check` |
+| Snapshot/pins | `make shared-tooling-check check-pins pin-tools-check` |
+| Local tools/hooks | `make local-tools-test hook-check` |
+| Release/evidence adapters | `make release-tools-check ci-evidence-check` |
+| Maintained docs | `make check-doc-links`, consistency review and `git diff --check` |
 
-The configured CI runs `make ci` natively on every declared host and
-`make msrv` on Linux. Completed code delivery requires `make ci`, `make msrv`
-plus `make stable-msrv` and `make wasm-inspect-msrv` under the adopted baseline; inspection and
-documentation-only work use narrower checks. Release command stubs run in native CI. Maintainer release preparation requires
-cargo-edit and does not implicitly publish or clean artifacts. Native release
-command-substitute and metadata/admission/retention fixtures pass on both macOS
-architectures at released 0.2.10. Actual interrupted-release execution remains
-distinct; substitute fixtures do not demonstrate live GitHub effects.
-The later formatter setup and packaging changes are covered by the tagged
-0.1.3 native CI evidence above; the earlier 0.1.1 run remains scoped to its tag.
-The released 0.2.3 snapshot records 46c0277; 0.2.2 used b32d303,
-0.1.9 used a37771f, 0.1.8 used a7efade
-and earlier tagged evidence used f52c0e2.
-Native CI includes a scratch hook
-fixture using this consumer's actual formatting and setup targets. It covers
-logical path aliases, selected refresh, unrelated edits, partial staging and
-formatter failure isolation. The shared installer normalizes physical paths,
-including the correction tracked in
-[Shared Tooling #1](https://github.com/dragginzgame/shared-tooling/issues/1).
-Focused Linux fixtures and the tagged 0.1.3 native CI pass on their declared hosts.
-`make hook-check` runs only these tooling fixtures, with no commits or product
-compilation.
+Keep compilation checks sequential when they share `target/`; check for active
+builds before source mutation or compilation. Bare Cargo commands select the
+arithmetic package. Builds use locked dependencies. The arithmetic graph has no
+third-party dependency, platform reader, IC feature or server harness. Native
+stable tests use `VectorMemory` for storage/codec reopening, not IC execution.
+The inspector tests argument/file/budget admission, report publication and typed
+output failure; invocation inputs remain under `target/evidence/wasm-inspect-cli/`.
+
+## Full delivery and release gates
+
+Before delivering completed code, run `make ci`, then `make msrv`,
+`make stable-msrv` and `make wasm-inspect-msrv`, reusing passing evidence only
+for unchanged inputs. Full CI admits tools and pins before compilation, denies
+Clippy warnings, and checks builds, docs and tests for all three packages.
+Inspection and documentation-only work use narrower checks. Validation authority
+and release effects are governed by [AGENTS.md](../AGENTS.md).
+
+Release/publication are separate maintainer actions under
+[the release contract](releases.md). Standard release preflight prepares the
+locked dependency cache and selected Cargo tools before offline validation;
+standalone preflight only fetches/checks offline. Preparation and late checks
+bind the selected release commit rather than newer working-tree metadata.
+Neither validation nor release performs artifact cleanup.
+
+## Native evidence
+
+The workflow captures exact source inputs and host/compiler identities before
+setup, records setup/check/native outcomes and keeps stdout/stderr on failures.
+Tool candidate selection preserves admitted failed inputs and diagnostics;
+collection failure remains nonzero. Formatter logs outside the fixture scratch
+root are included. Uploads retain `native-ci.tar.gz` and its checksum for 30 days,
+including hidden release/index/configuration evidence inside the outer tar.
+
+Release, hook and evidence fixtures substitute only their declared effects;
+actual Git index, Make dispatch, receipt admission and failure retention retain
+independent checks. These fixtures perform no real Metrics release or registry
+publication. The admission fixture isolates parent validation/failure/summary
+paths. Successful cleanup affects only invocation-owned scratch, while failed
+inputs stay under `target/evidence/native-ci/`. Substitute execution does not
+prove live GitHub release recovery or canister measurement behavior.
+
+[Released 0.8.1 acceptance](evidence/release-081.md) verifies all three native
+receipts and the complete Rust-floor run on its exact published source.
+[The current handoff](status/current.md) binds pending work to separate local
+qualification. Earlier host/reader/release observations remain in their evidence
+owners and the verbatim guides retained by [the cleanup receipt](evidence/cleanup-082.md).
+They are not current platform readers, validation commands or acceptance of a
+later dependency graph. Actual IC execution and callback attribution belong to
+the owning consumers under [the extraction contract](extraction.md#downstream-contract-checks).

@@ -61,18 +61,15 @@ impl fmt::Display for StoreError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidState(error) => write!(formatter, "invalid metric state: {error}"),
-            other => formatter.write_str(match other {
-                Self::InvalidIdentifier => "invalid bounded metric identifier",
-                Self::RecordTooLarge => "metric record exceeds byte budget",
-                Self::MalformedRecord => "malformed metric record",
-                Self::UnsupportedFormat => "unsupported metric record format",
-                Self::KindMismatch => "metric kind differs",
-                Self::IdentityMismatch => "metric unit or reset epoch differs",
-                Self::BoundsMismatch => "histogram bounds differ",
-                Self::TooManyBounds => "histogram has too many finite bounds",
-                Self::StateRegression => "metric checkpoint regresses",
-                Self::InvalidState(_) => return Ok(()),
-            }),
+            Self::InvalidIdentifier => formatter.write_str("invalid bounded metric identifier"),
+            Self::RecordTooLarge => formatter.write_str("metric record exceeds byte budget"),
+            Self::MalformedRecord => formatter.write_str("malformed metric record"),
+            Self::UnsupportedFormat => formatter.write_str("unsupported metric record format"),
+            Self::KindMismatch => formatter.write_str("metric kind differs"),
+            Self::IdentityMismatch => formatter.write_str("metric unit or reset epoch differs"),
+            Self::BoundsMismatch => formatter.write_str("histogram bounds differ"),
+            Self::TooManyBounds => formatter.write_str("histogram has too many finite bounds"),
+            Self::StateRegression => formatter.write_str("metric checkpoint regresses"),
         }
     }
 }
