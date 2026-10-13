@@ -4,11 +4,28 @@ use core::fmt;
 
 use crate::{
     MeasurementMeanError, MeasurementStateError, add_count, add_total, checked_scaled_ratio,
-    mean_total,
 };
 
 #[cfg(test)]
 mod tests;
+
+// Preserve native-width division for ordinary windows; wide totals stay exact.
+const fn mean_total(samples: u64, total: u128) -> Option<u128> {
+    if total <= u64::MAX as u128 {
+        // TryFrom is not const at the arithmetic support floor.
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "the branch admits a u64 total"
+        )]
+        let narrow = total as u64;
+        match narrow.checked_div(samples) {
+            Some(mean) => Some(mean as u128),
+            None => None,
+        }
+    } else {
+        total.checked_div(samples as u128)
+    }
+}
 
 /// Why two tracked snapshots cannot supply an exact count/total interval.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

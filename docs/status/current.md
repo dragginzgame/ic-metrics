@@ -5,26 +5,35 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.8.3
+## Pending 0.8.4
 
-The stable decoder uses one checked slice split instead of checking the same
-boundary twice. Truncated input retains the existing typed failure before cursor
-advancement. Public signatures, V1 bytes, size limits and restoration/identity
-checks stay unchanged. [The decoder record](../evidence/decoder-083.md) retains
-its source and qualification. Current guides now identify the scalar counter as
-released. This compatible batch selects 0.8.3 notes; package metadata stays
-0.8.2 and the real Git index/ref is unchanged. The decoder receipt retains its
-earlier Memory 0.35.19/Host 0.15.2 graph qualification.
+Native/wide mean projection now lives with its aggregate and interval callers;
+the implementation and public contract stay unchanged. Existing empty/zero,
+exact-cap, overflow, interval and constant-evaluation checks retain their owners.
+Standalone aggregate/interval mean Wasms are byte-identical before and after the
+move; this is raw byte evidence, not an IC instruction or cycle measurement.
+The incoming lock selects Memory 0.36.1; its published sources and unchanged
+exact collection types verify. Package metadata stays 0.8.3 and the real Git
+index/ref is unchanged. Qualification belongs to this source and graph.
 
-The incoming selections now use Memory 0.36.0 and private inspector Host 0.16.0.
-The stable bootstrap fixture supplies owned explicit requests; hosts still compose
-and bootstrap once. Exact `ic-stable-structures` 0.7.2 types, V1 records, retained
-allocation IDs and Rust floors remain unchanged. Constructor dependencies leave
-the stable graph, while arithmetic stays dependency-free.
-[The Memory adoption receipt](../evidence/memory-083.md) verifies the published
-sources and the selected graph. Full CI passes in 282 seconds and all package-floor
-gates pass; eight checkpoints match the 140 frozen/current inputs. Corruption,
-checkpoint refusal and one-binding reopening coverage stays intact.
+Full `make ci` passes in 377 seconds and all three package-floor gates pass.
+Eight checkpoints agree on the 140 frozen/current inputs. The
+[frozen qualification](../evidence/cleanup-084.tar.gz) and
+[checksum](../evidence/cleanup-084.tar.gz.sha256) retain before/after sources,
+registry/graph verification, mean probes, compiler identities and validation logs.
+Final documentation edits pass link, consistency and diff checks separately.
+
+## Delivered 0.8.3
+
+Public main, peeled v0.8.3 and local release commit agree on
+`39d7e0dd579231b61cca71bb713f3ba5afef4227`. The release contains the checked
+stable decoder and explicit Memory 0.36.0 request fixture with Host 0.16.0.
+[The decoder receipt](../evidence/decoder-083.md) retains its earlier graph;
+[the Memory adoption receipt](../evidence/memory-083.md) retains the final
+282-second local CI/floor qualification. Those preparation receipts do not
+qualify the pending Memory 0.36.1 graph or establish hosted release acceptance.
+Exact `ic-stable-structures` 0.7.2 types, V1 bytes and retained allocation IDs
+remain unchanged; arithmetic stays dependency-free.
 
 Hosts coordinate their Memory 0.36 adoption through
 [Canic #527](https://github.com/dragginzgame/canic/issues/527),
@@ -32,14 +41,9 @@ Hosts coordinate their Memory 0.36 adoption through
 [Blob Storage #64](https://github.com/dragginzgame/ic-blob-storage/issues/64).
 Local adapter qualification does not establish those applications' acceptance.
 
-## Released 0.8.2
-
-Public main, peeled v0.8.2 and local released HEAD agree on
-`65d824d501d9f3d21bb9b01c298488dcdf3f7d23`. Both official non-yanked archives,
-embedded Git identities and all 13 core/four stable Rust sources verify.
-[Publication verification](../evidence/release-082.md) retains exact checksums and
-CI observations. Linux and the floor job now pass; both macOS jobs remain queued
-at the final read. Publication does not complete native acceptance.
+Earlier [0.8.2 publication verification](../evidence/release-082.md) retains its
+exact archives, source and initial CI observations. Publication does not complete
+native acceptance.
 [Released 0.8.1 acceptance](../evidence/release-081.md)
 retains its own complete Linux, Intel, Apple Silicon and Rust-floor receipts.
 
@@ -51,7 +55,7 @@ and [cleanup record](../evidence/cleanup-082.md) retain their pre-release source
 including the 261-second final CI/floor proof and separate raw Wasm comparison.
 Historical measurements do not establish later application costs.
 
-The released lock selected Host 0.15.2, Memory 0.35.19 and Syn 3.0.9. Arithmetic
+The selected lock retains Host 0.16.0, Memory 0.36.1 and Syn 3.0.9. Arithmetic
 stays on Rust 1.85; stable and private inspector stay on 1.88. Shared Tooling
 0.9.10 `7e55adecf6f0b196c050f104b37f8c69b6bf434e` retains all 104 payloads and
 91 roots. [Its adoption receipt](../evidence/adoption-082-shared-0910.md) keeps the
