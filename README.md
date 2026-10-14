@@ -89,6 +89,13 @@ integer ratio from a `u128` numerator, without floating point or overflowing
 intermediate multiplication. Callers establish exact inputs and handle empty or
 overflowed diagnostics before using it. Consumer adoption remains separately qualified.
 
+`checked_scaled_ratio_nearest` provides an explicit nearest-integer projection,
+rounding exact halves upward. For example, `(1, 6, 1000)` returns 167 and
+`(1, 2, 1)` returns 1. It shares exact-input, zero-denominator and final-overflow
+admission with the floor operation; a rounded increment can itself overflow.
+Formatting and empty/missing values remain caller-owned. Existing ratios and
+scaled means continue to round down.
+
 Known callers are IcyDB, Canic, ic-timers, ic-backup, IC Blob Storage's
 restoration test probe and Toko Miner's production game-shard action metrics. Their
 attribution, registries, callback roles, replication, persistence and reporting

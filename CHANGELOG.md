@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.5]
+
+### Added
+
+- Add allocation-free, constant-evaluable `checked_scaled_ratio_nearest` for
+  nearest integer projection with exact halves upward. Existing floor ratios,
+  scaled means, typed errors and stored V1 bytes retain their contracts.
+  [#80](https://github.com/dragginzgame/ic-metrics/issues/80).
+
 ## [0.9.4] - 2026-10-14
 
 ### Changed

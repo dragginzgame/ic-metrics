@@ -1,4 +1,4 @@
-use super::{MeasurementRatioError, checked_scaled_ratio};
+use super::{MeasurementRatioError, checked_scaled_ratio, checked_scaled_ratio_nearest};
 
 #[test]
 fn projects_fractional_means_proportions_and_measured_zero() {
@@ -59,4 +59,52 @@ fn agrees_with_direct_exact_arithmetic_for_small_inputs() {
         }
     }
     assert_eq!(TENTHS, Ok(33));
+}
+
+#[test]
+fn nearest_agrees_with_independent_small_integer_reference() {
+    const HALF: Result<u128, MeasurementRatioError> = checked_scaled_ratio_nearest(1, 2, 1);
+    assert_eq!(HALF, Ok(1));
+    for numerator in 0..=100_u128 {
+        for denominator in 1..=20_u64 {
+            for scale in [0, 1, 10, 100] {
+                assert_eq!(
+                    checked_scaled_ratio_nearest(numerator, denominator, scale),
+                    Ok(
+                        (numerator * u128::from(scale) + u128::from(denominator) / 2)
+                            / u128::from(denominator)
+                    ),
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn nearest_preserves_zero_precedence_and_exact_caps() {
+    for numerator in [0, 1, u128::MAX] {
+        for scale in [0, 1, u64::MAX] {
+            assert_eq!(
+                checked_scaled_ratio_nearest(numerator, 0, scale),
+                Err(MeasurementRatioError::ZeroDenominator)
+            );
+        }
+    }
+    assert_eq!(checked_scaled_ratio_nearest(u128::MAX, 1, 0), Ok(0));
+    for divisor in [1, 10, u64::MAX] {
+        assert_eq!(
+            checked_scaled_ratio_nearest(u128::MAX, divisor, divisor),
+            Ok(u128::MAX)
+        );
+    }
+    assert_eq!(
+        checked_scaled_ratio_nearest(u128::MAX, 1, 2),
+        Err(MeasurementRatioError::Overflow)
+    );
+    let rounded_overflow = (u128::MAX / 7) * 6 + 3;
+    assert_eq!(checked_scaled_ratio(rounded_overflow, 6, 7), Ok(u128::MAX));
+    assert_eq!(
+        checked_scaled_ratio_nearest(rounded_overflow, 6, 7),
+        Err(MeasurementRatioError::Overflow)
+    );
 }

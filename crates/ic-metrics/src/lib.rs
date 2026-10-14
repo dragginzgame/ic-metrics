@@ -23,7 +23,7 @@ pub use histogram::{
     HistogramBoundsError, HistogramMergeError, HistogramQueryError, HistogramRange,
     MeasurementHistogram,
 };
-pub use ratio::{MeasurementRatioError, checked_scaled_ratio};
+pub use ratio::{MeasurementRatioError, checked_scaled_ratio, checked_scaled_ratio_nearest};
 pub use state::MeasurementStateError;
 pub use summary::MeasurementSummary;
 
