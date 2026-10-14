@@ -2,7 +2,7 @@
 # version	0.12.5
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	2d5e01e08fab6b432e463d721e5e2f7c6a929fdc
+revision	345865182de74a4cadfb9028b7c2055796d9552e
 # entrypoint	rules/contributions.md
 # entrypoint	DRAGGINZGAME.md
 # entrypoint	docs/principles/README.md
@@ -196,8 +196,8 @@ file	a9ed416a02f737d420723642935de94ffdd53cf92f75bb06ab4b0bc1c68430dc	-	tasks/ca
 file	d0b9fc7c8cc0ccc20a4700901848f4374138c6b92b57a478298ea6bff2a4eaad	x	scripts/ci/test-tool-downloads.sh
 file	7abc7480e1092046849328168a5d29822d44dfc6ffff1ad60d388c4099c159e8	-	rules/change-reporting.md
 file	a7b03e2b6676c9461d68219f5aad671e5afbae53df385568e1b966cf6d0a81cd	x	scripts/ci/install-ci-tool.sh
-file	7c0233196eb9fe46ffe9a3ee895819d6d9c8abd5a9ab7823ff7edd699b6aa5ed	x	scripts/ci/cargo-release-metadata.sh
-file	25add1fc768cca8c44f1b3ac8e3dd636b07204acf61cfdc8815f45974798b357	x	scripts/ci/test-cargo-release-metadata.sh
+file	94d4a1c8d36f3bb145a125b15da434dfa8b094fdd63effaff86f82774d4d0e8a	x	scripts/ci/cargo-release-metadata.sh
+file	e5376aa2cb8e79bcd323e61d4d7d0f595d8c7ed0299d42867f0aad8870593181	x	scripts/ci/test-cargo-release-metadata.sh
 file	ad65666b8b34e4967cecff3cfc97038dbc5dfbce146ac57316add2b380310ae1	x	scripts/ci/collect-tool-evidence.sh
 file	7741e24f2540eb15c48c59e58beb7ac3830c148becc817b83c7822b06ab6b6d5	-	scripts/ci/fixture-retention-probes.sh
 file	c9971d3de02546e81e25f19ab74dfa7997164fa05fe76e0d323b200a30f28318	-	docs/cargo-publication.md
@@ -224,7 +224,7 @@ file	ae47d5db88f4c4b0c8bce9ee94b83edc25ce450daa9df0275971f270439c5d34	-	make/rel
 file	394b173e903aeb4d057f57665a0fad17233b677eff1f63d17d81314b3086856b	-	make/rust-format.mk
 file	e00937f22bd31231993ae9c1d7eda844227b39529466d017de44dbc1f0618026	-	scripts/ci/cargo-workspace-members.jq
 file	fed2573258080a0c89c7db113208a774f615ca29c372e62c1d2334e58c165654	x	scripts/ci/compare-stable-versions.pl
-file	a1a9739e4749bfa9c594c8714a89aac3c2394b87cdfbc7c27c3936c8071ece4b	x	scripts/ci/render-cargo-workspace-version.pl
+file	f5ad60c7981daa237ac4e84bbe40ccaf2f795e417873b2aa5af6c5c01140ce65	x	scripts/ci/render-cargo-workspace-version.pl
 file	37477ebdbf9f03da16473290b12bb99436c73f1855df27d592438dc6324e05ea	x	scripts/ci/tool-catalog-records.pl
 file	cebc0fa4ee9944550350a492a3bc1084e28820e2c915e20351c336d87ce0359f	-	make/execution.mk
 file	eeeca9e6e7b92b888fd6547733d6136f0e7e9859d37c983f8048e60551a15c39	-	scripts/ci/StableVersion.pm

@@ -39,7 +39,7 @@ cat >> "$fixture/bin/make" <<'MAKE'
 MAKE
 chmod +x "$fixture/bin/make"
 export PATH="$fixture/bin:$PATH" CARGO_NET_OFFLINE=true
-export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-05
+export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.2.0 RELEASE_DATE=2026-10-05
 worktree="$fixture/version-input"
 mkdir -p "$worktree"
 cd "$worktree"
@@ -82,7 +82,7 @@ TOML
     printf '#![no_std]\n' > "crates/$package/src/lib.rs"
 done
 printf '\n[dependencies]\nic-metrics.workspace = true\n' >> crates/ic-metrics-stable/Cargo.toml
-printf '# Changelog\n\n## [0.1.2]\n\n- Consumer note.\n\n## [0.1.1] - 2026-10-05\n\n- Previous.\n' > CHANGELOG.md
+printf '# Changelog\n\n## [0.2.0]\n\n- Consumer note.\n\n## [0.1.1] - 2026-10-05\n\n- Previous.\n' > CHANGELOG.md
 cargo generate-lockfile --offline > setup.log 2>&1
 cargo sort --workspace >> setup.log 2>&1
 cp Cargo.toml Cargo.lock CHANGELOG.md originals/
@@ -93,7 +93,7 @@ bash "$root/scripts/release/metadata.sh" prepare > result.log 2>&1
 bash "$root/scripts/release/metadata.sh" check >> result.log 2>&1
 cargo metadata --locked --offline --format-version 1 | jq -r \
     '.packages[] | select(.source == null) | [.name,.version] | @tsv' | LC_ALL=C sort > actual-packages
-printf 'ic-metrics\t0.1.2\nic-metrics-stable\t0.1.2\n' > expected-packages
+printf 'ic-metrics\t0.2.0\nic-metrics-stable\t0.2.0\n' > expected-packages
 cmp expected-packages actual-packages
 # Keep the real two-package consumer boundary independent of upstream toy names.
 cp Cargo.lock prepared.lock

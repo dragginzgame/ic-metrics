@@ -38,8 +38,16 @@ remain independent. Documentation links, historical readback and diff checks pas
 
 The lock still selects Memory 0.38.0. Arithmetic retains Rust 1.85 native/Wasm;
 the optional stable package retains Rust 1.88. Shared's recorded candidate is
-`2d5e01e08fab6b432e463d721e5e2f7c6a929fdc`; the separately managed published
-Host inspector remains 0.17.10. No snapshot or executable-tool selection changes.
+`345865182de74a4cadfb9028b7c2055796d9552e`; the separately managed published
+Host inspector remains 0.17.10. The refresh changes three metadata helpers;
+executable-tool selections remain unchanged.
+
+[Shared PR #197](https://github.com/dragginzgame/shared-tooling/pull/197) repairs
+coordinated local dependency requirements. The earlier release attempt restored
+manifest, lock and notes exactly after Cargo refused its stale `^0.9` requirement.
+Its retained plan remains untouched. After committing this source repair, the
+standard minor command can restart preparation through the runner's existing
+clean-descendant recovery, retaining the old attempt and repeating validation.
 
 [Memory PR #103](https://github.com/dragginzgame/ic-memory/pull/103) remains open;
 the official registry index's latest Memory 0.38.0 has no test-support feature.
