@@ -3,7 +3,8 @@
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
 `7a7430bd30902dc655a025be61696ce19417c54a` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
-there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
+the validation-cadence exception below is the only baseline exception.
+Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
 
 ## Ownership
@@ -59,10 +60,9 @@ and [the extraction contract](docs/extraction.md) before implementation.
   `target/` and locked dependencies; do not upgrade dependencies as a side effect.
 - After Rust edits, run `make fmt`, then selected package checks or named tests.
   Focused commands and host qualification are in [docs/hosts.md](docs/hosts.md).
-  Before delivering completed code as ready, run `make ci` and all documented
-  package-floor checks, reusing passing evidence for unchanged inputs. Inspection
-  alone does not authorize that suite; documentation-only work needs link,
-  consistency and diff checks. Releases remain separately authorized.
+  Full release checks are `make ci` and documented package-floor checks;
+  execution follows the validation cadence below. Releases remain separately
+  authorized.
 - Fix warnings in the selected Clippy gate before later validation.
 - When shared contracts change, review the IcyDB, Canic, `ic-timers`,
   `ic-backup`, IC Blob Storage test-probe and Toko Miner callers under
@@ -91,3 +91,20 @@ and [the extraction contract](docs/extraction.md) before implementation.
   contracts in `docs/extraction.md`; focused commands remain in `docs/hosts.md`.
   Existing performance evidence under `docs/evidence` retains its domain scope
   and original identities. Audit adoption schedules no review or broad gate.
+
+## Validation cadence during shared-policy adoption
+
+Shared Tooling owns the [validation policy](DRAGGINZGAME.md#validation-and-evidence);
+local guidance supplies commands and product qualification requirements only.
+Maintainer-approved exception (2026-10-14): until this snapshot adopts Shared
+Tooling's focused-handoff policy, replace its full-suite-before-handoff requirement
+with focused checks of changed behavior and directly affected callers, including
+relevant failure/recovery paths. Reuse unchanged passing evidence. Documentation
+changes need link, consistency and diff checks only. Run local full suites only
+for an explicitly authorized release or an explicit request for those checks;
+implementation, continuation, PR preparation and readiness requests do not qualify.
+Report tested scope; an unrun full suite alone is not a handoff blocker. Configured
+CI, required branch checks, release gates and separate effect authority remain
+unchanged. This exception avoids redundant local testing; it does not claim a
+snapshot refresh. On reviewed adoption, remove this exception and retain only the
+link to the canonical policy and repository-specific commands.
