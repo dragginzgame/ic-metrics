@@ -50,7 +50,7 @@ done
 mkdir -p "$fixture/host-bin"
 cat > "$fixture/host-bin/uname" <<'UNAME'
 #!/usr/bin/env bash
-case "$1" in -s) printf '%s\n' "$FIXTURE_HOST_OS" ;; -m) printf '%s\n' "$FIXTURE_HOST_ARCH" ;; *) exit 2 ;; esac
+case "$1" in -s) printf '%s\n' "$FIXTURE_HOST_OS"; exit "${FIXTURE_HOST_STATUS:-0}" ;; -m) printf '%s\n' "$FIXTURE_HOST_ARCH" ;; *) exit 2 ;; esac
 UNAME
 cat > "$fixture/host-bin/sw_vers" <<'VERSION'
 #!/usr/bin/env bash
@@ -58,23 +58,26 @@ cat > "$fixture/host-bin/sw_vers" <<'VERSION'
 printf '%s\n' "$FIXTURE_HOST_VERSION"
 VERSION
 chmod +x "$fixture/host-bin/uname" "$fixture/host-bin/sw_vers"
-for scenario in success wrong-os wrong-architecture wrong-version; do
-    host_os=Darwin host_arch=arm64 host_version=15.0
+# Shared owns generic mismatches; retain this workflow's ordering/PATH boundary.
+for scenario in success wrong-os failed-observation; do
+    host_os=Darwin host_arch=arm64 host_version=15.0 host_status=0
     case "$scenario" in
         wrong-os) host_os=Linux ;;
-        wrong-architecture) host_arch=x86_64 ;;
-        wrong-version) host_version=14.0 ;;
+        failed-observation) host_status=43 ;;
     esac
+    expected_status=1
+    [[ "$scenario" != failed-observation ]] || expected_status=43
     : > "$fixture/host-$scenario.path"
     status=0
-    PATH="$fixture/host-bin:$PATH" EXPECTED_OS=Darwin EXPECTED_ARCHITECTURE=arm64 \
+    (cd "$root" && PATH="$fixture/host-bin:$PATH" EXPECTED_OS=Darwin EXPECTED_ARCHITECTURE=arm64 \
         FIXTURE_HOST_OS="$host_os" FIXTURE_HOST_ARCH="$host_arch" FIXTURE_HOST_VERSION="$host_version" \
+        FIXTURE_HOST_STATUS="$host_status" \
         GITHUB_PATH="$fixture/host-$scenario.path" "$BASH" --noprofile --norc -e -o pipefail \
-        "$fixture/commands/native_host.sh" > "$fixture/host-$scenario.log" 2>&1 || status=$?
+        "$fixture/commands/native_host.sh") > "$fixture/host-$scenario.log" 2>&1 || status=$?
     if [[ "$scenario" == success ]]; then
         [[ "$status" == 0 && "$(cat "$fixture/host-$scenario.path")" == /bin ]] || exit 1
     else
-        [[ "$status" == 1 && ! -s "$fixture/host-$scenario.path" ]] || exit 1
+        [[ "$status" == "$expected_status" && ! -s "$fixture/host-$scenario.path" ]] || exit 1
     fi
 done
 # Copy the workflow's source inputs and Make/helper closure, including pending

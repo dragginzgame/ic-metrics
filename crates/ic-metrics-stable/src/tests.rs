@@ -20,7 +20,7 @@ fn store() -> MetricsStore<VectorMemory> {
 
 fn encode<T: crate::DurableMetric>(identity: &MetricIdentity, value: &T) -> Vec<u8> {
     let payload_size = T::encoded_size(crate::metric::ACCESS).unwrap();
-    codec::encode(identity, value, payload_size).unwrap()
+    codec::encode(identity, value, payload_size)
 }
 
 #[test]

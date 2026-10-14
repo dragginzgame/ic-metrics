@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.5]
+
+### Changed
+
+- Share cleanup probes, Git source-admission coverage and formatter-log discovery
+  with Shared Tooling, retaining Metrics' release ordering, diagnostic retention,
+  archive layout and Git custody. Library APIs and stored V1 bytes are unchanged.
+- Remove the obsolete Cargo-edit prerequisite and release-fixture substitute;
+  metadata preparation remains owned by Shared Tooling's literal renderer.
+- Admit native hosts through the shared validator, preserving local matrices and
+  PATH ordering while refusing failed observations with plausible output.
+- Encode already admitted durable state without unreachable runtime errors;
+  compile-time layout budgets preserve record limits and decoder validation.
+
 ## [0.9.4] - 2026-10-14
 
 ### Changed

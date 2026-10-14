@@ -82,13 +82,18 @@ output failure at its IC Host owner. Metrics checks offline tool admission and
 actual dispatch to the published CLI; smoke inputs remain under
 `target/evidence/wasm-inspector/`.
 
-## Full delivery and release gates
+## Full release validation
 
-Before delivering completed code, run `make ci`, then `make msrv` and
-`make stable-msrv`, reusing passing evidence only for unchanged inputs. Full CI admits tools and pins before compilation, denies
-Clippy warnings, and checks builds, docs and tests for both packages.
-Inspection and documentation-only work use narrower checks. Validation authority
-and release effects are governed by [AGENTS.md](../AGENTS.md).
+Focused checks for changed behavior and directly affected callers are sufficient
+for ordinary handoff under [the validation policy](../DRAGGINZGAME.md#validation-and-evidence).
+Run full local suites only for an explicitly authorized release or an explicit
+request for those checks. The full gate is `make ci`, then `make msrv` and
+`make stable-msrv`; reuse passing evidence only for unchanged inputs. Full CI
+admits tools and pins before compilation, denies Clippy warnings, and checks
+builds, docs and tests for both packages. Configured CI and required branch
+checks remain unchanged. Inspection and documentation-only work use narrower
+checks. [AGENTS.md](../AGENTS.md) retains product constraints and separate release
+and publication authority.
 
 Release/publication are separate maintainer actions under
 [the release contract](releases.md). Standard release preflight prepares the
@@ -99,6 +104,10 @@ bind the selected release commit rather than newer working-tree metadata.
 Neither validation nor release performs artifact cleanup.
 
 ## Native evidence
+
+Native host admission uses Shared's read-only validator with the local matrix's
+OS, architecture and explicit macOS major. Failed observations refuse before
+local PATH changes; the portable fixture does not establish native macOS support.
 
 The workflow captures exact source inputs and host/compiler identities before
 setup, records setup/check/native outcomes and keeps stdout/stderr on failures.
@@ -112,11 +121,13 @@ payload, source tree, scratch directory or nested archive is selected. It is
 collected before the complete archive so full collection failures still leave
 readable diagnostics; neither archive silently truncates selected logs.
 
-Generic Cargo metadata edge cases run in the snapshot-owned fixture. The
-Metrics metadata fixture checks the real two-package adapter and stale stable
+Generic Cargo metadata and Git source-admission cases run in snapshot-owned
+fixtures. The Metrics metadata fixture checks the real two-package adapter and stale stable
 member refusal. Tool candidate selection/archive orchestration is shared; the
-consumer keeps source/outcome selection, outer Git custody and uploads. Local
-cleanup uses the shared helper after anchoring each scratch path physically.
+consumer keeps source/outcome selection, outer Git custody and uploads. Formatter
+log discovery uses the shared selector. Local cleanup probes delegate actual
+initialization/EXIT prefixes to the shared helper; Metrics retains its fixture
+roster, effectful-failure assertions and intentional successful retention.
 
 Release, hook and evidence fixtures substitute only their declared effects;
 actual Git index, Make dispatch, receipt admission and failure retention retain

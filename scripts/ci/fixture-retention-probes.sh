@@ -2,6 +2,33 @@
 # Shared companions: scripts/ci/fixture-lifecycle.sh
 # Sourced qualification helpers. Callers own fixture rosters and round trips.
 
+# Render only the actual initialization/EXIT boundary. Explicit variable names
+# avoid guessing a consumer's directory or repository ownership. The child must
+# receive RETENTION_SOURCE_ROOT and RETENTION_EXIT_PATH from its caller.
+fixture_probe_prefix() {
+    local source="$1" output="$2" root_variable="$3" directory_variable="$4" injection="$5"
+    [[ "$root_variable" =~ ^[A-Za-z_][A-Za-z0-9_]*$ &&
+       "$directory_variable" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || return 2
+    RETENTION_ROOT_VARIABLE="$root_variable" RETENTION_DIRECTORY_VARIABLE="$directory_variable" \
+        RETENTION_INJECTION="$injection" awk '
+        $0 ~ "^" ENVIRON["RETENTION_ROOT_VARIABLE"] "=" {
+            print ENVIRON["RETENTION_ROOT_VARIABLE"] "=\"$RETENTION_SOURCE_ROOT\""
+            next
+        }
+        { print }
+        /^trap .* EXIT$/ {
+            variable=ENVIRON["RETENTION_DIRECTORY_VARIABLE"]
+            print "printf \"%s\\n\" \"$" variable "\" > \"$RETENTION_EXIT_PATH\""
+            print "printf \"retained evidence\\n\" > \"$" variable "/exit-evidence\""
+            print ENVIRON["RETENTION_INJECTION"]
+            print "exit 99"
+            injected=1
+            exit
+        }
+        END { if (!injected) exit 1 }
+    ' "$source" > "$output"
+}
+
 fixture_probe_exit() {
     local source="$1" probe_root="$2" source_root="$3" name="$4" failure="$5"
     shift 5
@@ -15,6 +42,7 @@ fixture_probe_exit() {
         nonzero) injection='exit 23'; expected=23 ;;
         premature) injection='exit 0'; expected=1 ;;
         completed) injection='fixture_complete=true; exit 0'; expected=0 ;;
+        retained-completed) injection='fixture_complete=true; exit 0'; expected=0 ;;
         failed-completion) injection='fixture_complete=true; exit 23'; expected=23 ;;
         cleanup-failure) injection='rm() { return 37; }; fixture_complete=true; exit 0'; expected=37 ;;
         *) printf 'Unknown retention probe: %s\n' "$failure" >&2; return 2 ;;
@@ -23,27 +51,16 @@ fixture_probe_exit() {
     local exit_path="$probe_root/$name-$failure.exit"
     mkdir -p "$directory" || return
     cp "$source_root/scripts/ci/fixture-lifecycle.sh" "$directory/" || return
-    RETENTION_INJECTION="$injection" awk '
-        { print }
-        /^ROOT=".*%\/\.\}"$/ {
-            print "ROOT=\"$RETENTION_SOURCE_ROOT\""
-        }
-        /^trap .* EXIT$/ && !injected {
-            print "printf \"%s\\n\" \"${fixture:-${FIXTURE:-${FIXTURE_ROOT:-}}}\" > \"$RETENTION_EXIT_PATH\""
-            print "printf \"retained evidence\\n\" > \"${fixture:-${FIXTURE:-${FIXTURE_ROOT:-}}}/exit-evidence\""
-            print ENVIRON["RETENTION_INJECTION"]
-            print "exit 99"
-            injected=1
-        }
-        END { if (!injected) exit 1 }
-    ' "$source" > "$directory/probe.sh" || return
+    fixture_probe_prefix "$source" "$directory/probe.sh" \
+        "${FIXTURE_PROBE_ROOT_VARIABLE:-ROOT}" "${FIXTURE_PROBE_DIRECTORY_VARIABLE:-fixture}" \
+        "$injection" || return
     RETENTION_SOURCE_ROOT="$source_root" RETENTION_EXIT_PATH="$exit_path" \
         TMPDIR="$probe_root" "$BASH" "$directory/probe.sh" "$@" \
         > "$probe_root/$name-$failure.log" 2>&1 || status=$?
     [[ "$status" == "$expected" ]] || return 1
     retained="$(cat "$exit_path")" || return
-    [[ -n "$retained" ]] || return 1
-    if [[ "$expected" == 0 ]]; then
+    [[ "$retained" == "$probe_root/"* ]] || return 1
+    if [[ "$expected" == 0 && "$failure" != retained-completed ]]; then
         [[ ! -e "$retained" ]] || return 1
     else
         [[ -d "$retained" && "$(cat "$retained/exit-evidence")" == 'retained evidence' ]] || return 1

@@ -5,12 +5,31 @@
 
 use ic_metrics::MeasurementAggregate;
 
-use crate::{DurableMetric, MetricIdentity, StoreError};
+use crate::{DurableMetric, MAX_HISTOGRAM_BOUNDS, MAX_UNIT_BYTES, MetricIdentity, StoreError};
 
 pub const AGGREGATE_BYTES: usize = 33;
+pub const SUMMARY_BYTES: usize = AGGREGATE_BYTES + 8;
+pub const HISTOGRAM_BASE_BYTES: usize = AGGREGATE_BYTES + 2 + 9;
+pub const HISTOGRAM_BUCKET_BYTES: usize = 17;
 
 const MAGIC: &[u8; 4] = b"ICM\x01";
 const MAX_RECORD_BYTES: usize = 4608;
+const HEADER_BYTES: usize = 4 + 1 + 1 + 8;
+
+// Only the sealed, shape-admitted encoders can write records. Keep their budgets
+// tied to the same constants used by identity and payload-size admission.
+const _: () = {
+    assert!(MAX_UNIT_BYTES <= u8::MAX as usize);
+    assert!(HEADER_BYTES + MAX_UNIT_BYTES + AGGREGATE_BYTES <= MAX_RECORD_BYTES);
+    assert!(HEADER_BYTES + MAX_UNIT_BYTES + SUMMARY_BYTES <= MAX_RECORD_BYTES);
+    assert!(
+        HEADER_BYTES
+            + MAX_UNIT_BYTES
+            + HISTOGRAM_BASE_BYTES
+            + HISTOGRAM_BUCKET_BYTES * MAX_HISTOGRAM_BOUNDS
+            <= MAX_RECORD_BYTES
+    );
+};
 
 pub struct Decoder<'a> {
     remaining: &'a [u8],
@@ -98,7 +117,7 @@ pub fn envelope<'a>(
     let length = usize::from(decoder.byte()?);
     let unit = decoder.take(length)?;
     let unit = std::str::from_utf8(unit).map_err(|_| StoreError::MalformedRecord)?;
-    crate::identifier(unit, 64).map_err(|_| StoreError::MalformedRecord)?;
+    crate::identifier(unit, MAX_UNIT_BYTES).map_err(|_| StoreError::MalformedRecord)?;
     let epoch = decoder.u64()?;
     if unit != identity.unit || epoch != identity.epoch {
         return Err(StoreError::IdentityMismatch);
@@ -110,21 +129,22 @@ pub fn encode<T: DurableMetric>(
     identity: &MetricIdentity,
     value: &T,
     payload_size: usize,
-) -> Result<Vec<u8>, StoreError> {
+) -> Vec<u8> {
     // The store has already admitted T::encoded_size before reading any row.
     // Sealed encoders write that exact payload size; units are constructor-admitted.
-    let length = u8::try_from(identity.unit.len()).map_err(|_| StoreError::InvalidIdentifier)?;
-    let capacity = 14 + identity.unit.len() + payload_size;
-    if capacity > MAX_RECORD_BYTES {
-        return Err(StoreError::RecordTooLarge);
-    }
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "constructor-admitted units fit in u8 by the layout budget assertion"
+    )]
+    let length = identity.unit.len() as u8;
+    let capacity = HEADER_BYTES + identity.unit.len() + payload_size;
     let mut bytes = Vec::with_capacity(capacity);
     bytes.extend_from_slice(MAGIC);
     bytes.extend_from_slice(&[T::kind(crate::metric::ACCESS), length]);
     bytes.extend_from_slice(identity.unit.as_bytes());
     bytes.extend_from_slice(&identity.epoch.to_le_bytes());
     value.encode_state(crate::metric::ACCESS, &mut bytes);
-    Ok(bytes)
+    bytes
 }
 
 pub fn decode<T: DurableMetric>(

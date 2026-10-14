@@ -56,6 +56,7 @@ jobs:
             scripts/dev/install-rust-tools.sh scripts/dev/wasm-inspector.sh scripts/dev/test-wasm-inspector.sh scripts/ci/test-rust-tools.sh \
             scripts/dev/tool-store.sh scripts/dev/cargo-tool-build.sh scripts/ci/test-tool-store.sh \
             scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh scripts/ci/test-make-consumer.sh \
+            scripts/ci/check-native-host.sh scripts/ci/test-native-host.sh \
             scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
             scripts/ci/collect-tool-evidence.sh scripts/ci/test-cargo-release-metadata.sh \
             scripts/ci/fixture-lifecycle.sh scripts/ci/fixture-retention-probes.sh \
@@ -88,11 +89,11 @@ jobs:
           EXPECTED_OS: ${{ matrix.os }}
           EXPECTED_ARCHITECTURE: ${{ matrix.architecture }}
         run: |
-          [[ "$(uname -s)" == "$EXPECTED_OS" ]] || exit 1
-          [[ "$(uname -m)" == "$EXPECTED_ARCHITECTURE" ]] || exit 1
           if [[ "$EXPECTED_OS" == Darwin ]]; then
-            [[ "$(sw_vers -productVersion)" == 15.* ]] || exit 1
+            bash scripts/ci/check-native-host.sh "$EXPECTED_OS" "$EXPECTED_ARCHITECTURE" 15
             echo /bin >> "$GITHUB_PATH"
+          else
+            bash scripts/ci/check-native-host.sh "$EXPECTED_OS" "$EXPECTED_ARCHITECTURE"
           fi
       # dtolnay/rust-toolchain v1
       - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
@@ -189,12 +190,10 @@ jobs:
           # The formatter prefers RUNNER_TEMP, outside the native scratch tree.
           # Pack its retained diagnostics before hashing the native payloads.
           formatting_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
-          formatting_logs=()
-          for log in "$formatting_root"/formatting.*; do
-            if [[ -f "$log" ]]; then formatting_logs+=("$formatting_root" "${log##*/}"); fi
-          done
-          if [[ ${#formatting_logs[@]} != 0 ]]; then
-            bash scripts/ci/archive-evidence.sh target/evidence/native-ci/formatting-logs.tar.gz "${formatting_logs[@]}"
+          source scripts/ci/formatting-evidence.sh
+          select_formatting_evidence "$formatting_root"
+          if [[ ${#formatting_evidence[@]} != 0 ]]; then
+            bash scripts/ci/archive-evidence.sh target/evidence/native-ci/formatting-logs.tar.gz "${formatting_evidence[@]}"
           fi
           for file in target/evidence/native-ci/*; do
             if [[ -f "$file" && "$file" != target/evidence/native-ci/artifact-sha256.txt ]]; then

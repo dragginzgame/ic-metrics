@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Consumer adapter. Dependencies: Cargo/cargo-edit/cargo-sort, jq, yq, Git, tar, awk and Unix utilities.
+# Consumer adapter. Dependencies: Cargo, jq, yq, Git, tar, awk, Perl and Unix utilities.
 operation="${1:-}"
 [[ $# -eq 1 ]] || exit 2
 # Standard entrypoints select cache preparation only after runner recovery/source
@@ -33,7 +33,6 @@ case "$operation" in
         # Refuse conflicting pending notes before a gate or preparation intent.
         awk -v version="${RELEASE_VERSION:?}" -v previous="$RELEASE_PREVIOUS" -v date="${RELEASE_DATE:?}" \
             -f scripts/ci/finalize-release-changelog.awk CHANGELOG.md > /dev/null
-        cargo set-version --help >/dev/null
         tool_versions="${RUST_TOOL_VERSIONS:-$root/ci/tool-versions.env}"
         tool_versions_digest="$(bash "$root/scripts/ci/verify-file-checksum.sh" --print sha256 "$tool_versions")"
         tool_targets=(rust-tools-check wasm-inspector-tools-check)

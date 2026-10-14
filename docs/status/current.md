@@ -5,7 +5,57 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.9.4
+## Pending 0.9.5
+
+Metrics adopts reviewed Shared candidate `2f6dbdce7a19ce121dd574e77ee361b4d1aeb57c`
+through its clean committed exporter (121 files). The native-host contribution is
+[Shared PR #186](https://github.com/dragginzgame/shared-tooling/pull/186), stacked
+on [the earlier mechanics PR #184](https://github.com/dragginzgame/shared-tooling/pull/184)
+and [the existing probe owner PR #180](https://github.com/dragginzgame/shared-tooling/pull/180).
+These are contribution identities, not a new Shared release. Refresh the pin if
+integration changes the reviewed source identity. Common tool catalogs are
+byte-identical to the previous snapshot; incoming Cargo.lock work is independent.
+
+Cleanup-prefix rendering and injected exit qualification are shared, including
+explicit retained-success cases. Metrics retains the seven-owner roster and
+actual child/assertion/publication failure checks. The exportable minimal-Git
+fixture owns generic source categories, unusual names and observation failures;
+Metrics keeps its actual adapter allowlist, refusal-before-Cargo ordering and
+commit-check boundary. Both failure collectors use shared formatter selection;
+the outer native archive continues to retain Git intent/index evidence.
+
+The earlier convergence checkpoint passed full Linux `make ci`, `make msrv`
+and `make stable-msrv` with the preserved incoming IC Memory 0.36.4 lock selection,
+before the next cleanup described below. Shared and
+Metrics retention fixtures also pass genuine Bash 3.2.57. The initial sandbox
+attempt could not bind the download fixture's loopback socket; its log is retained
+under `target/validation-failures/`, and the host-capable rerun passes all gates.
+[Shared hosted run 38552056506](https://github.com/dragginzgame/shared-tooling/actions/runs/38552056506)
+passes Linux lint/portable checks; its macOS lanes remain pending. Local Linux
+and Bash 3.2 results do not qualify hosted macOS. Library APIs and stored V1 bytes
+are unchanged.
+
+Release preflight no longer probes Cargo-edit, and its fixture no longer
+substitutes retired manifest-writing behavior. The native host gate uses the
+shared validator before local PATH changes; generic mismatch coverage lives
+upstream while Metrics retains its workflow ordering and failure custody cases.
+[IC Host PR #100](https://github.com/dragginzgame/ic-host-tooling/pull/100) delivers
+its isolated adoption; its normal working checkout remains untouched.
+
+The private durable encoder consumes constructor/shape-admitted state without
+unreachable identifier/record-budget errors. Shared layout constants and
+compile-time assertions bound all three encodings; the maximum remains 4,474
+bytes. Decoder validation, public errors and stored V1 bytes are unchanged.
+Native/Wasm Clippy, all 14 store units, seven doctests and Rust 1.88 checks pass.
+Release adapter cases pass modern Bash and genuine Bash 3.2; the changed native
+workflow archive cases pass with substituted Make effects. This is local
+qualification rather than IC performance evidence or hosted macOS acceptance.
+
+Full Linux `make ci`, `make msrv` and `make stable-msrv` pass on the complete
+current batch, preserving the incoming IC Memory 0.36.4 lock selection. Shared
+PR #186 passes hosted Linux lint/portable checks; native macOS remains pending.
+
+## Delivered 0.9.4
 
 Shared Tooling 0.12.2 `cff186285829481185e932d3c16514022b897de9` is
 adopted through its clean committed exporter. The 114-file snapshot includes the

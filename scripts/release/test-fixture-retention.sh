@@ -192,49 +192,39 @@ done
 for remaining in "$run/tmp"/*; do [[ ! -e "$remaining" ]] || exit 1; done
 echo 'Admission fixture preserves inherited parent logs and summary'
 
-# Execute the actual cleanup bodies independently of installer/compilation effects.
-# Bash 3.2's nounset trap status and an explicit early exit must never admit success.
+# Probe actual initialization/cleanup prefixes through the shared owner.
+# Consumer rosters and successful diagnostic retention remain explicit here.
+# shellcheck source=scripts/ci/fixture-retention-probes.sh
+source "$root/scripts/ci/fixture-retention-probes.sh"
 for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \
     scripts/release/test-release-admission.sh scripts/dev/test-format-hook.sh \
     scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh \
     scripts/ci/check-formatting-hooks.sh; do
     name="${script##*/}"
-    for scenario in nounset early-zero success; do
+    success=completed
+    directory_variable=fixture
+    case "$script" in
+        scripts/ci/test-native-evidence.sh) success='retained-completed' ;;
+        scripts/release/test-fixture-retention.sh) success='retained-completed'; directory_variable=evidence ;;
+    esac
+    for scenario in nounset premature "$success"; do
         run="$evidence/cleanup-${name%.sh}-$scenario"
-        mkdir -p "$run/tmp" "$run/target/evidence/native-ci"
-        printf 'source "%s/scripts/ci/fixture-lifecycle.sh"\n' "$root" > "$run/cleanup.sh"
-        awk '
-            /^(fixture|evidence)="\$\(mktemp / { copy=1 }
-            copy && /^source / { next }
-            copy { print }
-            /^trap (cleanup|finish) EXIT$/ && copy { exit }
-        ' "$root/$script" >> "$run/cleanup.sh"
-        cat >> "$run/cleanup.sh" <<'CLEANUP'
-retained="${fixture:-$evidence}"
-printf '%s\n' "$retained" > "$root/selected.txt"
-printf 'retained diagnostic\n' > "$retained/result.log"
-case "$CLEANUP_SCENARIO" in
-    nounset) printf '%s\n' "${METRICS_INTENTIONALLY_UNSET?injected nounset}" ;;
-    early-zero) exit 0 ;;
-    success) fixture_complete=true ;;
-esac
-CLEANUP
-        status=0
-        env -u METRICS_INTENTIONALLY_UNSET root="$run" TMPDIR="$run/tmp" CLEANUP_SCENARIO="$scenario" \
-            "$real_bash" -eu "$run/cleanup.sh" > "$run/result.log" 2>&1 || status=$?
-        printf '%s\n' "$status" > "$run/status.txt"
-        retained="$(cat "$run/selected.txt")"
-        if [[ "$scenario" != success ]]; then
-            [[ "$status" != 0 && -f "$retained/result.log" ]] || exit 1
-            grep -F 'retained diagnostic' "$retained/result.log" > /dev/null
-            if [[ "$scenario" == nounset ]]; then grep -F 'injected nounset' "$run/result.log" > /dev/null; fi
-        else
-            [[ "$status" == 0 ]] || exit 1
-            case "$script" in
-                scripts/ci/test-native-evidence.sh|scripts/release/test-fixture-retention.sh) [[ -f "$retained/result.log" ]] || exit 1 ;;
-                *) [[ ! -e "$retained" ]] || exit 1 ;;
-            esac
+        probe_source="$run/source"
+        mkdir -p "$probe_source/scripts/ci" "$probe_source/scripts/dev" "$probe_source/.githooks" "$probe_source/crates/ic-metrics/src"
+        cp "$root/scripts/ci/fixture-lifecycle.sh" "$root/scripts/ci/check-make-execution.sh" "$probe_source/scripts/ci/"
+        # The native fixture observes its checkout before installing its trap.
+        git init --quiet "$probe_source"
+        probe_args=()
+        if [[ "$script" == scripts/ci/check-formatting-hooks.sh ]]; then
+            for path in Makefile README.md .githooks/pre-commit scripts/dev/install-git-hooks.sh \
+                crates/ic-metrics/src/lib.rs Cargo.toml; do
+                cp "$root/$path" "$probe_source/$path"
+            done
+            probe_args=("$probe_source" crates/ic-metrics/src/lib.rs Cargo.toml --no-dependency-tables)
         fi
+        FIXTURE_PROBE_ROOT_VARIABLE=root FIXTURE_PROBE_DIRECTORY_VARIABLE="$directory_variable" \
+            fixture_probe_exit "$root/$script" "$run" "$probe_source" "${name%.sh}" "$scenario" \
+            ${probe_args[@]+"${probe_args[@]}"} || exit 1
     done
 done
 echo "fixture success cleanup and child/assertion failure retention passed; evidence: $evidence"
