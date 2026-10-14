@@ -66,11 +66,11 @@ dependencies = [
 
 [[package]]
 name = "ic-metrics"
-version = "0.9.6"
+version = "0.10.0"
 
 [[package]]
 name = "ic-metrics-stable"
-version = "0.9.6"
+version = "0.10.0"
 dependencies = [
  "ic-memory",
  "ic-metrics",
