@@ -15,6 +15,12 @@
   adapter, preserving wide totals, actual-overflow flags and reset identities.
   Existing V1 record layouts and the one-map allocation remain unchanged.
 
+### Fixed
+
+- Advance the stable package's local Metrics dependency requirement when
+  preparing a minor release, keeping package and lock versions coherent
+  ([Shared PR #197 — Fix coordinated Cargo requirements](https://github.com/dragginzgame/shared-tooling/pull/197)).
+
 ### Changed
 
 - Use a minimal isolated Git baseline for synthetic release-admission cases;
