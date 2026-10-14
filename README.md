@@ -18,7 +18,8 @@ It holds a `u128` total and sticky actual-overflow flag, with `add`, `merge`,
 validated `from_parts`, `exact_total` and identity-qualified `delta_since`.
 Zero is an exact scalar value; an absent metric stays consumer-owned. An exactly
 reached cap remains exact, and narrow reports use checked conversions. This
-counter retains no observation statistics and has no stable-store encoding.
+counter retains no observation statistics. The optional stable adapter can
+checkpoint its total and overflow flag without manufacturing sample counts.
 
 ```rust
 use ic_metrics::MeasurementSummary;
@@ -26,11 +27,11 @@ use ic_metrics::MeasurementSummary;
 let mut summary = MeasurementSummary::EMPTY;
 assert_eq!(summary.latest(), None);
 summary.record(0);
-assert_eq!(summary.samples(), 1);
+assert_eq!(summary.aggregate().samples(), 1);
 assert_eq!(summary.latest(), Some(0));
 ```
 
-Tracked `MeasurementAggregate::mean()` and `MeasurementSummary::mean()` return
+Tracked `MeasurementAggregate::mean()` returns
 `Result<Option<u128>, MeasurementMeanError>`: empty is `None`, measured zero is
 `Some(0)`, and exact means round down. Actual sample-count overflow returns
 `SampleCountOverflow`; an exact count guarantees an exact total. Exactly reaching
@@ -39,15 +40,19 @@ fractional information: samples 3 and 4 yield 35 at scale ten. Admitted scaled
 means fit `u128` without a ratio-projection failure.
 Accumulator flags cannot restore a clamped input sample.
 
+In the prepared 0.10 API, summaries and histograms expose these projections
+through `aggregate()`: use `summary.aggregate().mean()` or
+`summary.aggregate().scaled_mean(10)`. Summary `samples`, `total`, `maximum`,
+`mean` and `scaled_mean` forwarding methods are removed; `latest()` remains
+summary-specific. Stored V1 layouts and measurement semantics are unchanged.
+
 `MeasurementAggregate::merge` combines count/total and maximum without claiming
 ordering or deduplication. `interval_since(previous)` returns checked count/total
 differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-The 0.9 API removes the unreachable mean `SaturatedTotal`/`Projection` and interval
-`SaturatedTotal` variants. Update matches or explicit construction of those errors
-when selecting 0.9. Overflow flags use `*_overflowed` names, including
+Overflow flags use `*_overflowed` names, including
 `bucket_overflowed()` and `overflow_count_overflowed()` for histogram counts.
 Remaining overflow errors use `SampleCountOverflow`, `TotalOverflow`,
 `CountOverflow` and `InvalidOverflowFlag`; arithmetic and quality stay unchanged.
@@ -56,7 +61,7 @@ use the supported generic `MetricsStore` operations.
 The stable V1 encoding and host allocation lifecycle require no reset.
 
 The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
-aggregates, summaries and histograms in one host-owned stable B-tree map using
+counters, aggregates, summaries and histograms in one host-owned stable B-tree map using
 `ic-memory`'s collection types. Namespaced records retain units, reset epochs,
 wide totals and overflow flags. Adding `ic-metrics-stable` is the opt-in; existing
 arithmetic callers remain volatile. The adapter requires Rust 1.88 on host and
@@ -173,11 +178,12 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Declare the current arithmetic contract in the consumer's root catalog:
+Consumers adopting this API cut select the 0.10 contract in the root catalog
+after publication and owning qualification:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.8"
+ic-metrics = "0.10"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

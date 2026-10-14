@@ -2,7 +2,8 @@
 set -euo pipefail
 export RELEASE_DELIVERY=direct
 
-# Real index/commit and actual Make/logger boundaries; no commits or releases.
+# Real index and actual Make/logger boundaries; only isolated fixture Git objects.
+# Selected-release checks retain the actual product commit; no product Git writes.
 unset MAKEFLAGS MFLAGS MAKEOVERRIDES GNUMAKEFLAGS MAKEFILES RELEASE_COMMIT
 unset VALIDATION_REPOSITORY_ROOT VALIDATION_RUNNER_SNAPSHOT_PATH
 # Intentional logger failures and summaries belong to this fixture's inputs.
@@ -108,28 +109,41 @@ exec "$ADMISSION_REAL_MAKE" "$@"
 MAKE
 chmod +x "$fixture/bin/make"
 export PATH="$fixture/bin:$PATH" ADMISSION_CARGO_EVENTS="$fixture/cargo-events"
-setup() {
-    local name="$1"
-    worktree="$fixture/$name"
-    mkdir -p "$worktree" "$fixture/attempts/$name"
-    git -C "$worktree" init --quiet
-    mkdir -p "$worktree/.git/objects/info"
-    printf '%s\n' "$source_objects" > "$worktree/.git/objects/info/alternates"
-    git -C "$worktree" update-ref HEAD "$source_commit"
-    cd "$worktree"
-    git read-tree HEAD
-    git checkout-index --all
-    # The index cases use prepared fixture metadata, independent of release tags.
-    cat > Cargo.toml <<'TOML'
+# Synthetic index/cache/logger cases need tiny metadata/helper inputs, not
+# historical evidence or the complete product checkout. Build one fixture-local Git identity;
+# real selected-release objects remain available independently through alternates.
+baseline="$fixture/baseline"
+mkdir "$baseline"
+"$ADMISSION_REAL_GIT" -C "$baseline" init --quiet
+cat > "$baseline/Cargo.toml" <<'TOML'
 [workspace]
 members = []
 [workspace.package]
 version = "0.1.1"
 edition = "2024"
 TOML
-    printf 'version = 4\n\n[[package]]\nname = "ic-metrics"\nversion = "0.1.1"\n' > Cargo.lock
-    printf '# Changelog\n\n## [0.1.1] - 2026-10-06\n\n- Prepared fixture.\n' > CHANGELOG.md
-    git add -- Cargo.toml Cargo.lock CHANGELOG.md
+printf 'version = 4\n\n[[package]]\nname = "ic-metrics"\nversion = "0.1.1"\n' > "$baseline/Cargo.lock"
+printf '# Changelog\n\n## [0.1.1] - 2026-10-06\n\n- Fixture baseline.\n' > "$baseline/CHANGELOG.md"
+printf 'Tracked consumer source sentinel.\n' > "$baseline/README.md"
+mkdir -p "$baseline/scripts/ci"
+cp "$root/scripts/ci/finalize-release-changelog.awk" "$baseline/scripts/ci/"
+"$ADMISSION_REAL_GIT" -C "$baseline" add -- Cargo.toml Cargo.lock CHANGELOG.md README.md scripts/ci/finalize-release-changelog.awk
+baseline_tree="$("$ADMISSION_REAL_GIT" -C "$baseline" write-tree)"
+baseline_commit="$(printf 'Isolated source-admission fixture\n' | \
+    GIT_AUTHOR_NAME=Fixture GIT_AUTHOR_EMAIL=fixture@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z \
+    GIT_COMMITTER_NAME=Fixture GIT_COMMITTER_EMAIL=fixture@example.invalid GIT_COMMITTER_DATE=2026-01-01T00:00:00Z \
+    "$ADMISSION_REAL_GIT" -C "$baseline" commit-tree "$baseline_tree")"
+setup() {
+    local name="$1" checkout_commit="${2:-$baseline_commit}"
+    worktree="$fixture/$name"
+    mkdir -p "$worktree" "$fixture/attempts/$name"
+    git -C "$worktree" init --quiet
+    mkdir -p "$worktree/.git/objects/info"
+    printf '%s\n' "$baseline/.git/objects" "$source_objects" > "$worktree/.git/objects/info/alternates"
+    git -C "$worktree" update-ref HEAD "$checkout_commit"
+    cd "$worktree"
+    git read-tree HEAD
+    git checkout-index --all
     : > "$ADMISSION_CARGO_EVENTS"
     unset RELEASE_COMMIT ADMISSION_FAIL_GIT IC_METRICS_RELEASE_CACHE_PREPARE
     unset CARGO_NET_OFFLINE ADMISSION_CONFIG_OFFLINE ADMISSION_FETCH_FAILURE ADMISSION_REAL_FETCH
@@ -191,7 +205,7 @@ done
 # Cargo itself admits explicit offline configuration/environment with an empty
 # cache. Only tool probes are substituted; fetch executes the committed graph.
 for policy in environment config; do
-    setup "actual-offline-$policy"
+    setup "actual-offline-$policy" "$source_commit"
     for path in Cargo.toml Cargo.lock; do git show "$source_commit:$path" > "$path"; done
     # Keep the real committed Cargo graph, but own the cache fixture's notes.
     # A repository draft may select a minor release instead of this test's patch.

@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.10.0]
+
+### Breaking
+
+- Remove summary forwarding methods for count, total, maximum, mean and scaled
+  mean. Use `summary.aggregate().samples()`, `.total()`, `.maximum()`, `.mean()`
+  or `.scaled_mean(scale)`; ordered recording and `latest()` stay summary-owned.
+  Existing stable V1 layouts and host allocation/reset policy are unchanged.
+
+### Added
+
+- Checkpoint scalar `MeasurementCounter` totals through the optional stable
+  adapter, preserving wide totals, actual-overflow flags and reset identities.
+  Existing V1 record layouts and the one-map allocation remain unchanged.
+
+### Changed
+
+- Use a minimal isolated Git baseline for synthetic release-admission cases;
+  retain the real committed graph for offline Cargo and selected-source checks.
+- Keep generic archive filename, mode and link coverage at Shared Tooling while
+  preserving Metrics' workflow ordering, payload replay and outer Git custody.
+- Keep current handoff guidance separate from historical qualification receipts,
+  preserving the earlier sources, graphs and measured evidence.
+
 ## [0.9.6] - 2026-10-14
 
 ### Changed
