@@ -25,8 +25,9 @@ mod tests;
 
 /// A supported arithmetic type with an admitted durable encoding.
 ///
-/// Implemented only for `MeasurementAggregate`, `MeasurementSummary` and
-/// `MeasurementHistogram<N>`. Histograms support at most 256 finite bounds.
+/// Implemented only for `MeasurementCounter`, `MeasurementAggregate`,
+/// `MeasurementSummary` and `MeasurementHistogram<N>`.
+/// Histograms support at most 256 finite bounds.
 /// Supported snapshots have exact structural equality.
 /// The bound supports generic store operations; raw codec and continuity
 /// dispatch require an adapter-private capability.
@@ -261,7 +262,7 @@ impl<M: Memory> MetricsStore<M> {
     ///
     /// An identical retained snapshot succeeds without encoding or writing again.
     /// This is replacement, not
-    /// merging; hosts own sample admission and commit cadence. Batch observations
+    /// merging; hosts own measurement admission and commit cadence. Batch observations
     /// within an update message, then save at its chosen attribution boundary.
     ///
     /// # Errors

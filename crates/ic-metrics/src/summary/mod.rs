@@ -1,6 +1,6 @@
 //! Saturating arithmetic without sampling or attribution policy.
 
-use crate::{MeasurementAggregate, MeasurementMeanError, MeasurementStateError};
+use crate::{MeasurementAggregate, MeasurementStateError};
 
 #[cfg(test)]
 mod tests;
@@ -12,6 +12,8 @@ mod tests;
 /// before using raw counts/totals for exact arithmetic. Latest and maximum remain
 /// individual observations after overflow. Empty and measured zero are distinct.
 /// Consumers own units, identity, ordering and reset boundaries.
+/// Project counts, totals, maximum and means through [`Self::aggregate`], just
+/// as for a histogram; this type adds ordered recording and [`Self::latest`].
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct MeasurementSummary {
     aggregate: MeasurementAggregate,
@@ -70,50 +72,13 @@ impl MeasurementSummary {
         self.aggregate
     }
 
-    /// Sample count, clipped at `u64::MAX`; overflow is in [`Self::aggregate`].
-    #[must_use]
-    pub const fn samples(self) -> u64 {
-        self.aggregate.samples()
-    }
-
-    /// Observation total, clipped at `u128::MAX`; overflow is in [`Self::aggregate`].
-    #[must_use]
-    pub const fn total(self) -> u128 {
-        self.aggregate.total()
-    }
-
-    /// Floor-rounded mean, or `None` when empty. An exactly reached cap is valid.
-    ///
-    /// # Errors
-    /// Returns [`MeasurementMeanError::SampleCountOverflow`] on actual count overflow.
-    pub const fn mean(self) -> Result<Option<u128>, MeasurementMeanError> {
-        self.aggregate.mean()
-    }
-
-    /// Compute `floor(total * scale / samples)`, retaining fractional information.
-    ///
-    /// Uses the aggregate's checked projection; a scale of ten reports tenths.
-    /// Empty remains `None`, and scale zero does not conceal actual overflow.
-    ///
-    /// # Errors
-    /// Returns [`MeasurementMeanError::SampleCountOverflow`] on actual count overflow.
-    pub const fn scaled_mean(self, scale: u64) -> Result<Option<u128>, MeasurementMeanError> {
-        self.aggregate.scaled_mean(scale)
-    }
-
     /// Latest observation, or `None` when empty. Summaries cannot be merged.
     #[must_use]
     pub const fn latest(self) -> Option<u64> {
-        if self.samples() == 0 {
+        if self.aggregate.samples() == 0 {
             None
         } else {
             Some(self.latest)
         }
-    }
-
-    /// Largest observation, or `None` when empty, including after overflow.
-    #[must_use]
-    pub const fn maximum(self) -> Option<u64> {
-        self.aggregate.maximum()
     }
 }

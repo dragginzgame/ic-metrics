@@ -142,13 +142,8 @@ if [[ "$*" == "$FIXTURE_FAILURE" ]]; then
             mkdir -p "$candidate"
         fi
         printf 'retained candidate\n' > "$candidate/failure:payload"
-        printf 'literal name\n' > "$candidate/"$'trailing\n'
-        chmod 640 "$candidate/failure:payload"
-        printf '#!/bin/sh\nexit 0\n' > "$candidate/executable"
-        chmod 755 "$candidate/executable"
-        ln -s failure:payload "$candidate/link"
-        mkdir -p "$candidate/.git"
-        printf 'candidate metadata excluded\n' > "$candidate/.git/config"
+        # Shared's archive fixture owns filename/mode/link fidelity. This fixture
+        # retains a payload marker to prove the consumer selected real evidence.
     fi
     exit 43
 fi
@@ -410,18 +405,6 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
                         [[ ! -e "${recovered%/*}/set.unrelated" ]] || exit 1
                     fi
                     cmp "$candidate/failure:payload" "$recovered/failure:payload"
-                    cmp "$candidate/"$'trailing\n' "$recovered/"$'trailing\n'
-                    cmp "$candidate/executable" "$recovered/executable"
-                    [[ -x "$recovered/executable" ]] || exit 1
-                    [[ -L "$recovered/link" ]] || exit 1
-                    [[ "$(readlink "$recovered/link")" == failure:payload ]] || exit 1
-                    [[ ! -e "$recovered/.git" ]] || exit 1
-                    # macOS and Linux expose permissions through different stat syntax.
-                    if [[ "$(uname -s)" == Darwin ]]; then
-                        [[ "$(stat -f %Lp "$recovered/failure:payload")" == 640 ]] || exit 1
-                    else
-                        [[ "$(stat -c %a "$recovered/failure:payload")" == 640 ]] || exit 1
-                    fi
                 fi
             done
         fi

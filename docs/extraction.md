@@ -13,7 +13,12 @@ crate documentation and supplies compiled examples.
 | `MeasurementAggregate` | Mergeable sample count, wide total, maximum and actual-overflow flags; checked means and count/total intervals. |
 | `MeasurementSummary` | An aggregate plus the latest ordered observation; no merge that invents ordering. |
 | `MeasurementHistogram<N>` | Immutable finite bounds, disjoint counts, overflow and an aggregate; equal-bound merging and checked cumulative counts/nearest-rank ranges. |
-| `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics or durable encoding. |
+| `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics. Optional stable checkpoints retain only its scalar state. |
+
+In the prepared 0.10 contract, summaries and histograms project count, total,
+maximum, mean and scaled mean through `aggregate()`. The summary's five direct
+forwarding methods are removed; its latest observation remains summary-owned.
+Existing consumers select 0.9 until 0.10 is published and independently qualified.
 
 Individual observations, sample counts and bucket counts use `u64`; accumulated
 quantities and means use `u128`. Zero is a valid observation. Empty aggregates
@@ -34,8 +39,7 @@ ranges, not exact observed percentiles.
 
 For admitted aggregates, total overflow implies sample-count overflow. Mean and
 interval queries reject count overflow first; exact counts bound totals and
-scaled means. The 0.9 API removes the unreachable mean `SaturatedTotal`/`Projection`
-and interval `SaturatedTotal` cases. The generic ratio still owns zero-denominator
+scaled means. The generic ratio owns zero-denominator
 and result-overflow errors for independently supplied scalar inputs; the scalar
 counter retains its actual-total-overflow error. Flags now use `*_overflowed`
 names, and the remaining error cases are `SampleCountOverflow`, `TotalOverflow`,
@@ -57,15 +61,15 @@ Inclusive overlapping IcyDB spans and exclusive Canic endpoint accounting remain
 separate contracts; there is no attribution-mode switch or product dependency.
 
 The optional [stable package](../crates/ic-metrics-stable/README.md) owns validated
-V1 snapshots for aggregates, summaries and histograms in one host-supplied
+V1 snapshots for counters, aggregates, summaries and histograms in one host-supplied
 `ic-memory` B-tree map. One permanent store allocation resolves to one memory ID;
 namespace/name keys distinguish rows. Hosts own bootstrap, map initialization,
 update-message synchronization, write cadence, authorization and resets. Queries
 cannot make stable writes durable, and adapter errors never silently reset data.
 Generic `DurableMetric` bounds support store operations; raw codec/kind and
 continuity dispatch require an adapter-private capability. The core has no
-serialization or stable-memory dependency. Scalar counters have
-no stored kind; an existing kind must never be repurposed for them.
+serialization or stable-memory dependency. Prepared scalar checkpoints use
+distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
 owns bounded structural inspection. Metrics selects its exact CLI through the
@@ -79,8 +83,8 @@ belong to IC Testkit; this workspace has no maintained server caller.
 | --- | --- | --- |
 | IcyDB | Inclusive overlapping spans, zero, overflow/report fields, CLI means, reset identity and journal-debt separation. | [#356](https://github.com/dragginzgame/icydb/issues/356) |
 | Canic | Exclusive nesting, async call-context identity, invocation checkpoints, zero, report ordering and quality propagation. | [#523](https://github.com/dragginzgame/canic/issues/523) |
-| IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/overflow projections. | [#51](https://github.com/dragginzgame/ic-timers/issues/51) |
-| IC Backup | Nanosecond/byte separation, success/rejection samples, zero/repeated chunks, clamped durations, copied views, `Send + Sync` and empty create/open state. | [#41](https://github.com/dragginzgame/ic-backup/issues/41) |
+| IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/overflow projections. | [0.9 qualification](https://github.com/dragginzgame/ic-timers/issues/51); [#59 — Adopt Metrics 0.10 summary projections](https://github.com/dragginzgame/ic-timers/issues/59) |
+| IC Backup | Nanosecond/byte separation, success/rejection samples, zero/repeated chunks, clamped durations, copied views, `Send + Sync` and empty create/open state. | [Earlier qualification](https://github.com/dragginzgame/ic-backup/issues/41); [#47 — Adopt Metrics 0.10 summary projections](https://github.com/dragginzgame/ic-backup/issues/47) |
 | Blob restoration test probe | Restoration-operation attribution, call-context identity, zero, bounded reports and reset behavior; not production storage instrumentation. | [#65](https://github.com/dragginzgame/ic-blob-storage/issues/65) |
 | Toko Miner game shard | Action-count cohort admission, separate attempt/instruction units, trap/outcome policy, bounded reports and window/reset identity. | [#48](https://github.com/dragginzgame/toko-miner/issues/48) |
 

@@ -2,8 +2,8 @@ use std::{cell::Cell, rc::Rc};
 
 use ic_memory::ic_stable_structures::{BTreeMap, Memory, VectorMemory};
 use ic_metrics::{
-    MeasurementAggregate as Aggregate, MeasurementHistogram as Histogram,
-    MeasurementSummary as Summary,
+    MeasurementAggregate as Aggregate, MeasurementCounter as Counter,
+    MeasurementHistogram as Histogram, MeasurementSummary as Summary,
 };
 
 use crate::{MetricIdentity, MetricKey, MetricsStore, StoreError, codec};
@@ -38,6 +38,11 @@ fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
     store.save(&key("icydb"), &identity(), &aggregate).unwrap();
     store.save(&key("canic"), &identity(), &summary).unwrap();
     store.save(&key("timers"), &identity(), &histogram).unwrap();
+    let bytes_identity = MetricIdentity::new("bytes", 0).unwrap();
+    let counter = Counter::from_parts(u128::from(u64::MAX) + 42, false).unwrap();
+    store
+        .save(&key("backup"), &bytes_identity, &counter)
+        .unwrap();
     drop(store);
     let reopened = MetricsStore::new(BTreeMap::init(memory));
     assert_eq!(
@@ -55,6 +60,10 @@ fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
             &Histogram::new([0, 10]).unwrap()
         ),
         Ok(Some(histogram))
+    );
+    assert_eq!(
+        reopened.load(&key("backup"), &bytes_identity, &Counter::ZERO),
+        Ok(Some(counter))
     );
     assert_eq!(
         reopened.load(&key("missing"), &identity(), &Aggregate::EMPTY),
@@ -191,6 +200,30 @@ fn v1_encoding_is_explicit_and_rejects_invalid_numeric_state() {
     expected.extend_from_slice(&7_u64.to_le_bytes());
     expected.push(0);
     assert_eq!(bytes, expected);
+    let summary = Summary::from_parts(value, Some(7)).unwrap();
+    let mut summary_bytes = expected.clone();
+    summary_bytes[4] = 2;
+    summary_bytes.extend_from_slice(&7_u64.to_le_bytes());
+    assert_eq!(encode(&identity, &summary), summary_bytes);
+    assert_eq!(
+        codec::decode(&summary_bytes, &identity, &Summary::EMPTY),
+        Ok(summary)
+    );
+    let mut histogram = Histogram::new([10]).unwrap();
+    histogram.record(7);
+    let mut histogram_bytes = expected;
+    histogram_bytes[4] = 3;
+    histogram_bytes.extend_from_slice(&1_u16.to_le_bytes());
+    histogram_bytes.extend_from_slice(&10_u64.to_le_bytes());
+    histogram_bytes.extend_from_slice(&1_u64.to_le_bytes());
+    histogram_bytes.push(0);
+    histogram_bytes.extend_from_slice(&0_u64.to_le_bytes());
+    histogram_bytes.push(0);
+    assert_eq!(encode(&identity, &histogram), histogram_bytes);
+    assert_eq!(
+        codec::decode(&histogram_bytes, &identity, &Histogram::new([10]).unwrap()),
+        Ok(histogram)
+    );
     let mut invalid = bytes;
     // The admitted V1 envelope is 15 bytes here; change exact total to zero.
     invalid[23..39].fill(0);
@@ -198,6 +231,152 @@ fn v1_encoding_is_explicit_and_rejects_invalid_numeric_state() {
         codec::decode(&invalid, &identity, &Aggregate::EMPTY),
         Err(StoreError::InvalidState(_))
     ));
+}
+
+#[test]
+fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
+    let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
+    let key = key("app");
+    let identity = MetricIdentity::new("bytes", 7).unwrap();
+    assert_eq!(store.load(&key, &identity, &Counter::ZERO), Ok(None));
+    for value in [
+        Counter::ZERO,
+        Counter::from_parts(u128::from(u64::MAX) + 1, false).unwrap(),
+        Counter::from_parts(u128::MAX, false).unwrap(),
+        Counter::from_parts(u128::MAX, true).unwrap(),
+    ] {
+        store.save(&key, &identity, &value).unwrap();
+        assert_eq!(store.load(&key, &identity, &Counter::ZERO), Ok(Some(value)));
+    }
+    drop(store);
+    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let retained = Counter::from_parts(u128::MAX, true).unwrap();
+    assert_eq!(
+        store.load(&key, &identity, &Counter::ZERO),
+        Ok(Some(retained))
+    );
+    writes.set(0);
+    for regression in [
+        Counter::ZERO,
+        Counter::from_parts(u128::MAX, false).unwrap(),
+    ] {
+        assert_eq!(
+            store.save(&key, &identity, &regression),
+            Err(StoreError::StateRegression)
+        );
+    }
+    for wrong in [
+        MetricIdentity::new("items", 7).unwrap(),
+        MetricIdentity::new("bytes", 8).unwrap(),
+    ] {
+        assert_eq!(
+            store.load(&key, &wrong, &Counter::ZERO),
+            Err(StoreError::IdentityMismatch)
+        );
+        assert_eq!(
+            store.save(&key, &wrong, &retained),
+            Err(StoreError::IdentityMismatch)
+        );
+        assert_eq!(
+            store.remove(&key, &wrong),
+            Err(StoreError::IdentityMismatch)
+        );
+    }
+    assert_eq!(
+        store.load(&key, &identity, &Aggregate::EMPTY),
+        Err(StoreError::KindMismatch)
+    );
+    assert_eq!(
+        store.save(&key, &identity, &Aggregate::EMPTY),
+        Err(StoreError::KindMismatch)
+    );
+    assert_eq!(writes.get(), 0);
+    assert_eq!(
+        store.load(&key, &identity, &Counter::ZERO),
+        Ok(Some(retained))
+    );
+    assert!(store.remove(&key, &identity).unwrap());
+    let next = MetricIdentity::new("bytes", 8).unwrap();
+    store.save(&key, &next, &Counter::ZERO).unwrap();
+    assert_eq!(
+        store.load(&key, &next, &Counter::ZERO),
+        Ok(Some(Counter::ZERO))
+    );
+    assert_eq!(
+        store.load(&key, &identity, &Counter::ZERO),
+        Err(StoreError::IdentityMismatch)
+    );
+}
+
+#[test]
+fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
+    let value = Counter::from_parts(7, false).unwrap();
+    let identity = MetricIdentity::new("x", 3).unwrap();
+    let bytes = encode(&identity, &value);
+    let mut expected = b"ICM\x01\x04\x01x".to_vec();
+    expected.extend_from_slice(&3_u64.to_le_bytes());
+    expected.extend_from_slice(&7_u128.to_le_bytes());
+    expected.push(0);
+    assert_eq!(bytes, expected);
+    let mut malformed = Vec::new();
+    for length in 0..bytes.len() {
+        malformed.push((bytes[..length].to_vec(), StoreError::MalformedRecord));
+    }
+    let mut trailing = bytes.clone();
+    trailing.push(0);
+    malformed.push((trailing, StoreError::MalformedRecord));
+    let mut invalid_flag = bytes.clone();
+    *invalid_flag.last_mut().unwrap() = 2;
+    malformed.push((invalid_flag, StoreError::MalformedRecord));
+    let mut impossible_overflow = bytes.clone();
+    *impossible_overflow.last_mut().unwrap() = 1;
+    malformed.push((
+        impossible_overflow,
+        StoreError::InvalidState(ic_metrics::MeasurementStateError::InvalidOverflowFlag),
+    ));
+    let mut unknown_kind = bytes.clone();
+    unknown_kind[4] = 5;
+    malformed.push((unknown_kind, StoreError::KindMismatch));
+    let mut unknown_format = bytes;
+    unknown_format[3] = 2;
+    malformed.push((unknown_format, StoreError::UnsupportedFormat));
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
+    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let key = key("app");
+    for (bytes, error) in malformed {
+        store.map.insert(key.0.clone(), bytes.clone());
+        writes.set(0);
+        assert_eq!(store.load(&key, &identity, &Counter::ZERO), Err(error));
+        assert_eq!(store.save(&key, &identity, &value), Err(error));
+        assert_eq!(writes.get(), 0);
+        assert_eq!(store.map.get(&key.0), Some(bytes));
+    }
+    assert_eq!(
+        store.remove(&key, &identity),
+        Err(StoreError::UnsupportedFormat)
+    );
+    assert_eq!(writes.get(), 0);
+    // Explicit disposition can retire a known envelope with invalid payload.
+    store
+        .map
+        .insert(key.0.clone(), expected[..expected.len() - 1].to_vec());
+    assert!(store.remove(&key, &identity).unwrap());
+    assert!(!store.remove(&key, &identity).unwrap());
+    // An aggregate's existing kind cannot be reinterpreted as a scalar counter.
+    store.save(&key, &identity, &Aggregate::EMPTY).unwrap();
+    writes.set(0);
+    assert_eq!(
+        store.load(&key, &identity, &Counter::ZERO),
+        Err(StoreError::KindMismatch)
+    );
+    assert_eq!(
+        store.save(&key, &identity, &value),
+        Err(StoreError::KindMismatch)
+    );
+    assert_eq!(writes.get(), 0);
 }
 
 #[test]
@@ -447,6 +626,12 @@ fn identical_checkpoints_validate_without_stable_writes() {
     let mut aggregate = Aggregate::EMPTY;
     aggregate.record(0);
     check(&Aggregate::EMPTY, &aggregate);
+    let mut counter = Counter::ZERO;
+    counter.add(u128::from(u64::MAX) + 1);
+    check(&Counter::ZERO, &counter);
+    let exact_cap = Counter::from_parts(u128::MAX, false).unwrap();
+    let overflowed = Counter::from_parts(u128::MAX, true).unwrap();
+    check(&exact_cap, &overflowed);
     let mut summary = Summary::EMPTY;
     summary.record(1);
     check(&Summary::EMPTY, &summary);
@@ -513,6 +698,8 @@ fn v1_encoding_reserves_the_complete_bounded_record() {
         assert!(codec::decode(&bytes, &identity, value).unwrap() == *value);
     }
     check(&Aggregate::EMPTY, 47);
+    check(&Counter::ZERO, 31);
+    check(&Counter::from_parts(u128::MAX, true).unwrap(), 31);
     check(&Summary::EMPTY, 55);
     check(&Histogram::new([]).unwrap(), 58);
     check(

@@ -1,6 +1,8 @@
 //! Sealed adapters to the core's canonical restored-state admission.
 
-use ic_metrics::{MeasurementAggregate, MeasurementHistogram, MeasurementSummary};
+use ic_metrics::{
+    MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementSummary,
+};
 
 use crate::{
     DurableMetric, MAX_HISTOGRAM_BOUNDS, StoreError,
@@ -40,6 +42,32 @@ fn continues(current: MeasurementAggregate, previous: MeasurementAggregate) -> b
         && (current.samples_overflowed()
             || current.samples() != previous.samples()
             || current == previous)
+}
+
+impl DurableMetric for MeasurementCounter {}
+
+impl Sealed for MeasurementCounter {
+    fn kind(_: Access) -> u8 {
+        4
+    }
+
+    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+        Ok(codec::COUNTER_BYTES)
+    }
+
+    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
+        bytes.extend_from_slice(&self.total().to_le_bytes());
+        bytes.push(u8::from(self.total_overflowed()));
+    }
+
+    fn decode_state(_: &Self, _: Access, decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
+        Ok(Self::from_parts(decoder.u128()?, decoder.flag()?)?)
+    }
+
+    fn continues(&self, _: Access, previous: &Self) -> bool {
+        self.total() >= previous.total()
+            && (!previous.total_overflowed() || self.total_overflowed())
+    }
 }
 
 impl DurableMetric for MeasurementAggregate {}
@@ -97,7 +125,7 @@ impl Sealed for MeasurementSummary {
     fn continues(&self, _: Access, previous: &Self) -> bool {
         continues(self.aggregate(), previous.aggregate())
             && (self.aggregate().samples_overflowed()
-                || self.samples() != previous.samples()
+                || self.aggregate().samples() != previous.aggregate().samples()
                 || self.latest() == previous.latest())
     }
 }

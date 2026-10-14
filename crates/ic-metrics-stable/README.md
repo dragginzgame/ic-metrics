@@ -1,12 +1,12 @@
 # IC Metrics Stable
 
-Optional durable aggregate, summary and histogram snapshots in **one stable
+Optional durable counter, aggregate, summary and histogram snapshots in **one stable
 B-tree map per canister**. Multiple components share that map with permanent
 namespace/name keys. Adding this package is the opt-in: `ic-metrics` alone stays
 allocation-free, dependency-free, `no_std` and volatile. This adapter uses `std`,
 allocates bounded records and supports native hosts and Wasm with Rust 1.88.
 
-The host owns one `ic-memory` allocation pool and bootstrap. With Memory 0.36,
+The host owns one `ic-memory` allocation pool and bootstrap. With Memory 0.38,
 include a `MemoryRequest` for one permanent store key such as `app.metrics.v1`
 in the host's complete owned request list, then seal that list with
 `SealedDeclarationSnapshot::new(requests)`. After bootstrap, open its admitted memory and one
@@ -56,7 +56,12 @@ contracts; typed adapter errors cover identifiers, values and numeric admission.
   use the same alphabet and have a 64-byte limit. These namespaces separate rows;
   the canister still owns authorization and label cardinality.
 - Every V1 record has a format discriminator, kind, unit, reset epoch and explicit
-  little-endian state. It retains `u128` totals, maxima/latest, count/total overflow
+  little-endian state. Kinds 1/2/3 remain aggregate/summary/histogram; kind 4 is
+  a scalar counter's 16-byte `u128` total followed by one overflow byte (0 or 1).
+  Counters have no sample count, maximum or latest value. Existing kinds retain
+  their exact layouts; no stored-data reset is required. An older adapter cannot
+  read kind 4, so hosts must retain counter-aware code when reopening those rows.
+  Records retain `u128` totals, maxima/latest, count/total overflow
   flags, histogram bounds, disjoint bucket counts and their flags. It never copies
   raw Rust struct memory. Histograms admit at most 256 finite bounds; records are
   limited to 4,608 bytes at the codec boundary. Constructor-admitted units and
@@ -85,6 +90,35 @@ Neither persistence nor an upgrade establishes counter/call-context continuity;
 unfinished spans must be re-established by the consumer.
 
 Host-owned endpoints, resets, sample admission and synchronization remain local.
+
+For diagnostic byte or event totals, load a `MeasurementCounter::ZERO`
+configuration, add only admitted exact quantities, then checkpoint at the host's
+update-message boundary. Absent and stored zero remain distinct. Exact
+`u128::MAX` and actual overflow remain distinct too; an overflowed counter cannot
+later clear its flag or decrease without explicit removal and a new reset epoch.
+These diagnostics never replace authoritative balances, quotas or ledger debt.
+
+```rust
+use ic_memory::ic_stable_structures::{BTreeMap, VectorMemory};
+use ic_metrics::MeasurementCounter;
+use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsStore};
+
+# fn main() -> Result<(), ic_metrics_stable::StoreError> {
+let mut store = MetricsStore::new(BTreeMap::init(VectorMemory::default()));
+let key = MetricKey::new("app", "processed.bytes")?;
+let identity = MetricIdentity::new("bytes", 0)?;
+let mut bytes = store.load(&key, &identity, &MeasurementCounter::ZERO)?
+    .unwrap_or(MeasurementCounter::ZERO);
+bytes.add(32_768);
+store.save(&key, &identity, &bytes)?;
+assert_eq!(store.load(&key, &identity, &MeasurementCounter::ZERO)?, Some(bytes));
+# Ok(())
+# }
+```
+
+This native example verifies codec/storage behavior, not IC checkpoint costs or
+upgrade execution. Hosts choose which completed work contributes and when to
+write; persistence does not establish attribution or reset continuity.
 Stable map reads/writes add allocation and IC costs. The repository's frozen
 [IC store qualification](https://github.com/dragginzgame/ic-metrics/issues/64)
 checks upgrades, query discard, trap rollback and reset, with actual checkpoint

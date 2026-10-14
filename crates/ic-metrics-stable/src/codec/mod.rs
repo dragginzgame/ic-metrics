@@ -8,6 +8,7 @@ use ic_metrics::MeasurementAggregate;
 use crate::{DurableMetric, MAX_HISTOGRAM_BOUNDS, MAX_UNIT_BYTES, MetricIdentity, StoreError};
 
 pub const AGGREGATE_BYTES: usize = 33;
+pub const COUNTER_BYTES: usize = 16 + 1;
 pub const SUMMARY_BYTES: usize = AGGREGATE_BYTES + 8;
 pub const HISTOGRAM_BASE_BYTES: usize = AGGREGATE_BYTES + 2 + 9;
 pub const HISTOGRAM_BUCKET_BYTES: usize = 17;
@@ -21,6 +22,7 @@ const HEADER_BYTES: usize = 4 + 1 + 1 + 8;
 const _: () = {
     assert!(MAX_UNIT_BYTES <= u8::MAX as usize);
     assert!(HEADER_BYTES + MAX_UNIT_BYTES + AGGREGATE_BYTES <= MAX_RECORD_BYTES);
+    assert!(HEADER_BYTES + MAX_UNIT_BYTES + COUNTER_BYTES <= MAX_RECORD_BYTES);
     assert!(HEADER_BYTES + MAX_UNIT_BYTES + SUMMARY_BYTES <= MAX_RECORD_BYTES);
     assert!(
         HEADER_BYTES
@@ -74,9 +76,13 @@ impl<'a> Decoder<'a> {
         Ok(u64::from_le_bytes(self.array()?))
     }
 
+    pub fn u128(&mut self) -> Result<u128, StoreError> {
+        Ok(u128::from_le_bytes(self.array()?))
+    }
+
     pub fn aggregate(&mut self) -> Result<MeasurementAggregate, StoreError> {
         let samples = self.u64()?;
-        let total = u128::from_le_bytes(self.array()?);
+        let total = self.u128()?;
         let maximum = self.u64()?;
         let flags = self.byte()?;
         if flags > 3 || (samples == 0 && maximum != 0) {
@@ -111,7 +117,7 @@ pub fn envelope<'a>(
         return Err(StoreError::UnsupportedFormat);
     }
     let kind = decoder.byte()?;
-    if !(1..=3).contains(&kind) {
+    if !(1..=4).contains(&kind) {
         return Err(StoreError::KindMismatch);
     }
     let length = usize::from(decoder.byte()?);

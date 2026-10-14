@@ -69,12 +69,16 @@ assert_eq!(metrics.budget_stops.exact_total()?, 1);
 # }
 ```
 
-The histogram already owns its mergeable aggregate. Project count, total, maximum
+Summaries and histograms already own their mergeable aggregate. Project count, total, maximum
 and mean from `aggregate()` rather than maintaining another instruction aggregate
 for the same observations. Separate rows, bytes, instructions and outcome
 counts. Independent summaries do not retain per-call correlations: a mean of
 per-call instructions per item differs from total instructions divided by total
 items. Buckets describe ranges, not exact percentiles.
+
+An ordered summary adds `latest()` to that aggregate. For example,
+`metrics.rows_per_batch.aggregate().mean()` projects rows per completed batch
+while `metrics.rows_per_batch.latest()` returns the most recent batch size.
 
 ### Scalar totals
 
