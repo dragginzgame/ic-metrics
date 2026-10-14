@@ -49,40 +49,10 @@ jobs:
             uname -s
             uname -m
           } > target/evidence/native-ci/inputs.txt
-          git ls-files Cargo.toml Cargo.lock Makefile make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk .shared-tooling.snapshot \
-            crates/ic-metrics crates/ic-metrics-stable .github/workflows/ci.yml \
-            .github/actions/retain-failure-evidence/action.yml ci/tool-versions.env ci/ic-tools.tsv \
-            scripts/dev/install-host-tools.sh scripts/dev/install-ic-tools.sh \
-            scripts/dev/install-rust-tools.sh scripts/dev/wasm-inspector.sh scripts/dev/test-wasm-inspector.sh scripts/ci/test-rust-tools.sh \
-            scripts/dev/tool-store.sh scripts/dev/cargo-tool-build.sh scripts/ci/test-tool-store.sh \
-            scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh scripts/ci/test-make-consumer.sh \
-            scripts/ci/check-native-host.sh scripts/ci/test-native-host.sh \
-            scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
-            scripts/ci/collect-tool-evidence.sh scripts/ci/test-cargo-release-metadata.sh \
-            scripts/ci/fixture-lifecycle.sh scripts/ci/fixture-retention-probes.sh \
-            scripts/ci/cargo-workspace-members.jq scripts/ci/compare-stable-versions.pl \
-            scripts/ci/select-tool-evidence.sh scripts/ci/test-tool-evidence.sh \
-            scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
-            scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh scripts/ci/test-tool-downloads.sh \
-            scripts/ci/test-tool-commands.sh scripts/ci/test-cloc.sh \
-            scripts/dev/cloc.sh \
-            scripts/distribution/refresh-consumer.sh scripts/ci/run-validation-targets.sh \
-            scripts/ci/run-release.sh scripts/ci/release-pr.sh scripts/ci/test-release-runner.sh \
-            scripts/ci/test-release-tracking.sh \
-            scripts/ci/check-release-source.sh \
-            scripts/ci/finalize-release-changelog.awk \
-            'scripts/release/*.sh' scripts/dev/test-format-hook.sh \
-            scripts/ci/check-release-commands.sh scripts/ci/check-documentation-links.pl \
-            scripts/ci/check-formatting-hooks.sh \
-            scripts/ci/check-format-tools.sh scripts/ci/test-format-tools.sh scripts/ci/run-formatting.sh \
-            scripts/ci/check-make-execution.sh \
-            scripts/ci/read-cargo-workspace-version.sh scripts/ci/cargo-release-metadata.sh \
-            scripts/ci/rewrite-local-lock-versions.pl .githooks/pre-commit \
-            scripts/dev/install-git-hooks.sh \
-            > target/evidence/native-ci/source-files.txt
-          while IFS= read -r file; do
-            shasum -a 256 "$file"
-          done < target/evidence/native-ci/source-files.txt > target/evidence/native-ci/source-sha256.txt
+          bash scripts/ci/native-source-files.sh > target/evidence/native-ci/source-files.nul
+          while IFS= read -r -d '' file; do
+            shasum -a 256 -- "$file"
+          done < target/evidence/native-ci/source-files.nul > target/evidence/native-ci/source-sha256.txt
       - name: Verify native host
         id: native_host
         env:
@@ -126,12 +96,11 @@ jobs:
           {
             rustc --version
             cargo --version
-            cargo-sort --version
-            cargo-sort-derives sort-derives --version
-            candid-extractor --version
-            rg --version
-            cloc --version
-          } > target/evidence/native-ci/tool-versions.txt
+            bash scripts/ci/report-tool-versions.sh "$GITHUB_WORKSPACE"
+            inspector="$(bash scripts/dev/wasm-inspector.sh check)"
+            printf 'tool=ic-host-wasm-inspect executable=%q sha256=' "$inspector"
+            bash scripts/ci/verify-file-checksum.sh --print sha256 "$inspector"
+          } > target/evidence/native-ci/tool-versions.txt 2>&1
       - name: Prepare the locked application sources
         id: application_sources
         run: |
@@ -170,7 +139,7 @@ jobs:
           fi
           # Small, explicit diagnostic selections exclude scratch/source/tool payloads.
           diagnostics=()
-          for name in inputs.txt source-commit.txt source-files.txt source-sha256.txt outcome.txt \
+          for name in inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
             prerequisites.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log \
             ic-tool-files.sha256 ic-tool-pins.tsv ic-tool-host.txt; do
             if [[ -f "target/evidence/native-ci/$name" ]]; then
@@ -247,7 +216,6 @@ jobs:
         uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
         with:
           toolchain: 1.88.0
+          targets: wasm32-unknown-unknown
       - name: Check stable adapter native and Wasm MSRV
-        run: |
-          rustup target add wasm32-unknown-unknown --toolchain 1.88.0
-          make stable-msrv
+        run: make stable-msrv

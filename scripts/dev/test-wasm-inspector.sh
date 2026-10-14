@@ -7,13 +7,22 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 mkdir -p "$root/target/evidence/wasm-inspector"
-fixture="$(mktemp -d "$root/target/evidence/wasm-inspector/run.XXXXXX")"
+# shellcheck source=scripts/ci/fixture-lifecycle.sh
+source "$root/scripts/ci/fixture-lifecycle.sh"
+fixture="$(fixture_create "$root/target/evidence/wasm-inspector/run.XXXXXX")"
 printf '\000asm\001\000\000\000' > "$fixture/empty.wasm"
 bash "$root/scripts/dev/wasm-inspector.sh" run "$fixture/empty.wasm" 8 0 0 0 > "$fixture/report.tsv"
-[[ "$(wc -l < "$fixture/report.tsv")" == 2 ]]
-# All facts correspond to the exact admitted empty module, including its digest.
+# Host owns structural report semantics. Bind consumer dispatch to this input.
 digest="$(bash "$root/scripts/ci/verify-file-checksum.sh" --print sha256 "$fixture/empty.wasm")"
-printf '%s\t8\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\n' "$digest" > "$fixture/expected-row.tsv"
-tail -n 1 "$fixture/report.tsv" > "$fixture/actual-row.tsv"
-cmp "$fixture/expected-row.tsv" "$fixture/actual-row.tsv"
+# shellcheck disable=SC2016 # awk fields remain literal.
+awk -F '\t' -v digest="$digest" '
+    NR == 1 {
+        for (i = 1; i <= NF; i++) {
+            if ($i == "sha256") identity = i
+            if ($i == "raw_wasm_bytes") bytes = i
+        }
+    }
+    NR == 2 { if (!identity || !bytes || $identity != digest || $bytes != 8) exit 1 }
+    END { if (NR != 2) exit 1 }
+' "$fixture/report.tsv"
 printf 'published Wasm inspector dispatch passed; inputs retained: %s\n' "$fixture"

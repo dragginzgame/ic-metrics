@@ -5,7 +5,50 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.9.5
+## Pending 0.9.6
+
+Metrics adopts clean committed Shared candidate
+`2d5e01e08fab6b432e463d721e5e2f7c6a929fdc` through the canonical exporter.
+[Shared PR #190](https://github.com/dragginzgame/shared-tooling/pull/190) owns common
+version reporting and test-only jobserver observation, stacked on #186/#184/#180.
+This is a reviewed contribution identity; integration may change its pin.
+The source selector is Metrics-owned and shared by hashing and fixture copying;
+its NUL-delimited paths include pending source, preserving unusual filenames.
+Generated/private evidence, historical archives and managed tool payloads remain
+outside source selection. Native diagnostics retain the NUL roster.
+
+The common reporter checks managed selections without installing, derives its
+roster from catalogs and records executable hashes and live versions. Compiler
+selection and inspector hash/admission stay local. Partial failing reports are
+retained in the small diagnostic archive before later steps can run. The shared
+pipe probe observes descriptor type and direction without token IO; actual Make
+forwarding coverage stays at each consumer. No library/API, V1 bytes, Cargo lock,
+package versions or executable pins change in this batch.
+
+Source selection and actual release/native workflow fixtures pass modern Bash
+and genuine Bash 3.2. Shared report, pipe and affected Make fixtures pass both;
+ShellCheck, workflow lint, snapshot verification, links and pins pass. Real
+read-only reporting passes against prepared Linux selections. The corrected
+native failure case recovers partial stdout/stderr before application dispatch;
+the initial fixture failure remains retained. These are focused local checks,
+not full-suite or native macOS acceptance; earlier receipts keep their scope.
+
+The candidate also carries the reviewed fixture allocator from Shared main
+`998065bd2dc8350fb6811c3c3486627cbb48724e`. Eight local fixtures use its explicit
+allocation/physical anchoring, retaining their own traps, prefixes and successful
+evidence policy. Host's existing CLI tests own the complete report row; Metrics
+checks only managed dispatch, the input digest and raw byte count. Both package
+floor installs declare their Wasm target through the pinned action; the separate
+Rust 1.88 target command is retired.
+
+The allocator's original failure/custody checks pass modern Bash and genuine
+Bash 3.2. Actual managed inspector dispatch passes; controlled producer checks
+reject changed digest/byte count and preserve exit 41 while ignoring unrelated
+structural columns. Release-admission, retention and native artifact fixtures
+pass modern Bash and Bash 3.2, preserving failed and intentional-success evidence. No runtime library
+source, stored V1 data, package version or dependency/tool pin changes.
+
+## Delivered 0.9.5
 
 Metrics adopts reviewed Shared candidate `2f6dbdce7a19ce121dd574e77ee361b4d1aeb57c`
 through its clean committed exporter (121 files). The native-host contribution is
@@ -52,7 +95,7 @@ workflow archive cases pass with substituted Make effects. This is local
 qualification rather than IC performance evidence or hosted macOS acceptance.
 
 Full Linux `make ci`, `make msrv` and `make stable-msrv` pass on the complete
-current batch, preserving the incoming IC Memory 0.36.4 lock selection. Shared
+0.9.5 preparation batch, preserving the incoming IC Memory 0.36.4 lock selection. Shared
 PR #186 passes hosted Linux lint/portable checks; native macOS remains pending.
 
 ## Delivered 0.9.4

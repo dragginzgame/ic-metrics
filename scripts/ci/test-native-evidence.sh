@@ -12,8 +12,9 @@ yq="$root/.tools/host/bin/yq"
 jq="$root/.tools/host/bin/jq"
 git_dir="$(git -C "$root" rev-parse --absolute-git-dir)"
 mkdir -p "$root/target/evidence/native-ci"
-fixture="$(mktemp -d "${TMPDIR:-$root/target/evidence/native-ci}/native-evidence.XXXXXX")"
-fixture="$(cd "$fixture" && pwd -P)"
+# shellcheck source=scripts/ci/fixture-lifecycle.sh
+source "$root/scripts/ci/fixture-lifecycle.sh"
+fixture="$(fixture_create "${TMPDIR:-$root/target/evidence/native-ci}/native-evidence.XXXXXX")"
 fixture_complete=false
 cleanup() {
     local status=$?
@@ -84,9 +85,7 @@ done
 # untracked helpers. Historical docs/evidence archives are not fixture inputs.
 # The live source-hash step below refuses any omitted workflow input.
 # No Git write, release, installer, network or product compilation is dispatched.
-git -C "$root" ls-files --cached --others --exclude-standard -z -- \
-    Cargo.toml Cargo.lock Makefile rust-toolchain.toml .shared-tooling.snapshot \
-    make crates ci scripts .githooks .github > "$fixture/source-files"
+bash "$root/scripts/ci/native-source-files.sh" > "$fixture/source-files"
 while IFS= read -r -d '' path; do
     if [[ -f "$root/$path" ]]; then
         mkdir -p "$fixture/source/$(dirname "$path")"
@@ -176,6 +175,17 @@ real_bash="$(command -v bash)"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
 cat >> "$fixture/bin/bash" <<'BASH'
 set -euo pipefail
+if [[ "${!#}" == --check ]]; then
+    case "$1" in
+        */install-host-tools.sh|*/install-rust-tools.sh|*/install-ic-tools.sh)
+            printf '%s\n' "$FIXTURE_REPORT_BIN"
+            exit 0 ;;
+    esac
+fi
+if [[ "$1" == scripts/dev/wasm-inspector.sh && "${2:-}" == check ]]; then
+    printf '%s/inspector\n' "$FIXTURE_REPORT_BIN"
+    exit 0
+fi
 if [[ "${!#}" == --preflight ]]; then
     case "$1" in
         */install-ic-tools.sh|*/install-rust-tools.sh)
@@ -195,7 +205,18 @@ FIXTURE_REAL_BASH="$real_bash"
 export FIXTURE_REAL_BASH
 FIXTURE_REAL_MAKE="$(command -v make)"
 export FIXTURE_REAL_MAKE
-for scenario in success application-sources rust-install rust-check rust-store rust-store-invalid rust-admission ic-admission host-install host-check host-store ic-install ic-check ic-store native formatting rust-archive-write rust-archive-conflict; do (
+export FIXTURE_REPORT_BIN="$fixture/report-bin"
+mkdir -p "$FIXTURE_REPORT_BIN"
+for tool in jq yq rg cloc cargo-sort cargo-sort-derives candid-extractor icp didc ic-wasm quill wasm-opt inspector; do
+    cat > "$FIXTURE_REPORT_BIN/$tool" <<'TOOL'
+#!/usr/bin/env bash
+printf 'observed %s\n' "${0##*/}"
+printf 'tool observation stderr\n' >&2
+[[ "${FIXTURE_FAILURE:-}" != tool-inputs ]] || exit 43
+TOOL
+    chmod +x "$FIXTURE_REPORT_BIN/$tool"
+done
+for scenario in success tool-inputs application-sources rust-install rust-check rust-store rust-store-invalid rust-admission ic-admission host-install host-check host-store ic-install ic-check ic-store native formatting rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -214,6 +235,7 @@ for scenario in success application-sources rust-install rust-check rust-store r
     export APPLICATION_OUTCOME=skipped
     export TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped NATIVE_OUTCOME=skipped
     case "$scenario" in
+        tool-inputs) FIXTURE_FAILURE="tool-inputs" ;;
         application-sources) FIXTURE_FAILURE=application-sources ;;
         rust-install|rust-store|rust-store-invalid|rust-archive-write|rust-archive-conflict) FIXTURE_FAILURE=install-rust-tools ;;
         rust-admission) FIXTURE_FAILURE=install-rust-tools-preflight ;;
@@ -248,7 +270,7 @@ for scenario in success application-sources rust-install rust-check rust-store r
     printf '%s\n' "$status" > status.txt
     case "$scenario" in
         success) [[ "$status" == 0 ]] || exit 1 ;;
-        native|formatting|application-sources) [[ "$status" == 43 ]] || exit 1 ;;
+        native|formatting|application-sources|tool-inputs) [[ "$status" == 43 ]] || exit 1 ;;
         *) [[ "$status" == 2 ]] || exit 1 ;; # GNU Make preserves its failing aggregate status.
     esac
     # No later set/check/native effect can follow the first refused leaf.
@@ -258,7 +280,7 @@ for scenario in success application-sources rust-install rust-check rust-store r
     : > expected-commands
     for phase in "${phases[@]}"; do
         printf '%s\n' "$phase" >> expected-commands
-        if [[ "$phase" == "$FIXTURE_FAILURE" ]]; then break; fi
+        if [[ "$phase" == "$FIXTURE_FAILURE" || ( "$scenario" == tool-inputs && "$phase" == wasm-inspector-tools-check ) ]]; then break; fi
     done
     cmp expected-commands commands.log
     # The outer archive owns full failed-release evidence, including Git state.
@@ -312,7 +334,7 @@ for scenario in success application-sources rust-install rust-check rust-store r
     mkdir -p unpacked/target/evidence/native-ci
     tar -xzf target/evidence/native-ci.tar.gz -C unpacked/target/evidence/native-ci
     (cd unpacked && shasum -a 256 -c target/evidence/native-ci/artifact-sha256.txt) > content-check.log
-    for file in inputs.txt source-commit.txt source-files.txt source-sha256.txt outcome.txt; do
+    for file in inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt; do
         cmp "target/evidence/native-ci/$file" "unpacked/target/evidence/native-ci/$file"
     done
     for file in index release-state/fixture.plan; do
@@ -343,8 +365,16 @@ for scenario in success application-sources rust-install rust-check rust-store r
             *-check) failed_log=tools-check.log ;;
             rust-*|host-*|ic-*) failed_log=tools-setup.log ;;
             application-sources) failed_log=application-sources.log ;;
+            tool-inputs) failed_log="tool-versions.txt" ;;
             native|formatting) failed_log=native-ci.log ;;
         esac
+        if [[ "$scenario" == tool-inputs ]]; then
+            grep -Fx 'observed cloc' "diagnostic-readback/$failed_log" > /dev/null
+            grep -Fx 'tool observation stderr' "diagnostic-readback/$failed_log" > /dev/null
+            [[ "$APPLICATION_OUTCOME" == skipped && "$NATIVE_OUTCOME" == skipped ]] || exit 1
+            [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]] || exit 1
+            exit 0
+        fi
         if [[ "$scenario" == application-sources ]]; then
             grep -Fx 'fetch stdout' "diagnostic-readback/$failed_log" > /dev/null
             grep -Fx 'fetch stderr' "diagnostic-readback/$failed_log" > /dev/null
