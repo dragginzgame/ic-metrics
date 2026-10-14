@@ -74,7 +74,7 @@ impl Sealed for MeasurementSummary {
     }
 
     fn encoded_size(_: Access) -> Result<usize, StoreError> {
-        Ok(codec::AGGREGATE_BYTES + 8)
+        Ok(codec::SUMMARY_BYTES)
     }
 
     fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
@@ -125,7 +125,7 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
         if N > MAX_HISTOGRAM_BOUNDS {
             return Err(StoreError::TooManyBounds);
         }
-        Ok(codec::AGGREGATE_BYTES + 2 + 17 * N + 9)
+        Ok(codec::HISTOGRAM_BASE_BYTES + codec::HISTOGRAM_BUCKET_BYTES * N)
     }
 
     fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {

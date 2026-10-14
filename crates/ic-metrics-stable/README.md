@@ -59,7 +59,10 @@ contracts; typed adapter errors cover identifiers, values and numeric admission.
   little-endian state. It retains `u128` totals, maxima/latest, count/total overflow
   flags, histogram bounds, disjoint bucket counts and their flags. It never copies
   raw Rust struct memory. Histograms admit at most 256 finite bounds; records are
-  limited to 4,608 bytes at the codec boundary.
+  limited to 4,608 bytes at the codec boundary. Constructor-admitted units and
+  shape-admitted encoders are bounded together at compile time; the largest
+  current encoded record is 4,474 bytes. Stored bytes still undergo independent
+  size, envelope and numeric validation.
 - Load checks kind, unit, epoch and exact histogram bounds, then restores through
   the core's typed numeric admission. Unknown formats, truncation, trailing bytes
   and malformed state are errors; they never silently create an empty metric.

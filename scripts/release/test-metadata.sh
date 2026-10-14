@@ -25,23 +25,8 @@ cleanup() {
     fixture_finish "$status" "$fixture" "failed metadata fixture retained"
 }
 trap cleanup EXIT
-FIXTURE_REAL_CARGO="$(command -v cargo)"
-export FIXTURE_REAL_CARGO
 real_bash="$(command -v bash)"
 mkdir -p "$fixture/bin"
-printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
-cat >> "$fixture/bin/cargo" <<'CARGO'
-set -euo pipefail
-if [[ "$*" == 'set-version --help' ]]; then exit 0; fi
-if [[ "${1:-}" == set-version ]]; then
-    [[ $# -eq 4 && "$2" == --workspace && "$3" == --offline && "$4" == "$RELEASE_VERSION" ]] || exit 1
-    awk -v version="$4" '/^version = / { $0="version = \"" version "\"" } { print }' Cargo.toml > Cargo.toml.fixture
-    mv Cargo.toml.fixture Cargo.toml
-else
-    exec "$FIXTURE_REAL_CARGO" "$@"
-fi
-CARGO
-chmod +x "$fixture/bin/cargo"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 case "$*" in
@@ -125,5 +110,5 @@ cmp stale.lock Cargo.lock
 cp prepared.lock Cargo.lock
 bash "$root/scripts/release/metadata.sh" check >> result.log 2>&1
 cmp originals/evidence target/evidence
-echo 'Metrics coordinated-package metadata delegation passed (Cargo-edit/Git substituted; offline metadata real)'
+echo 'Metrics coordinated-package metadata delegation passed (Git/Make substituted; offline Cargo metadata real)'
 fixture_complete=true

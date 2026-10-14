@@ -69,7 +69,7 @@ help:
 	@echo "Wasm evidence tool: install-wasm-inspector, wasm-inspector-tools-check, wasm-inspect-check"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
 	@echo "Durable adapter: stable-check; separate native/Wasm minimum: stable-msrv"
-	@echo "Full delivery validation: ci, msrv, stable-msrv; release commands remain explicit"
+	@echo "Full release validation (or explicit check request): ci, msrv, stable-msrv"
 
 publish:
 	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io
@@ -91,6 +91,8 @@ hook-check:
 	bash scripts/dev/test-format-hook.sh
 
 ci-evidence-check:
+	bash scripts/ci/test-native-host.sh
+	bash scripts/ci/test-formatting-evidence.sh
 	bash scripts/ci/test-evidence-archive.sh
 	bash scripts/ci/test-native-evidence.sh
 
@@ -161,6 +163,7 @@ release-tools-check:
 	bash scripts/release/test-standard-release.sh
 	bash scripts/ci/test-cargo-release-metadata.sh
 	bash scripts/release/test-metadata.sh
+	bash scripts/ci/test-release-source.sh
 	bash scripts/release/test-release-admission.sh
 	bash scripts/release/test-fixture-retention.sh
 

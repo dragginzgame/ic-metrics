@@ -143,6 +143,8 @@ impl From<MeasurementStateError> for StoreError {
     }
 }
 
+const MAX_UNIT_BYTES: usize = 64;
+
 fn identifier(value: &str, limit: usize) -> Result<(), StoreError> {
     if value.is_empty()
         || value.len() > limit
@@ -195,7 +197,7 @@ impl MetricIdentity {
     /// # Errors
     /// Returns `StoreError::InvalidIdentifier` for an invalid unit.
     pub fn new(unit: &str, epoch: u64) -> Result<Self, StoreError> {
-        identifier(unit, 64)?;
+        identifier(unit, MAX_UNIT_BYTES)?;
         Ok(Self {
             unit: unit.to_owned(),
             epoch,
@@ -280,7 +282,7 @@ impl<M: Memory> MetricsStore<M> {
                 return Err(StoreError::StateRegression);
             }
         }
-        let bytes = codec::encode(identity, value, payload_size)?;
+        let bytes = codec::encode(identity, value, payload_size);
         self.map.insert(key.0.clone(), bytes);
         Ok(())
     }

@@ -64,7 +64,6 @@ set -euo pipefail
 if [[ "${1:-}" == locate-project ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
 printf '%s\n' "$*" >> "$ADMISSION_CARGO_EVENTS"
 case "$*" in
-    'set-version --help'|'sort --help') ;;
     'metadata --locked --offline --format-version 1')
         if grep -q '^members = \[\]' Cargo.toml; then
             # Synthetic index-admission cases substitute graph facts. Selected
@@ -179,7 +178,7 @@ for scenario in cold standalone-offline environment-offline config-offline netwo
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
     [[ "$status" == "$expected_status" ]] || exit 1
-    printf '%s\n' 'set-version --help' "$expected_fetch" > "$fixture/expected-cache-events"
+    printf '%s\n' "$expected_fetch" > "$fixture/expected-cache-events"
     if [[ "$expected_status" == 0 ]]; then
         printf '%s\n' install-rust-tools rust-tools-check install-wasm-inspector wasm-inspector-tools-check >> "$fixture/expected-cache-events"
     fi
@@ -214,7 +213,7 @@ for policy in environment config; do
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
     [[ "$status" == 101 ]] || exit 1
-    printf '%s\n' 'set-version --help' 'fetch --locked' > "$fixture/actual-events"
+    printf '%s\n' 'fetch --locked' > "$fixture/actual-events"
     cmp "$fixture/actual-events" "$ADMISSION_CARGO_EVENTS"
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
     cmp .git/index "$originals/index"
@@ -261,7 +260,7 @@ for scenario in cold offline network-failure tool-setup-failure tool-check-failu
     status=0
     RELEASE_MAKE="$fixture/bin/release-make" bash "$root/scripts/ci/run-release.sh" patch origin "$branch" \
         > "$fixture/result.log" 2>&1 || status=$?
-    printf '%s\n' 'set-version --help' 'fetch --locked' > "$fixture/runner-cache-events"
+    printf '%s\n' 'fetch --locked' > "$fixture/runner-cache-events"
     if [[ "$scenario" == cold ]]; then
         [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]] || exit 1
         printf '%s\n' install-rust-tools rust-tools-check install-wasm-inspector wasm-inspector-tools-check validation >> "$fixture/runner-cache-events"
@@ -329,7 +328,7 @@ for scenario in cold reuse setup-failure check-failure inspector-setup-failure i
     [[ "$status" == "$expected_status" ]] || exit 1
     expected_fetch='fetch --locked'
     if [[ "$scenario" == standalone-missing ]]; then expected_fetch='fetch --locked --offline'; fi
-    printf '%s\n' 'set-version --help' "$expected_fetch" "${expected_targets[@]}" > "$fixture/expected-tool-events"
+    printf '%s\n' "$expected_fetch" "${expected_targets[@]}" > "$fixture/expected-tool-events"
     cmp "$fixture/expected-tool-events" "$ADMISSION_CARGO_EVENTS"
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
     cmp .git/index "$originals/index"
@@ -340,47 +339,20 @@ for scenario in cold reuse setup-failure check-failure inspector-setup-failure i
     [[ ! -e .git/release-state ]] || exit 1
 done
 
-for scenario in unstaged staged-hidden untracked; do
-    setup "preflight-$scenario"
-    export IC_METRICS_RELEASE_CACHE_PREPARE=1
-    case "$scenario" in
-        unstaged) printf '\nUnrelated edit.\n' >> README.md ;;
-        staged-hidden)
-            printf '\nHidden staged edit.\n' >> README.md
-            git add -- README.md
-            git show HEAD:README.md > README.md
-            git diff --quiet HEAD -- README.md
-            ;;
-        untracked) printf 'Unrelated source.\n' > untracked.txt ;;
-    esac
-    reject preflight
-    [[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
-done
-
-setup preflight-all-blockers
+# Shared's exportable source fixture owns generic Git/path diagnostics.
+# Keep the actual consumer adapter's refusal before cache/tool dispatch.
+setup preflight-hidden-staged
 export IC_METRICS_RELEASE_CACHE_PREPARE=1
 printf '\nHidden staged edit.\n' >> README.md
 git add -- README.md
 git show HEAD:README.md > README.md
-printf '\n# Unstaged edit.\n' >> Makefile
-untracked=$'source name\nwith newline.rs'
-printf 'Untracked input.\n' > "$untracked"
-printf '\n# Allowed lock-only work.\n' >> Cargo.lock
 cp .git/index "$fixture/index-before"
-for path in README.md Makefile "$untracked" Cargo.lock; do
-    cp "$path" "$fixture/$(printf '%s' "$path" | shasum -a 256 | cut -d ' ' -f 1)"
-done
+cp README.md "$fixture/readme-before"
 reject preflight
 [[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1
-grep -F 'staged: README.md' "$fixture/result.log" >/dev/null
-grep -F 'unstaged: Makefile' "$fixture/result.log" >/dev/null
-printf 'untracked: %q\n' "$untracked" > "$fixture/expected-path"
-grep -F -f "$fixture/expected-path" "$fixture/result.log" >/dev/null
 grep -F 'has not started validation or version preparation' "$fixture/result.log" >/dev/null
 cmp .git/index "$fixture/index-before"
-for path in README.md Makefile "$untracked" Cargo.lock; do
-    cmp "$path" "$fixture/$(printf '%s' "$path" | shasum -a 256 | cut -d ' ' -f 1)"
-done
+cmp README.md "$fixture/readme-before"
 
 setup preflight-allowed-lock
 printf '\n# Allowed lock-only work.\n' >> Cargo.lock

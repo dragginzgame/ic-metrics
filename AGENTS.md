@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`cff186285829481185e932d3c16514022b897de9` and file digests are recorded in
+`2f6dbdce7a19ce121dd574e77ee361b4d1aeb57c` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -59,10 +59,12 @@ and [the extraction contract](docs/extraction.md) before implementation.
   `target/` and locked dependencies; do not upgrade dependencies as a side effect.
 - After Rust edits, run `make fmt`, then selected package checks or named tests.
   Focused commands and host qualification are in [docs/hosts.md](docs/hosts.md).
-  Before delivering completed code as ready, run `make ci` and all documented
-  package-floor checks, reusing passing evidence for unchanged inputs. Inspection
-  alone does not authorize that suite; documentation-only work needs link,
-  consistency and diff checks. Releases remain separately authorized.
+  Focused checks for the changed behavior and directly affected callers suffice
+  for ordinary handoff under [the validation policy](DRAGGINZGAME.md#validation-and-evidence).
+  Full `make ci`, `make msrv` and `make stable-msrv` are release gates or explicit
+  check requests. Reuse passing evidence only for unchanged inputs. Documentation-
+  only work needs link, consistency and diff checks. Releases remain separately
+  authorized.
 - Fix warnings in the selected Clippy gate before later validation.
 - When shared contracts change, review the IcyDB, Canic, `ic-timers`,
   `ic-backup`, IC Blob Storage test-probe and Toko Miner callers under
