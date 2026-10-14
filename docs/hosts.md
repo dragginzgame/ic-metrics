@@ -44,7 +44,7 @@ before `make ci`. The selected-commit metadata fixture reads committed HEAD,
 so its graph must also be prepared when local manifest/lock edits differ from
 HEAD; a prepared working-tree graph alone cannot qualify that offline check.
 
-The ordered local extension installs/checks published `ic-host-wasm-inspect` 0.17.4 through
+The ordered local extension installs/checks published `ic-host-wasm-inspect` 0.17.10 through
 the shared Cargo-tool installer. `make install-wasm-inspector` prepares that
 selection explicitly; `make wasm-inspector-tools-check` verifies it offline.
 `bash scripts/dev/wasm-inspector.sh run PATH MAX_BYTES MAX_SECTIONS MAX_EXPORTS MAX_CUSTOM_SECTIONS`
@@ -111,6 +111,12 @@ explicit available top-level logs and source/tool/outcome identities. No tool
 payload, source tree, scratch directory or nested archive is selected. It is
 collected before the complete archive so full collection failures still leave
 readable diagnostics; neither archive silently truncates selected logs.
+
+Generic Cargo metadata edge cases run in the snapshot-owned fixture. The
+Metrics metadata fixture checks the real two-package adapter and stale stable
+member refusal. Tool candidate selection/archive orchestration is shared; the
+consumer keeps source/outcome selection, outer Git custody and uploads. Local
+cleanup uses the shared helper after anchoring each scratch path physically.
 
 Release, hook and evidence fixtures substitute only their declared effects;
 actual Git index, Make dispatch, receipt admission and failure retention retain

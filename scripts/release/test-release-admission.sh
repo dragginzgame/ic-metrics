@@ -12,17 +12,17 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-release-admission.XXXXXX")"
+fixture="$(cd -P "$fixture" && printf '%s/.' "$PWD")"
+fixture="${fixture%/.}"
+# shellcheck source=scripts/ci/fixture-lifecycle.sh
+source "$root/scripts/ci/fixture-lifecycle.sh"
 fixture_complete=false
 cleanup() {
     local status=$?
-    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
     if [[ "$status" != 0 ]]; then
         [[ ! -f "$fixture/result.log" ]] || cat "$fixture/result.log" >&2
-        echo "failed admission fixture retained: $fixture" >&2
-    else
-        rm -rf "$fixture"
     fi
-    exit "$status"
+    fixture_finish "$status" "$fixture" "failed admission fixture retained"
 }
 trap cleanup EXIT
 source_commit="$(git -C "$root" rev-parse HEAD)"

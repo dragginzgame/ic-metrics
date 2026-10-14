@@ -55,7 +55,7 @@ mod tests;
 /// ```compile_fail,E0061
 /// use ic_metrics_stable::DurableMetric;
 /// fn raw<T: DurableMetric>() {
-///     let _ = T::check_size();
+///     let _ = T::encoded_size();
 /// }
 /// ```
 ///
@@ -238,7 +238,17 @@ impl<M: Memory> MetricsStore<M> {
         identity: &MetricIdentity,
         configuration: &T,
     ) -> Result<Option<T>, StoreError> {
-        T::check_size(crate::metric::ACCESS)?;
+        T::encoded_size(crate::metric::ACCESS)?;
+        self.load_admitted(key, identity, configuration)
+    }
+
+    // Both public entrypoints admit the static size before inspecting stored bytes.
+    fn load_admitted<T: DurableMetric>(
+        &self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        configuration: &T,
+    ) -> Result<Option<T>, StoreError> {
         self.map
             .get(&key.0)
             .map(|bytes| codec::decode(&bytes, identity, configuration))
@@ -261,7 +271,8 @@ impl<M: Memory> MetricsStore<M> {
         identity: &MetricIdentity,
         value: &T,
     ) -> Result<(), StoreError> {
-        if let Some(previous) = self.load(key, identity, value)? {
+        let payload_size = T::encoded_size(crate::metric::ACCESS)?;
+        if let Some(previous) = self.load_admitted(key, identity, value)? {
             if value.same_state(crate::metric::ACCESS, &previous) {
                 return Ok(());
             }
@@ -269,7 +280,7 @@ impl<M: Memory> MetricsStore<M> {
                 return Err(StoreError::StateRegression);
             }
         }
-        let bytes = codec::encode(identity, value)?;
+        let bytes = codec::encode(identity, value, payload_size)?;
         self.map.insert(key.0.clone(), bytes);
         Ok(())
     }
