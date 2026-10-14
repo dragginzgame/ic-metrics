@@ -18,6 +18,11 @@ fn store() -> MetricsStore<VectorMemory> {
     MetricsStore::new(BTreeMap::init(VectorMemory::default()))
 }
 
+fn encode<T: crate::DurableMetric>(identity: &MetricIdentity, value: &T) -> Vec<u8> {
+    let payload_size = T::encoded_size(crate::metric::ACCESS).unwrap();
+    codec::encode(identity, value, payload_size).unwrap()
+}
+
 #[test]
 fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
     let memory = VectorMemory::default();
@@ -143,7 +148,7 @@ fn exact_caps_and_overflow_flags_survive_storage_and_continue() {
 fn corrupted_records_never_reset_or_overwrite_implicitly() {
     let mut store = store();
     let key = key("app");
-    let bytes = codec::encode(&identity(), &Aggregate::EMPTY).unwrap();
+    let bytes = encode(&identity(), &Aggregate::EMPTY);
     for length in 0..bytes.len() {
         let truncated = bytes[..length].to_vec();
         store.map.insert(key.0.clone(), truncated.clone());
@@ -178,7 +183,7 @@ fn v1_encoding_is_explicit_and_rejects_invalid_numeric_state() {
     let mut value = Aggregate::EMPTY;
     value.record(7);
     let identity = MetricIdentity::new("x", 3).unwrap();
-    let bytes = codec::encode(&identity, &value).unwrap();
+    let bytes = encode(&identity, &value);
     let mut expected = b"ICM\x01\x01\x01x".to_vec();
     expected.extend_from_slice(&3_u64.to_le_bytes());
     expected.extend_from_slice(&1_u64.to_le_bytes());
@@ -204,7 +209,7 @@ fn inconsistent_summary_latest_rejects_load_and_save_without_overwrite() {
     let mut summary = Summary::EMPTY;
     summary.record(10);
     summary.record(10);
-    let mut bytes = codec::encode(&identity, &summary).unwrap();
+    let mut bytes = encode(&identity, &summary);
     // V1 stores latest as the final eight bytes. Zero contradicts two tens.
     let latest_offset = bytes.len() - 8;
     bytes[latest_offset..].copy_from_slice(&0_u64.to_le_bytes());
@@ -295,20 +300,23 @@ fn histogram_corruption_and_maximum_bound_size_are_admitted_explicitly() {
     let identity = identity();
     let mut histogram = Histogram::new([0, 10]).unwrap();
     histogram.record(5);
-    let bytes = codec::encode(&identity, &histogram).unwrap();
+    let bytes = encode(&identity, &histogram);
     for length in 0..bytes.len() {
-        assert!(codec::decode(&bytes[..length], &identity, &histogram).is_err());
+        assert_eq!(
+            codec::decode(&bytes[..length], &identity, &histogram),
+            Err(StoreError::MalformedRecord)
+        );
     }
     let bounds = std::array::from_fn::<_, 256, _>(|index| u64::try_from(index).unwrap());
     let mut value = Histogram::new(bounds).unwrap();
     for observation in [0, 127, 255, 256] {
         value.record(observation);
     }
-    let bytes = codec::encode(&identity, &value).unwrap();
+    let bytes = encode(&identity, &value);
     assert_eq!(codec::decode(&bytes, &identity, &value), Ok(value));
     let mut zero = Histogram::new([]).unwrap();
     zero.record(0);
-    let bytes = codec::encode(&identity, &zero).unwrap();
+    let bytes = encode(&identity, &zero);
     assert_eq!(codec::decode(&bytes, &identity, &zero), Ok(zero));
 }
 
@@ -498,7 +506,7 @@ fn histogram_checkpoints_preserve_each_bucket_count_and_flag() {
 fn v1_encoding_reserves_the_complete_bounded_record() {
     fn check<T: crate::DurableMetric>(value: &T, size: usize) {
         let identity = MetricIdentity::new(&"x".repeat(64), 3).unwrap();
-        let bytes = codec::encode(&identity, value).unwrap();
+        let bytes = encode(&identity, value);
         assert_eq!(bytes.len(), size + 64);
         // No encoder growth after its single exact reservation.
         assert_eq!(bytes.capacity(), bytes.len());
@@ -515,10 +523,7 @@ fn v1_encoding_reserves_the_complete_bounded_record() {
     check(&wide, 47);
     check(&Summary::from_parts(wide, Some(u64::MAX)).unwrap(), 55);
     assert_eq!(
-        codec::encode(
-            &identity(),
-            &Histogram::new(std::array::from_fn::<_, 257, _>(|i| i as u64)).unwrap()
-        ),
+        <Histogram<257> as crate::metric::Sealed>::encoded_size(crate::metric::ACCESS),
         Err(StoreError::TooManyBounds)
     );
 }

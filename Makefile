@@ -159,6 +159,7 @@ release-tools-check:
 	bash scripts/ci/test-release-runner.sh
 	bash scripts/ci/test-release-tracking.sh
 	bash scripts/release/test-standard-release.sh
+	bash scripts/ci/test-cargo-release-metadata.sh
 	bash scripts/release/test-metadata.sh
 	bash scripts/release/test-release-admission.sh
 	bash scripts/release/test-fixture-retention.sh

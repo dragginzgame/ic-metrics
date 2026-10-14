@@ -77,9 +77,13 @@ for scenario in success wrong-os wrong-architecture wrong-version; do
         [[ "$status" == 1 && ! -s "$fixture/host-$scenario.path" ]] || exit 1
     fi
 done
-# Read the real index but use copied current source as the independent worktree.
+# Copy the workflow's source inputs and Make/helper closure, including pending
+# untracked helpers. Historical docs/evidence archives are not fixture inputs.
+# The live source-hash step below refuses any omitted workflow input.
 # No Git write, release, installer, network or product compilation is dispatched.
-git -C "$root" ls-files --cached --others --exclude-standard -z > "$fixture/source-files"
+git -C "$root" ls-files --cached --others --exclude-standard -z -- \
+    Cargo.toml Cargo.lock Makefile rust-toolchain.toml .shared-tooling.snapshot \
+    make crates ci scripts .githooks .github > "$fixture/source-files"
 while IFS= read -r -d '' path; do
     if [[ -f "$root/$path" ]]; then
         mkdir -p "$fixture/source/$(dirname "$path")"

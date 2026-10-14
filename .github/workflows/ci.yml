@@ -57,6 +57,9 @@ jobs:
             scripts/dev/tool-store.sh scripts/dev/cargo-tool-build.sh scripts/ci/test-tool-store.sh \
             scripts/ci/ic-tool-pins.awk scripts/ci/test-native-evidence.sh scripts/ci/test-make-consumer.sh \
             scripts/ci/archive-evidence.sh scripts/ci/test-evidence-archive.sh \
+            scripts/ci/collect-tool-evidence.sh scripts/ci/test-cargo-release-metadata.sh \
+            scripts/ci/fixture-lifecycle.sh scripts/ci/fixture-retention-probes.sh \
+            scripts/ci/cargo-workspace-members.jq scripts/ci/compare-stable-versions.pl \
             scripts/ci/select-tool-evidence.sh scripts/ci/test-tool-evidence.sh \
             scripts/ci/verify-file-checksum.sh scripts/ci/verify-evidence-checksums.sh \
             scripts/ci/test-host-tools.sh scripts/ci/test-ic-tools.sh scripts/ci/test-tool-downloads.sh \
@@ -177,21 +180,11 @@ jobs:
           shasum -a 256 target/evidence/native-diagnostics.tar.gz > target/evidence/native-diagnostics.tar.gz.sha256
           collection_status=0
           if [[ "$TOOLS_OUTCOME" == failure ]]; then
-            candidates=()
             diagnostics="$(mktemp -d target/evidence/native-ci/tool-evidence.XXXXXX)"
-            bash scripts/ci/select-tool-evidence.sh full "$PWD" "$diagnostics" \
-              > "$diagnostics/selections.nul" 2> "$diagnostics/selection.log" || collection_status=$?
-            printf '%s\n' "$collection_status" > "$diagnostics/selection-status"
-            if [[ "$collection_status" != 0 ]]; then
-              cat "$diagnostics/selection.log" >&2
-              echo 'Tool evidence collection incomplete; retaining admitted local evidence and diagnostics.' >&2
-            fi
-            while IFS= read -r -d '' candidate_root && IFS= read -r -d '' candidate; do
-              candidates+=("$candidate_root" "$candidate")
-            done < "$diagnostics/selections.nul"
-            if [[ ${#candidates[@]} != 0 ]]; then
-              bash scripts/ci/archive-evidence.sh target/evidence/native-ci/tool-candidates.tar.gz "${candidates[@]}"
-            fi
+            bash scripts/ci/collect-tool-evidence.sh target/evidence/native-ci/tool-candidates.tar.gz \
+              "$PWD" "$diagnostics" full "$PWD/ci/tool-versions.env" "$PWD/ci/ic-tools.tsv" \
+              > /dev/null || collection_status=$?
+            [[ "$collection_status" != 2 ]] || exit "$collection_status"
           fi
           # The formatter prefers RUNNER_TEMP, outside the native scratch tree.
           # Pack its retained diagnostics before hashing the native payloads.

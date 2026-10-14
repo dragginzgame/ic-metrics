@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.9.4] - 2026-10-14
+
+### Changed
+
+- Adopt Shared Tooling 0.12.2 through a clean committed snapshot, preserving
+  selected tool pins, library dependencies, APIs and stored V1 bytes.
+- Run canonical metadata edge-case coverage at its shared owner; retain a
+  smaller Metrics fixture for two-package delegation and stale-adapter refusal.
+- Delegate native tool-evidence selection and archiving to the shared collector,
+  retaining local diagnostics, formatter logs, outer Git custody and uploads.
+- Reuse shared fixture cleanup with physically anchored scratch paths, preserving
+  failure status, diagnostic logs and intentional successful evidence retention.
+- Select published Host inspector 0.17.10, containing the checked permission
+  conversion that repairs macOS tool compilation. Library dependencies and
+  stored V1 bytes are unchanged
+  ([#78](https://github.com/dragginzgame/ic-metrics/issues/78)).
+- Consolidate durable size admission before row reads and carry its payload size
+  into encoding, preserving V1 bytes and oversized-histogram error ordering.
+- Decode fixed-width fields with one length check; truncation remains a typed
+  malformed-record failure.
+- Limit native-evidence fixture copies to workflow sources and Make/helper
+  inputs, retaining all failure, archive and Git-custody scenarios.
+
 ## [0.9.3] - 2026-10-14
 
 ### Changed

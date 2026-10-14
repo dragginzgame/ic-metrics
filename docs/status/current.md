@@ -5,7 +5,36 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.9.3
+## Pending 0.9.4
+
+Shared Tooling 0.12.2 `cff186285829481185e932d3c16514022b897de9` is
+adopted through its clean committed exporter. The 114-file snapshot includes the
+canonical metadata fixture, tool-evidence collector and retention probes.
+Generic metadata edge cases run at the shared owner; Metrics keeps coordinated
+package and stale-adapter integration. Native tool selection/archive orchestration
+converges with the shared action while the outer archive retains Git intent/index
+state. Consumer cleanup reuses the common helper and anchors scratch paths.
+Tool pins, library dependencies, APIs and V1 bytes stay unchanged.
+[The scoped qualification](../evidence/tooling-convergence-094.md) records passing
+full Linux CI, both native/Wasm floors and 106 unchanged inputs. Metadata fixtures
+also execute under Bash 3.2; hosted macOS acceptance remains separate.
+
+The selected published Host inspector advances to 0.17.10 for the checked native
+permission conversion. [Its qualification](../evidence/host-inspector-094.md)
+records passing offline admission, actual dispatch, full CI and both package
+floors. [#78](https://github.com/dragginzgame/ic-metrics/issues/78) owns subsequent
+native acceptance. The earlier convergence receipt retains its 0.17.4 identity.
+
+Durable encoding now carries the admitted payload size from the store boundary;
+fixed-width decoding establishes array shape and length together. The native
+evidence fixture selects workflow source and helper roots instead of copying
+historical evidence into every scenario. Public APIs, V1 bytes, dependencies
+and error precedence stay unchanged; focused tests and paired native records
+cover the cleanup independently of the earlier tooling receipts.
+[The cleanup receipt](../evidence/cleanup-094.md) records passing full CI and both
+native/Wasm package floors with unchanged inputs.
+
+## Delivered 0.9.3
 
 Native CI explicitly prepares the locked application graph before its offline
 selected-commit release fixtures. A separate diagnostic upload retains available
@@ -19,7 +48,10 @@ cold-cache proof, local gates and isolated IC comparison from hosted acceptance.
 Full local CI and both native/Wasm floor gates pass with 98 guarded inputs
 unchanged. Fresh archive replay rebuilds the two Wasms and reproduces raw IC
 results exactly; native write assertions preserve behavior separately from costs.
-The updated GitHub workflow still needs hosted acceptance.
+[Hosted run 38530414943](https://github.com/dragginzgame/ic-metrics/actions/runs/38530414943)
+passes Linux native CI and both package floors. Both macOS lanes fail compiling
+selected Host inspector 0.17.4 before application preparation; the pending
+selection repair above retains their checksummed diagnostic readback.
 
 ## Delivered 0.9.2
 

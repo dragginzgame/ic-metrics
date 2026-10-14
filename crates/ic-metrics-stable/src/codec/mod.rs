@@ -27,9 +27,12 @@ impl<'a> Decoder<'a> {
     }
 
     fn array<const N: usize>(&mut self) -> Result<[u8; N], StoreError> {
-        self.take(N)?
-            .try_into()
-            .map_err(|_| StoreError::MalformedRecord)
+        let (bytes, remaining) = self
+            .remaining
+            .split_first_chunk::<N>()
+            .ok_or(StoreError::MalformedRecord)?;
+        self.remaining = remaining;
+        Ok(*bytes)
     }
 
     pub fn byte(&mut self) -> Result<u8, StoreError> {
@@ -106,9 +109,12 @@ pub fn envelope<'a>(
 pub fn encode<T: DurableMetric>(
     identity: &MetricIdentity,
     value: &T,
+    payload_size: usize,
 ) -> Result<Vec<u8>, StoreError> {
+    // The store has already admitted T::encoded_size before reading any row.
+    // Sealed encoders write that exact payload size; units are constructor-admitted.
     let length = u8::try_from(identity.unit.len()).map_err(|_| StoreError::InvalidIdentifier)?;
-    let capacity = 14 + identity.unit.len() + T::encoded_size(crate::metric::ACCESS)?;
+    let capacity = 14 + identity.unit.len() + payload_size;
     if capacity > MAX_RECORD_BYTES {
         return Err(StoreError::RecordTooLarge);
     }
@@ -117,10 +123,7 @@ pub fn encode<T: DurableMetric>(
     bytes.extend_from_slice(&[T::kind(crate::metric::ACCESS), length]);
     bytes.extend_from_slice(identity.unit.as_bytes());
     bytes.extend_from_slice(&identity.epoch.to_le_bytes());
-    value.encode_state(crate::metric::ACCESS, &mut bytes)?;
-    if bytes.len() > MAX_RECORD_BYTES {
-        return Err(StoreError::RecordTooLarge);
-    }
+    value.encode_state(crate::metric::ACCESS, &mut bytes);
     Ok(bytes)
 }
 
