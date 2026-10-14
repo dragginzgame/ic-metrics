@@ -12,6 +12,12 @@ the latest workflow/ref run through cancellation; a cancelled run never qualifie
 its source. Native jobs have a 60-minute budget for cold setup and validation.
 The [shared host rules](supported-hosts.md) own the common support contract.
 
+Native input hashing and workflow fixture copies use
+`scripts/ci/native-source-files.sh`, which emits NUL-delimited maintained paths
+including pending source. The workflow records common managed tool paths, hashes
+and observed versions through Shared Tooling; compiler selection and inspector
+admission/hash evidence stay local. Failed observations retain partial diagnostics.
+
 ## Prerequisites and focused checks
 
 Prepare the pinned Rust 1.99.0 development toolchain with rustfmt, Clippy and

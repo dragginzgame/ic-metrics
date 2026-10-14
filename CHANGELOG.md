@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.6]
+
+### Changed
+
+- Reuse one NUL-delimited native source selection for provenance hashes and
+  workflow fixtures, including pending source while excluding generated/private
+  evidence and historical archives.
+- Report all admitted common host, Rust and IC tools through Shared Tooling,
+  recording live versions and executable hashes; compiler and inspector evidence
+  stay local, and failed partial reports survive diagnostic recovery.
+- Reuse shared pipe jobserver observation in release fixtures, preserving actual
+  Make forwarding checks without consuming tokens.
+- Allocate and physically anchor local fixture directories through Shared
+  Tooling, preserving caller cleanup, diagnostics and intentional retention.
+- Keep inspector report-schema assertions at IC Host; Metrics' managed dispatch
+  smoke test binds the report to its input digest and byte count.
+- Prepare the stable compiler's Wasm target through the existing pinned action,
+  preserving independent arithmetic and stable package floors.
+
 ## [0.9.5] - 2026-10-14
 
 ### Changed

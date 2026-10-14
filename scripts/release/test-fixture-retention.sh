@@ -9,7 +9,9 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 mkdir -p "$root/target/evidence/native-ci"
-evidence="$(mktemp -d "$root/target/evidence/native-ci/fixture-retention.XXXXXX")"
+# shellcheck source=scripts/ci/fixture-lifecycle.sh
+source "$root/scripts/ci/fixture-lifecycle.sh"
+evidence="$(fixture_create "$root/target/evidence/native-ci/fixture-retention.XXXXXX")"
 fixture_complete=false
 cleanup() {
     local status=$?

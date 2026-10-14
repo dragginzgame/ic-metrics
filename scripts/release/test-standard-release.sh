@@ -7,11 +7,9 @@ root="${BASH_SOURCE[0]}"
 [[ "$root" == /* ]] || root="$PWD/$root"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
-fixture="$(mktemp -d "${TMPDIR:-/tmp}/standard-release-entry.XXXXXX")"
-fixture="$(cd -P "$fixture" && printf '%s/.' "$PWD")"
-fixture="${fixture%/.}"
 # shellcheck source=scripts/ci/fixture-lifecycle.sh
 source "$root/scripts/ci/fixture-lifecycle.sh"
+fixture="$(fixture_create "${TMPDIR:-/tmp}/standard-release-entry.XXXXXX")"
 fixture_complete=false
 cleanup() {
     local status=$?
@@ -184,18 +182,9 @@ cmp "$fixture/cache-entry-expected" "$EVENTS"
 # release/formatter operation, including an inherited marker claiming admission.
 # Publication remains a separate Cargo operation. Substitute it
 # before admission cases so even a broken guard cannot reach a registry.
-export JOBSERVER_PROBE="$fixture/jobserver-probe.pl"
-cat > "$JOBSERVER_PROBE" <<'PERL'
-use strict;
-use warnings;
-use Fcntl qw(F_GETFD);
-($ENV{MAKEFLAGS} // "") =~ /--jobserver-(?:auth|fds)=(\d+),(\d+)/
-    or die "parallel Cargo has no pipe jobserver identity\n";
-for my $fd ($1, $2) {
-    open my $handle, "<&=$fd" or die "closed jobserver descriptor $fd: $!\n";
-    defined fcntl($handle, F_GETFD, 0) or die "invalid jobserver descriptor $fd: $!\n";
-}
-PERL
+export JOBSERVER_PROBE="$root/scripts/ci/check-pipe-jobserver.pl"
+parallel=(-j4)
+if "$real_make" --help | grep -q -- --jobserver-style; then parallel+=(--jobserver-style=pipe); fi
 printf '#!%s\n' "$real_bash" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'
 set -euo pipefail
@@ -252,7 +241,7 @@ rm "$fixture/bin/bash"
 # owned Cargo boundary. Cargo effects are substituted; Make admission is real.
 for target in "${cargo_targets[@]}"; do
     : > "$EVENTS"
-    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" -j4 --no-print-directory \
+    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" "${parallel[@]}" --no-print-directory \
         -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
     [[ -s "$EVENTS" ]] || exit 1
 done
@@ -260,7 +249,7 @@ done
 cp "$fixture/mode-bash" "$fixture/bin/bash"
 for target in "${metadata_targets[@]}"; do
     : > "$EVENTS"
-    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" -j4 --no-print-directory \
+    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" "${parallel[@]}" --no-print-directory \
         -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
     [[ -s "$EVENTS" ]] || exit 1
 done
@@ -268,7 +257,7 @@ rm "$fixture/bin/bash"
 # A failure in a multi-command gate stops before any later Cargo command.
 : > "$EVENTS"
 status=0
-PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 FAIL_PUBLISH=1 "$real_make" -j4 --no-print-directory \
+PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 FAIL_PUBLISH=1 "$real_make" "${parallel[@]}" --no-print-directory \
     -f "$root/Makefile" clippy > "$fixture/output" 2>&1 || status=$?
 [[ "$status" == 2 ]] || exit 1
 printf '%s\n' clippy -p ic-metrics --all-targets --locked -- -D warnings > "$fixture/expected"

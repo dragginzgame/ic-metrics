@@ -91,6 +91,7 @@ hook-check:
 	bash scripts/dev/test-format-hook.sh
 
 ci-evidence-check:
+	bash scripts/ci/test-native-source-files.sh
 	bash scripts/ci/test-native-host.sh
 	bash scripts/ci/test-formatting-evidence.sh
 	bash scripts/ci/test-evidence-archive.sh
