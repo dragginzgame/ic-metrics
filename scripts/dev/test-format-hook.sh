@@ -10,21 +10,21 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/metrics-format-hook.XXXXXX")"
+fixture="$(cd -P "$fixture" && printf '%s/.' "$PWD")"
+fixture="${fixture%/.}"
+# shellcheck source=scripts/ci/fixture-lifecycle.sh
+source "$root/scripts/ci/fixture-lifecycle.sh"
 fixture_complete=false
 cleanup() {
     local status=$?
-    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
     if [[ "$status" != 0 ]]; then
         if [[ -f "$fixture/format-tools.log" ]]; then cat "$fixture/format-tools.log" >&2 || :; fi
         if [[ -f "$fixture/hook.log" ]]; then cat "$fixture/hook.log" >&2 || :; fi
         for log in "$fixture"/formatting-adoption.*/*.log "$fixture"/formatting-adoption.*/*/.git/*.log; do
             if [[ -f "$log" ]]; then cat "$log" >&2 || :; fi
         done
-        echo "failed formatting hook fixture retained: $fixture" >&2
-    else
-        rm -rf "$fixture"
     fi
-    exit "$status"
+    fixture_finish "$status" "$fixture" "failed formatting hook fixture retained"
 }
 trap cleanup EXIT
 # shellcheck source=ci/tool-versions.env

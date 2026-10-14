@@ -75,7 +75,7 @@ CMP
             elif [[ "$kind" == metadata && "$scenario" == assertion ]]; then
                 cat >> "$run/bin/$executable" <<'CMP'
 case "$1" in
-    history-before) ;;
+    expected-packages) ;;
     *) exec "$FIXTURE_RETENTION_REAL_CMP" "$@" ;;
 esac
 CMP
@@ -152,7 +152,7 @@ FAIL
                 fi
                 [[ -f "$retained/prepared/Cargo.toml" && -f "$retained/prepared/setup.log" ]] || exit 1
                 if [[ "$scenario" == assertion ]]; then
-                    [[ -f "$retained/prepared/history-before" && -f "$retained/prepared/history-after" ]] || exit 1
+                    [[ -f "$retained/prepared/expected-packages" && -f "$retained/prepared/actual-packages" ]] || exit 1
                     [[ -f "$retained/prepared/originals/Cargo.lock" && -f "$retained/prepared/result.log" ]] || exit 1
                 fi
                 ;;
@@ -202,11 +202,13 @@ for script in scripts/release/test-standard-release.sh scripts/release/test-meta
     for scenario in nounset early-zero success; do
         run="$evidence/cleanup-${name%.sh}-$scenario"
         mkdir -p "$run/tmp" "$run/target/evidence/native-ci"
+        printf 'source "%s/scripts/ci/fixture-lifecycle.sh"\n' "$root" > "$run/cleanup.sh"
         awk '
             /^(fixture|evidence)="\$\(mktemp / { copy=1 }
+            copy && /^source / { next }
             copy { print }
             /^trap (cleanup|finish) EXIT$/ && copy { exit }
-        ' "$root/$script" > "$run/cleanup.sh"
+        ' "$root/$script" >> "$run/cleanup.sh"
         cat >> "$run/cleanup.sh" <<'CLEANUP'
 retained="${fixture:-$evidence}"
 printf '%s\n' "$retained" > "$root/selected.txt"

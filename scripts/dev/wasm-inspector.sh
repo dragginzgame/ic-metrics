@@ -9,7 +9,7 @@ root="${root%/.}"
 operation="${1:-}"
 [[ $# -ge 1 ]] || exit 2
 shift
-selection=(--consumer "$root" --package ic-host-wasm-inspect --version 0.17.4 --bin ic-host-wasm-inspect --profile release)
+selection=(--consumer "$root" --package ic-host-wasm-inspect --version 0.17.10 --bin ic-host-wasm-inspect --profile release)
 case "$operation" in
     install|check)
         [[ $# == 0 ]] || exit 2

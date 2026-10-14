@@ -17,14 +17,12 @@ pub const ACCESS: Access = Access(());
 
 pub trait Sealed: Sized + Eq {
     fn kind(access: Access) -> u8;
-    fn check_size(_: Access) -> Result<(), StoreError> {
-        Ok(())
-    }
     fn same_state(&self, _: Access, previous: &Self) -> bool {
         self == previous
     }
     fn encoded_size(_: Access) -> Result<usize, StoreError>;
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError>;
+    // Called only after encoded_size admits this metric's static shape.
+    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>);
     fn decode_state(
         configuration: &Self,
         _: Access,
@@ -55,9 +53,8 @@ impl Sealed for MeasurementAggregate {
         Ok(codec::AGGREGATE_BYTES)
     }
 
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError> {
+    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, *self);
-        Ok(())
     }
 
     fn decode_state(_: &Self, _: Access, decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
@@ -80,10 +77,9 @@ impl Sealed for MeasurementSummary {
         Ok(codec::AGGREGATE_BYTES + 8)
     }
 
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError> {
+    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, self.aggregate());
         bytes.extend_from_slice(&self.latest().unwrap_or(0).to_le_bytes());
-        Ok(())
     }
 
     fn decode_state(_: &Self, _: Access, decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
@@ -113,14 +109,6 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
         3
     }
 
-    fn check_size(_: Access) -> Result<(), StoreError> {
-        if N > MAX_HISTOGRAM_BOUNDS {
-            Err(StoreError::TooManyBounds)
-        } else {
-            Ok(())
-        }
-    }
-
     fn same_state(&self, _: Access, previous: &Self) -> bool {
         // Tiny arrays already reject cheaply. Larger matching arrays are costly
         // when recording changes a bucket but leaves overflow unchanged.
@@ -134,13 +122,19 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
     }
 
     fn encoded_size(_: Access) -> Result<usize, StoreError> {
-        Self::check_size(ACCESS)?;
+        if N > MAX_HISTOGRAM_BOUNDS {
+            return Err(StoreError::TooManyBounds);
+        }
         Ok(codec::AGGREGATE_BYTES + 2 + 17 * N + 9)
     }
 
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError> {
+    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, self.aggregate());
-        let count = u16::try_from(N).map_err(|_| StoreError::TooManyBounds)?;
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "encoded_size admits at most 256 bounds before encoding"
+        )]
+        let count = N as u16;
         bytes.extend_from_slice(&count.to_le_bytes());
         for ((bound, count), flag) in self
             .upper_bounds()
@@ -154,7 +148,6 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
         }
         bytes.extend_from_slice(&self.overflow().to_le_bytes());
         bytes.push(u8::from(self.overflow_count_overflowed()));
-        Ok(())
     }
 
     fn decode_state(
