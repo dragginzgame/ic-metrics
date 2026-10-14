@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.3]
+
+### Changed
+
+- Prepare locked application sources explicitly before native CI's offline
+  selected-commit release fixtures, including on cold runners.
+- Upload a separate small diagnostic archive with complete available logs and
+  source/tool/outcome identities; preserve the full native evidence archive.
+- Reserve each durable V1 record's complete bounded size before encoding,
+  preserving stored bytes and oversized-histogram refusal.
+- Reject changed histogram checkpoints using overflow/aggregate equality before
+  full equality for four or more bounds. Tiny histograms keep direct equality;
+  identity, corruption, sticky flags and bounds admission remain unchanged.
+
 ## [0.9.2] - 2026-10-13
 
 ### Changed

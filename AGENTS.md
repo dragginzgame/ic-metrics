@@ -77,30 +77,14 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 ## Dependency qualification
 
-- `make check-pins` requires prepared Git, jq and Mike Farah yq. Default common
-  tool versions/digests are snapshot-owned in `ci/tool-versions.env`. Host, IC
-  and Rust exceptions require independent explicit selection and qualification.
-  Explicit
-  `make install-host-tools` prepares jq, yq, ripgrep with PCRE2 and cloc under
-  `.tools/host/bin`; `make host-tools-check` verifies the complete set offline.
-  Host/IC/Cargo payloads live in the canonical per-user store; checkout paths select
-  exact shared generations. Use the same `SHARED_TOOLING_STORE` setting for setup,
-  checks and evidence collection. Preserve earlier local bundles and references;
-  do not copy payloads or create consumer-owned storage management.
-  Explicit `make install-rust-tools` prepares the pinned Cargo tools with the
-  standard shared tool-build environment and exact compiler/native/package-lock
-  identities, activating `.tools/rust/common/bin` only after the complete set
-  passes admission. Application flags/wrappers remain local build policy;
-  selected CLI adapters consume the installer's returned path.
-  `make rust-tools-check` verifies the managed source cache, Cargo receipts,
-  byte identities and common-tool versions offline. Retain prior sets and failed
-  build evidence. `install-tools` and `tools-check` run the complete common host, IC and
-  Rust sets in order, including under parallel Make; product extensions use the
-  shared ordered target lists rather than aggregate prerequisites.
-  Shared `make/consumer.mk` composes setup/check, formatting, hooks and releases;
-  its included owners retain their contracts. Default IC executable pins are
-  snapshot-owned in `ci/ic-tools.tsv`; this consumer needs no exception catalog.
-  The checker and release gates never install tools or unlock graphs.
+- Follow [shared local setup](docs/local-setup.md) and the selected catalogs
+  in `ci/tool-versions.env` and `ci/ic-tools.tsv`; Metrics has no tool-catalog
+  exception. [make/consumer.mk](make/consumer.mk) owns common setup/check,
+  formatting, hook and release recipes. Local host qualification and commands
+  remain in [docs/hosts.md](docs/hosts.md).
+- `make check-pins` requires prepared Git, jq and Mike Farah yq. Checks never
+  install tools or unlock dependency graphs. Select product CLI adapters through
+  the shared managed installer; keep application compiler policy local.
 - Shared structural reviews use [the common methods](audits/README.md), with
   this overlay's allocation, units, counter identity and ownership constraints.
   Source scope is `crates/ic-metrics`, owning tooling and the affected downstream

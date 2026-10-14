@@ -262,7 +262,7 @@ impl<M: Memory> MetricsStore<M> {
         value: &T,
     ) -> Result<(), StoreError> {
         if let Some(previous) = self.load(key, identity, value)? {
-            if *value == previous {
+            if value.same_state(crate::metric::ACCESS, &previous) {
                 return Ok(());
             }
             if !value.continues(crate::metric::ACCESS, &previous) {

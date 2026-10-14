@@ -493,3 +493,78 @@ fn histogram_checkpoints_preserve_each_bucket_count_and_flag() {
         assert_eq!(store.load(&key, &identity(), &previous), Ok(Some(previous)));
     }
 }
+
+#[test]
+fn v1_encoding_reserves_the_complete_bounded_record() {
+    fn check<T: crate::DurableMetric>(value: &T, size: usize) {
+        let identity = MetricIdentity::new(&"x".repeat(64), 3).unwrap();
+        let bytes = codec::encode(&identity, value).unwrap();
+        assert_eq!(bytes.len(), size + 64);
+        // No encoder growth after its single exact reservation.
+        assert_eq!(bytes.capacity(), bytes.len());
+        assert!(codec::decode(&bytes, &identity, value).unwrap() == *value);
+    }
+    check(&Aggregate::EMPTY, 47);
+    check(&Summary::EMPTY, 55);
+    check(&Histogram::new([]).unwrap(), 58);
+    check(
+        &Histogram::new(std::array::from_fn::<_, 256, _>(|i| i as u64)).unwrap(),
+        58 + 17 * 256,
+    );
+    let wide = Aggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, true).unwrap();
+    check(&wide, 47);
+    check(&Summary::from_parts(wide, Some(u64::MAX)).unwrap(), 55);
+    assert_eq!(
+        codec::encode(
+            &identity(),
+            &Histogram::new(std::array::from_fn::<_, 257, _>(|i| i as u64)).unwrap()
+        ),
+        Err(StoreError::TooManyBounds)
+    );
+}
+
+#[test]
+fn histogram_equality_shortcut_preserves_full_state_comparison() {
+    use crate::metric::{ACCESS, Sealed};
+    fn check<const N: usize>() {
+        let bounds = std::array::from_fn::<_, N, _>(|i| i as u64);
+        let empty = Histogram::new(bounds).unwrap();
+        assert!(empty.same_state(ACCESS, &empty));
+        let mut previous = empty;
+        previous.record(0);
+        assert!(previous.same_state(ACCESS, &previous));
+        for sample in [0, u64::MAX] {
+            let mut current = previous;
+            current.record(sample);
+            assert!(!current.same_state(ACCESS, &previous));
+        }
+        let other_bounds =
+            Histogram::new(std::array::from_fn::<_, N, _>(|i| 1 + i as u64)).unwrap();
+        assert_eq!(empty.same_state(ACCESS, &other_bounds), N == 0);
+        // A clipped aggregate can remain unchanged while distribution changes.
+        let aggregate =
+            Aggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, true).unwrap();
+        let clipped =
+            Histogram::from_parts(bounds, [0; N], u64::MAX, [false; N], true, aggregate).unwrap();
+        let mut continued = clipped;
+        continued.record(0);
+        assert_eq!(continued.aggregate(), clipped.aggregate());
+        assert_eq!(continued.same_state(ACCESS, &clipped), N == 0);
+        if N != 0 {
+            let mut counts = [0; N];
+            counts[0] = u64::MAX;
+            let mut flags = [false; N];
+            let exact_bucket =
+                Histogram::from_parts(bounds, counts, u64::MAX, flags, true, aggregate).unwrap();
+            flags[0] = true;
+            let overflowed_bucket =
+                Histogram::from_parts(bounds, counts, u64::MAX, flags, true, aggregate).unwrap();
+            assert!(!exact_bucket.same_state(ACCESS, &overflowed_bucket));
+        }
+    }
+    check::<0>();
+    check::<1>();
+    check::<4>();
+    check::<8>();
+    check::<256>();
+}
