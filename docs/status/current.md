@@ -5,7 +5,23 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns setup, focused checks and delivery gates.
 
-## Pending 0.9.2
+## Pending 0.9.3
+
+Native CI explicitly prepares the locked application graph before its offline
+selected-commit release fixtures. A separate diagnostic upload retains available
+logs and identities without the full tool/source payloads. Durable encoding
+reserves its exact bounded V1 capacity. Histogram checkpoint equality rejects
+changed overflow/aggregate headers first for four or more bounds, retaining
+full equality for successful matches and direct equality for tiny histograms.
+Public APIs, stored bytes, library dependencies and Rust floors are unchanged.
+[The focused qualification](../evidence/checkpoint-093.md) distinguishes the
+cold-cache proof, local gates and isolated IC comparison from hosted acceptance.
+Full local CI and both native/Wasm floor gates pass with 98 guarded inputs
+unchanged. Fresh archive replay rebuilds the two Wasms and reproduces raw IC
+results exactly; native write assertions preserve behavior separately from costs.
+The updated GitHub workflow still needs hosted acceptance.
+
+## Delivered 0.9.2
 
 Identical durable checkpoints validate the retained record, then return without
 encoding or stable-map writes. Absent rows still get persisted, including empty

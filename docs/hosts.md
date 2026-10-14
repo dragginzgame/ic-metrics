@@ -32,12 +32,19 @@ hooks and releases; product gates remain local.
 ```sh
 make install-tools
 make tools-check
+cargo fetch --locked
 export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin:$PATH"
 make install-hooks
 ```
 
-Setup is explicit; checks never install tools or unlock the selected graph. The ordered
-local extension installs/checks published `ic-host-wasm-inspect` 0.17.4 through
+Setup is explicit; checks never install tools or unlock the selected graph.
+Prepare the locked application sources before offline release-fixture checks;
+common tool setup prepares different Cargo graphs. Native CI fetches explicitly
+before `make ci`. The selected-commit metadata fixture reads committed HEAD,
+so its graph must also be prepared when local manifest/lock edits differ from
+HEAD; a prepared working-tree graph alone cannot qualify that offline check.
+
+The ordered local extension installs/checks published `ic-host-wasm-inspect` 0.17.4 through
 the shared Cargo-tool installer. `make install-wasm-inspector` prepares that
 selection explicitly; `make wasm-inspector-tools-check` verifies it offline.
 `bash scripts/dev/wasm-inspector.sh run PATH MAX_BYTES MAX_SECTIONS MAX_EXPORTS MAX_CUSTOM_SECTIONS`
@@ -99,6 +106,11 @@ Tool candidate selection preserves admitted failed inputs and diagnostics;
 collection failure remains nonzero. Formatter logs outside the fixture scratch
 root are included. Uploads retain `native-ci.tar.gz` and its checksum for 30 days,
 including hidden release/index/configuration evidence inside the outer tar.
+A separately uploaded `native-diagnostics.tar.gz` and checksum contain only
+explicit available top-level logs and source/tool/outcome identities. No tool
+payload, source tree, scratch directory or nested archive is selected. It is
+collected before the complete archive so full collection failures still leave
+readable diagnostics; neither archive silently truncates selected logs.
 
 Release, hook and evidence fixtures substitute only their declared effects;
 actual Git index, Make dispatch, receipt admission and failure retention retain

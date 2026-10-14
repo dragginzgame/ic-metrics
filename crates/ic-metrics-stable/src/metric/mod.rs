@@ -20,6 +20,10 @@ pub trait Sealed: Sized + Eq {
     fn check_size(_: Access) -> Result<(), StoreError> {
         Ok(())
     }
+    fn same_state(&self, _: Access, previous: &Self) -> bool {
+        self == previous
+    }
+    fn encoded_size(_: Access) -> Result<usize, StoreError>;
     fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError>;
     fn decode_state(
         configuration: &Self,
@@ -47,6 +51,10 @@ impl Sealed for MeasurementAggregate {
         1
     }
 
+    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+        Ok(codec::AGGREGATE_BYTES)
+    }
+
     fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError> {
         codec::aggregate(bytes, *self);
         Ok(())
@@ -66,6 +74,10 @@ impl DurableMetric for MeasurementSummary {}
 impl Sealed for MeasurementSummary {
     fn kind(_: Access) -> u8 {
         2
+    }
+
+    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+        Ok(codec::AGGREGATE_BYTES + 8)
     }
 
     fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError> {
@@ -107,6 +119,23 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
         } else {
             Ok(())
         }
+    }
+
+    fn same_state(&self, _: Access, previous: &Self) -> bool {
+        // Tiny arrays already reject cheaply. Larger matching arrays are costly
+        // when recording changes a bucket but leaves overflow unchanged.
+        if N < 4 {
+            self == previous
+        } else {
+            self.overflow() == previous.overflow()
+                && self.aggregate() == previous.aggregate()
+                && self == previous
+        }
+    }
+
+    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+        Self::check_size(ACCESS)?;
+        Ok(codec::AGGREGATE_BYTES + 2 + 17 * N + 9)
     }
 
     fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) -> Result<(), StoreError> {

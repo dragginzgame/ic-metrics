@@ -7,6 +7,8 @@ use ic_metrics::MeasurementAggregate;
 
 use crate::{DurableMetric, MetricIdentity, StoreError};
 
+pub const AGGREGATE_BYTES: usize = 33;
+
 const MAGIC: &[u8; 4] = b"ICM\x01";
 const MAX_RECORD_BYTES: usize = 4608;
 
@@ -106,7 +108,11 @@ pub fn encode<T: DurableMetric>(
     value: &T,
 ) -> Result<Vec<u8>, StoreError> {
     let length = u8::try_from(identity.unit.len()).map_err(|_| StoreError::InvalidIdentifier)?;
-    let mut bytes = Vec::new();
+    let capacity = 14 + identity.unit.len() + T::encoded_size(crate::metric::ACCESS)?;
+    if capacity > MAX_RECORD_BYTES {
+        return Err(StoreError::RecordTooLarge);
+    }
+    let mut bytes = Vec::with_capacity(capacity);
     bytes.extend_from_slice(MAGIC);
     bytes.extend_from_slice(&[T::kind(crate::metric::ACCESS), length]);
     bytes.extend_from_slice(identity.unit.as_bytes());
