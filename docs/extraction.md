@@ -74,9 +74,11 @@ distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
 owns bounded structural inspection. Metrics selects its exact CLI through the
-shared managed installer, outside both library graphs. It does not execute
+shared managed installer for optional evidence work, outside both library graphs.
+Common setup, CI and release preflight require no inspector. It does not execute
 canisters or estimate instruction/cycle costs. PocketIC provisioning and lifecycle
 belong to IC Testkit; this workspace has no maintained server caller.
+No IC Host package is required to compile or use either published Metrics library.
 
 ## Downstream contract checks
 

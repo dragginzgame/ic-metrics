@@ -64,9 +64,9 @@ The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
 counters, aggregates, summaries and histograms in one host-owned stable B-tree map using
 `ic-memory`'s collection types. Namespaced records retain units, reset epochs,
 wide totals and overflow flags. Adding `ic-metrics-stable` is the opt-in; existing
-arithmetic callers remain volatile. The adapter requires Rust 1.88 on host and
+arithmetic callers remain volatile. The adapter requires Rust 1.91 on host and
 Wasm. Hosts own allocation/bootstrap, synchronization, write cadence and resets;
-the arithmetic core remains dependency-free and `no_std` on Rust 1.85.
+the arithmetic core remains dependency-free and `no_std` on Rust 1.91.
 
 The [application guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md) is included in
 packaged crate documentation, with a compiled example of fixed named histograms,
@@ -136,12 +136,14 @@ publication and release metadata remain owned here.
 
 Use rustup with the pinned Rust 1.99.0 toolchain, Git, GNU Make and Bash 3.2 or
 newer. Install `wasm32-unknown-unknown` for Wasm checks. The arithmetic library's
-minimum compiler is Rust 1.85.0.
+minimum compiler is Rust 1.91.0.
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
 reports raw/encoded bytes and structural counts for explicitly supplied Wasms
-with caller-selected bounds. Metrics selects version 0.17.4 as a managed tool,
-separate from both library dependency graphs. After explicit tool setup, run
+with caller-selected bounds. Metrics selects version 0.17.10 as a managed tool,
+separate from both library dependency graphs. Neither published library needs
+IC Host to build or run. Common setup, CI and release preflight omit this optional
+evidence tool. Prepare it with `make install-wasm-inspector`, then run
 `bash scripts/dev/wasm-inspector.sh run module.wasm 20000000 1000 10000 1000`.
 It executes no canister; bare Cargo commands select the arithmetic package.
 
@@ -165,9 +167,9 @@ vendored; normal commands need no Shared Tooling sibling checkout.
 without editing. `make help` lists focused commands. Select named tests during
 implementation, and use `make check`, `make check-wasm` and `make clippy` for
 the affected package. `make wasm-inspect-check` checks the selected host tool.
-Completed code delivery uses `make ci`, `make msrv` and `make stable-msrv`;
-inspection and documentation
-changes use narrower checks. The [host support and qualification guide](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks)
+Full release validation uses `make ci` and workspace-native/Wasm `make msrv`;
+implementation, inspection and documentation use focused checks under the shared
+validation policy. The [host support and qualification guide](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks)
 owns local gates and native acceptance. [Agent rules](https://github.com/dragginzgame/ic-metrics/blob/main/AGENTS.md)
 own command authority.
 

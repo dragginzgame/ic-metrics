@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.11.0]
+
+### Breaking
+
+- Raise both packages' native and Wasm minimum supported Rust version to 1.91.
+
+### Changed
+
+- Use one Rust 1.91 native/Wasm workspace floor gate; retire the separate stable
+  floor target and duplicate CI/release dispatch.
+- Keep 22 exhaustive shared regression suites at Shared Tooling, retiring unused
+  snapshot test payloads while retaining actual Metrics integration/admission checks.
+- Delegate complete native archive packaging to Shared Tooling, preserving hidden
+  Git recovery state, readable diagnostics and original partial-failure evidence
+  ([Shared PR #215 — Native evidence packaging](https://github.com/dragginzgame/shared-tooling/pull/215)).
+- Keep the published Wasm inspector opt-in: common setup/check, CI and release
+  preflight need only common tools. Explicit inspector setup and smoke checks
+  remain available; frozen experiments retain their original identities.
+- Keep Shared checker fixture-layout assertions at their producer, while retaining
+  Metrics' own failure status, diagnostic forwarding and metadata/publication custody
+  ([Shared PR #211 — Checker retention](https://github.com/dragginzgame/shared-tooling/pull/211)).
+- Adopt the Shared Tooling 0.15.0 integration candidate, preserving existing
+  qualification helpers and adding explicit manifest-order checks against the
+  selected release source ([Shared PR #205 — Integration candidate](https://github.com/dragginzgame/shared-tooling/pull/205)).
+
 ## [0.10.1] - 2026-10-15
 
 ### Changed

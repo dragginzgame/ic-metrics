@@ -27,6 +27,7 @@ source "$root/scripts/ci/fixture-retention-probes.sh"
 real_bash="$(command -v bash)"
 real_cargo="$(command -v cargo)"
 export FIXTURE_RETENTION_REAL_CARGO="$real_cargo"
+export FIXTURE_RETENTION_REAL_BASH="$real_bash"
 FIXTURE_RETENTION_REAL_MAKE="$(command -v make)"
 FIXTURE_RETENTION_REAL_CMP="$(command -v cmp)"
 export FIXTURE_RETENTION_REAL_MAKE FIXTURE_RETENTION_REAL_CMP
@@ -36,12 +37,13 @@ git -C "$root" rev-parse HEAD > "$evidence/source-commit.txt"
 
 for kind in standard metadata hook; do
     case "$kind" in
-        standard) script=scripts/release/test-standard-release.sh; prefix=standard-release-entry; child='make' ;;
+        standard) script=scripts/release/test-standard-release.sh; prefix=standard-release-entry; child=bash ;;
         metadata) script=scripts/release/test-metadata.sh; prefix=metrics-metadata-test; child=cargo ;;
-        hook) script=scripts/dev/test-format-hook.sh; prefix=metrics-format-hook; child='make' ;;
+        hook) script=scripts/dev/test-format-hook.sh; prefix=metrics-format-hook; child=bash ;;
     esac
     cp "$root/$script" "$evidence/$kind-source.sh"
-    scenarios=(success child assertion)
+    scenarios=(success child)
+    if [[ "$kind" == metadata ]]; then scenarios+=(assertion); fi
     if [[ "$kind" == standard ]]; then scenarios+=(publication-child publication-assertion); fi
     if [[ "$kind" == hook ]]; then scenarios+=(formatter-version); fi
     if [[ "$kind" == metadata ]]; then scenarios+=(predicate-assertion); fi
@@ -50,6 +52,7 @@ for kind in standard metadata hook; do
         mkdir -p "$run/tmp" "$run/bin"
         if [[ "$scenario" != success ]]; then
             executable="$child"
+            if [[ "$scenario" == publication-child ]]; then executable='make'; fi
             if [[ "$scenario" == *assertion ]]; then executable='cmp'; fi
             if [[ "$scenario" == formatter-version ]]; then executable=cargo; fi
             if [[ "$scenario" == predicate-assertion ]]; then executable=yq; fi
@@ -60,6 +63,14 @@ if [[ "${1:-}" != generate-lockfile && "${FIXTURE_RETENTION_SCENARIO:-}" != form
     exec "$FIXTURE_RETENTION_REAL_CARGO" "$@"
 fi
 CARGO
+            fi
+            if [[ "$executable" == bash ]]; then
+                cat >> "$run/bin/$executable" <<'BASH'
+case "${1:-}" in
+    */scripts/ci/check-release-commands.sh|*/scripts/ci/check-formatting-hooks.sh) ;;
+    *) exec "$FIXTURE_RETENTION_REAL_BASH" "$@" ;;
+esac
+BASH
             fi
             if [[ "$scenario" == publication-child ]]; then
                 cat >> "$run/bin/$executable" <<'MAKE'
@@ -113,7 +124,7 @@ FAIL
         case "$scenario" in
             success) expected_status=0 ;;
             predicate-assertion|formatter-version) expected_status=1 ;;
-            *child) if [[ "$kind" == standard ]]; then expected_status=1; fi ;;
+            publication-child) expected_status=1 ;;
         esac
         fixture_yq="$FIXTURE_RETENTION_REAL_YQ"
         if [[ "$scenario" == predicate-assertion ]]; then fixture_yq="$run/bin/yq"; fi
@@ -130,10 +141,6 @@ FAIL
                 if [[ "$scenario" == publication-* ]]; then
                     [[ -f "$retained/events" && -f "$retained/bin/cargo" ]] || exit 1
                     if [[ "$scenario" == publication-assertion ]]; then [[ -f "$retained/expected" ]] || exit 1; fi
-                else
-                    set -- "$retained"/release-commands.*
-                    [[ $# == 1 && -f "$1/Makefile" && -f "$1/events" && -f "$1/patch-0.log" ]] || exit 1
-                    if [[ "$scenario" == assertion ]]; then [[ -f "$1/expected" ]] || exit 1; fi
                 fi
                 ;;
             metadata)
@@ -154,11 +161,6 @@ FAIL
                     continue
                 fi
                 [[ -f "$retained/hook.log" ]] || exit 1
-                set -- "$retained"/formatting-adoption.*
-                [[ $# == 1 && -f "$1/base/Cargo.toml" && -f "$1/baseline.log" ]] || exit 1
-                if [[ "$scenario" == assertion ]]; then
-                    [[ -f "$1/sorted-manifest" && -f "$1/refresh/crates/ic-metrics/Cargo.toml" ]] || exit 1
-                fi
                 ;;
         esac
     done
@@ -188,8 +190,7 @@ echo 'Admission fixture preserves inherited parent logs and summary'
 # Consumer rosters and successful diagnostic retention remain explicit here.
 for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \
     scripts/release/test-release-admission.sh scripts/dev/test-format-hook.sh \
-    scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh \
-    scripts/ci/check-formatting-hooks.sh; do
+    scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh; do
     name="${script##*/}"
     success=completed
     directory_variable=fixture
@@ -201,20 +202,12 @@ for script in scripts/release/test-standard-release.sh scripts/release/test-meta
         run="$evidence/cleanup-${name%.sh}-$scenario"
         probe_source="$run/source"
         mkdir -p "$probe_source/scripts/ci" "$probe_source/scripts/dev" "$probe_source/.githooks" "$probe_source/crates/ic-metrics/src"
-        cp "$root/scripts/ci/fixture-lifecycle.sh" "$root/scripts/ci/check-make-execution.sh" "$probe_source/scripts/ci/"
+        cp "$root/scripts/ci/fixture-lifecycle.sh" "$root/scripts/ci/fixture-retention-probes.sh" \
+            "$root/scripts/ci/check-make-execution.sh" "$probe_source/scripts/ci/"
         # The native fixture observes its checkout before installing its trap.
         git init --quiet "$probe_source"
-        probe_args=()
-        if [[ "$script" == scripts/ci/check-formatting-hooks.sh ]]; then
-            for path in Makefile README.md .githooks/pre-commit scripts/dev/install-git-hooks.sh \
-                crates/ic-metrics/src/lib.rs Cargo.toml; do
-                cp "$root/$path" "$probe_source/$path"
-            done
-            probe_args=("$probe_source" crates/ic-metrics/src/lib.rs Cargo.toml --no-dependency-tables)
-        fi
         FIXTURE_PROBE_ROOT_VARIABLE=root FIXTURE_PROBE_DIRECTORY_VARIABLE="$directory_variable" \
-            fixture_probe_exit "$root/$script" "$run" "$probe_source" "${name%.sh}" "$scenario" \
-            ${probe_args[@]+"${probe_args[@]}"} || exit 1
+            fixture_probe_exit "$root/$script" "$run" "$probe_source" "${name%.sh}" "$scenario" || exit 1
     done
 done
 echo "fixture success cleanup and child/assertion failure retention passed; evidence: $evidence"

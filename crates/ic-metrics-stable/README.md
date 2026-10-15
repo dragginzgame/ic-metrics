@@ -4,7 +4,7 @@ Optional durable counter, aggregate, summary and histogram snapshots in **one st
 B-tree map per canister**. Multiple components share that map with permanent
 namespace/name keys. Adding this package is the opt-in: `ic-metrics` alone stays
 allocation-free, dependency-free, `no_std` and volatile. This adapter uses `std`,
-allocates bounded records and supports native hosts and Wasm with Rust 1.88.
+allocates bounded records and supports native hosts and Wasm with Rust 1.91.
 
 The host owns one `ic-memory` allocation pool and bootstrap. With Memory 0.38,
 include a `MemoryRequest` for one permanent store key such as `app.metrics.v1`

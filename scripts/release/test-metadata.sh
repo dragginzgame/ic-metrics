@@ -35,7 +35,7 @@ GIT
 chmod +x "$fixture/bin/git"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/make"
 cat >> "$fixture/bin/make" <<'MAKE'
-[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && ( "$4" == rust-tools-check || "$4" == wasm-inspector-tools-check ) ]] || exit 1
+[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$4" == rust-tools-check ]] || exit 1
 MAKE
 chmod +x "$fixture/bin/make"
 export PATH="$fixture/bin:$PATH" CARGO_NET_OFFLINE=true

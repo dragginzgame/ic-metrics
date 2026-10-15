@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`1d53395b4c861e4a41e8cd70243c488c41377b4f` and file digests are recorded in
+`1d261fe396c6158c5e0bcd9b35d4c914f1d5489f` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -12,7 +12,7 @@ and [the extraction contract](docs/extraction.md) before implementation.
   dependency-free and `no_std`; consumers own platform counter reads.
 - The separately opted-in `ic-metrics-stable` package owns one-map snapshot
   encoding and validated restoration, using `ic-memory`'s exact collection types.
-  Its native/Wasm Rust floor is 1.88. Hosts own the allocation key, bootstrap,
+  Its native/Wasm Rust floor is 1.91. Hosts own the allocation key, bootstrap,
   collection lifecycle, identities, synchronization, write cadence and resets.
   Never add stable-memory dependencies to the arithmetic package.
 - IC Host owns the published `ic-host-wasm-inspect` CLI and its Rust floor.
@@ -61,7 +61,7 @@ and [the extraction contract](docs/extraction.md) before implementation.
   Focused commands and host qualification are in [docs/hosts.md](docs/hosts.md).
   Focused checks for the changed behavior and directly affected callers suffice
   for ordinary handoff under [the validation policy](DRAGGINZGAME.md#validation-and-evidence).
-  Full `make ci`, `make msrv` and `make stable-msrv` are release gates or explicit
+  Full `make ci` and `make msrv` are release gates or explicit
   check requests. Reuse passing evidence only for unchanged inputs. Documentation-
   only work needs link, consistency and diff checks. Releases remain separately
   authorized.
