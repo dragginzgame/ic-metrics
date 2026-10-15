@@ -21,7 +21,20 @@ and observed versions through Shared Tooling; compiler selection stays local. Fa
 
 Prepare the pinned Rust 1.99.0 development toolchain with rustfmt, Clippy and
 `wasm32-unknown-unknown`. Prepare Rust 1.91.0, including its Wasm
-target, for the advertised package floors:
+target, for the advertised package floors.
+
+Local setup and both CI lanes use the selected shared installer:
+
+```sh
+bash scripts/dev/prepare-rust-toolchain.sh 1.99.0 \
+    --component rustfmt --component clippy --target wasm32-unknown-unknown
+bash scripts/dev/prepare-rust-toolchain.sh 1.91.0 --target wasm32-unknown-unknown
+```
+
+Setup preserves the default toolchain. Checks still require prepared compilers;
+they never call this installer implicitly.
+
+Both packages use that minimum:
 
 | Package | Rust floor | Floor gate |
 | --- | --- | --- |
@@ -183,6 +196,15 @@ publication. The admission fixture isolates parent validation/failure/summary
 paths. Successful cleanup affects only invocation-owned scratch, while failed
 inputs stay under `target/evidence/native-ci/`. Substitute execution does not
 prove live GitHub release recovery or canister measurement behavior.
+
+The actual development/MSRV workflow setup bodies execute the shared Rust
+installer against a substitute rustup in the native evidence fixture. Metrics
+checks its compiler pins, components, Wasm targets and failed setup status; Shared
+Tooling owns generic installer argument admission. Simulated cold/warm cache and
+tool-availability matrices live with Shared's preflight fixture
+([PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)). Metrics retains
+the real committed-graph Cargo offline checks, internal preparation selection,
+runner ordering, explicit catalog overrides and Git-state custody.
 
 [Released 0.8.1 acceptance](evidence/release-081.md) verifies all three native
 receipts and the complete Rust-floor run on its exact published source.

@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.11.3]
+
+### Changed
+
+- Adopt the reviewed 112-file Shared Tooling 0.15.2 candidate at
+  `6ed2e1c048e3a56b6993ac20372dd1b7aaf366ab`. Retire the unused maintenance
+  runner and systemd copies through canonical distribution; retain the task
+  catalog, guidance and explicit upstream operational-file selection list
+  ([Shared PR #220](https://github.com/dragginzgame/shared-tooling/pull/220)).
+- Use Shared Tooling's explicit Rust installer for local and CI preparation,
+  replacing the separate CI action while preserving compiler/component/target
+  selections and setup failure status.
+- Move ten overlapping simulated cache/tool scenarios to Shared Tooling's
+  producer fixture ([PR #228](https://github.com/dragginzgame/shared-tooling/pull/228));
+  retain actual release-adapter routing, Cargo offline-policy and Git-state checks.
+
 ## [0.11.2] - 2026-10-15
 
 ### Changed
