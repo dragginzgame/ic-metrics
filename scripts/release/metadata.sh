@@ -36,9 +36,8 @@ case "$operation" in
         tool_versions="${RUST_TOOL_VERSIONS:-$root/ci/tool-versions.env}"
         bash "$root/scripts/ci/cargo-release-preflight.sh" "$root" "$release_cache_prepare" \
             --pin "$tool_versions" \
-            --check rust-tools-check --check wasm-inspector-tools-check \
-            --prepare install-rust-tools --prepare rust-tools-check \
-            --prepare install-wasm-inspector --prepare wasm-inspector-tools-check
+            --check rust-tools-check \
+            --prepare install-rust-tools --prepare rust-tools-check
         ;;
     prepare)
         bash "$root/scripts/ci/cargo-release-metadata.sh" prepare ic-metrics
@@ -47,7 +46,7 @@ case "$operation" in
         if [[ "$operation" == commit-check ]]; then
             [[ -z "${RELEASE_COMMIT:-}" ]] || exit 1
         fi
-        bash "$root/scripts/ci/cargo-release-metadata.sh" check ic-metrics
+        bash "$root/scripts/ci/cargo-release-metadata.sh" check ic-metrics --manifest-order
         bash "$root/scripts/ci/check-release-source.sh" \
             --allow Cargo.toml --allow Cargo.lock --allow CHANGELOG.md
         if [[ "$operation" == commit-check ]]; then

@@ -177,9 +177,9 @@ if [[ "${!#}" == --check ]]; then
             exit 0 ;;
     esac
 fi
-if [[ "$1" == scripts/dev/wasm-inspector.sh && "${2:-}" == check ]]; then
-    printf '%s/inspector\n' "$FIXTURE_REPORT_BIN"
-    exit 0
+if [[ "$1" == scripts/dev/wasm-inspector.sh ]]; then
+    echo 'unexpected optional inspector dispatch' >&2
+    exit 99
 fi
 if [[ "${!#}" == --preflight ]]; then
     case "$1" in
@@ -202,7 +202,7 @@ FIXTURE_REAL_MAKE="$(command -v make)"
 export FIXTURE_REAL_MAKE
 export FIXTURE_REPORT_BIN="$fixture/report-bin"
 mkdir -p "$FIXTURE_REPORT_BIN"
-for tool in jq yq rg cloc cargo-sort cargo-sort-derives candid-extractor icp didc ic-wasm quill wasm-opt inspector; do
+for tool in jq yq rg cloc cargo-sort cargo-sort-derives candid-extractor icp didc ic-wasm quill wasm-opt; do
     cat > "$FIXTURE_REPORT_BIN/$tool" <<'TOOL'
 #!/usr/bin/env bash
 printf 'observed %s\n' "${0##*/}"
@@ -211,7 +211,7 @@ printf 'tool observation stderr\n' >&2
 TOOL
     chmod +x "$FIXTURE_REPORT_BIN/$tool"
 done
-for scenario in success tool-inputs application-sources rust-install rust-check rust-store rust-store-invalid rust-admission ic-admission host-install host-check host-store ic-install ic-check ic-store native formatting rust-archive-write rust-archive-conflict; do (
+for scenario in success tool-inputs application-sources rust-install rust-check rust-store rust-store-invalid rust-admission ic-admission host-install host-check host-store ic-install ic-check ic-store native formatting native-archive-write rust-archive-write rust-archive-conflict; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -264,18 +264,18 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
     done
     printf '%s\n' "$status" > status.txt
     case "$scenario" in
-        success) [[ "$status" == 0 ]] || exit 1 ;;
+        success|native-archive-write) [[ "$status" == 0 ]] || exit 1 ;;
         native|formatting|application-sources|tool-inputs) [[ "$status" == 43 ]] || exit 1 ;;
         *) [[ "$status" == 2 ]] || exit 1 ;; # GNU Make preserves its failing aggregate status.
     esac
     # No later set/check/native effect can follow the first refused leaf.
     phases=(install-tools install-ic-tools-preflight install-rust-tools-preflight
-            install-host-tools install-ic-tools install-rust-tools install-wasm-inspector
-            tools-check host-tools-check ic-tools-check rust-tools-check wasm-inspector-tools-check application-sources ci)
+            install-host-tools install-ic-tools install-rust-tools
+            tools-check host-tools-check ic-tools-check rust-tools-check application-sources ci)
     : > expected-commands
     for phase in "${phases[@]}"; do
         printf '%s\n' "$phase" >> expected-commands
-        if [[ "$phase" == "$FIXTURE_FAILURE" || ( "$scenario" == tool-inputs && "$phase" == wasm-inspector-tools-check ) ]]; then break; fi
+        if [[ "$phase" == "$FIXTURE_FAILURE" || ( "$scenario" == tool-inputs && "$phase" == rust-tools-check ) ]]; then break; fi
     done
     cmp expected-commands commands.log
     # The outer archive owns full failed-release evidence, including Git state.
@@ -306,6 +306,21 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
         [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
         grep -Fx 'tools=failure' target/evidence/native-ci/outcome.txt > /dev/null
         grep -Fx 'native=skipped' target/evidence/native-ci/outcome.txt > /dev/null
+        exit 0
+    fi
+    if [[ "$scenario" == native-archive-write ]]; then
+        mkdir archive-bin
+        # shellcheck disable=SC2016 # The stub substitutes only outer tar writing.
+        printf '#!%s\ncase "$*" in *"-C target/evidence/native-ci .") printf "partial native archive"; exit 23 ;; esac\nexec "$FIXTURE_REAL_TAR" "$@"\n' "$real_bash" > archive-bin/tar
+        chmod +x archive-bin/tar
+        export PATH="$worktree/archive-bin:$PATH"
+        archive_status=0
+        "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || archive_status=$?
+        [[ "$archive_status" == 23 ]] || exit 1
+        shasum -a 256 -c target/evidence/native-diagnostics.tar.gz.sha256 > diagnostic-check.log
+        [[ "$(cat target/evidence/native-ci.tar.gz)" == 'partial native archive' &&
+           ! -e target/evidence/native-ci.tar.gz.sha256 ]] || exit 1
+        [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
         exit 0
     fi
     collection_status=0

@@ -6,6 +6,42 @@ policy. They require Perl core modules or Bash 3.2+, as noted below, and run on
 Linux and macOS. The portable regression suite includes offline fixtures;
 native CI qualifies each supported host separately.
 
+## Complete release-change paths
+
+```bash
+bash scripts/ci/collect-release-changes.sh v0.3.8 > changed-paths.nul
+```
+
+The optional Bash 3.2 helper emits NUL-separated tracked changes from the selected
+base commit to the current worktree, followed by nonignored untracked paths.
+Without a base, it selects the most recent reachable canonical `vX.Y.Z` tag.
+Explicit bases must resolve to commits. The verified commit ID, rather than its
+mutable ref spelling, is used for the comparison even if the tag moves afterwards.
+It anchors Git observation at the checkout
+root, disables optional index writes, and publishes no paths until both Git
+producers succeed. Failed observations preserve their status and clean the
+scratch file; its own newly allocated file is excluded if scratch storage is
+inside the worktree. Empty output after success means no changed paths. Output order is
+not a classification contract. Consumers own package/repository path policy,
+release authority and how they use the complete observation. This does not replace
+index/worktree admission or commit-to-commit CI selection.
+
+## Release-prose advisory
+
+```bash
+bash scripts/ci/warn-release-prose.sh 0.3.7 docs/status/current.md
+```
+
+This optional Bash 3.2/awk helper warns when the selected status file describes
+its target version as a candidate, or its `Next action` section contains release
+instructions likely to become stale. The caller supplies the version and file;
+the default file is `docs/status/current.md`, resolved from the caller's directory.
+It does not parse package identity or decide release readiness. Missing inputs
+and reader failures remain advisory, and the command always returns success.
+Run it before release metadata mutation; never turn interpreted prose into a
+post-mutation blocker. Consumers retain invocation timing and their own status
+layout. The owner fixture qualifies heuristics and failure behavior.
+
 ## Evidence archives
 
 ```bash
@@ -576,6 +612,17 @@ configuration or Make includes). The checker exports existing HEAD, overlays
 the named inputs plus the Makefile, hook, installer and Make execution check,
 and stages them only in temporary repositories. It never creates commits or
 activates the real checkout's hook.
+Pass `--rust-sources` immediately after the fourth argument to discover current
+Git-maintained Rust files and Cargo manifests, including unignored additions.
+The checker applies their edits/additions and tracked deletions only to its
+disposable checkout. Keep selected perturbation inputs and additional Make,
+configuration or tooling files explicit. This option avoids maintaining a
+second per-module source roster; it does not change formatter or workspace policy.
+The companion `scripts/ci/select-rust-formatting-sources.sh ROOT` publishes a
+complete NUL-separated relative-path selection only after Git and path admission
+succeed. It rejects symlinks, nonregular current files and physical escapes;
+tracked missing paths represent deletions. Ignored untracked files and unrelated
+extensions are omitted. Neither command stages or edits the real source checkout.
 README.md must exist as an unrelated-edit preservation input. Tracked files must
 be regular files, matching the shared hook's support contract.
 This includes unrelated historical symlinks: the checker rejects them before
@@ -637,6 +684,42 @@ or logger, checks preserved inputs and deliberately returns the verified origina
 failure status. Callers own evidence selection, upload/download and supported
 host gates; the command activates no workflow and changes no active tool selection.
 
+### Fixture allocation
+
+Source `scripts/ci/fixture-lifecycle.sh` and call `fixture_create TEMPLATE` to
+allocate one directory and return its absolute physical path before changing cwd.
+The caller selects the template/prefix and retains its EXIT trap, completion flag
+and evidence policy. Relative templates, ordinary spaces and directory aliases
+are supported; CDPATH cannot redirect anchoring or add output. Empty templates,
+leading options and CR/LF in templates are rejected before allocation. A resolved
+physical path containing CR/LF is refused, retaining the allocation for inspection.
+Allocation errors preserve their status; normalization failures retain and report
+the created directory without attempting cleanup from an unanchored path.
+
+For example, after sourcing the helper:
+
+```bash
+fixture="$(fixture_create "${TMPDIR:-/tmp}/consumer-check.XXXXXX")"
+fixture_complete=false
+trap 'fixture_finish "$?" "$fixture" "Consumer fixture retained"' EXIT
+# Run the caller-owned checks, then mark successful completion.
+fixture_complete=true
+```
+
+The allocation helper is additive and does not change existing cleanup callers.
+Its focused fixture is `scripts/ci/test-fixture-allocation.sh`; selecting that
+fixture through the snapshot exporter includes the lifecycle helper.
+
+### Completion admission without cleanup
+
+`fixture_completion_status STATUS COMPLETE` returns the original nonzero status,
+or returns 1 for zero-status execution unless COMPLETE is `true`. STATUS must be
+a canonical decimal shell exit status from 0 through 255; invalid arguments
+return 2 rather than wrapping an invalid status to success. The helper performs
+no cleanup, reporting or process exit. Capture refusal in an explicit conditional
+under errexit. `fixture_finish` uses this admission before its existing cleanup
+policy; qualification runners can instead retain all success and failure evidence.
+
 ## Consumer fixture retention probes
 
 Source `scripts/ci/fixture-retention-probes.sh` to reuse failure injection and
@@ -696,9 +779,7 @@ when it prints plausible output. Linux does not call `sw_vers`. Consumers retain
 their matrices, workflow ordering, PATH changes and native-host qualification.
 The portable fixture substitutes observations; it does not qualify macOS.
 
-## Fixture allocation
-
-### Locked release preflight
+## Locked release preflight
 
 `scripts/ci/cargo-release-preflight.sh TOOL-ROOT PREPARE` accepts repeated
 `--pin PATH`, `--check TARGET` and `--prepare TARGET` pairs. Callers first admit
@@ -712,7 +793,7 @@ tool target. Failures preserve fetch/Make status or refuse changed selections.
 The helper owns no version/source admission, index, release or publication effect.
 Focused coverage is `scripts/ci/test-cargo-release-preflight.sh`.
 
-### Current Rust formatting inputs
+## Current Rust formatting inputs
 
 Pass `--rust-sources` after the formatting checker's fourth positional argument
 to use `scripts/ci/select-rust-formatting-sources.sh`. The canonical selector
@@ -723,7 +804,7 @@ non-Rust tooling/lock/configuration overlays. Source and checker bytes match the
 delivered Shared contribution; focused coverage is
 `scripts/ci/test-rust-formatting-sources.sh`.
 
-### Workflow run extraction
+## Workflow run extraction
 
 `scripts/ci/extract-workflow-step.sh STEPS_JSON STEP_ID` emits the selected run
 body from one JSON array of workflow steps. It requires exactly one matching
@@ -734,7 +815,7 @@ own YAML-to-JSON selection, ordering/condition assertions and actual execution;
 extraction grants no authority to execute unreviewed workflow code. Focused
 coverage is `scripts/ci/test-workflow-step.sh`.
 
-### Consumer flow qualification
+## Consumer flow qualification
 
 Source `scripts/ci/make-adapter-probes.sh` for
 `make_probe_execution_modes MAKE MAKEFILE DIRECTORY EVENTS TARGET...` and
@@ -760,33 +841,59 @@ roster, upload policy and complete outer archives including Git recovery state.
 
 Focused coverage is `scripts/ci/test-consumer-flow-probes.sh`; no helper is a
 sandbox for an unreviewed Makefile, script or selected payload.
+## Assertion retention probes
 
-Retained-success fixtures can call `fixture_completion_status STATUS COMPLETE`
-without deleting evidence. It preserves a nonzero child status, refuses an
-incomplete zero-status execution with status 1 and rejects invalid status values
-with status 2. Callers retain cleanup and diagnostic policy. The completion
-fixture exercises real EXIT/nounset handling under Bash 3.2 and newer.
+Source `scripts/ci/fixture-retention-probes.sh` for
+`fixture_probe_assertion OWNER PROBE_ROOT SOURCE_ROOT NAME [ARGUMENTS...]`.
+The default probe contradicts the first status assertion in a lower-case
+`root`/`fixture` owner and runs its existing setup. Consumers retain the fixture
+roster and arguments.
 
-Source `scripts/ci/fixture-lifecycle.sh` and call `fixture_create TEMPLATE` to
-allocate one directory and return its absolute physical path before changing cwd.
-The caller selects the template/prefix and retains its EXIT trap, completion flag
-and evidence policy. Relative templates, ordinary spaces and directory aliases
-are supported; CDPATH cannot redirect anchoring or add output. Empty templates,
-leading options and CR/LF in templates are rejected before allocation. A resolved
-physical path containing CR/LF is refused, retaining the allocation for inspection.
-Allocation errors preserve their status; normalization failures retain and report
-the created directory without attempting cleanup from an unanchored path.
+For an assertion in a workflow or another script, pass
+`--selected ASSERTION_SOURCE LITERAL_PREFIX BINDINGS` after `NAME` instead.
+Exactly one source line must match the literal prefix after leading whitespace.
+The child runs only the owner's initialization through its EXIT trap, followed
+by caller bindings and the selected assertion. Bindings are trusted shell source
+maintained by the caller; never pass user input. Bodies that build, install or
+mutate Git are excluded in this mode. Keep contradictory values and product
+assertion selection in the consumer.
 
-For example, after sourcing the helper:
+Both modes require the supported root anchor and EXIT boundary, evidence
+retention, status 1, and a receipt proving the intended assertion was reached.
+Ignored assertions and earlier setup failures are rejected. The focused owner
+suite is `scripts/ci/test-fixture-assertion-probe.sh`.
 
-```bash
-fixture="$(fixture_create "${TMPDIR:-/tmp}/consumer-check.XXXXXX")"
-fixture_complete=false
-trap 'fixture_finish "$?" "$fixture" "Consumer fixture retained"' EXIT
-# Run the caller-owned checks, then mark successful completion.
-fixture_complete=true
-```
+## Manifest ordering in selected release sources
 
-The allocation helper is additive and does not change existing cleanup callers.
-Its focused fixture is `scripts/ci/test-fixture-allocation.sh`; selecting that
-fixture through the snapshot exporter includes the lifecycle helper.
+`cargo-release-metadata.sh check PRIMARY_PACKAGE --manifest-order` additionally
+runs `cargo sort --workspace --check` in the same source selected for metadata
+admission. With `RELEASE_COMMIT`, Shared owns the one immutable export, exact
+commit admission, cleanup and failure retention. Consumers retain the opt-in
+policy and prepare the Cargo tool; this check performs no installation or
+manifest mutation. Other check callers remain unchanged. The flag is rejected
+for `prepare` and `check-graph`. Scripts from the selected export are never run.
+
+## Hosted qualification admission and evidence parents
+
+`qualify-hosted-failure.sh` owns stage/manual-dispatch admission, selected-checkout
+comparison and validation of caller catalog/log paths before creating an evidence
+parent. Consumers select the five arguments and delegate; they need not repeat
+admission or create the parent first. A nonempty missing parent is created only
+after admission, then physically anchored so relative paths, aliases and spaces
+retain the same scenario identity. Refused inputs create no evidence directories.
+The focused owner fixture is `scripts/ci/test-hosted-failure.sh`.
+
+The producer fixture `scripts/ci/test-checker-retention.sh` qualifies retained
+release/formatting inputs, logs and Git index after child or assertion failures.
+Consumers retain their own status/diagnostic checks without inspecting these
+shared checkers' internal directory layout.
+
+`collect-native-evidence.sh EVIDENCE OUTPUT` inventories available top-level files
+and packages the caller-owned tree verbatim, including hidden Git recovery state,
+with an archive checksum. Keep the same relative evidence-root spelling for
+inventory replay. The caller selects trusted inputs and artifact upload policy;
+this helper does not sanitize a tree for public distribution. Output must be
+outside the evidence tree; existing outputs refuse. Failures preserve inputs and
+partial output with their command status. Publish separately selected readable
+diagnostics before calling it. `test-native-evidence-archive.sh` owns packaging,
+checksum, containment, refusal and partial-failure qualification.

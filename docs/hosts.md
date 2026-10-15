@@ -15,19 +15,18 @@ The [shared host rules](supported-hosts.md) own the common support contract.
 Native input hashing and workflow fixture copies use
 `scripts/ci/native-source-files.sh`, which emits NUL-delimited maintained paths
 including pending source. The workflow records common managed tool paths, hashes
-and observed versions through Shared Tooling; compiler selection and inspector
-admission/hash evidence stay local. Failed observations retain partial diagnostics.
+and observed versions through Shared Tooling; compiler selection stays local. Failed observations retain partial diagnostics.
 
 ## Prerequisites and focused checks
 
 Prepare the pinned Rust 1.99.0 development toolchain with rustfmt, Clippy and
-`wasm32-unknown-unknown`. Prepare Rust 1.85.0 and 1.88.0, including their Wasm
-targets, for the advertised package floors:
+`wasm32-unknown-unknown`. Prepare Rust 1.91.0, including its Wasm
+target, for the advertised package floors:
 
 | Package | Rust floor | Floor gate |
 | --- | --- | --- |
-| `ic-metrics` | 1.85, native and Wasm | `make msrv` |
-| `ic-metrics-stable` | 1.88, native and Wasm | `make stable-msrv` |
+| `ic-metrics` | 1.91, native and Wasm | `make msrv` |
+| `ic-metrics-stable` | 1.91, native and Wasm | `make msrv` |
 
 Use Git, GNU Make, Bash 3.2 or newer and standard Unix utilities. The
 [local setup guide](local-setup.md#bootstrap-prerequisites) owns system bootstrap,
@@ -46,16 +45,23 @@ make install-hooks
 Setup is explicit; checks never install tools or unlock the selected graph.
 Prepare the locked application sources before offline release-fixture checks;
 common tool setup prepares different Cargo graphs. Native CI fetches explicitly
-before `make ci`. The selected-commit metadata fixture reads committed HEAD,
+before `make ci`. A snapshot retirement leaves tracked deletions until committed;
+source hashing deliberately refuses missing tracked files. Qualify that prepared
+source in an isolated committed checkout without changing the real index, or run
+against the committed tree. The selected-commit metadata fixture reads committed HEAD,
 so its graph must also be prepared when local manifest/lock edits differ from
 HEAD; a prepared working-tree graph alone cannot qualify that offline check.
 
-The ordered local extension installs/checks published `ic-host-wasm-inspect` 0.17.10 through
+The optional evidence tool is published `ic-host-wasm-inspect` 0.17.10, selected through
 the shared Cargo-tool installer. `make install-wasm-inspector` prepares that
 selection explicitly; `make wasm-inspector-tools-check` verifies it offline.
 `bash scripts/dev/wasm-inspector.sh run PATH MAX_BYTES MAX_SECTIONS MAX_EXPORTS MAX_CUSTOM_SECTIONS`
 consumes only the admitted executable path. IC Host owns its compiler floor,
 implementation and complete CLI test suite; it is not a Metrics workspace package.
+Common setup/check, CI and release preflight do not install or require this CLI.
+Neither library requires IC Host to build or run. Explicit `make wasm-inspect-check`
+checks evidence-tool wiring and dispatch; it establishes no canister behavior.
+Existing experiment identities remain frozen.
 The reviewed snapshot owns default pins in `ci/tool-versions.env` and
 `ci/ic-tools.tsv`; host, Rust and IC exceptions are independently selected
 under the shared catalog contract. Use the same optional
@@ -73,8 +79,8 @@ After Rust edits, run `make fmt`. It sorts workspace manifests and formats Rust;
 | Arithmetic | `make check check-wasm clippy docs-check`; named `cargo test -p ic-metrics --locked <test-name>` |
 | Durable adapter | `make stable-check`; named `cargo test -p ic-metrics-stable --locked <test-name>` |
 | Host inspector | `make wasm-inspect-check` |
-| Snapshot/pins | `make shared-tooling-check check-pins pin-tools-check` |
-| Local tools/hooks | `make local-tools-test hook-check` |
+| Snapshot/pins | `make shared-tooling-check check-pins` |
+| Local tools/hooks | `make tools-check hook-check` |
 | Release/evidence adapters | `make release-tools-check ci-evidence-check` |
 | Maintained docs | `make check-doc-links`, consistency review and `git diff --check` |
 
@@ -100,8 +106,7 @@ tool targets and pin files. Checks remain offline and never install tools.
 Focused checks for changed behavior and directly affected callers are sufficient
 for ordinary handoff under [the validation policy](../DRAGGINZGAME.md#validation-and-evidence).
 Run full local suites only for an explicitly authorized release or an explicit
-request for those checks. The full gate is `make ci`, then `make msrv` and
-`make stable-msrv`; reuse passing evidence only for unchanged inputs. Full CI
+request for those checks. The full gate is `make ci`, then workspace-native/Wasm `make msrv`; reuse passing evidence only for unchanged inputs. Full CI
 admits tools and pins before compilation, denies Clippy warnings, and checks
 builds, docs and tests for both packages. Configured CI and required branch
 checks remain unchanged. Inspection and documentation-only work use narrower
@@ -110,10 +115,11 @@ and publication authority.
 
 Release/publication are separate maintainer actions under
 [the release contract](releases.md). Standard release preflight prepares the
-locked dependency cache, common Cargo tools and the selected Wasm inspector
-before offline validation;
+locked dependency cache and common Cargo tools before offline validation;
 standalone preflight only fetches/checks offline. Preparation and late checks
 bind the selected release commit rather than newer working-tree metadata.
+Late metadata checks use Shared's `--manifest-order` option to check ordering
+in that same selected source; literal version preparation never sorts it.
 Neither validation nor release performs artifact cleanup.
 
 ## Native evidence
@@ -134,13 +140,17 @@ payload, source tree, scratch directory or nested archive is selected. It is
 collected before the complete archive so full collection failures still leave
 readable diagnostics; neither archive silently truncates selected logs.
 
-Generic Cargo metadata and Git source-admission cases run in snapshot-owned
-fixtures. The Metrics metadata fixture checks the real two-package adapter and stale stable
+Exhaustive installer, formatting, archive, Cargo metadata and release-engine
+regressions run at Shared Tooling's producer. Metrics verifies its reviewed
+snapshot, actual common tools and pins, then its own Make/hook/metadata/source
+admission and evidence integration. Removed upstream test payloads are retired
+through the distribution helper; directly used helpers remain explicit roots. The Metrics metadata fixture checks the real two-package adapter and stale stable
 member refusal. Tool candidate selection/archive orchestration is shared; the
-consumer keeps source/outcome selection, outer Git custody and uploads. Formatter
+consumer keeps source/outcome selection, Git custody and uploads. Formatter
 log discovery uses the shared selector. Local cleanup probes delegate actual
 initialization/EXIT prefixes to the shared helper; Metrics retains its fixture
-roster, effectful-failure assertions and intentional successful retention.
+roster, consumer-log forwarding and intentional successful retention. Shared
+Tooling owns assertions about its checkers' nested fixture payloads.
 
 Generic Make execution-mode matrices and parallel dispatch also use shared probes
 against the actual consumer Makefile. Metrics owns the target lists and stubs.
@@ -151,7 +161,10 @@ The shared effectful-fixture driver requires exact status, a failure marker and
 one retained directory, or successful cleanup; Metrics checks retained payloads.
 Native diagnostic collection uses the explicit local filename roster, publishes
 the small archive first and returns fatal admission/archive errors before outer
-collection. The complete outer archive still retains Git recovery state locally.
+collection. Shared's complete-tree packager then inventories top-level files
+and retains Git recovery state verbatim. Occupied destinations refuse; inventory,
+archive or checksum failure retains inputs and partial output with its command
+status. Metrics keeps incomplete-collection status and artifact upload policy.
 
 Release, hook and evidence fixtures substitute only their declared effects;
 actual Git index, Make dispatch, receipt admission and failure retention retain

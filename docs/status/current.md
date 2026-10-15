@@ -5,6 +5,52 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
+## Pending 0.11.0
+
+Both packages declare Rust 1.91 for native and Wasm. `make msrv` checks the
+whole workspace; the separate stable floor target, override and CI/release
+dispatch are removed. Package versions remain 0.10.1. This tooling cleanup
+preserves the maintainer's incoming Memory 0.40 manifest/lock selection.
+
+The reviewed 112-file Shared Tooling 0.15.0 snapshot is
+`1d261fe396c6158c5e0bcd9b35d4c914f1d5489f`, from
+[Shared PR #215](https://github.com/dragginzgame/shared-tooling/pull/215), stacked
+on [#211](https://github.com/dragginzgame/shared-tooling/pull/211). It retains the
+now-merged [integration PR #205](https://github.com/dragginzgame/shared-tooling/pull/205).
+Twenty-two exhaustive regression-suite calls move to the Shared producer's CI;
+unused test payloads retire through distribution. Actual tool/snapshot/pin,
+Make/hook, metadata/source-admission and evidence custody checks remain here.
+Preflight, workflow extraction and jobserver helpers are explicit snapshot roots.
+
+Shared owns full native archive packaging as well as sanitized diagnostic
+collection. Metrics keeps file selection, identity/outcome records, incomplete
+collection status, Git custody and upload policy. Hidden index/intent, hashes,
+filenames and modes remain retained; partial-write failures keep original inputs
+and readable diagnostics. Common CI and preflight still omit the optional Host
+inspector. Explicit evidence-tool commands and frozen experiment identities remain.
+
+The producer packaging fixture passes on current Bash and genuine Bash 3.2.57,
+including direct filesystem-root refusal. Final-source full `make ci` and actual
+native workflow qualification pass in the source-equivalent disposable committed
+checkout at `target/evidence/tooling-cleanup.1Ot0RX/`. The unified Rust 1.91 native
+and Wasm workspace gate passes on unchanged package/compiler inputs, including
+Memory 0.40. Bash 3.2 workflow, release-admission and standard-release fixtures
+pass; ShellCheck, workflow lint, snapshot, formatting and documentation checks
+pass. Substituted workflow effects establish local wiring and custody, not hosted
+native acceptance or IC performance. Shared PR #215's hosted matrix remains
+separate from this local qualification.
+
+Tracked scripts retired by refresh remain missing from the real index until
+committed, so source hashing deliberately refuses there; qualification changes
+no real index, refs, package versions or dependency selections. Earlier evidence
+under `target/evidence/without-inspector.oFamcc/` retains its original source,
+Memory 0.39 graph and separate compiler-floor commands.
+
+Read-only downstream review finds IcyDB, Canic, Blob Storage and Toko Miner at
+Rust 1.91 or newer; Timers and Backup currently declare 1.88. They must raise
+that floor before selecting Metrics 0.11. Existing 0.10 requirements keep their
+current release line. No sibling manifest or dependency selection was changed.
+
 ## Released 0.10.0
 
 Summaries now project counts, totals, maximum and means through `aggregate()`,
@@ -13,9 +59,13 @@ aliases. Ordered recording, restoration and `latest()` remain summary-owned;
 underlying arithmetic, quality flags and empty/zero semantics are unchanged.
 Consumers selecting the new minor must update summary projections. Both packages
 are published from `63a6bd7ee79cc892f9894ab307c990520842ffc7`; the root catalog
-now requires local Metrics 0.10. Package versions remain unchanged.
+requires local Metrics 0.10.
 
-## Pending 0.10.1
+## Released 0.10.1
+
+The finalized release is `305325df2baa0cfc1763070a8c7e975b1f8d0bdd`.
+Both package versions are 0.10.1. The preparation observations below retain
+their original scope; they do not establish new hosted acceptance.
 
 Retained-success fixtures delegate completion admission to Shared Tooling without
 changing their cleanup or diagnostic policy. The snapshot also shares generic
@@ -59,14 +109,14 @@ numeric comparison fixes it, with padded-output checks on both local Bash versio
 That substitute remains distinct from hosted native acceptance.
 
 [Shared PR #207](https://github.com/dragginzgame/shared-tooling/pull/207) supplies
-the current 133-file snapshot and mechanical workflow run-body extraction.
+the prior 133-file snapshot and mechanical workflow run-body extraction.
 Metrics retains YAML selection, workflow ordering/conditions and evidence custody.
 The extractor refuses missing/duplicate IDs, action steps, blank bodies and
 malformed or multiple JSON documents before publishing a script. Shared owns the
 exhaustive release-root matrix; Metrics retains one actual Makefile include check.
 Producer selection/root-isolation fixtures and actual consumer release, native
 evidence and effectful-retention fixtures pass on current Bash and Bash 3.2.57.
-The complete local `make ci` gate passes on this snapshot; unchanged native/Wasm
+The complete local `make ci` gate passed on that snapshot; unchanged native/Wasm
 package-floor inputs retain their earlier passing evidence.
 This batch changes no Rust source, manifest, lock or executable-tool selection.
 
@@ -104,14 +154,14 @@ per package. [The released-source receipt](../evidence/release-0100.md) binds
 the source, registry archives and all three native diagnostics. Owning consumer
 acceptance and earlier IC performance experiments retain their separate scope.
 
-The incoming Memory 0.39.0 manifest and lock selection is preserved. Complete
+Earlier qualification used Memory 0.39.0; the incoming graph now selects 0.40.0. Complete
 local CI, including stable codec tests and strict native/Wasm Clippy, and actual
 Rust 1.88 checks pass on that graph. Hosted acceptance and owning application
 workloads remain separate.
-Arithmetic retains Rust 1.85 native/Wasm; the optional stable package retains
-Rust 1.88. Shared's recorded candidate is
-`1d53395b4c861e4a41e8cd70243c488c41377b4f`; the separately managed published
-Host inspector remains 0.17.10. Executable-tool selections remain unchanged.
+Both packages select Rust 1.91 native/Wasm through one workspace gate. Shared's
+recorded revision is `1d261fe396c6158c5e0bcd9b35d4c914f1d5489f` (Shared 0.15.0). The separately
+managed published Host inspector remains 0.17.10. Executable-tool selections
+remain unchanged.
 
 [Shared PR #197](https://github.com/dragginzgame/shared-tooling/pull/197) repairs
 coordinated local dependency requirements. The released 0.10.0 source contains

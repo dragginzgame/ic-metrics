@@ -169,7 +169,7 @@ CARGO
 chmod +x "$fixture/bin/cargo"
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
 chmod +x "$fixture/bin/rustc"
-cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv stable-check stable-msrv)
+cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv stable-check)
 tool_targets=(install-wasm-inspector wasm-inspector-tools-check wasm-inspect-check)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
