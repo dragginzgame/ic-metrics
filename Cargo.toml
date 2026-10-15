@@ -13,7 +13,7 @@ authors = ["borovan <84897664+borovan@users.noreply.github.com>"]
 description = "Allocation-free, dependency-free measurement arithmetic"
 
 [workspace.dependencies]
-ic-memory = "0.38"
+ic-memory = "0.39"
 ic-metrics = { version = "0.10", path = "crates/ic-metrics" }
 
 [workspace.lints.rust]

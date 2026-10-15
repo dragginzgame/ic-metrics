@@ -88,6 +88,13 @@ output failure at its IC Host owner. Metrics checks offline tool admission and
 actual dispatch to the published CLI; smoke inputs remain under
 `target/evidence/wasm-inspector/`.
 
+Formatting fixtures use Shared Tooling's current-source selector for maintained
+Rust sources and Cargo manifests, including pending additions and deletions.
+Metrics supplies the primary perturbation paths and explicit non-Rust overlays.
+The shared locked release-preflight helper owns fetch/tool sequencing and pin
+rechecks; Metrics admits source/recovery first and selects preparation authority,
+tool targets and pin files. Checks remain offline and never install tools.
+
 ## Full release validation
 
 Focused checks for changed behavior and directly affected callers are sufficient
@@ -134,6 +141,17 @@ consumer keeps source/outcome selection, outer Git custody and uploads. Formatte
 log discovery uses the shared selector. Local cleanup probes delegate actual
 initialization/EXIT prefixes to the shared helper; Metrics retains its fixture
 roster, effectful-failure assertions and intentional successful retention.
+
+Generic Make execution-mode matrices and parallel dispatch also use shared probes
+against the actual consumer Makefile. Metrics owns the target lists and stubs.
+The exhaustive release-root isolation matrix stays with Shared Tooling; Metrics
+keeps one actual include-admission check. Workflow run bodies use the shared
+unique-step extractor, while ordering, conditions and execution remain local.
+The shared effectful-fixture driver requires exact status, a failure marker and
+one retained directory, or successful cleanup; Metrics checks retained payloads.
+Native diagnostic collection uses the explicit local filename roster, publishes
+the small archive first and returns fatal admission/archive errors before outer
+collection. The complete outer archive still retains Git recovery state locally.
 
 Release, hook and evidence fixtures substitute only their declared effects;
 actual Git index, Make dispatch, receipt admission and failure retention retain

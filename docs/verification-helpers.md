@@ -698,6 +698,75 @@ The portable fixture substitutes observations; it does not qualify macOS.
 
 ## Fixture allocation
 
+### Locked release preflight
+
+`scripts/ci/cargo-release-preflight.sh TOOL-ROOT PREPARE` accepts repeated
+`--pin PATH`, `--check TARGET` and `--prepare TARGET` pairs. Callers first admit
+source/recovery and consume their preparation authority. With PREPARE=0 it
+runs locked offline Cargo fetching followed by check targets; PREPARE=1 runs
+locked fetching followed by the caller's complete ordered preparation targets.
+Explicit Cargo offline policy remains authoritative. Cargo retains the caller's
+selected-source working directory; tool targets run with Make in TOOL-ROOT.
+Every selected catalog is hashed before preparation and rechecked after each
+tool target. Failures preserve fetch/Make status or refuse changed selections.
+The helper owns no version/source admission, index, release or publication effect.
+Focused coverage is `scripts/ci/test-cargo-release-preflight.sh`.
+
+### Current Rust formatting inputs
+
+Pass `--rust-sources` after the formatting checker's fourth positional argument
+to use `scripts/ci/select-rust-formatting-sources.sh`. The canonical selector
+includes current maintained Rust/Cargo inputs and tracked deletions, publishing
+its complete NUL-separated result only after Git/path admission. Only disposable
+hook checkouts are updated. Consumers retain chosen perturbations and additional
+non-Rust tooling/lock/configuration overlays. Source and checker bytes match the
+delivered Shared contribution; focused coverage is
+`scripts/ci/test-rust-formatting-sources.sh`.
+
+### Workflow run extraction
+
+`scripts/ci/extract-workflow-step.sh STEPS_JSON STEP_ID` emits the selected run
+body from one JSON array of workflow steps. It requires exactly one matching
+object with a nonblank string `run` and no `uses`. Missing/duplicate selections,
+invalid shapes and malformed or multiple JSON documents refuse without emitting
+a script. It preserves jq failures and requires prepared jq on PATH. Callers
+own YAML-to-JSON selection, ordering/condition assertions and actual execution;
+extraction grants no authority to execute unreviewed workflow code. Focused
+coverage is `scripts/ci/test-workflow-step.sh`.
+
+### Consumer flow qualification
+
+Source `scripts/ci/make-adapter-probes.sh` for
+`make_probe_execution_modes MAKE MAKEFILE DIRECTORY EVENTS TARGET...` and
+`make_probe_parallel_dispatch` with the same arguments. Callers prepare reviewed
+Makefiles and substituted effects. The first checks unsafe direct/inherited
+execution modes and hidden flag assignments; the second requires observable
+dispatch under a real pipe jobserver. Both fail when required assertions disagree.
+
+`fixture_probe_effect SCRIPT RUN PREFIX STATUS BASH MARKER` runs a fixture with
+caller-prepared PATH/environment, captures `result.log` and `status.txt`, and
+requires exact status, successful cleanup or one retained failure directory and
+the supplied marker. `RUN/tmp` must exist. The helper publishes
+`fixture_effect_retained` for consumer-owned payload/diagnostic assertions.
+
+`collect-native-diagnostics.sh CHECKOUT EVIDENCE OUTPUT FORMAT-ROOT TOOLS-OUTCOME
+HOST-PINS IC-PINS NAME...` archives only the supplied existing top-level files
+and writes its SHA-256 before collecting failed tools or formatter logs.
+Names cannot traverse directories; the scratch tree is never implicitly selected.
+The helper uses the existing tool/formatter owners and returns 0 on success,
+the tool collector's nonfatal status on partial collection, or 2 on fatal
+admission/archive errors. Consumers retain source/outcome records, the selected
+roster, upload policy and complete outer archives including Git recovery state.
+
+Focused coverage is `scripts/ci/test-consumer-flow-probes.sh`; no helper is a
+sandbox for an unreviewed Makefile, script or selected payload.
+
+Retained-success fixtures can call `fixture_completion_status STATUS COMPLETE`
+without deleting evidence. It preserves a nonzero child status, refuses an
+incomplete zero-status execution with status 1 and rejects invalid status values
+with status 2. Callers retain cleanup and diagnostic policy. The completion
+fixture exercises real EXIT/nounset handling under Bash 3.2 and newer.
+
 Source `scripts/ci/fixture-lifecycle.sh` and call `fixture_create TEMPLATE` to
 allocate one directory and return its absolute physical path before changing cwd.
 The caller selects the template/prefix and retains its EXIT trap, completion flag

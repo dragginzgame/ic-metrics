@@ -2,7 +2,7 @@
 # version	0.12.5
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	345865182de74a4cadfb9028b7c2055796d9552e
+revision	1d53395b4c861e4a41e8cd70243c488c41377b4f
 # entrypoint	rules/contributions.md
 # entrypoint	DRAGGINZGAME.md
 # entrypoint	docs/principles/README.md
@@ -105,6 +105,13 @@ revision	345865182de74a4cadfb9028b7c2055796d9552e
 # entrypoint	scripts/ci/check-native-host.sh
 # entrypoint	scripts/ci/test-native-host.sh
 # entrypoint	scripts/ci/report-tool-versions.sh
+# entrypoint	scripts/ci/test-fixture-completion.sh
+# entrypoint	scripts/ci/make-adapter-probes.sh
+# entrypoint	scripts/ci/collect-native-diagnostics.sh
+# entrypoint	scripts/ci/test-consumer-flow-probes.sh
+# entrypoint	scripts/ci/test-cargo-release-preflight.sh
+# entrypoint	scripts/ci/test-rust-formatting-sources.sh
+# entrypoint	scripts/ci/test-workflow-step.sh
 file	ef2a017ec18674af6b67329424bcebf4a211f0c4ec69fa70a4ff3a9da4a17583	-	rules/contributions.md
 file	9cd262741b22e90500126294326697cc5a7d0c6d49add21346c4a749342e370d	-	DRAGGINZGAME.md
 file	59f6cb0b47fcfa698396776bbb391737292ebf34457ad7c65803fe7b36961499	-	docs/principles/README.md
@@ -147,12 +154,12 @@ file	ebf236f1db579744a13bc995ec1c58c2ee87e34caed23088a6d9b75e638dd27f	x	scripts/
 file	91a8718e6a7d62ca04e5291b8f8f84c822dc7bef8d2421c5932e0f27d0cd0a0e	x	scripts/ci/test-host-tools.sh
 file	ea9907f2eb6359caa46c101d3a9e9ab2d046a7af9f90f284d744df9dca23dbb7	x	scripts/ci/test-ic-tools.sh
 file	544bf727af1886a6c8853be306da72fd1f2498cca319f2aaf040c16cc4ce43d4	x	scripts/ci/test-evidence-checksums.sh
-file	b7bef420ff185384e8a7051e65ef53fcb5b352485b3feac3211515a34f44bf34	-	docs/verification-helpers.md
+file	ed51e8f60507a241814a65a4c8fae4782f49be9b56b81f688866d0d19738e36f	-	docs/verification-helpers.md
 file	1063002468575e2f821cfec71524bde06a64634bf30455d64d2d9fed872969d6	-	docs/tag-maintenance.md
 file	a04ef3105e7851b83bb682120873e29a6c3c604183c275bc53051dd9e4b300a7	x	scripts/ci/check-documentation-links.pl
 file	6fe7da8acbeb862b26047d08c63a95a5d2b93223bb9c929d65c56dd2f30551ac	x	scripts/ci/check-release-commands.sh
 file	236f9b2d7fe391a73d03cfe355c0d26fa73de8db1553c7e670f7b19aeb65d086	x	scripts/ci/rewrite-local-lock-versions.pl
-file	2bf5c0c722a872218fd8b575b331a5ca5a3f49259dc1ef16ec567c1618c9cf2b	x	scripts/ci/check-formatting-hooks.sh
+file	3634f4eef80eeaf69ebf2d8480adae7fdee1a7f369546e1feb0ece90e6206be0	x	scripts/ci/check-formatting-hooks.sh
 file	40f31a19d6115411ebffe7c26e3ed30b8af7eead10dd4830de8d5a9312291222	x	scripts/ci/read-cargo-workspace-version.sh
 file	a52db278800a9f02d85a6b8a780a9b1eed860c49d5442cef9db1f7f9d7ddee0a	x	scripts/ci/check-format-tools.sh
 file	9bce8995f4d534d2fe20a7f39e2c62b1d8d75190ac5a1f0e47a4982ec68e91b6	x	scripts/ci/test-format-tools.sh
@@ -199,7 +206,7 @@ file	a7b03e2b6676c9461d68219f5aad671e5afbae53df385568e1b966cf6d0a81cd	x	scripts/
 file	94d4a1c8d36f3bb145a125b15da434dfa8b094fdd63effaff86f82774d4d0e8a	x	scripts/ci/cargo-release-metadata.sh
 file	e5376aa2cb8e79bcd323e61d4d7d0f595d8c7ed0299d42867f0aad8870593181	x	scripts/ci/test-cargo-release-metadata.sh
 file	ad65666b8b34e4967cecff3cfc97038dbc5dfbce146ac57316add2b380310ae1	x	scripts/ci/collect-tool-evidence.sh
-file	7741e24f2540eb15c48c59e58beb7ac3830c148becc817b83c7822b06ab6b6d5	-	scripts/ci/fixture-retention-probes.sh
+file	58381e7a790a4c414ce499fa24a9059503822a0806b6a10b812777117181f7fb	-	scripts/ci/fixture-retention-probes.sh
 file	c9971d3de02546e81e25f19ab74dfa7997164fa05fe76e0d323b200a30f28318	-	docs/cargo-publication.md
 file	d517344568e02a638cd19b99bfbcc63f000a0cf1df7b7713f901f52518b1e2ee	x	scripts/ci/formatting-evidence.sh
 file	15c888473fc7fb8e3a400295396ea9fee5744c4f75ae4b0a0beff90a47034482	x	scripts/ci/test-formatting-evidence.sh
@@ -207,14 +214,22 @@ file	99461157dcd6a7be4939907e12d7d295b76aa69960548c2c6e4a79e547a29dfe	x	scripts/
 file	a022de645d391ca6fd85949d5f4f8c48eb2f5320bc41a161d92887b24f66638d	x	scripts/ci/check-native-host.sh
 file	686261c19af8871f4eadf435d31612ea8d044fc487e4199741b4149007fb6755	x	scripts/ci/test-native-host.sh
 file	2866f395df1ec7b19b4281261414be897a18987744eb8322df172291b8015bc8	x	scripts/ci/report-tool-versions.sh
+file	c42cdbe3a1a2ac9138eb47718708726d77676290477ff05263bc566e7030ee4e	-	scripts/ci/test-fixture-completion.sh
+file	b98d6b02218985ce5181500520c4908cf6b9498b6d28649d3a647f3e0cceb022	-	scripts/ci/make-adapter-probes.sh
+file	549ec26d9e89d1c07ccacd275f3504b96f727418d233e77514c55ccc21309511	-	scripts/ci/collect-native-diagnostics.sh
+file	b1554e173f1902ce848d612737fbbc6c5165eb034af6c4f2bc96b3a3611a8074	-	scripts/ci/test-consumer-flow-probes.sh
+file	b67f190f8ddff0220d37c1cebe25ccd771c9c8d69b946e0d236e889dff9175f4	-	scripts/ci/test-cargo-release-preflight.sh
+file	3aea57a7398e1d4171f8ba81eb8ebe1738a6bbf796843745b97304ba1a350fc2	-	scripts/ci/test-rust-formatting-sources.sh
+file	d3cb9c741a2f9356e0d5c8d0a858ccdf99852e03a2cc99a26d6fd586afd13b56	-	scripts/ci/test-workflow-step.sh
 file	37e028e2d9fee271ffdc06d06fc15d7a148ec524def3d9ed2afcd9910c0ec642	x	scripts/ci/next-release-version.sh
 file	d7b179f9ceaec6e11c690c975b61f91bedc80526415f71571615064db14f0c9c	x	scripts/ci/check-release-tag.sh
-file	ecfd7c82fd84ce4468d7be846a23961c2894239f80c817f1059fc675eaad378b	-	scripts/ci/fixture-lifecycle.sh
+file	7c726e4eb21710526204de6263a4c217d7f85ca73e22af453699999f1cc338a2	-	scripts/ci/fixture-lifecycle.sh
 file	3d56ca1b0c5952b9534ece61b6754ca39e6ec1980d929f09de3dbd967a0c4977	-	scripts/ci/dependency-pins.jq
 file	5d4501374009d423df6f9093a331f1ae6117dc3b7d78f0114357c415eda7eeb9	-	scripts/dev/tool-store.sh
 file	775da89f655a3781059f433f80470ee6db9675e08942a805c111614183322fe1	-	scripts/ci/ic-tool-pins.awk
 file	b58328912fddccf643b243bccfb963bfe0d90dcbc77a6b12fff5af803f5e07d7	x	scripts/ci/test-tool-evidence.sh
 file	afacaf5289ec27b932ea6edd7e3827a9b8ec9e4bd03d2d5009adf674d258cf80	-	scripts/ci/test-tool-store.sh
+file	c10514df9c63541c1e86633c6311d9448d06426cd33b93e4dd289e743fc2e4c6	-	scripts/ci/select-rust-formatting-sources.sh
 file	4d889baf268ecfb67d2993c77b72a3c814a7ccd74814b1532d37a2cac1abec05	-	make/tools.mk
 file	d866bd1ae0bf5c5d22120c3427857968eba86cbc2affa310951f76742e339116	x	scripts/ci/check-pipe-jobserver.pl
 file	b936baeb21374c8718c4f35b00cd3ee09350f2315f4367559cf922ef42f68292	-	scripts/dev/cargo-tool-build.sh
@@ -227,4 +242,6 @@ file	fed2573258080a0c89c7db113208a774f615ca29c372e62c1d2334e58c165654	x	scripts/
 file	f5ad60c7981daa237ac4e84bbe40ccaf2f795e417873b2aa5af6c5c01140ce65	x	scripts/ci/render-cargo-workspace-version.pl
 file	37477ebdbf9f03da16473290b12bb99436c73f1855df27d592438dc6324e05ea	x	scripts/ci/tool-catalog-records.pl
 file	cebc0fa4ee9944550350a492a3bc1084e28820e2c915e20351c336d87ce0359f	-	make/execution.mk
+file	aa540f75e1a45b62310ae379ae5f17589267040ebbf8867aa70789e744dec970	-	scripts/ci/cargo-release-preflight.sh
+file	e2825c554ea3952515ecb2938f7ad592d6539ec5304c3b3107d32a1bfc6b4eda	-	scripts/ci/extract-workflow-step.sh
 file	eeeca9e6e7b92b888fd6547733d6136f0e7e9859d37c983f8048e60551a15c39	-	scripts/ci/StableVersion.pm

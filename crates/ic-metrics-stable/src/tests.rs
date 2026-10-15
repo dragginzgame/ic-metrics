@@ -522,47 +522,6 @@ fn checkpoints_reject_same_count_rewrites_and_admit_order_after_overflow() {
     );
 }
 
-#[test]
-fn ic_memory_bootstrap_retains_one_application_binding_for_all_metrics() {
-    use ic_memory::{
-        GenericAllocationPolicy, MemoryAllocationPool, MemoryAuthority, MemoryRequest,
-        MemoryRuntime, SchemaMetadata, SealedDeclarationSnapshot,
-    };
-    let backing = VectorMemory::default();
-    let pool =
-        MemoryAllocationPool::new(vec![MemoryAuthority::new("app", "app.").unwrap()], vec![])
-            .unwrap();
-    let declarations = SealedDeclarationSnapshot::new(vec![
-        MemoryRequest::new("app", "app.metrics.v1", SchemaMetadata::default()).unwrap(),
-    ])
-    .unwrap();
-    let mut host = MemoryRuntime::new(backing.clone()).unwrap();
-    host.bootstrap(&declarations, &pool, &GenericAllocationPolicy)
-        .unwrap();
-    let first_id = host.memory_id("app.metrics.v1").unwrap();
-    let mut store = MetricsStore::new(BTreeMap::init(host.open_memory("app.metrics.v1").unwrap()));
-    let mut aggregate = Aggregate::EMPTY;
-    aggregate.record(42);
-    for namespace in ["icydb", "canic", "timers"] {
-        store
-            .save(&key(namespace), &identity(), &aggregate)
-            .unwrap();
-    }
-    drop(store);
-    drop(host);
-    let mut host = MemoryRuntime::new(backing).unwrap();
-    host.bootstrap(&declarations, &pool, &GenericAllocationPolicy)
-        .unwrap();
-    assert_eq!(host.memory_id("app.metrics.v1").unwrap(), first_id);
-    let store = MetricsStore::new(BTreeMap::init(host.open_memory("app.metrics.v1").unwrap()));
-    for namespace in ["icydb", "canic", "timers"] {
-        assert_eq!(
-            store.load(&key(namespace), &identity(), &Aggregate::EMPTY),
-            Ok(Some(aggregate))
-        );
-    }
-}
-
 // Observe native Memory effects, not IC instructions, cycles or timings.
 #[derive(Clone, Default)]
 struct WriteCountingMemory {

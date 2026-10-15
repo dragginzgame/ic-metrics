@@ -88,9 +88,13 @@ local-tools-test:
 	bash scripts/ci/test-cloc.sh
 
 hook-check:
+	bash scripts/ci/test-rust-formatting-sources.sh
 	bash scripts/dev/test-format-hook.sh
 
 ci-evidence-check:
+	bash scripts/ci/test-fixture-completion.sh
+	bash scripts/ci/test-consumer-flow-probes.sh
+	bash scripts/ci/test-workflow-step.sh
 	bash scripts/ci/test-native-source-files.sh
 	bash scripts/ci/test-native-host.sh
 	bash scripts/ci/test-formatting-evidence.sh
@@ -163,6 +167,7 @@ release-tools-check:
 	bash scripts/ci/test-release-tracking.sh
 	bash scripts/release/test-standard-release.sh
 	bash scripts/ci/test-cargo-release-metadata.sh
+	bash scripts/ci/test-cargo-release-preflight.sh
 	bash scripts/release/test-metadata.sh
 	bash scripts/ci/test-release-source.sh
 	bash scripts/release/test-release-admission.sh

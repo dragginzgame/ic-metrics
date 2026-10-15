@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.10.1]
+
+### Changed
+
+- Keep exhaustive release-root isolation at Shared Tooling, retaining one actual
+  consumer wiring check; use its validated workflow run-body extractor in native
+  evidence fixtures ([Shared PR #207](https://github.com/dragginzgame/shared-tooling/pull/207)).
+- Restore histogram bucket counts, maximum placement and total-range consistency
+  in one admission pass, preserving typed failures and stored V1 records.
+- Use canonical current-source formatter discovery and shared locked release
+  preparation, retaining source admission, tool selection and pin-change refusal
+  ([Shared PR #204 — Share release preparation and formatter discovery](https://github.com/dragginzgame/shared-tooling/pull/204)).
+- Share fixture completion admission with Shared Tooling while preserving
+  successful diagnostic retention and original failure statuses
+  ([Shared PR #200 — Share completion admission](https://github.com/dragginzgame/shared-tooling/pull/200)).
+- Delegate generic Make admission, fixture execution/retention and native
+  diagnostic collection to Shared Tooling; retain consumer target rosters,
+  effect stubs, payload assertions and complete Git recovery archives
+  ([Shared PR #201 — Share consumer validation flows](https://github.com/dragginzgame/shared-tooling/pull/201)).
+- Keep allocation/bootstrap qualification at IC Memory; retain Metrics' mixed-kind
+  one-map reopening, identity and checkpoint assertions here.
+
 ## [0.10.0] - 2026-10-14
 
 ### Breaking
