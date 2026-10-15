@@ -8,10 +8,19 @@ and `MeasurementSummary` for ordered observations with a latest value.
 `MeasurementHistogram` adds a mergeable fixed-size distribution with caller-selected bounds.
 Zero is a valid observation; an empty summary has no latest or maximum value.
 Tracked count and total clip independently, with sticky actual-overflow flags.
-Counts and individual samples use `u64`; totals and means use `u128`. Every
+The tracked integer APIs use `u64` samples/counts and `u128` totals/means. Every
 exact counted batch fits its total. An exactly reached numeric cap remains exact. Consumers establish units, identity and
 reset boundaries before comparing observations; overflowed totals cannot supply
 exact interval arithmetic.
+
+`summarize_samples` sorts a caller-owned finite `f64` slice without allocation,
+returning count, minimum, maximum, approximate mean, median and a caller-selected
+observed nearest-rank quantile. Pass `95, 100` for p95; this differs from a
+histogram's bucket range. Invalid fractions/non-finite samples refuse before
+sorting; a non-finite rounded mean returns an error after sorting. Empty is
+`None`, while measured zero is a sample. Callers retain storage, collection,
+units, attribution and reports. Floating samples do not become exact integer
+aggregates or stable metric records.
 
 `MeasurementCounter` supports scalar event, item or byte totals.
 It holds a `u128` total and sticky actual-overflow flag, with `add`, `merge`,

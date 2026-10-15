@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.1]
+
+### Added
+
+- Add allocation-free finite sample statistics over caller-owned slices, with
+  approximate means, even/odd medians and caller-selected observed nearest-rank
+  quantiles. Invalid fractions and non-finite inputs/results return typed errors;
+  the existing integer and histogram contracts remain unchanged.
+  [#85 — Own allocation-free finite sample statistics](https://github.com/dragginzgame/ic-metrics/issues/85).
+
 ## [0.11.0] - 2026-10-15
 
 ### Breaking

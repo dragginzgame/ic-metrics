@@ -13,6 +13,7 @@ crate documentation and supplies compiled examples.
 | `MeasurementAggregate` | Mergeable sample count, wide total, maximum and actual-overflow flags; checked means and count/total intervals. |
 | `MeasurementSummary` | An aggregate plus the latest ordered observation; no merge that invents ordering. |
 | `MeasurementHistogram<N>` | Immutable finite bounds, disjoint counts, overflow and an aggregate; equal-bound merging and checked cumulative counts/nearest-rank ranges. |
+| `summarize_samples` | Sort a caller-owned finite floating-point slice without allocation; project mean, median and a selected observed nearest-rank value. No retained state, collection, attribution or serialization. |
 | `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics. Optional stable checkpoints retain only its scalar state. |
 
 In the published 0.10 contract, summaries and histograms project count, total,
@@ -21,7 +22,7 @@ forwarding methods are removed; its latest observation remains summary-owned.
 Consumers selecting 0.10 update these projections and independently qualify
 their own integration.
 
-Individual observations, sample counts and bucket counts use `u64`; accumulated
+The tracked integer APIs use `u64` observations, sample counts and bucket counts; accumulated
 quantities and means use `u128`. Zero is a valid observation. Empty aggregates
 have no maximum, ordered summaries have no latest, and empty means are `None`.
 A zero scalar counter is exact; consumers decide whether a counter exists.
@@ -52,6 +53,17 @@ Merging adds deliberately attributed batches without deduplication. Before
 intervals or scalar deltas, establish matching units, counter/window identity
 and append-only continuity. Numeric success cannot detect a reset followed by
 larger readings. Maxima, latest observations and quantiles are not subtractable.
+
+Finite sample statistics are a separate approximate projection over actual
+caller-supplied observations. They do not reconstruct exact counts or histogram
+state from floating values. The caller supplies the quantile fraction, memory
+and units; Metrics sorts that memory in place and reports a midpoint median and
+an observed nearest-rank value. Invalid fraction/non-finite sample admission
+precedes mutation; rounded mean overflow is explicit after sorting. Existing
+integer arithmetic and stable records remain unchanged. Testkit's prepared
+consumer removes its private statistics only after a supplying release is
+published; its worker schema, process lifecycle and report presentation remain
+Testkit-owned. Other maintained consumers require no change for this additive API.
 
 ## Platform and persistence boundaries
 

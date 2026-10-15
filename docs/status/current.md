@@ -51,6 +51,19 @@ Rust 1.91 or newer; Timers and Backup currently declare 1.88. They must raise
 that floor before selecting Metrics 0.11. Existing 0.10 requirements keep their
 current release line. No sibling manifest or dependency selection was changed.
 
+## Pending 0.11.1: caller-owned sample statistics
+
+The arithmetic package adds finite sample statistics under
+[#85 — Caller-owned sample statistics](https://github.com/dragginzgame/ic-metrics/issues/85).
+The caller retains storage, sampling, units, quantile selection and reports.
+No allocation, dependency, platform sampling or stable record is added.
+Five focused arithmetic cases, the compiled example, strict package Clippy,
+warning-denied documentation and actual Rust 1.91 native/Wasm library checks
+pass. Source/error contracts are documented in the extraction guide. The new
+source still needs required hosted/native checks and maintainer integration and
+publication before Testkit can adopt it normally. Evidence is retained under
+`/tmp/testkit-three-report-cuts-0rjddwfr/`; own package versions remain unchanged.
+
 ## Released 0.10.0
 
 Summaries now project counts, totals, maximum and means through `aggregate()`,

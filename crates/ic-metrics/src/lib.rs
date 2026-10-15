@@ -12,6 +12,7 @@ mod aggregate;
 mod counter;
 mod histogram;
 mod ratio;
+mod sample_statistics;
 mod state;
 mod summary;
 
@@ -24,6 +25,7 @@ pub use histogram::{
     MeasurementHistogram,
 };
 pub use ratio::{MeasurementRatioError, checked_scaled_ratio};
+pub use sample_statistics::{SampleStatistics, SampleStatisticsError, summarize_samples};
 pub use state::MeasurementStateError;
 pub use summary::MeasurementSummary;
 
