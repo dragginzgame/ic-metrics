@@ -2,7 +2,7 @@
 # version	0.15.2
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	ba41f29a2d2a3d92e8ba593daa9f7cf0c2fb6912
+revision	ebca2ba2cbab7dba6427bac8151644e9d0960332
 # entrypoint	rules/contributions.md
 # entrypoint	DRAGGINZGAME.md
 # entrypoint	docs/principles/README.md
@@ -132,7 +132,7 @@ file	05da2ac2b805c7cf9597d4af75983efc1268d619a0fb1e42c7f6d3fdb481880b	-	ci/ic-to
 file	0fe0525667d3d96eb9f25968cb648bfeb3072a0afa980599692776fac256a2ee	x	scripts/dev/install-host-tools.sh
 file	9fc0f0eb833b0db3087adaac90bfe98382a8a43decc23116dd4e962da1da8c0c	x	scripts/dev/install-ic-tools.sh
 file	ebf236f1db579744a13bc995ec1c58c2ee87e34caed23088a6d9b75e638dd27f	x	scripts/ci/verify-evidence-checksums.sh
-file	bb2c7a0fccfbaff062c2fb0166ea08f72994ace5a5e0340fe4076a973e3af29c	-	docs/verification-helpers.md
+file	c6f8b9f96d8c667cc6f7e846c49ac9dd3917a5678ed6bfa8d2a34d980e3484d7	-	docs/verification-helpers.md
 file	1063002468575e2f821cfec71524bde06a64634bf30455d64d2d9fed872969d6	-	docs/tag-maintenance.md
 file	a04ef3105e7851b83bb682120873e29a6c3c604183c275bc53051dd9e4b300a7	x	scripts/ci/check-documentation-links.pl
 file	6fe7da8acbeb862b26047d08c63a95a5d2b93223bb9c929d65c56dd2f30551ac	x	scripts/ci/check-release-commands.sh
@@ -187,7 +187,7 @@ file	d866bd1ae0bf5c5d22120c3427857968eba86cbc2affa310951f76742e339116	x	scripts/
 file	aa540f75e1a45b62310ae379ae5f17589267040ebbf8867aa70789e744dec970	-	scripts/ci/cargo-release-preflight.sh
 file	e2825c554ea3952515ecb2938f7ad592d6539ec5304c3b3107d32a1bfc6b4eda	-	scripts/ci/extract-workflow-step.sh
 file	38a079f95bd69c79733758d1325f6641bcf3501987af2bf1527057b54443c3e4	-	scripts/ci/check-release-changelog.sh
-file	ef2ba87f4a34406c355cef9d101ec97dce72990f04b16ded721761bb59ec4df3	-	docs/rust-toolchains.md
+file	d8262e16afce59b65b5a9ef6142b20170a6c6459efa1d30d9dd8d292614c854f	-	docs/rust-toolchains.md
 file	3824050479f26a6d8533dadc6a53826d365274e0840b11691c46dacceb191e00	-	docs/ci-change-selection.md
 file	9737e3851045bc4fd6d23e9b0e371293ab80405492bf11ad38e4de6e18af17a8	x	scripts/ci/next-release-version.sh
 file	d7b179f9ceaec6e11c690c975b61f91bedc80526415f71571615064db14f0c9c	x	scripts/ci/check-release-tag.sh
@@ -204,7 +204,7 @@ file	394b173e903aeb4d057f57665a0fad17233b677eff1f63d17d81314b3086856b	-	make/rus
 file	e00937f22bd31231993ae9c1d7eda844227b39529466d017de44dbc1f0618026	-	scripts/ci/cargo-workspace-members.jq
 file	fed2573258080a0c89c7db113208a774f615ca29c372e62c1d2334e58c165654	x	scripts/ci/compare-stable-versions.pl
 file	a3553478868eb97d0fccbc0d3b19831eed4e938a3a273c61e87156bb27fe1fff	x	scripts/ci/render-cargo-workspace-version.pl
-file	7c726e4eb21710526204de6263a4c217d7f85ca73e22af453699999f1cc338a2	-	scripts/ci/fixture-lifecycle.sh
+file	523996a3e4eb9dbe87e8daa4285293a28c5e005223feaa84bd5383d430784b09	-	scripts/ci/fixture-lifecycle.sh
 file	37477ebdbf9f03da16473290b12bb99436c73f1855df27d592438dc6324e05ea	x	scripts/ci/tool-catalog-records.pl
 file	cebc0fa4ee9944550350a492a3bc1084e28820e2c915e20351c336d87ce0359f	-	make/execution.mk
 file	eeeca9e6e7b92b888fd6547733d6136f0e7e9859d37c983f8048e60551a15c39	-	scripts/ci/StableVersion.pm

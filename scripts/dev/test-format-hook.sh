@@ -16,11 +16,8 @@ fixture_complete=false
 cleanup() {
     local status=$?
     if [[ "$status" != 0 ]]; then
-        if [[ -f "$fixture/format-tools.log" ]]; then cat "$fixture/format-tools.log" >&2 || :; fi
-        if [[ -f "$fixture/hook.log" ]]; then cat "$fixture/hook.log" >&2 || :; fi
-        for log in "$fixture"/formatting-adoption.*/*.log "$fixture"/formatting-adoption.*/*/.git/*.log; do
-            if [[ -f "$log" ]]; then cat "$log" >&2 || :; fi
-        done
+        fixture_replay_logs "$fixture/format-tools.log" "$fixture/hook.log" \
+            "$fixture"/formatting-adoption.*/*.log "$fixture"/formatting-adoption.*/*/.git/*.log
     fi
     fixture_finish "$status" "$fixture" "failed formatting hook fixture retained"
 }

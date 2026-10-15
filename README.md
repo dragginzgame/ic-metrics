@@ -181,8 +181,9 @@ vendored; normal commands need no Shared Tooling sibling checkout.
 
 `make fmt` sorts workspace manifests and formats Rust; `make fmt-check` checks
 without editing. `make help` lists focused commands. Select named tests during
-implementation, and use `make check`, `make check-wasm` and `make clippy` for
-the affected package. `make wasm-inspect-check` checks the selected host tool.
+implementation. `make check`, `make check-wasm`, `make clippy`, `make docs-check`
+and `make test` cover both workspace packages; use `cargo ... -p PACKAGE --locked`
+for focused package checks. `make wasm-inspect-check` checks the selected host tool.
 Full release validation uses `make ci` and workspace-native/Wasm `make msrv`;
 implementation, inspection and documentation use focused checks under the shared
 validation policy. The [host support and qualification guide](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks)
@@ -196,7 +197,7 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both 0.11.0 packages are published and require Rust 1.91 on native and Wasm.
+Both 0.11.1 packages are published and require Rust 1.91 on native and Wasm.
 Consumers select the 0.11 contract in the root catalog and qualify their owning
 integration:
 

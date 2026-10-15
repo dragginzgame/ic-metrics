@@ -16,9 +16,7 @@ fixture_complete=false
 cleanup() {
     local status=$?
     if [[ "$status" != 0 ]]; then
-        for log in "${worktree:-}/setup.log" "${worktree:-}/preflight.log" "${worktree:-}/result.log"; do
-            if [[ -f "$log" ]]; then cat "$log" >&2 || :; fi
-        done
+        fixture_replay_logs "${worktree:-}/setup.log" "${worktree:-}/preflight.log" "${worktree:-}/result.log"
     fi
     fixture_finish "$status" "$fixture" "failed metadata fixture retained"
 }

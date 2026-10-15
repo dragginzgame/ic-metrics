@@ -48,7 +48,6 @@ release-files:
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
 .PHONY: ci-evidence-check
 .PHONY: wasm-inspect-check install-wasm-inspector wasm-inspector-tools-check
-.PHONY: stable-check
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
@@ -64,7 +63,7 @@ help:
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Optional Wasm evidence tool: install-wasm-inspector, wasm-inspector-tools-check, wasm-inspect-check"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
-	@echo "Durable adapter: stable-check; workspace native/Wasm minimum: msrv"
+	@echo "Workspace gates cover arithmetic and the durable adapter; native/Wasm minimum: msrv"
 	@echo "Full release validation (or explicit check request): ci, msrv"
 
 publish:
@@ -81,18 +80,18 @@ ci-evidence-check:
 	bash scripts/ci/test-native-evidence.sh
 
 check:
-	+cargo check -p $(PACKAGE) --locked
+	+cargo check --workspace --all-targets --locked
 
 check-wasm:
-	+cargo check -p $(PACKAGE) --locked --target wasm32-unknown-unknown
+	+cargo check --workspace --locked --target wasm32-unknown-unknown
 
 clippy:
-	+cargo clippy -p $(PACKAGE) --all-targets --locked -- -D warnings
-	+cargo clippy -p $(PACKAGE) --lib --locked --target wasm32-unknown-unknown -- -D warnings
+	+cargo clippy --workspace --all-targets --locked -- -D warnings
+	+cargo clippy --workspace --lib --locked --target wasm32-unknown-unknown -- -D warnings
 
 docs-check:
-	+RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps
-	+RUSTDOCFLAGS="-D warnings" cargo doc -p $(PACKAGE) --locked --no-deps --target wasm32-unknown-unknown
+	+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --locked --no-deps
+	+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --locked --no-deps --target wasm32-unknown-unknown
 
 check-doc-links:
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
@@ -102,7 +101,7 @@ check-doc-links:
 		crates/ic-metrics/src/application.md crates/ic-metrics-stable/README.md
 
 test:
-	+cargo test -p $(PACKAGE) --locked
+	+cargo test --workspace --locked
 
 msrv:
 	rustc +$(MSRV) --version
@@ -118,16 +117,6 @@ wasm-inspector-tools-check:
 
 wasm-inspect-check:
 	+bash scripts/dev/test-wasm-inspector.sh
-
-stable-check:
-	+cargo check -p ic-metrics-stable --all-targets --locked
-	+cargo check -p ic-metrics-stable --locked --target wasm32-unknown-unknown
-	+cargo clippy -p ic-metrics-stable --all-targets --locked -- -D warnings
-	+cargo clippy -p ic-metrics-stable --lib --locked --target wasm32-unknown-unknown -- -D warnings
-	+RUSTDOCFLAGS="-D warnings" cargo doc -p ic-metrics-stable --locked --no-deps
-	+RUSTDOCFLAGS="-D warnings" cargo doc -p ic-metrics-stable --locked --no-deps --target wasm32-unknown-unknown
-	+cargo test -p ic-metrics-stable --locked tests::
-	+cargo test -p ic-metrics-stable --locked --doc
 
 check-pins:
 	bash scripts/ci/check-dependency-pins.sh --cargo-inheritance
@@ -151,6 +140,5 @@ ci:
 	+$(MAKE) --no-print-directory check
 	+$(MAKE) --no-print-directory check-wasm
 	+$(MAKE) --no-print-directory clippy
-	+$(MAKE) --no-print-directory stable-check
 	+$(MAKE) --no-print-directory docs-check
 	+$(MAKE) --no-print-directory test
