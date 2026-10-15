@@ -22,6 +22,8 @@ cleanup() {
     fixture_finish "$status" "$fixture" "failed standard release fixture retained"
 }
 trap cleanup EXIT
+# shellcheck source=scripts/ci/make-adapter-probes.sh
+source "$root/scripts/ci/make-adapter-probes.sh"
 mkdir -p "$fixture/bin" "$fixture/make" "$fixture/scripts/ci"
 cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" "$fixture/make/"
 cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/run-formatting.sh" "$fixture/scripts/ci/"
@@ -37,47 +39,17 @@ for selection in default direct; do
         scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
 done
 
-# Admission follows the selected include even when runtime routing is overridden.
-# No unselected execution probe may run during harmless help parsing.
+# Keep one real-consumer include-admission check. Shared Tooling owns the
+# environment/recursive-root isolation matrix and checker export behavior.
 mkdir -p "$fixture/external/scripts/ci"
 cat > "$fixture/external/scripts/ci/check-make-execution.sh" <<'EXTERNAL'
 #!/usr/bin/env bash
 echo escaped >> "$EVENTS"
 exit 0
 EXTERNAL
-for selection in environment command; do
-    : > "$EVENTS"
-    if [[ "$selection" == command ]]; then
-        "$real_make" --no-print-directory -f "$root/Makefile" help \
-            "SHARED_TOOLING_ROOT=$fixture/external" > "$fixture/output" 2>&1
-    else
-        SHARED_TOOLING_ROOT="$fixture/external" "$real_make" --no-print-directory \
-            -f "$root/Makefile" help > "$fixture/output" 2>&1
-    fi
-    [[ ! -s "$EVENTS" ]] || exit 1
-done
-
-# The smoke checker must bind this consumer's includes to its scratch snapshot,
-# even when invoked through a parent Make exporting another tooling root.
-cat > "$fixture/external/scripts/ci/run-release.sh" <<'EXTERNAL'
-#!/usr/bin/env bash
-echo escaped >> "$EVENTS"
-exit 99
-EXTERNAL
-cat > "$fixture/root-parent.mk" <<'MAKE'
-export SHARED_TOOLING_ROOT := $(EXTERNAL_ROOT)
-check:
-	+@bash "$(CHECKER)" "$(CONSUMER)" make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh
-MAKE
 : > "$EVENTS"
-SHARED_TOOLING_ROOT="$fixture/external" TMPDIR="$fixture" "$real_bash" \
-    "$root/scripts/ci/check-release-commands.sh" "$root" \
-    make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
-    scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
-[[ ! -s "$EVENTS" ]] || exit 1
-TMPDIR="$fixture" "$real_make" -j2 --no-print-directory -f "$fixture/root-parent.mk" check \
-    EXTERNAL_ROOT="$fixture/external" CHECKER="$root/scripts/ci/check-release-commands.sh" \
-    CONSUMER="$root" > "$fixture/output" 2>&1
+"$real_make" --no-print-directory -f "$root/Makefile" help \
+    "SHARED_TOOLING_ROOT=$fixture/external" > "$fixture/output" 2>&1
 [[ ! -s "$EVENTS" ]] || exit 1
 
 # Unsupported inherited and command-line policies must fail before runner or
@@ -201,58 +173,17 @@ cargo_targets=(publish publish-check check check-wasm clippy docs-check test msr
 tool_targets=(install-wasm-inspector wasm-inspector-tools-check wasm-inspect-check)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
-for target in release-patch release-minor release-major release-resume fmt fmt-check "${cargo_targets[@]}" "${tool_targets[@]}" "${metadata_targets[@]}"; do
-    for mode in -i --ignore-errors -n --dry-run --just-print --recon -t --touch -q --question -kin; do
-        for selection in direct inherited cleared replaced both-hidden; do
-            : > "$EVENTS"
-            status=0
-            if [[ "$selection" == inherited ]]; then
-                PATH="$fixture/bin:$PATH" _shared_make_execution_checked=yes MAKEFLAGS="$mode" "$real_make" --no-print-directory \
-                    -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
-            else
-                flags=()
-                case "$selection" in
-                    cleared) flags=(MAKEFLAGS=) ;;
-                    replaced) flags=(MAKEFLAGS=--no-print-directory) ;;
-                    both-hidden) flags=(MAKEFLAGS= MFLAGS=) ;;
-                esac
-                PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -f "$root/Makefile" "$mode" "$target" \
-                    ${flags[@]+"${flags[@]}"} > "$fixture/output" 2>&1 || status=$?
-            fi
-            if [[ "$status" != 2 || -s "$EVENTS" ]]; then
-                echo "consumer Make admission failed: $target $mode $selection (status $status)" >&2
-                exit 1
-            fi
-        done
-    done
-done
-for assignment in 'MFLAGS :=' 'override MFLAGS :='; do
-    printf '%s\n' "$assignment" > "$fixture/hidden-mflags.mk"
-    : > "$EVENTS"
-    status=0
-    PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -i \
-        -f "$fixture/hidden-mflags.mk" -f "$root/Makefile" release-patch MAKEFLAGS= \
-        > "$fixture/output" 2>&1 || status=$?
-    [[ "$status" == 2 && ! -s "$EVENTS" ]] || exit 1
-done
+PATH="$fixture/bin:$PATH" make_probe_execution_modes "$real_make" "$root/Makefile" "$fixture" "$EVENTS" \
+    release-patch release-minor release-major release-resume fmt fmt-check \
+    "${cargo_targets[@]}" "${tool_targets[@]}" "${metadata_targets[@]}"
 rm "$fixture/bin/bash"
 
 # The real consumer Makefile must leave both pipe descriptors open at every
 # owned Cargo boundary. Cargo effects are substituted; Make admission is real.
-for target in "${cargo_targets[@]}"; do
-    : > "$EVENTS"
-    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" "${parallel[@]}" --no-print-directory \
-        -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
-    [[ -s "$EVENTS" ]] || exit 1
-done
+PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 make_probe_parallel_dispatch "$real_make" "$root/Makefile" "$fixture" "$EVENTS" "${cargo_targets[@]}"
 # Metadata also dispatches Cargo, so its Bash entry must retain the descriptors.
 cp "$fixture/mode-bash" "$fixture/bin/bash"
-for target in "${metadata_targets[@]}"; do
-    : > "$EVENTS"
-    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 "$real_make" "${parallel[@]}" --no-print-directory \
-        -f "$root/Makefile" "$target" > "$fixture/output" 2>&1
-    [[ -s "$EVENTS" ]] || exit 1
-done
+PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 make_probe_parallel_dispatch "$real_make" "$root/Makefile" "$fixture" "$EVENTS" "${metadata_targets[@]}"
 rm "$fixture/bin/bash"
 # A failure in a multi-command gate stops before any later Cargo command.
 : > "$EVENTS"

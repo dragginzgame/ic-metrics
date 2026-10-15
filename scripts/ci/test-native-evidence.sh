@@ -18,7 +18,7 @@ fixture="$(fixture_create "${TMPDIR:-$root/target/evidence/native-ci}/native-evi
 fixture_complete=false
 cleanup() {
     local status=$?
-    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
+    fixture_completion_status "$status" "$fixture_complete" || status=$?
     printf 'Native evidence fixture retained: %s\n' "$fixture"
     exit "$status"
 }
@@ -43,8 +43,8 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
 for step in native_inputs native_host tools tool_inputs application_sources native_ci native_artifacts; do
-    # shellcheck disable=SC2016 # $step is bound by jq's --arg.
-    "$jq" -er --arg step "$step" '.[] | select(.id == $step) | .run' "$fixture/steps.json" > "$fixture/commands/$step.sh"
+    PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
+        "$fixture/steps.json" "$step" > "$fixture/commands/$step.sh"
 done
 # Execute the actual host gate with substituted platform observations. Failed
 # comparisons must refuse before writing PATH, including on Bash 3.2.

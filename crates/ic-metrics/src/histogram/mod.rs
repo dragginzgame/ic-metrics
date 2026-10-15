@@ -180,51 +180,15 @@ impl<const N: usize> MeasurementHistogram<N> {
         if validate_bounds(&upper_bounds).is_err() {
             return Err(MeasurementStateError::InvalidBounds);
         }
-        if overflow_count_overflowed && overflow != u64::MAX {
-            return Err(MeasurementStateError::InvalidOverflowFlag);
-        }
-        let mut count = overflow;
-        let mut overflowed = overflow_count_overflowed;
-        let mut index = 0;
-        let mut highest = None;
-        while index < N {
-            if bucket_overflowed[index] && bucket_counts[index] != u64::MAX {
-                return Err(MeasurementStateError::InvalidOverflowFlag);
-            }
-            add_count(&mut count, &mut overflowed, bucket_counts[index]);
-            overflowed |= bucket_overflowed[index];
-            if bucket_counts[index] != 0 {
-                highest = Some(index);
-            }
-            index += 1;
-        }
-        if count != aggregate.samples() || overflowed != aggregate.samples_overflowed() {
-            return Err(MeasurementStateError::InvalidDistribution);
-        }
-        if let Some(maximum) = aggregate.maximum() {
-            if overflow != 0 {
-                if N != 0 && maximum <= upper_bounds[N - 1] {
-                    return Err(MeasurementStateError::InvalidDistribution);
-                }
-            } else if let Some(index) = highest {
-                if maximum > upper_bounds[index]
-                    || (index != 0 && maximum <= upper_bounds[index - 1])
-                {
-                    return Err(MeasurementStateError::InvalidDistribution);
-                }
-            } else {
-                return Err(MeasurementStateError::InvalidDistribution);
-            }
-            if !valid_distribution_total(
-                &upper_bounds,
-                &bucket_counts,
-                overflow,
-                &bucket_overflowed,
-                overflow_count_overflowed,
-                aggregate,
-            ) {
-                return Err(MeasurementStateError::InvalidDistribution);
-            }
+        if let Err(error) = validate_distribution(
+            &upper_bounds,
+            &bucket_counts,
+            overflow,
+            &bucket_overflowed,
+            overflow_count_overflowed,
+            aggregate,
+        ) {
+            return Err(error);
         }
         Ok(Self {
             upper_bounds,
@@ -495,18 +459,25 @@ const fn quantile_rank(
     ))
 }
 
-// Canonical range admission for restored counts, including clipped lower bounds.
-const fn valid_distribution_total<const N: usize>(
+// Canonical admission derives counts, highest bucket and total range together.
+const fn validate_distribution<const N: usize>(
     upper_bounds: &[u64; N],
     bucket_counts: &[u64; N],
     overflow: u64,
     bucket_overflowed: &[bool; N],
     overflow_count_overflowed: bool,
     aggregate: MeasurementAggregate,
-) -> bool {
-    let Some(maximum) = aggregate.maximum() else {
-        return true;
+) -> Result<(), MeasurementStateError> {
+    if overflow_count_overflowed && overflow != u64::MAX {
+        return Err(MeasurementStateError::InvalidOverflowFlag);
+    }
+    let maximum = match aggregate.maximum() {
+        Some(value) => value,
+        None => 0,
     };
+    let mut samples = 0;
+    let mut samples_overflowed = false;
+    let mut maximum_matches = false;
     let mut minimum_total = 0_u128;
     let mut maximum_total = 0_u128;
     let mut maximum_overflow = false;
@@ -541,7 +512,17 @@ const fn valid_distribution_total<const N: usize>(
             };
             (overflow, overflow_count_overflowed, lower, maximum)
         };
+        if lost && count != u64::MAX {
+            return Err(MeasurementStateError::InvalidOverflowFlag);
+        }
+        add_count(&mut samples, &mut samples_overflowed, count);
+        samples_overflowed |= lost;
         if count != 0 {
+            maximum_matches = if index < N {
+                maximum <= upper_bounds[index] && (index == 0 || maximum > upper_bounds[index - 1])
+            } else {
+                N == 0 || maximum > upper_bounds[N - 1]
+            };
             maximum_lower = lower;
             let minimum_count = count as u128 + lost as u128;
             let minimum = minimum_count * lower as u128;
@@ -562,17 +543,31 @@ const fn valid_distribution_total<const N: usize>(
         }
         index += 1;
     }
+    if samples != aggregate.samples()
+        || samples_overflowed != aggregate.samples_overflowed()
+        || (samples != 0 && !maximum_matches)
+    {
+        return Err(MeasurementStateError::InvalidDistribution);
+    }
+    if samples == 0 {
+        return Ok(());
+    }
     // At least one observation actually attains the stored maximum.
     if let Some(next) = minimum_total.checked_add(maximum.saturating_sub(maximum_lower) as u128) {
         minimum_total = next;
     } else {
         minimum_overflow = true;
     }
-    if aggregate.total_overflowed() {
+    let valid_total = if aggregate.total_overflowed() {
         maximum_overflow
     } else {
         !minimum_overflow
             && aggregate.total() >= minimum_total
             && (maximum_overflow || aggregate.total() <= maximum_total)
+    };
+    if valid_total {
+        Ok(())
+    } else {
+        Err(MeasurementStateError::InvalidDistribution)
     }
 }

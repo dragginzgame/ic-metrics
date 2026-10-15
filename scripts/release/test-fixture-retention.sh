@@ -15,13 +15,15 @@ evidence="$(fixture_create "$root/target/evidence/native-ci/fixture-retention.XX
 fixture_complete=false
 cleanup() {
     local status=$?
-    [[ "$fixture_complete" == true || "$status" != 0 ]] || status=1
+    fixture_completion_status "$status" "$fixture_complete" || status=$?
     if [[ "$status" != 0 ]]; then
         echo "fixture retention check failed; evidence retained: $evidence" >&2
     fi
     exit "$status"
 }
 trap cleanup EXIT
+# shellcheck source=scripts/ci/fixture-retention-probes.sh
+source "$root/scripts/ci/fixture-retention-probes.sh"
 real_bash="$(command -v bash)"
 real_cargo="$(command -v cargo)"
 export FIXTURE_RETENTION_REAL_CARGO="$real_cargo"
@@ -107,32 +109,20 @@ FAIL
             fi
             chmod +x "$run/bin/$executable"
         fi
-        status=0
+        expected_status=43
+        case "$scenario" in
+            success) expected_status=0 ;;
+            predicate-assertion|formatter-version) expected_status=1 ;;
+            *child) if [[ "$kind" == standard ]]; then expected_status=1; fi ;;
+        esac
         fixture_yq="$FIXTURE_RETENTION_REAL_YQ"
         if [[ "$scenario" == predicate-assertion ]]; then fixture_yq="$run/bin/yq"; fi
-        TMPDIR="$run/tmp" PATH="$run/bin:$PATH" FIXTURE_RETENTION_SCENARIO="$scenario" \
-            FIXTURE_RETENTION_PROBE="$run" YQ="$fixture_yq" "$real_bash" "$root/$script" \
-            > "$run/result.log" 2>&1 || status=$?
-        printf '%s\n' "$status" > "$run/status.txt"
-        if [[ "$scenario" == success ]]; then
-            [[ "$status" == 0 ]] || exit 1
-            for remaining in "$run/tmp"/*; do [[ ! -e "$remaining" ]] || exit 1; done
-            continue
-        fi
-        [[ "$status" != 0 ]] || exit 1
-        if [[ "$scenario" == predicate-assertion ]]; then
-            [[ "$status" == 1 ]] || exit 1
-        elif [[ "$scenario" == formatter-version ]]; then
-            [[ "$status" == 1 ]] || exit 1 # The shared prerequisite checker rejects the failed producer.
-        elif [[ "$kind" == standard && "$scenario" == *child ]]; then
-            [[ "$status" == 1 ]] || exit 1 # The real fixture rejects the unexpected Make status.
-        else
-            [[ "$status" == 43 ]] || exit 1 # Cleanup must preserve the injected failure status.
-        fi
-        grep -q FIXTURE_RETENTION_INJECTED_FAILURE "$run/result.log"
-        set -- "$run/tmp/$prefix".*
-        [[ $# == 1 && -d "$1" ]] || exit 1
-        retained="$1"
+        PATH="$run/bin:$PATH" FIXTURE_RETENTION_SCENARIO="$scenario" \
+            FIXTURE_RETENTION_PROBE="$run" YQ="$fixture_yq" \
+            fixture_probe_effect "$root/$script" "$run" "$prefix" "$expected_status" "$real_bash" \
+                FIXTURE_RETENTION_INJECTED_FAILURE
+        if [[ "$scenario" == success ]]; then continue; fi
+        retained="$fixture_effect_retained"
         grep -Fq "fixture retained: $retained" "$run/result.log"
         case "$kind" in
             standard)
@@ -196,8 +186,6 @@ echo 'Admission fixture preserves inherited parent logs and summary'
 
 # Probe actual initialization/cleanup prefixes through the shared owner.
 # Consumer rosters and successful diagnostic retention remain explicit here.
-# shellcheck source=scripts/ci/fixture-retention-probes.sh
-source "$root/scripts/ci/fixture-retention-probes.sh"
 for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \
     scripts/release/test-release-admission.sh scripts/dev/test-format-hook.sh \
     scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh \

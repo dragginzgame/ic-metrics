@@ -15,10 +15,11 @@ crate documentation and supplies compiled examples.
 | `MeasurementHistogram<N>` | Immutable finite bounds, disjoint counts, overflow and an aggregate; equal-bound merging and checked cumulative counts/nearest-rank ranges. |
 | `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics. Optional stable checkpoints retain only its scalar state. |
 
-In the prepared 0.10 contract, summaries and histograms project count, total,
+In the published 0.10 contract, summaries and histograms project count, total,
 maximum, mean and scaled mean through `aggregate()`. The summary's five direct
 forwarding methods are removed; its latest observation remains summary-owned.
-Existing consumers select 0.9 until 0.10 is published and independently qualified.
+Consumers selecting 0.10 update these projections and independently qualify
+their own integration.
 
 Individual observations, sample counts and bucket counts use `u64`; accumulated
 quantities and means use `u128`. Zero is a valid observation. Empty aggregates
@@ -68,7 +69,7 @@ update-message synchronization, write cadence, authorization and resets. Queries
 cannot make stable writes durable, and adapter errors never silently reset data.
 Generic `DurableMetric` bounds support store operations; raw codec/kind and
 continuity dispatch require an adapter-private capability. The core has no
-serialization or stable-memory dependency. Prepared scalar checkpoints use
+serialization or stable-memory dependency. Scalar checkpoints use
 distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)

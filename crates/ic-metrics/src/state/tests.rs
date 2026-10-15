@@ -214,6 +214,25 @@ fn zero_bound_histogram_and_bucket_count_overflow_restore() {
 }
 
 #[test]
+fn histogram_admission_preserves_error_priority_and_closed_maximum_bound() {
+    let aggregate = Aggregate::from_parts(1, 1, Some(1), false, false).unwrap();
+    assert_eq!(
+        Histogram::from_parts([1, 1], [0, 0], 0, [true; 2], true, aggregate),
+        Err(Error::InvalidBounds)
+    );
+    assert_eq!(
+        Histogram::from_parts([0, 1], [0, 0], 0, [true; 2], false, aggregate),
+        Err(Error::InvalidOverflowFlag)
+    );
+    let maximum =
+        Aggregate::from_parts(1, u128::from(u64::MAX), Some(u64::MAX), false, false).unwrap();
+    assert_eq!(
+        Histogram::from_parts([u64::MAX], [0], 1, [false], false, maximum),
+        Err(Error::InvalidDistribution)
+    );
+}
+
+#[test]
 fn histogram_range_totals_reject_impossible_observations() {
     let high = Aggregate::from_parts(2, 20, Some(10), false, false).unwrap();
     assert_eq!(

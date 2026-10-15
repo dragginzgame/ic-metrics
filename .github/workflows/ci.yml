@@ -137,33 +137,16 @@ jobs:
             cp .tools/ic/pins.tsv target/evidence/native-ci/ic-tool-pins.tsv
             cp .tools/ic/host target/evidence/native-ci/ic-tool-host.txt
           fi
-          # Small, explicit diagnostic selections exclude scratch/source/tool payloads.
-          diagnostics=()
-          for name in inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
-            prerequisites.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log \
-            ic-tool-files.sha256 ic-tool-pins.tsv ic-tool-host.txt; do
-            if [[ -f "target/evidence/native-ci/$name" ]]; then
-              diagnostics+=("$PWD/target/evidence/native-ci" "$name")
-            fi
-          done
-          bash scripts/ci/archive-evidence.sh target/evidence/native-diagnostics.tar.gz "${diagnostics[@]}"
-          shasum -a 256 target/evidence/native-diagnostics.tar.gz > target/evidence/native-diagnostics.tar.gz.sha256
+          # Shared mechanics; Metrics owns this explicit roster and outer Git custody.
           collection_status=0
-          if [[ "$TOOLS_OUTCOME" == failure ]]; then
-            diagnostics="$(mktemp -d target/evidence/native-ci/tool-evidence.XXXXXX)"
-            bash scripts/ci/collect-tool-evidence.sh target/evidence/native-ci/tool-candidates.tar.gz \
-              "$PWD" "$diagnostics" full "$PWD/ci/tool-versions.env" "$PWD/ci/ic-tools.tsv" \
-              > /dev/null || collection_status=$?
-            [[ "$collection_status" != 2 ]] || exit "$collection_status"
-          fi
-          # The formatter prefers RUNNER_TEMP, outside the native scratch tree.
-          # Pack its retained diagnostics before hashing the native payloads.
-          formatting_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
-          source scripts/ci/formatting-evidence.sh
-          select_formatting_evidence "$formatting_root"
-          if [[ ${#formatting_evidence[@]} != 0 ]]; then
-            bash scripts/ci/archive-evidence.sh target/evidence/native-ci/formatting-logs.tar.gz "${formatting_evidence[@]}"
-          fi
+          bash scripts/ci/collect-native-diagnostics.sh \
+            "$PWD" "$PWD/target/evidence/native-ci" target/evidence/native-diagnostics.tar.gz \
+            "${RUNNER_TEMP:-${TMPDIR:-/tmp}}" "$TOOLS_OUTCOME" \
+            "$PWD/ci/tool-versions.env" "$PWD/ci/ic-tools.tsv" \
+            inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
+            prerequisites.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log \
+            ic-tool-files.sha256 ic-tool-pins.tsv ic-tool-host.txt || collection_status=$?
+          [[ "$collection_status" != 2 ]] || exit "$collection_status"
           for file in target/evidence/native-ci/*; do
             if [[ -f "$file" && "$file" != target/evidence/native-ci/artifact-sha256.txt ]]; then
               shasum -a 256 "$file"

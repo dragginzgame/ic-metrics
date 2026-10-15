@@ -34,25 +34,11 @@ case "$operation" in
         awk -v version="${RELEASE_VERSION:?}" -v previous="$RELEASE_PREVIOUS" -v date="${RELEASE_DATE:?}" \
             -f scripts/ci/finalize-release-changelog.awk CHANGELOG.md > /dev/null
         tool_versions="${RUST_TOOL_VERSIONS:-$root/ci/tool-versions.env}"
-        tool_versions_digest="$(bash "$root/scripts/ci/verify-file-checksum.sh" --print sha256 "$tool_versions")"
-        tool_targets=(rust-tools-check wasm-inspector-tools-check)
-        case "$release_cache_prepare" in
-            1)
-                cargo fetch --locked
-                tool_targets=(install-rust-tools rust-tools-check install-wasm-inspector wasm-inspector-tools-check)
-                ;;
-            0) cargo fetch --locked --offline ;;
-            *) echo 'invalid release cache preparation selection' >&2; exit 2 ;;
-        esac
-        # Source fetching does not install the pinned Cargo executables. Prepare
-        # only behind normal release admission; standalone preflight stays offline.
-        for target in "${tool_targets[@]}"; do
-            make --no-print-directory -C "$root" "$target"
-            if [[ "$(bash "$root/scripts/ci/verify-file-checksum.sh" --print sha256 "$tool_versions")" != "$tool_versions_digest" ]]; then
-                echo 'selected Rust tool pins changed during release preflight' >&2
-                exit 1
-            fi
-        done
+        bash "$root/scripts/ci/cargo-release-preflight.sh" "$root" "$release_cache_prepare" \
+            --pin "$tool_versions" \
+            --check rust-tools-check --check wasm-inspector-tools-check \
+            --prepare install-rust-tools --prepare rust-tools-check \
+            --prepare install-wasm-inspector --prepare wasm-inspector-tools-check
         ;;
     prepare)
         bash "$root/scripts/ci/cargo-release-metadata.sh" prepare ic-metrics

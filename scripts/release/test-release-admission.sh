@@ -324,7 +324,7 @@ for scenario in cold reuse setup-failure check-failure inspector-setup-failure i
             tool_root="$(cd -P "$tool_root" && printf '%s/.' "$PWD")"
             tool_root="${tool_root%/.}"
             cp "$root/scripts/release/metadata.sh" "$tool_root/scripts/release/"
-            for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh; do
+            for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh cargo-release-preflight.sh; do
                 cp "$root/scripts/ci/$helper" "$tool_root/scripts/ci/"
             done
             cp "$root/ci/tool-versions.env" "$tool_root/ci/"

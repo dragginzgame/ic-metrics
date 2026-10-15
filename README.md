@@ -40,7 +40,7 @@ fractional information: samples 3 and 4 yield 35 at scale ten. Admitted scaled
 means fit `u128` without a ratio-projection failure.
 Accumulator flags cannot restore a clamped input sample.
 
-In the prepared 0.10 API, summaries and histograms expose these projections
+In the published 0.10 API, summaries and histograms expose these projections
 through `aggregate()`: use `summary.aggregate().mean()` or
 `summary.aggregate().scaled_mean(10)`. Summary `samples`, `total`, `maximum`,
 `mean` and `scaled_mean` forwarding methods are removed; `latest()` remains
@@ -178,8 +178,8 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Consumers adopting this API cut select the 0.10 contract in the root catalog
-after publication and owning qualification:
+Both 0.10.0 packages are published. Consumers adopting this API cut select the
+0.10 contract in the root catalog and qualify their owning integration:
 
 ```toml
 [workspace.dependencies]
