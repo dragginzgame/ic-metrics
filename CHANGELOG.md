@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.11.1]
+
+### Added
+
+- Add allocation-free finite sample statistics over caller-owned slices, with
+  approximate means, midpoint medians and observed nearest-rank quantiles.
+  Invalid fractions, non-finite samples and rounded mean overflow return typed
+  errors ([#85](https://github.com/dragginzgame/ic-metrics/issues/85),
+  [PR #86](https://github.com/dragginzgame/ic-metrics/pull/86)).
+- Add constant-evaluable `checked_scaled_ratio_nearest`, rounding exact halves
+  upward with checked final overflow. Existing floor projections are unchanged
+  ([#80](https://github.com/dragginzgame/ic-metrics/issues/80),
+  [PR #81](https://github.com/dragginzgame/ic-metrics/pull/81)).
+
+### Changed
+
+- Delegate read-only changelog preflight to Shared Tooling's canonical helper
+  through the reviewed 113-file 0.15.2 candidate snapshot
+  ([Shared PR #217](https://github.com/dragginzgame/shared-tooling/pull/217)).
+- Consolidate release-validation fixture setup and remove the redundant shell
+  publication-chain test; retain direct release rejection and publication checks.
+- Keep the exhaustive logger-depth matrix at Shared Tooling; retain one actual
+  Metrics release-adapter refusal check before either validation gate runs.
+- Move older release and preparation narratives into a linked historical handoff,
+  keeping current versions, qualification and consumer owners easy to find.
+
+### Fixed
+
+- Correct current adoption and release guidance for published 0.11.0: Rust 1.91,
+  the selected Memory 0.41 graph and shared literal metadata preparation. Keep
+  preparation evidence distinct from released-source native acceptance.
+
 ## [0.11.0] - 2026-10-15
 
 ### Breaking

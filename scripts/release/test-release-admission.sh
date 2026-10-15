@@ -160,6 +160,12 @@ setup() {
     export TMPDIR="$fixture/attempts/$name"
     export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-06
 }
+prepare_validation_adapter() {
+    mkdir -p scripts/ci make "$worktree/tmp"
+    cp "$root"/make/{consumer,tools,release,rust-format,execution}.mk make/
+    cp "$root"/scripts/ci/{run-validation-targets,check-make-execution,verify-file-checksum,run-formatting}.sh scripts/ci/
+}
+
 reject() {
     if bash "$root/scripts/release/metadata.sh" "$1" > "$fixture/result.log" 2>&1; then
         echo "admission unexpectedly accepted $worktree: $1" >&2
@@ -323,7 +329,7 @@ for scenario in cold reuse setup-failure check-failure standalone-missing offlin
             tool_root="$(cd -P "$tool_root" && printf '%s/.' "$PWD")"
             tool_root="${tool_root%/.}"
             cp "$root/scripts/release/metadata.sh" "$tool_root/scripts/release/"
-            for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh cargo-release-preflight.sh; do
+            for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh cargo-release-preflight.sh check-release-changelog.sh finalize-release-changelog.awk; do
                 cp "$root/scripts/ci/$helper" "$tool_root/scripts/ci/"
             done
             cp "$root/ci/tool-versions.env" "$tool_root/ci/"
@@ -480,10 +486,7 @@ done
 # Nested Make must preserve release selections and never route to the parent CI.
 for scenario in retention fallback; do
     setup "logger-$scenario"
-    mkdir -p scripts/ci make "$worktree/tmp"
-    cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
-    cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
-    cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/verify-file-checksum.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
+    prepare_validation_adapter
     cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
@@ -546,10 +549,7 @@ done
 
 # The second gate still runs after successful CI; its failures are retained too.
 setup logger-second-gate
-mkdir -p scripts/ci make
-cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
-cp "$root/scripts/ci/run-validation-targets.sh" scripts/ci/
-cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/verify-file-checksum.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
+prepare_validation_adapter
 cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
@@ -578,12 +578,21 @@ make --no-print-directory -f "$root/Makefile" release-verify \
     > "$fixture/result.log" 2>&1
 cmp gate-events "$fixture/expected-gates"
 grep -F retained-msrv-failure "${second_logs[0]}" >/dev/null
+# Shared owns the complete depth matrix. Check Metrics' actual release adapter
+# refuses inherited invalid depth before either selected gate can run.
+: > gate-events
+if VALIDATION_RUNNER_DEPTH=08 VALIDATION_LOG_DIR="$worktree/refused-depth-logs" \
+    make --no-print-directory -f "$root/Makefile" release-verify \
+    RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit \
+    > "$fixture/result.log" 2>&1; then
+    echo 'release-verify accepted invalid inherited depth' >&2
+    exit 1
+fi
+grep -F 'VALIDATION_RUNNER_DEPTH must be' "$fixture/result.log" >/dev/null
+[[ ! -s gate-events && ! -e refused-depth-logs ]] || exit 1
 # Prepared Cargo inputs must stay fixed between release validation stages.
 setup logger-input-drift
-mkdir -p scripts/ci make "$worktree/tmp"
-cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" make/
-cp "$root/scripts/ci/run-validation-targets.sh" "$root/scripts/ci/check-make-execution.sh" \
-    "$root/scripts/ci/verify-file-checksum.sh" "$root/scripts/ci/run-formatting.sh" scripts/ci/
+prepare_validation_adapter
 cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
@@ -605,28 +614,5 @@ set -- "$worktree"/tmp/validation.*
 jq -e -s '.[0]["Cargo.toml"] == .[1]["Cargo.toml"] and
     .[0]["Cargo.lock"] != .[1]["Cargo.lock"]' "$1/inputs.json" "$1/0-after-inputs.json" > /dev/null
 
-# Admission at the actual logger entrypoint must precede every consumer target.
-# Fixtures above own the release adapter; this isolated target proves inherited
-# nesting metadata cannot make the selected logger skip dispatch and return zero.
-depth_consumer="$fixture/depth-admission"
-mkdir -p "$depth_consumer"
-cat > "$depth_consumer/Makefile" <<'DEPTH'
-check:
-	@printf '%s\n' "$$VALIDATION_RUNNER_DEPTH" > dispatched
-DEPTH
-for depth in SHARED_DEPTH_UNDEFINED 00 08 -1 '1+1' 18446744073709551616; do
-    status=0
-    VALIDATION_REPOSITORY_ROOT="$depth_consumer" VALIDATION_RUNNER_DEPTH="$depth" \
-        VALIDATION_LOG_DIR="$depth_consumer/refused-logs" \
-        "$real_bash" "$root/scripts/ci/run-validation-targets.sh" check \
-        > "$depth_consumer/refused.log" 2>&1 || status=$?
-    [[ "$status" == 2 && ! -e "$depth_consumer/dispatched" && ! -e "$depth_consumer/refused-logs" ]] || exit 1
-done
-for depth in '' 0 8 999999999999999999; do
-    VALIDATION_REPOSITORY_ROOT="$depth_consumer" VALIDATION_RUNNER_DEPTH="$depth" \
-        "$real_bash" "$root/scripts/ci/run-validation-targets.sh" check \
-        > "$depth_consumer/admitted.log" 2>&1
-    [[ "$(cat "$depth_consumer/dispatched")" == "$((${depth:-0} + 1))" ]] || exit 1
-done
 echo 'release admission, cache preparation, selected-commit metadata and Make/logger retention passed (real Git/offline fetch; remaining Cargo effects and gates substituted)'
 fixture_complete=true

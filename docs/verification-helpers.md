@@ -6,6 +6,20 @@ policy. They require Perl core modules or Bash 3.2+, as noted below, and run on
 Linux and macOS. The portable regression suite includes offline fixtures;
 native CI qualifies each supported host separately.
 
+## Cargo dependency-order fixtures
+
+```bash
+perl scripts/ci/prepare-cargo-formatting-fixture.pl Cargo.toml workspace.dependencies candid ic-build > unsorted.toml
+```
+
+The helper accepts a caller-owned valid Cargo manifest and swaps exactly two
+adjacent, single-line declarations selected by table and bare dependency keys.
+Only strings and inline-table values are supported; unsupported selections refuse
+before any output. Other bytes, comments and newline positions remain unchanged,
+and the source is never edited. This is fixture preparation, not TOML validation,
+release metadata rendering or a production dependency reorder. Consumers retain
+their selected pair and the formatting/hook assertions. Requires Perl core only.
+
 ## Complete release-change paths
 
 ```bash
@@ -897,3 +911,25 @@ outside the evidence tree; existing outputs refuse. Failures preserve inputs and
 partial output with their command status. Publish separately selected readable
 diagnostics before calling it. `test-native-evidence-archive.sh` owns packaging,
 checksum, containment, refusal and partial-failure qualification.
+
+## Controlled hosted-scenario verification
+
+`failure_evidence.py` also exports
+`verify_hosted_scenario(members, read, stage, *, scenario_parent, failure_log_root)`.
+Call it inside `regular_evidence_archive` with explicit canonical relative archive
+prefixes. It independently checks the maintained hosted driver's exact failure
+status, preserved input bytes/modes, scenario marker, rejected early download or
+late raw/combined logs. It neither extracts archives nor derives expected bytes
+from their receipts. Consumers retain source/job/run identity, collection policy,
+native tool pins and compact-tool qualification. Negative owner cases exercise
+both stages and malformed/missing/ambiguous evidence; consumer collector tests
+still qualify the complete upload/download boundary.
+
+## Read-only changelog preflight
+
+`check-release-changelog.sh VERSION PREVIOUS DATE CHANGELOG` admits a regular
+changelog with the canonical candidate selector before any setup or mutation.
+It writes no temporary/output file, preserves failed reader/selector status and
+keeps empty notes advisory. Coordinated metadata preparation remains the writer;
+consumer source, tag, impact and release authority stay local. Focused coverage
+is `scripts/ci/test-release-changelog.sh`.

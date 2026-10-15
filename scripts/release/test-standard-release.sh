@@ -205,13 +205,6 @@ for selection in '' --no-print-directory; do
     cmp "$fixture/cache-entry-expected" "$EVENTS"
 done
 
-# A rejected release cannot start a chained publication.
-: > "$EVENTS"
-if PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -f "$root/Makefile" \
-    release-patch RELEASE_DELIVERY=pr > "$fixture/output" 2>&1 && \
-    PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory -f "$root/Makefile" publish \
-        >> "$fixture/output" 2>&1; then exit 1; fi
-[[ ! -s "$EVENTS" ]] || exit 1
 for target in publish publish-check; do
     for fail in 0 1; do
         : > "$EVENTS"
