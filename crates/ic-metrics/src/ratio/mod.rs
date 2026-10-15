@@ -10,7 +10,7 @@ mod tests;
 pub enum MeasurementRatioError {
     /// Division by zero has no defined ratio, including for a zero numerator.
     ZeroDenominator,
-    /// The floor-rounded scaled result exceeds `u128::MAX`.
+    /// The scaled result with the selected rounding exceeds `u128::MAX`.
     Overflow,
 }
 
@@ -68,6 +68,48 @@ pub const fn checked_scaled_ratio(
     // Remainder and scale are at most u64::MAX, so this product fits in u128.
     let fraction = (numerator % denominator) * scale / denominator;
     match whole.checked_add(fraction) {
+        Some(value) => Ok(value),
+        None => Err(MeasurementRatioError::Overflow),
+    }
+}
+
+/// Compute the nearest scaled integer ratio, rounding exact halves upward.
+///
+/// Like [`checked_scaled_ratio`], the numerator is `u128` and denominator/scale
+/// are `u64`. Inputs must be exact and comparable; units, input quality and empty
+/// measurements remain caller-owned. Only the rounded answer must fit `u128`.
+/// No floating point or allocation is used. The floor-only API is unchanged.
+///
+/// # Errors
+///
+/// Returns [`MeasurementRatioError::ZeroDenominator`] first, including at zero
+/// scale; otherwise [`MeasurementRatioError::Overflow`] when the floor or its
+/// rounded increment cannot fit `u128`.
+///
+/// ```
+/// use ic_metrics::checked_scaled_ratio_nearest;
+///
+/// assert_eq!(checked_scaled_ratio_nearest(1, 6, 1000), Ok(167));
+/// assert_eq!(checked_scaled_ratio_nearest(1, 2, 1), Ok(1));
+/// assert_eq!(checked_scaled_ratio_nearest(u128::MAX, 10, 10), Ok(u128::MAX));
+/// ```
+pub const fn checked_scaled_ratio_nearest(
+    numerator: u128,
+    denominator: u64,
+    scale: u64,
+) -> Result<u128, MeasurementRatioError> {
+    let floor = match checked_scaled_ratio(numerator, denominator, scale) {
+        Ok(value) => value,
+        Err(error) => return Err(error),
+    };
+    let denominator = denominator as u128;
+    // Both factors are bounded by u64::MAX, so this product fits u128.
+    let remainder = ((numerator % denominator) * scale as u128) % denominator;
+    let half = denominator / 2 + denominator % 2;
+    if remainder < half {
+        return Ok(floor);
+    }
+    match floor.checked_add(1) {
         Some(value) => Ok(value),
         None => Err(MeasurementRatioError::Overflow),
     }

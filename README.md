@@ -8,10 +8,19 @@ and `MeasurementSummary` for ordered observations with a latest value.
 `MeasurementHistogram` adds a mergeable fixed-size distribution with caller-selected bounds.
 Zero is a valid observation; an empty summary has no latest or maximum value.
 Tracked count and total clip independently, with sticky actual-overflow flags.
-Counts and individual samples use `u64`; totals and means use `u128`. Every
+The tracked integer APIs use `u64` samples/counts and `u128` totals/means. Every
 exact counted batch fits its total. An exactly reached numeric cap remains exact. Consumers establish units, identity and
 reset boundaries before comparing observations; overflowed totals cannot supply
 exact interval arithmetic.
+
+`summarize_samples` sorts a caller-owned finite `f64` slice without allocation,
+returning count, minimum, maximum, approximate mean, median and a caller-selected
+observed nearest-rank quantile. Pass `95, 100` for p95; this differs from a
+histogram's bucket range. Invalid fractions/non-finite samples refuse before
+sorting; a non-finite rounded mean returns an error after sorting. Empty is
+`None`, while measured zero is a sample. Callers retain storage, collection,
+units, attribution and reports. Floating samples do not become exact integer
+aggregates or stable metric records.
 
 `MeasurementCounter` supports scalar event, item or byte totals.
 It holds a `u128` total and sticky actual-overflow flag, with `add`, `merge`,
@@ -40,7 +49,7 @@ fractional information: samples 3 and 4 yield 35 at scale ten. Admitted scaled
 means fit `u128` without a ratio-projection failure.
 Accumulator flags cannot restore a clamped input sample.
 
-In the published 0.10 API, summaries and histograms expose these projections
+In the current API, summaries and histograms expose these projections
 through `aggregate()`: use `summary.aggregate().mean()` or
 `summary.aggregate().scaled_mean(10)`. Summary `samples`, `total`, `maximum`,
 `mean` and `scaled_mean` forwarding methods are removed; `latest()` remains
@@ -93,6 +102,13 @@ returns `HistogramQueryError`. Overflow has no configured ceiling.
 integer ratio from a `u128` numerator, without floating point or overflowing
 intermediate multiplication. Callers establish exact inputs and handle empty or
 overflowed diagnostics before using it. Consumer adoption remains separately qualified.
+
+`checked_scaled_ratio_nearest` provides an explicit nearest-integer projection,
+rounding exact halves upward. For example, `(1, 6, 1000)` returns 167 and
+`(1, 2, 1)` returns 1. It shares exact-input, zero-denominator and final-overflow
+admission with the floor operation; a rounded increment can itself overflow.
+Formatting and empty/missing values remain caller-owned. Existing ratios and
+scaled means continue to round down.
 
 Known callers are IcyDB, Canic, ic-timers, ic-backup, IC Blob Storage's
 restoration test probe and Toko Miner's production game-shard action metrics. Their
@@ -180,12 +196,13 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both 0.10.0 packages are published. Consumers adopting this API cut select the
-0.10 contract in the root catalog and qualify their owning integration:
+Both 0.11.0 packages are published and require Rust 1.91 on native and Wasm.
+Consumers select the 0.11 contract in the root catalog and qualify their owning
+integration:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.10"
+ic-metrics = "0.11"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers
@@ -200,9 +217,10 @@ Contributions follow the [shared contribution rules](https://github.com/dragginz
 Maintainer releases use `make release-patch`, `make release-minor` or
 `make release-major` under the [shared release contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md).
 This repository supports `RELEASE_DELIVERY=direct` only, defaulting to remote
-`origin` and branch `main`. Release execution requires cargo-edit
-(`cargo set-version`). The shared contract owns preparation, validation,
-commit/tag delivery and interrupted-release recovery.
+`origin` and branch `main`. Standard preflight prepares locked sources and
+common Rust tools; metadata preparation uses the reviewed shared literal manifest
+renderer. The shared contract owns validation, commit/tag delivery and
+interrupted-release recovery.
 
 Publication is separate from release delivery:
 

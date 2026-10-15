@@ -31,8 +31,8 @@ case "$operation" in
             [[ -f "$path" && ! -L "$path" ]] || exit 1
         done
         # Refuse conflicting pending notes before a gate or preparation intent.
-        awk -v version="${RELEASE_VERSION:?}" -v previous="$RELEASE_PREVIOUS" -v date="${RELEASE_DATE:?}" \
-            -f scripts/ci/finalize-release-changelog.awk CHANGELOG.md > /dev/null
+        bash "$root/scripts/ci/check-release-changelog.sh" \
+            "${RELEASE_VERSION:?}" "$RELEASE_PREVIOUS" "${RELEASE_DATE:?}" CHANGELOG.md
         tool_versions="${RUST_TOOL_VERSIONS:-$root/ci/tool-versions.env}"
         bash "$root/scripts/ci/cargo-release-preflight.sh" "$root" "$release_cache_prepare" \
             --pin "$tool_versions" \
