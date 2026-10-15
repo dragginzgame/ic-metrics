@@ -42,9 +42,42 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(select(.uses != null and .with.name == "native-${{ matrix.runner }}-${{ github.run_attempt }}"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
-for step in native_inputs native_host tools tool_inputs application_sources native_ci native_artifacts; do
+for step in native_inputs native_host toolchain tools tool_inputs application_sources native_ci native_artifacts; do
     PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
         "$fixture/steps.json" "$step" > "$fixture/commands/$step.sh"
+done
+"$yq" -o=json '.jobs.msrv.steps' "$root/.github/workflows/ci.yml" > "$fixture/msrv-steps.json"
+PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
+    "$fixture/msrv-steps.json" toolchain > "$fixture/commands/minimum_toolchain.sh"
+# Execute the real workflow setup bodies and selected helper. Shared owns
+# generic argument admission; Metrics owns compiler/component/target selection.
+mkdir -p "$fixture/rust-bin"
+cat > "$fixture/rust-bin/rustup" <<'RUSTUP'
+#!/usr/bin/env bash
+printf '%s\0' "$@" > "$METRICS_RUSTUP_ARGS"
+exit "$METRICS_RUSTUP_STATUS"
+RUSTUP
+chmod +x "$fixture/rust-bin/rustup"
+for lane in development minimum; do
+    if [[ "$lane" == development ]]; then
+        version="$("$yq" -p toml -o yaml -r '.toolchain.channel' "$root/rust-toolchain.toml")"
+        command_file=toolchain
+        components=(--component rustfmt --component clippy)
+    else
+        version="$("$yq" -p toml -o yaml -r '.workspace.package."rust-version"' "$root/Cargo.toml")"
+        command_file=minimum_toolchain
+        components=()
+    fi
+    printf '%s\0' toolchain install "$version" --profile minimal \
+        ${components[@]+"${components[@]}"} --target wasm32-unknown-unknown > "$fixture/rust-expected"
+    for expected_status in 0 49; do
+        status=0
+        (cd "$root" && PATH="$fixture/rust-bin:$PATH" METRICS_RUSTUP_ARGS="$fixture/rust-actual" \
+            METRICS_RUSTUP_STATUS="$expected_status" "$BASH" --noprofile --norc -e -o pipefail \
+            "$fixture/commands/$command_file.sh") > "$fixture/rust-$lane-$expected_status.log" 2>&1 || status=$?
+        [[ "$status" == "$expected_status" ]] || exit 1
+        cmp "$fixture/rust-expected" "$fixture/rust-actual"
+    done
 done
 # Execute the actual host gate with substituted platform observations. Failed
 # comparisons must refuse before writing PATH, including on Bash 3.2.

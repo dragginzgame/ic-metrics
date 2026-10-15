@@ -76,8 +76,7 @@ case "$*" in
     'fetch --locked'|'fetch --locked --offline')
         if [[ "${ADMISSION_REAL_FETCH:-0}" == 1 ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
         if [[ ! -e "$ADMISSION_CACHE/input" ]]; then
-            if [[ "$*" == *' --offline' || "${CARGO_NET_OFFLINE:-false}" == true ||
-                  "${ADMISSION_CONFIG_OFFLINE:-false}" == true ]]; then
+            if [[ "$*" == *' --offline' || "${CARGO_NET_OFFLINE:-false}" == true ]]; then
                 echo 'controlled missing cache under explicit offline policy' >&2
                 exit 43
             fi
@@ -97,7 +96,6 @@ if [[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$3" == "$ADMISSI
             printf '%s\n' "$4" >> "$ADMISSION_CARGO_EVENTS"
             [[ "${ADMISSION_TOOL_FAIL:-}" != "$4" ]] || exit 49
             if [[ "$4" == install-rust-tools ]]; then
-                if [[ ! -f "$ADMISSION_CACHE/tool" && "${CARGO_NET_OFFLINE:-false}" == true ]]; then exit 57; fi
                 [[ "${ADMISSION_TOOL_CHANGE:-no}" != yes ]] || printf '\n# changed selection\n' >> "${RUST_TOOL_VERSIONS:-$ADMISSION_TOOL_ROOT/ci/tool-versions.env}"
                 printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
             else
@@ -147,7 +145,7 @@ setup() {
     git checkout-index --all
     : > "$ADMISSION_CARGO_EVENTS"
     unset RELEASE_COMMIT ADMISSION_FAIL_GIT IC_METRICS_RELEASE_CACHE_PREPARE
-    unset CARGO_NET_OFFLINE ADMISSION_CONFIG_OFFLINE ADMISSION_FETCH_FAILURE ADMISSION_REAL_FETCH
+    unset CARGO_NET_OFFLINE ADMISSION_FETCH_FAILURE ADMISSION_REAL_FETCH
     unset ADMISSION_TOOL_FAIL ADMISSION_TOOL_CHANGE RUST_TOOL_VERSIONS
     export ADMISSION_TOOL_ROOT="$root"
     if [[ -n "$original_cargo_home_set" ]]; then export CARGO_HOME="$original_cargo_home";
@@ -176,23 +174,19 @@ reject() {
 setup preflight-clean
 bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1
 
-# Locked preparation can fill a cold cache without touching release inputs.
-# Offline environment/configuration and network errors are authoritative refusals.
-for scenario in cold standalone-offline environment-offline config-offline network-failure warm-offline; do
+# Shared owns the simulated cache matrix. Retain this adapter's internal
+# preparation selection and standalone refusal, including actual index custody.
+for scenario in cold standalone-offline; do
     setup "cache-$scenario"
     mkdir "$fixture/originals-$scenario"
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cp "$path" "$fixture/originals-$scenario/$path"; done
     cp .git/index "$fixture/originals-$scenario/index"
     export IC_METRICS_RELEASE_CACHE_PREPARE=1
-    if [[ "$scenario" != warm-offline ]]; then rm "$ADMISSION_CACHE/input"; fi
+    rm "$ADMISSION_CACHE/input"
     expected_status=0
     expected_fetch='fetch --locked'
     case "$scenario" in
         standalone-offline) unset IC_METRICS_RELEASE_CACHE_PREPARE; expected_status=43; expected_fetch='fetch --locked --offline' ;;
-        environment-offline) export CARGO_NET_OFFLINE=true; expected_status=43 ;;
-        config-offline) export ADMISSION_CONFIG_OFFLINE=true; expected_status=43 ;;
-        network-failure) export ADMISSION_FETCH_FAILURE=47; expected_status=47 ;;
-        warm-offline) export CARGO_NET_OFFLINE=true ;;
     esac
     status=0
     bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
@@ -295,9 +289,10 @@ for scenario in cold offline network-failure tool-setup-failure tool-check-failu
     for plan in .git/release-state/*.plan; do [[ ! -e "$plan" ]] || exit 1; done
 done
 
-# Actual preflight/runner routing admits selected executables after source/cache
-# admission and before the gate. Setup/check effects remain substituted.
-for scenario in cold reuse setup-failure check-failure standalone-missing offline-missing pins-changed explicit-pins-changed; do
+# Shared owns generic tool availability/failure and pin-drift cases. Retain
+# Metrics' standalone target selection and its explicit catalog override routing.
+# The actual runner's setup/check refusal-before-validation cases stay above.
+for scenario in standalone-missing explicit-pins-changed; do
     setup "tool-$scenario"
     originals="$fixture/tool-originals-$scenario"
     mkdir "$originals"
@@ -308,18 +303,11 @@ for scenario in cold reuse setup-failure check-failure standalone-missing offlin
     expected_status=0
     expected_targets=(install-rust-tools rust-tools-check)
     case "$scenario" in
-        cold) rm "$ADMISSION_CACHE/tool" ;;
-        setup-failure) export ADMISSION_TOOL_FAIL=install-rust-tools; expected_status=49; expected_targets=(install-rust-tools) ;;
-        check-failure) export ADMISSION_TOOL_FAIL=rust-tools-check; expected_status=49; expected_targets=(install-rust-tools rust-tools-check) ;;
         standalone-missing)
             unset IC_METRICS_RELEASE_CACHE_PREPARE
             rm "$ADMISSION_CACHE/tool"
             expected_status=53; expected_targets=(rust-tools-check) ;;
-        offline-missing)
-            export CARGO_NET_OFFLINE=true
-            rm "$ADMISSION_CACHE/tool"
-            expected_status=57; expected_targets=(install-rust-tools) ;;
-        pins-changed|explicit-pins-changed)
+        explicit-pins-changed)
             # Copy the script owners, so the controlled mutation cannot touch
             # the real repository's reviewed tool pins.
             tool_root="$fixture/changed-tool-root-$scenario"
@@ -334,10 +322,8 @@ for scenario in cold reuse setup-failure check-failure standalone-missing offlin
             done
             cp "$root/ci/tool-versions.env" "$tool_root/ci/"
             export ADMISSION_TOOL_ROOT="$tool_root" ADMISSION_TOOL_CHANGE=yes
-            if [[ "$scenario" == explicit-pins-changed ]]; then
-                export RUST_TOOL_VERSIONS="$fixture/selected Rust pins.env"
-                cp "$root/ci/tool-versions.env" "$RUST_TOOL_VERSIONS"
-            fi
+            export RUST_TOOL_VERSIONS="$fixture/selected Rust pins.env"
+            cp "$root/ci/tool-versions.env" "$RUST_TOOL_VERSIONS"
             expected_status=1; expected_targets=(install-rust-tools) ;;
     esac
     status=0
