@@ -53,13 +53,8 @@ fn latest_and_maximum_follow_individual_observations() {
 
 #[test]
 fn total_overflow_preserves_count_latest_and_maximum() {
-    let mut aggregate = MeasurementAggregate::EMPTY;
-    for _ in 0..64 {
-        aggregate.merge(aggregate);
-        aggregate.record(u64::MAX);
-    }
-    aggregate.record(u64::MAX);
-    aggregate.record(u64::MAX);
+    let aggregate =
+        MeasurementAggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, false).unwrap();
     let mut summary = MeasurementSummary::from_parts(aggregate, Some(u64::MAX)).unwrap();
     assert_eq!(summary.aggregate().total(), u128::MAX);
     assert!(!summary.aggregate().total_overflowed());

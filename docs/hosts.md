@@ -72,12 +72,14 @@ explicit Cargo-tool setup. Application flags and wrappers remain separate from
 [the standard tool-build environment](local-setup.md#standard-cargo-tool-build-environment).
 
 After Rust edits, run `make fmt`. It sorts workspace manifests and formats Rust;
-`make fmt-check` is read-only. Select the affected package's focused checks:
+`make fmt-check` is read-only. The common product gates cover both workspace
+packages; select direct Cargo commands when only one package or test is affected:
 
 | Scope | Commands |
 | --- | --- |
-| Arithmetic | `make check check-wasm clippy docs-check`; named `cargo test -p ic-metrics --locked <test-name>` |
-| Durable adapter | `make stable-check`; named `cargo test -p ic-metrics-stable --locked <test-name>` |
+| Both packages | `make check check-wasm clippy docs-check test` |
+| One package | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
+| Named tests | `cargo test -p ic-metrics --locked <test-name>` or `cargo test -p ic-metrics-stable --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
 | Host inspector | `make wasm-inspect-check` |
 | Snapshot/pins | `make shared-tooling-check check-pins` |
 | Local tools/hooks | `make tools-check hook-check` |
@@ -165,6 +167,14 @@ collection. Shared's complete-tree packager then inventories top-level files
 and retains Git recovery state verbatim. Occupied destinations refuse; inventory,
 archive or checksum failure retains inputs and partial output with its command
 status. Metrics keeps incomplete-collection status and artifact upload policy.
+
+The producer's [native diagnostic regression contribution](https://github.com/dragginzgame/shared-tooling/pull/222)
+owns the six generic referenced-store and candidate-archive cases. Metrics keeps
+the actual workflow's fatal/nonfatal collector handling: fatal status stops the
+outer archive; partial collection retains it and remains nonzero. Its remaining
+fixture also checks setup/check ordering, selected diagnostics, formatting logs,
+and hidden Git recovery state. Producer tests remain upstream rather than being
+added to this consumer's snapshot or CI.
 
 Release, hook and evidence fixtures substitute only their declared effects;
 actual Git index, Make dispatch, receipt admission and failure retention retain

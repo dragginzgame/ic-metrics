@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.11.2]
+
+### Changed
+
+- Delegate metadata, release and hook fixture log replay to Shared Tooling while
+  retaining local log selection, original failure statuses and retention policy
+  ([Shared PR #221](https://github.com/dragginzgame/shared-tooling/pull/221)).
+- Adopt the reviewed 113-file Shared Tooling 0.15.2 candidate at
+  `ebca2ba2cbab7dba6427bac8151644e9d0960332` through canonical distribution.
+- Consolidate native/Wasm checks, Clippy, documentation and tests into workspace
+  gates covering both packages; retire `stable-check`. Focused package checks
+  remain available through Cargo.
+- Move six generic tool-store and candidate-archive regression scenarios to
+  Shared Tooling ([PR #222](https://github.com/dragginzgame/shared-tooling/pull/222)).
+  Keep actual workflow ordering, collector status propagation, readable logs and
+  outer Git recovery-state checks in Metrics.
+- Construct the summary overflow test's admitted cap directly; aggregate tests
+  retain the merge/record sequence that reaches it. Runtime arithmetic is unchanged.
+
 ## [0.11.1] - 2026-10-15
 
 ### Added
