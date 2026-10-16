@@ -5,164 +5,101 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.11.6
+## Prepared 0.11.7
 
-The private storage and development-tooling candidate is 0.11.6: compatible cleanup,
-with no public API, V1 storage, dependency or Rust-floor change of its own. Fixed-size
-reads now share bounded cursor admission. The matched four-type probe saves
-46 raw Wasm bytes and 19 instructions per valid four-bound histogram load; all
-other measured outcomes and the limitations are in
-[the decoder comparison](../evidence/decoder-cleanup-0116.md).
+This is compatible development-tooling cleanup. Package versions remain 0.11.6;
+no arithmetic API, stable V1 bytes, product dependency or Rust floor changes.
+The root index and Git refs remain maintainer-owned.
 
-Retention checks use the existing shared selected-assertion and exit helpers.
-The fake parser/JSON rewrite and per-case synthetic Git checkouts are removed;
-Metrics retains its roster, retained-success policy, real metadata bodies and
-payload checks. Caller-selected TMPDIR is honored, with native CI evidence as
-the default parent.
+The snapshot selects reviewed committed Shared Tooling source
+`d33cb5251b537636d6d0619c75accf658592f99e` (base display version 0.16.0),
+including [PR #246](https://github.com/dragginzgame/shared-tooling/pull/246).
+It removes the two unused entrypoints through the distribution helper:
+`retain-failure-evidence/action.yml` and `install-ci-tool.sh`. Actual native
+collection, direct uploads and common tool setup retain their active helpers.
+The selected shared contracts require explicit assertion selection and narrowed
+Make admission probes; Metrics already uses those contracts. Fleet tooling Make
+commands stay upstream. The standalone floor reader is a declared companion of
+Rust setup; the local validation adapter now delegates to it too, preserving
+explicit prepared-toolchain overrides and disabled Rustup auto-install.
 
-The reviewed snapshot now selects committed Shared Tooling source
-`9b555ad46b7a74e8fbbeba234b8df60829be58ce` (base display version 0.15.8),
-including the TOML-driven Rust setup in
-[PR #239](https://github.com/dragginzgame/shared-tooling/pull/239). That PR is not
-merged; this source selection does not claim a supplying release. CI prepares
-pinned host parsers first, reads development/floor policy from the existing TOML
-files and retains parser setup failures. The normal common-tool action reuses
-the prepared host set. The upstream contribution uses an isolated checkout;
-the normal Shared Tooling checkout is unchanged.
+Generic runner/preflight failure qualification, common-tool reporting probes and
+archive failure mechanics now stay at Shared Tooling's producer fixtures in
+[PR #247](https://github.com/dragginzgame/shared-tooling/pull/247), exact source
+`14c1a433273effd1a2449690f77ee484f37c2b8e`. The real runner/helper matrix
+preserves source/index, old tools and destination refs without reaching release
+preparation. Reporter checks preserve partial output; archive checks preserve
+readable diagnostics and their checksum through partial writes. Production helper
+bytes match the selected snapshot, so this fixture-only contribution requires no
+new snapshot selection. The PR remains open for upstream review/integration.
 
-The hook wrapper no longer repeats formatter admission. Its baseline-failure
-probe preserves nested diagnostics, while generic formatter-version failures
-stay upstream. Unusual filenames use the real workflow hashing step; the focused
-selector fixture retains inclusion, exclusion and missing-tracked-source checks.
+Metrics retains its cold/standalone preparation-authority routing, exact catalog
+and package selections, actual source refusal and Git custody. Its workflow
+fixture substitutes the shared reporter and outer archive helper boundaries,
+keeping real workflow ordering, partial-log retention, failure status and skipped
+later work. Normal archive cases still execute the real collector and restore
+Metrics' diagnostics, nested index and release intent; tar command spelling and
+the repeated fake common-tool inventory are removed.
 
-CI now dispatches complete release/hook fixtures only through their retention
-suite, preserving standalone focused entrypoints. Unexpected child failures
-replay their active log before reporting retained evidence. Both native artifact
-uploads disable recompression of the gzip archives. The observer replacement
-remains publication-gated under [#82](https://github.com/dragginzgame/ic-metrics/issues/82).
+Release-admission fixtures now use ordinary Git clone/checkout operations with
+per-case indexes and one baseline-owned source-object link. They read the selected
+release's version/date from that checkout, removing the separate initial source
+archive. Hidden staged edits, source/index custody and selected-commit checks
+remain intact. The snapshot exporter removes three redundant explicit roots
+(`rewrite-local-lock-versions.pl`, `archive-evidence.sh`, `select-tool-evidence.sh`);
+all 113 payload identities and the selected revision remain unchanged.
 
-The MSRV gate now derives its default from Cargo at execution time and keeps an
-explicit prepared-toolchain override. The metadata adapter owns one NUL-delimited
-release-file roster for Make, source admission and diff checks. The unit's private
-representation is now immutable `Box<str>`; the
-[matched identity study](../evidence/identity-storage-0116.md) qualifies its
-construction/clone savings and unchanged decoder costs without changing V1 bytes.
+The histogram range-construction prototype is rejected and the maintained Rust
+source restored byte-for-byte. It saves 5 raw Wasm bytes but increases common
+query costs by up to 511 IC instructions per call at 256 bounds. The
+[matched experiment](../evidence/quantile-range-0117.md) retains the frozen
+candidate, typed result parity, raw cycles and byte-identical independent replay.
+There is no downstream runtime contract change to adopt.
 
-Earlier focused stable tests, native/Wasm Clippy and actual Rust 1.91 package
-checks passed with selected Memory 0.43. The incoming workspace/lock selection of
-Memory 0.44 is preserved. The later unit-storage batch separately passes the 16
-stable tests, native/Wasm Clippy and Rust 1.91 stable-package checks on that graph;
-it does not establish complete downstream adoption or full release acceptance.
-The retained release/hook/evidence fixture passes on Bash 5 and genuine Bash
-3.2.57 on Linux; a relative parent with spaces preserves its failure status and
-evidence. Full CI/MSRV release gates and new native macOS qualification were not
-run. Package versions remain 0.11.5; source changes remain uncommitted.
-Before-images and focused logs remain at `/tmp/metrics-decoder-cleanup.qnfxcC/`.
-The tooling batch's separate before-images and logs remain at
-`/tmp/metrics-workflow-cleanup.43ct3Y/`.
-Its focused workflow, source-selector and retention checks pass on Bash 5 and
-genuine Bash 3.2.57 on Linux, including baseline formatter failure and retained
-host-tool candidates after early setup failure. The isolated Shared installer
-fixtures pass on both shells. ShellCheck, workflow lint, offline host-tool
-admission, documentation links and all 114 snapshot digests pass. The source
-selection also adopts the upstream Make-executable routing; the release fixture
-now forwards its tool calls through the selected substitute. Full CI/MSRV and
-native macOS runs were not performed for this tooling batch. At the final review,
-PR #239 was open at the selected commit with no hosted check results reported.
+Focused evidence and before-images remain under
+`/tmp/metrics-floor-quantile.KevI5d/`. The Shared contribution uses an isolated
+checkout; the normal sibling's incoming dirty work is untouched. PR #246 is open;
+selection of its exact reviewed commit does not claim a merged/supplying release.
+The reader/setup fixture and release-retention suite pass on Bash 5 and genuine
+Bash 3.2.57 on Linux. Workflow evidence passes on both shells in disposable
+committed source `a0ad2ccd0833081fff1778131b73853812aeb98f`, as do pin checks.
+The real checkout still has tracked snapshot deletions pending commit: pin checks
+and source hashing deliberately refuse those missing tracked inputs. The source
+selection, not a weakened check, qualifies the intended post-commit tree.
+MSRV adapter probes preserve default/override selection, parser/compiler failures
+and disabled auto-install using compiler substitutes; they are not full MSRV.
+All 113 snapshot digests, selected ShellCheck, workflow lint, maintained links and
+both archive/inner checksums pass. The archive readback matches the independently
+replayed payload. Full CI/MSRV gates and native macOS qualification were not run.
+PR #246's hosted lint/security check passes; its three native portable jobs were
+still running at the final observation. The observer follow-up stays under
+[#82](https://github.com/dragginzgame/ic-metrics/issues/82).
 
-The dispatch/upload cleanup passes the actual `make release-tools-check` entry
-on Bash 5 and the retention suite on genuine Bash 3.2.57, selected for its children
-too. A substituted-gate probe executes the actual CI recipe and verifies its
-roster and fail-fast behavior without running full CI. A separate unexpected
-metadata-child failure verifies stdout/stderr replay, refused success and retained
-status/input logs. Workflow lint, unchanged upload fields, documentation links
-and ShellCheck pass. Before-images and logs for this slice remain at
-`/tmp/metrics-ci-dispatch.0gOp7e/`; no Rust or dependency edits were made here.
+The fixture-ownership slice retains incoming before-images and focused logs at
+`/tmp/metrics-fixture-owners.z3nJha/`. All three producer fixtures pass on Bash 5
+and genuine Bash 3.2.57, as do Metrics' release/hook retention and workflow
+evidence checks. Workflow evidence uses disposable committed source
+`b1fe4a4ac090585bba5f784e05e7fdc393d0e5e5` because the real checkout has tracked
+snapshot deletions pending commit. Selected ShellCheck, docs and diff checks pass.
+This slice changes no product Rust, package versions, dependency lock, root index
+or root Git ref. Full CI/MSRV and native macOS qualification remain unrun.
 
-Policy/unit before-images and logs remain at `/tmp/metrics-policy-unit.VGvbsA/`.
-The MSRV default/override, failed compiler and failed parser cases use substitute
-compilers against the actual Make/validation adapters. Real package-floor checks
-are separately recorded above. Release/hook retention and roster projection pass
-on Bash 5; no-tool roster reads preserve byte boundaries in ordinary and spaced
-checkouts. The same retention suite passes on genuine Bash 3.2.57, selected for
-its children. The frozen IC replay reproduces all four Wasms byte-for-byte and all
-576 instruction/projection observations. No package version, root index or Git
-ref is changed by this batch; full CI/MSRV release gates remain unrun.
+The checkout/root-selection slice retains before-images and focused logs under
+`/tmp/metrics-checkout-cleanup.EZMxLN/`. Release/hook retention passes on Bash 5
+and genuine Bash 3.2.57; the admission fixture also passes on Bash 3.2 with a spaced
+scratch parent. Snapshot integrity, selected ShellCheck, docs and diff checks pass.
+The root index/ref, product Rust, manifests and lock remain unchanged by this
+slice. No new full CI/MSRV or native macOS qualification is claimed.
+The observer prerequisite was rechecked on 2026-10-16: the official registry index
+for `ic-testkit-native` returns 404 and Testkit PR #97 remains open at
+`741e2e8e89cd1442e29dd3a8e1ff235260806bf0`. Its existing owning issue #82 remains
+open; the local observer and dependency graph remain intact until publication.
 
-## Finalized 0.11.5
+## Finalized 0.11.6
 
-Commit `0efa8d8d7aadb2bcebbd929364a50d3c317924ca` and tag `v0.11.5` identify
-the finalized baseline. Its
-[source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/0efa8d8d7aadb2bcebbd929364a50d3c317924ca/docs/status/current.md)
-retains the original local observations, source identities and upstream
-contributions. Finalization alone does not establish registry publication or
-complete hosted/native acceptance.
-
-## Released 0.11.4
-
-Commit `9665613f05f6477fe97ad60562e54185ed875aac` and tag `v0.11.4` identify
-that finalized release. At its recorded review, the registry listed both packages as
-non-yanked with Rust 1.91; stable selects Memory 0.43.
-[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38874976758)
-had passed Linux, Apple Silicon and native/Wasm floors; Intel macOS remained in
-progress, so complete native acceptance was not yet established by that observation.
-
-This release shares common-tool preparation and Make fixture setup, keeps
-exhaustive test permutations at Shared Tooling and preserves Metrics release,
-corruption and evidence-custody checks. Its
-[source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/9665613f05f6477fe97ad60562e54185ed875aac/docs/status/current.md)
-retains the original local observations and selected snapshot identities.
-Shared PRs [#231](https://github.com/dragginzgame/shared-tooling/pull/231) and
-[#232](https://github.com/dragginzgame/shared-tooling/pull/232) now have complete
-passing hosted matrices. The separately refreshed [PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)
-passes focused Bash 5/3.2 preflight, ShellCheck and documentation checks; its
-new branch source needs its own hosted acceptance. No PR was merged.
-
-## Released 0.11.3
-
-Commit `362406df49365ef7894f52ad53a843760517a0b7` and tag `v0.11.3` identify
-that finalized release. [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38781538090)
-has completed Linux, Intel macOS, Apple Silicon and native/Wasm floor acceptance.
-This release adopts explicit shared Rust setup, trims maintenance payload copies
-and keeps simulated preflight cases with their producer. Its
-[retained preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/362406df49365ef7894f52ad53a843760517a0b7/docs/status/current.md)
-owns the original local observations and snapshot identities; they do not qualify
-later changes.
-
-## Earlier releases
-
-[Earlier release receipts](https://github.com/dragginzgame/ic-metrics/blob/362406df49365ef7894f52ad53a843760517a0b7/docs/status/current.md#released-0112)
-retain the 0.11.2/0.11.1 source identities, publication observations and exact-source
-CI results. [Older narratives](history-through-0110.md) keep their original scope.
-The [arithmetic convergence review](../evidence/arithmetic-convergence-0112.md)
-retains the rejected rank and quotient/remainder prototypes and their matched IC
-measurements; those results do not qualify later source.
-
-## Consumer owners
-
-The supplying sample-statistics issue [#85](https://github.com/dragginzgame/ic-metrics/issues/85)
-is complete after publication and exact-source native acceptance; Testkit's normal
-registry adoption/delivery remains with [Testkit #103](https://github.com/dragginzgame/ic-testkit/issues/103).
-Ratio [PR #81](https://github.com/dragginzgame/ic-metrics/pull/81) is closed as
-superseded by published code, with its branch retained. Query's independent input
-and percentage acceptance is recorded in [#80](https://github.com/dragginzgame/ic-metrics/issues/80).
-
-The test-only memory observer replacement remains with [#82](https://github.com/dragginzgame/ic-metrics/issues/82)
-and [Testkit PR #97](https://github.com/dragginzgame/ic-testkit/pull/97); adopt only a
-reviewed published registry package with the same stable-memory trait identity.
-Rechecked on 2026-10-16: the official `ic-testkit-native` index returns HTTP 404
-and the supplying PR remains open at `741e2e8e89cd1442e29dd3a8e1ff235260806bf0`.
-The local `WriteCountingMemory` observer remains until the supplying package is
-published; no path dependency or replacement observer was introduced.
-[The first durable consumer qualification](https://github.com/dragginzgame/ic-metrics/issues/83)
-remains host-owned. Existing callers are not opted into persistence by publication.
-
-Downstream acceptance stays with [the owning contract issues](../extraction.md#downstream-contract-checks).
-Direct summary projections are tracked by [Timers #59](https://github.com/dragginzgame/ic-timers/issues/59)
-and [Backup #47](https://github.com/dragginzgame/ic-backup/issues/47), while
-the original remaining Canic qualification stays with
-[#447](https://github.com/dragginzgame/canic/issues/447) and
-[#99](https://github.com/dragginzgame/canic/issues/99).
-The coordination-only [#10](https://github.com/dragginzgame/ic-metrics/issues/10)
-is retired as not planned, preserving its evidence. Canic acceptance remains
-unresolved; publication, registry selection and producer CI do not establish it.
+Commit `604276df62e898568a1f388851340dd6525a2d9f` identifies the finalized
+baseline. Its
+[source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/604276df62e898568a1f388851340dd6525a2d9f/docs/status/current.md)
+retains the earlier focused observations, source identities, decoder/identity
+experiments and upstream contributions. Finalization alone does not establish
+registry publication or complete hosted/native acceptance.

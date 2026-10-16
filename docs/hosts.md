@@ -50,7 +50,8 @@ development component/target roster. Setup preserves the default toolchain. Chec
 they never call this installer implicitly.
 
 The `msrv` validation adapter reads `workspace.package.rust-version` at execution
-time using the prepared host parsers. `MSRV` can explicitly override it with one
+time through the shared read-only workspace-floor reader, using prepared host
+parsers without requiring setup. `MSRV` can explicitly override it with one
 already prepared toolchain; Rustup auto-install is disabled. Help and unrelated
 Make targets do not parse Cargo just to select the floor. Full `make msrv` retains
 its release/explicit-check authority; focused package commands remain below.

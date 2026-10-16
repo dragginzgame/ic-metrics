@@ -29,11 +29,6 @@ selected_commit="$source_commit"
 source_objects="$(git -C "$root" rev-parse --git-path objects)"
 case "$source_objects" in /*) ;; *) source_objects="$root/$source_objects" ;; esac
 mkdir -p "$fixture/bin" "$fixture/templates"
-git -C "$root" archive --format=tar "$selected_commit" Cargo.toml crates |
-    tar -xf - -C "$fixture"
-selected_version="$(cd "$fixture" && bash "$root/scripts/release/metadata.sh" version)"
-selected_date="$(git -C "$root" show "$selected_commit:CHANGELOG.md" | \
-    awk -v heading="## [$selected_version] - " 'index($0, heading) == 1 { print $4; count++ } END { if (count != 1) exit 1 }')"
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TEMPLATE_DIR="$fixture/templates"
 real_bash="$(command -v bash)"
 ADMISSION_REAL_GIT="$(command -v git)"
@@ -77,7 +72,6 @@ case "$*" in
                 echo 'controlled missing cache under explicit offline policy' >&2
                 exit 43
             fi
-            [[ "${ADMISSION_FETCH_FAILURE:-0}" == 0 ]] || exit "$ADMISSION_FETCH_FAILURE"
             printf 'prepared selected locked input\n' > "$ADMISSION_CACHE/input"
         fi ;;
     *) echo 'unexpected admission fixture Cargo command' >&2; exit 99 ;;
@@ -91,7 +85,6 @@ if [[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$3" == "$ADMISSI
     case "$4" in
         install-rust-tools|rust-tools-check)
             printf '%s\n' "$4" >> "$ADMISSION_CARGO_EVENTS"
-            [[ "${ADMISSION_TOOL_FAIL:-}" != "$4" ]] || exit 49
             if [[ "$4" == install-rust-tools ]]; then
                 [[ "${ADMISSION_TOOL_CHANGE:-no}" != yes ]] || printf '\n# changed selection\n' >> "${RUST_TOOL_VERSIONS:-$ADMISSION_TOOL_ROOT/ci/tool-versions.env}"
                 printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
@@ -129,21 +122,21 @@ baseline_commit="$(printf 'Isolated source-admission fixture\n' | \
     GIT_AUTHOR_NAME=Fixture GIT_AUTHOR_EMAIL=fixture@example.invalid GIT_AUTHOR_DATE=2026-01-01T00:00:00Z \
     GIT_COMMITTER_NAME=Fixture GIT_COMMITTER_EMAIL=fixture@example.invalid GIT_COMMITTER_DATE=2026-01-01T00:00:00Z \
     "$ADMISSION_REAL_GIT" -C "$baseline" commit-tree "$baseline_tree")"
+# Share source objects once at the fixture baseline. Git owns each ordinary
+# clone's alternates, refs, index and checkout; no linked-worktree Git context.
+"$ADMISSION_REAL_GIT" -C "$baseline" update-ref HEAD "$baseline_commit"
+printf '%s\n' "$source_objects" > "$baseline/.git/objects/info/alternates"
 setup() {
     local name="$1" checkout_commit="${2:-$baseline_commit}"
     worktree="$fixture/$name"
-    mkdir -p "$worktree" "$fixture/attempts/$name"
-    git -C "$worktree" init --quiet
-    mkdir -p "$worktree/.git/objects/info"
-    printf '%s\n' "$baseline/.git/objects" "$source_objects" > "$worktree/.git/objects/info/alternates"
-    git -C "$worktree" update-ref HEAD "$checkout_commit"
+    mkdir -p "$fixture/attempts/$name"
+    git clone --quiet --shared --no-checkout --origin fixture-source "$baseline" "$worktree"
+    git -C "$worktree" checkout --quiet -B fixture "$checkout_commit"
     cd "$worktree"
-    git read-tree HEAD
-    git checkout-index --all
+    [[ -d .git && "$(git rev-parse HEAD)" == "$checkout_commit" ]] || exit 1
     : > "$ADMISSION_CARGO_EVENTS"
     unset RELEASE_COMMIT ADMISSION_FAIL_GIT IC_METRICS_RELEASE_CACHE_PREPARE
-    unset CARGO_NET_OFFLINE ADMISSION_FETCH_FAILURE
-    unset ADMISSION_TOOL_FAIL ADMISSION_TOOL_CHANGE RUST_TOOL_VERSIONS
+    unset CARGO_NET_OFFLINE ADMISSION_TOOL_CHANGE RUST_TOOL_VERSIONS
     export ADMISSION_TOOL_ROOT="$root"
     export ADMISSION_CACHE="$fixture/cache/$name"
     mkdir -p "$ADMISSION_CACHE"
@@ -201,7 +194,8 @@ done
 # Shared PR #235 owns real Cargo environment/config offline refusal with a
 # frozen minimal graph. This consumer retains authority routing and Git custody.
 
-## The actual runner must stop on fetch refusal before validation or preparation.
+# Shared qualifies the complete runner/helper failure matrix. Keep the local
+# preparation-authority handoff and one refusal before validation/preparation.
 # Only Make dispatch is adapted: consumer preflight/version stay real, and a
 # successful cold fetch reaches a deliberately failing substitute validation.
 export ADMISSION_REAL_MAKE ADMISSION_METADATA="$root/scripts/release/metadata.sh"
@@ -226,7 +220,7 @@ esac
 MAKE
 chmod +x "$fixture/bin/release-make"
 git init --bare --quiet "$fixture/destination.git"
-for scenario in cold offline network-failure tool-setup-failure tool-check-failure; do
+for scenario in cold offline; do
     setup "runner-cache-$scenario"
     git remote add origin "$fixture/destination.git"
     branch="$(git symbolic-ref --quiet --short HEAD)"
@@ -234,9 +228,6 @@ for scenario in cold offline network-failure tool-setup-failure tool-check-failu
     rm "$ADMISSION_CACHE/input"
     case "$scenario" in
         offline) export CARGO_NET_OFFLINE=true ;;
-        network-failure) export ADMISSION_FETCH_FAILURE=47 ;;
-        tool-setup-failure) export ADMISSION_TOOL_FAIL=install-rust-tools ;;
-        tool-check-failure) export ADMISSION_TOOL_FAIL=rust-tools-check ;;
     esac
     cp Cargo.lock "$fixture/runner-lock-before"
     status=0
@@ -246,12 +237,6 @@ for scenario in cold offline network-failure tool-setup-failure tool-check-failu
     if [[ "$scenario" == cold ]]; then
         [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]] || exit 1
         printf '%s\n' install-rust-tools rust-tools-check validation >> "$fixture/runner-cache-events"
-    elif [[ "$scenario" == tool-* ]]; then
-        [[ "$status" == 1 && -e "$ADMISSION_CACHE/input" ]] || exit 1
-        printf '%s\n' install-rust-tools >> "$fixture/runner-cache-events"
-        if [[ "$scenario" == tool-check-failure ]]; then
-            printf '%s\n' rust-tools-check >> "$fixture/runner-cache-events"
-        fi
     else [[ "$status" == 1 && ! -e "$ADMISSION_CACHE/input" ]] || exit 1; fi
     cmp "$fixture/runner-cache-events" "$ADMISSION_CARGO_EVENTS"
     cmp Cargo.lock "$fixture/runner-lock-before"
@@ -376,7 +361,11 @@ printf 'sort --workspace --check\n' > "$fixture/expected-order-only"
 cmp "$fixture/expected-order-only" "$ADMISSION_CARGO_EVENTS"
 
 # Older release checks use the selected commit, despite newer worktree metadata.
-setup selected-older-commit
+setup selected-older-commit "$selected_commit"
+# Read metadata from this exact selected checkout, without a second source export.
+selected_version="$(bash "$root/scripts/release/metadata.sh" version)"
+selected_date="$(awk -v heading="## [$selected_version] - " \
+    'index($0, heading) == 1 { print $4; count++ } END { if (count != 1) exit 1 }' CHANGELOG.md)"
 export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" RELEASE_DATE="$selected_date"
 printf 'Newer unrelated worktree metadata.\n' > Cargo.toml
 bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1

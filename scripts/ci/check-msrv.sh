@@ -7,11 +7,7 @@ set -euo pipefail
 export RUSTUP_AUTO_INSTALL=0
 minimum="${MSRV:-}"
 if [[ -z "$minimum" ]]; then
-    document="$("${YQ:-yq}" -p toml -o json '.' Cargo.toml)"
-    minimum="$(printf '%s' "$document" | jq -er '
-        .workspace.package."rust-version" |
-        select(type == "string" and test("\\A[0-9]+\\.[0-9]+(\\.[0-9]+)?\\z"))
-    ')"
+    minimum="$(bash scripts/ci/read-cargo-workspace-rust-version.sh Cargo.toml)"
 fi
 [[ "$minimum" != -* && "$minimum" != *[[:space:]]* ]] || {
     echo 'MSRV must select one prepared Rust toolchain' >&2; exit 2;

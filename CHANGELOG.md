@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.11.7]
+
+- Let Git create isolated release-fixture checkouts and read selected metadata
+  from the same source. Remove redundant snapshot roots while retaining their
+  required companion payloads unchanged.
+
+- Keep generic release-preflight, common-tool reporting and archive failure
+  qualification at their Shared Tooling owners. Metrics fixtures retain adapter
+  authority, workflow status/log handling and actual recovery-payload checks.
+
+- Retire the unused failure-upload action and CI binary installer from the
+  selected Shared Tooling snapshot; active collection and common setup remain
+  at their canonical owners.
+- Share the workspace Rust-floor reader with explicit Rust setup, preserving
+  prepared-toolchain overrides, parser failures and validation without installs.
+  Adopt reviewed Shared Tooling source `d33cb5251b537636d6d0619c75accf658592f99e`
+  through the snapshot exporter.
+- Retain the measured histogram implementation: the proposed shared range
+  construction saves only 5 Wasm bytes and increases common query costs. The
+  [matched IC comparison](docs/evidence/quantile-range-0117.md) records the decision.
+
 ## [0.11.6] - 2026-10-16
 
 ### Changed
