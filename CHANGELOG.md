@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.11.7]
+## [0.11.7] - 2026-10-16
 
 - Let Git create isolated release-fixture checkouts and read selected metadata
   from the same source. Remove redundant snapshot roots while retaining their
