@@ -18,12 +18,12 @@ fn store() -> MetricsStore<VectorMemory> {
     MetricsStore::new(BTreeMap::init(VectorMemory::default()))
 }
 
-fn encode<T: crate::DurableMetric>(identity: &MetricIdentity, value: &T) -> Vec<u8> {
-    let payload_size = T::encoded_size(crate::metric::ACCESS).unwrap();
+fn encode<T: crate::metric::StoredMetric>(identity: &MetricIdentity, value: &T) -> Vec<u8> {
+    let payload_size = T::encoded_size().unwrap();
     codec::encode(identity, value, payload_size)
 }
 
-fn assert_rejected_record<T: crate::DurableMetric + std::fmt::Debug>(
+fn assert_rejected_record<T: crate::metric::StoredMetric + std::fmt::Debug>(
     store: &mut MetricsStore<WriteCountingMemory>,
     writes: &Cell<usize>,
     key: &MetricKey,
@@ -33,7 +33,10 @@ fn assert_rejected_record<T: crate::DurableMetric + std::fmt::Debug>(
 ) {
     // Callers install the record before this check, including before reopening.
     writes.set(0);
-    assert_eq!(store.load(key, identity, value), Err(error));
+    assert_eq!(
+        store.load::<T>(key, identity, value.configuration()),
+        Err(error)
+    );
     assert_eq!(store.save(key, identity, value), Err(error));
     assert_eq!(store.map.get(&key.0), Some(bytes));
     assert_eq!(writes.get(), 0);
@@ -52,7 +55,7 @@ fn stored_unit_bytes_preserve_malformed_and_identity_errors() {
         bytes[6] = byte;
         if byte == b'x' {
             assert_eq!(
-                codec::decode(&bytes, &identity, &Aggregate::EMPTY),
+                codec::decode::<Aggregate>(&bytes, &identity, &()),
                 Ok(Aggregate::EMPTY)
             );
             continue;
@@ -86,38 +89,40 @@ fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
         summary.record(value);
         histogram.record(value);
     }
-    store.save(&key("icydb"), &identity(), &aggregate).unwrap();
-    store.save(&key("canic"), &identity(), &summary).unwrap();
-    store.save(&key("timers"), &identity(), &histogram).unwrap();
+    store
+        .save_aggregate(&key("icydb"), &identity(), &aggregate)
+        .unwrap();
+    store
+        .save_summary(&key("canic"), &identity(), &summary)
+        .unwrap();
+    store
+        .save_histogram(&key("timers"), &identity(), &histogram)
+        .unwrap();
     let bytes_identity = MetricIdentity::new("bytes", 0).unwrap();
     let counter = Counter::from_parts(u128::from(u64::MAX) + 42, false).unwrap();
     store
-        .save(&key("backup"), &bytes_identity, &counter)
+        .save_counter(&key("backup"), &bytes_identity, &counter)
         .unwrap();
     drop(store);
     let reopened = MetricsStore::new(BTreeMap::init(memory));
     assert_eq!(
-        reopened.load(&key("icydb"), &identity(), &Aggregate::EMPTY),
+        reopened.load_aggregate(&key("icydb"), &identity()),
         Ok(Some(aggregate))
     );
     assert_eq!(
-        reopened.load(&key("canic"), &identity(), &Summary::EMPTY),
+        reopened.load_summary(&key("canic"), &identity()),
         Ok(Some(summary))
     );
     assert_eq!(
-        reopened.load(
-            &key("timers"),
-            &identity(),
-            &Histogram::new([0, 10]).unwrap()
-        ),
+        reopened.load_histogram(&key("timers"), &identity(), &[0, 10]),
         Ok(Some(histogram))
     );
     assert_eq!(
-        reopened.load(&key("backup"), &bytes_identity, &Counter::ZERO),
+        reopened.load_counter(&key("backup"), &bytes_identity),
         Ok(Some(counter))
     );
     assert_eq!(
-        reopened.load(&key("missing"), &identity(), &Aggregate::EMPTY),
+        reopened.load_aggregate(&key("missing"), &identity()),
         Ok(None)
     );
     assert!(aggregate.total() > u128::from(u64::MAX));
@@ -155,14 +160,14 @@ fn identity_kind_bounds_and_regression_reject_without_mutation() {
         Err(StoreError::StateRegression)
     );
     assert_eq!(
-        store.load(&key, &identity(), &histogram),
+        store.load_histogram(&key, &identity(), histogram.upper_bounds()),
         Ok(Some(histogram))
     );
     assert!(store.remove(&key, &identity()).unwrap());
     let next = MetricIdentity::new("instructions", 1).unwrap();
     store.save(&key, &next, &Aggregate::EMPTY).unwrap();
     assert_eq!(
-        store.load(&key, &next, &Aggregate::EMPTY),
+        store.load_aggregate(&key, &next),
         Ok(Some(Aggregate::EMPTY))
     );
 }
@@ -173,10 +178,7 @@ fn exact_caps_and_overflow_flags_survive_storage_and_continue() {
     let key = key("app");
     let mut value = Aggregate::from_parts(u64::MAX, 0, Some(0), false, false).unwrap();
     store.save(&key, &identity(), &value).unwrap();
-    let exact = store
-        .load(&key, &identity(), &Aggregate::EMPTY)
-        .unwrap()
-        .unwrap();
+    let exact = store.load_aggregate(&key, &identity()).unwrap().unwrap();
     assert!(!exact.samples_overflowed());
     value.record(0);
     store.save(&key, &identity(), &value).unwrap();
@@ -184,16 +186,10 @@ fn exact_caps_and_overflow_flags_survive_storage_and_continue() {
         store.save(&key, &identity(), &exact),
         Err(StoreError::StateRegression)
     );
-    assert_eq!(
-        store.load(&key, &identity(), &Aggregate::EMPTY),
-        Ok(Some(value))
-    );
+    assert_eq!(store.load_aggregate(&key, &identity()), Ok(Some(value)));
     let wide = Aggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, true).unwrap();
     store.save(&key, &identity(), &wide).unwrap();
-    assert_eq!(
-        store.load(&key, &identity(), &Aggregate::EMPTY),
-        Ok(Some(wide))
-    );
+    assert_eq!(store.load_aggregate(&key, &identity()), Ok(Some(wide)));
     let histogram = Histogram::from_parts([0], [u64::MAX], 0, [true], false, value).unwrap();
     store
         .save(
@@ -226,19 +222,19 @@ fn corrupted_records_never_reset_or_overwrite_implicitly() {
     let mut unknown = bytes.clone();
     unknown[3] = 99;
     assert_eq!(
-        codec::decode(&unknown, &identity(), &Aggregate::EMPTY),
+        codec::decode::<Aggregate>(&unknown, &identity(), &()),
         Err(StoreError::UnsupportedFormat)
     );
     let mut trailing = bytes.clone();
     trailing.push(0);
     assert_eq!(
-        codec::decode(&trailing, &identity(), &Aggregate::EMPTY),
+        codec::decode::<Aggregate>(&trailing, &identity(), &()),
         Err(StoreError::MalformedRecord)
     );
     let mut flags = bytes;
     *flags.last_mut().unwrap() = 4;
     assert_eq!(
-        codec::decode(&flags, &identity(), &Aggregate::EMPTY),
+        codec::decode::<Aggregate>(&flags, &identity(), &()),
         Err(StoreError::MalformedRecord)
     );
     store.map.insert(key.0.clone(), trailing);
@@ -264,7 +260,7 @@ fn v1_encoding_is_explicit_and_rejects_invalid_numeric_state() {
     summary_bytes.extend_from_slice(&7_u64.to_le_bytes());
     assert_eq!(encode(&identity, &summary), summary_bytes);
     assert_eq!(
-        codec::decode(&summary_bytes, &identity, &Summary::EMPTY),
+        codec::decode::<Summary>(&summary_bytes, &identity, &()),
         Ok(summary)
     );
     let mut histogram = Histogram::new([10]).unwrap();
@@ -279,14 +275,14 @@ fn v1_encoding_is_explicit_and_rejects_invalid_numeric_state() {
     histogram_bytes.push(0);
     assert_eq!(encode(&identity, &histogram), histogram_bytes);
     assert_eq!(
-        codec::decode(&histogram_bytes, &identity, &Histogram::new([10]).unwrap()),
+        codec::decode::<Histogram<1>>(&histogram_bytes, &identity, &[10]),
         Ok(histogram)
     );
     let mut invalid = bytes;
     // The admitted V1 envelope is 15 bytes here; change exact total to zero.
     invalid[23..39].fill(0);
     assert!(matches!(
-        codec::decode(&invalid, &identity, &Aggregate::EMPTY),
+        codec::decode::<Aggregate>(&invalid, &identity, &()),
         Err(StoreError::InvalidState(_))
     ));
 }
@@ -298,7 +294,7 @@ fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
     let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
     let key = key("app");
     let identity = MetricIdentity::new("bytes", 7).unwrap();
-    assert_eq!(store.load(&key, &identity, &Counter::ZERO), Ok(None));
+    assert_eq!(store.load_counter(&key, &identity), Ok(None));
     for value in [
         Counter::ZERO,
         Counter::from_parts(u128::from(u64::MAX) + 1, false).unwrap(),
@@ -306,15 +302,12 @@ fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
         Counter::from_parts(u128::MAX, true).unwrap(),
     ] {
         store.save(&key, &identity, &value).unwrap();
-        assert_eq!(store.load(&key, &identity, &Counter::ZERO), Ok(Some(value)));
+        assert_eq!(store.load_counter(&key, &identity), Ok(Some(value)));
     }
     drop(store);
     let mut store = MetricsStore::new(BTreeMap::init(memory));
     let retained = Counter::from_parts(u128::MAX, true).unwrap();
-    assert_eq!(
-        store.load(&key, &identity, &Counter::ZERO),
-        Ok(Some(retained))
-    );
+    assert_eq!(store.load_counter(&key, &identity), Ok(Some(retained)));
     writes.set(0);
     for regression in [
         Counter::ZERO,
@@ -330,7 +323,7 @@ fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
         MetricIdentity::new("bytes", 8).unwrap(),
     ] {
         assert_eq!(
-            store.load(&key, &wrong, &Counter::ZERO),
+            store.load_counter(&key, &wrong),
             Err(StoreError::IdentityMismatch)
         );
         assert_eq!(
@@ -343,7 +336,7 @@ fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
         );
     }
     assert_eq!(
-        store.load(&key, &identity, &Aggregate::EMPTY),
+        store.load_aggregate(&key, &identity),
         Err(StoreError::KindMismatch)
     );
     assert_eq!(
@@ -351,19 +344,13 @@ fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
         Err(StoreError::KindMismatch)
     );
     assert_eq!(writes.get(), 0);
-    assert_eq!(
-        store.load(&key, &identity, &Counter::ZERO),
-        Ok(Some(retained))
-    );
+    assert_eq!(store.load_counter(&key, &identity), Ok(Some(retained)));
     assert!(store.remove(&key, &identity).unwrap());
     let next = MetricIdentity::new("bytes", 8).unwrap();
     store.save(&key, &next, &Counter::ZERO).unwrap();
+    assert_eq!(store.load_counter(&key, &next), Ok(Some(Counter::ZERO)));
     assert_eq!(
-        store.load(&key, &next, &Counter::ZERO),
-        Ok(Some(Counter::ZERO))
-    );
-    assert_eq!(
-        store.load(&key, &identity, &Counter::ZERO),
+        store.load_counter(&key, &identity),
         Err(StoreError::IdentityMismatch)
     );
 }
@@ -423,7 +410,7 @@ fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
     store.save(&key, &identity, &Aggregate::EMPTY).unwrap();
     writes.set(0);
     assert_eq!(
-        store.load(&key, &identity, &Counter::ZERO),
+        store.load_counter(&key, &identity),
         Err(StoreError::KindMismatch)
     );
     assert_eq!(
@@ -484,7 +471,7 @@ fn bounded_inputs_empty_zero_and_idempotent_checkpoints() {
     let mut value = Summary::EMPTY;
     store.save(&key, &identity(), &value).unwrap();
     assert_eq!(
-        store.load(&key, &identity(), &value),
+        store.load_summary(&key, &identity()),
         Ok(Some(Summary::EMPTY))
     );
     value.record(0);
@@ -492,7 +479,7 @@ fn bounded_inputs_empty_zero_and_idempotent_checkpoints() {
     store.save(&key, &identity(), &value).unwrap();
     assert_eq!(
         store
-            .load(&key, &identity(), &Summary::EMPTY)
+            .load_summary(&key, &identity())
             .unwrap()
             .unwrap()
             .latest(),
@@ -502,27 +489,27 @@ fn bounded_inputs_empty_zero_and_idempotent_checkpoints() {
     let unsupported = Histogram::new(bounds).unwrap();
     let oversized_key = crate::MetricKey::new("app", "oversize").unwrap();
     assert_eq!(
-        store.load(&oversized_key, &identity(), &unsupported),
+        store.load_histogram(&oversized_key, &identity(), unsupported.upper_bounds()),
         Err(StoreError::TooManyBounds)
     );
     assert_eq!(
-        store.save(&oversized_key, &identity(), &unsupported),
+        store.save_histogram(&oversized_key, &identity(), &unsupported),
         Err(StoreError::TooManyBounds)
     );
     assert!(store.map.get(&oversized_key.0).is_none());
     store.map.insert(oversized_key.0.clone(), vec![0]);
     assert_eq!(
-        store.load(&oversized_key, &identity(), &unsupported),
+        store.load_histogram(&oversized_key, &identity(), unsupported.upper_bounds()),
         Err(StoreError::TooManyBounds)
     );
     assert_eq!(
-        store.save(&oversized_key, &identity(), &unsupported),
+        store.save_histogram(&oversized_key, &identity(), &unsupported),
         Err(StoreError::TooManyBounds)
     );
     assert_eq!(store.map.get(&oversized_key.0), Some(vec![0]));
     let bytes = vec![0; 4609];
     assert_eq!(
-        codec::decode(&bytes, &identity(), &Aggregate::EMPTY),
+        codec::decode::<Aggregate>(&bytes, &identity(), &()),
         Err(StoreError::RecordTooLarge)
     );
 }
@@ -535,7 +522,7 @@ fn histogram_corruption_and_maximum_bound_size_are_admitted_explicitly() {
     let bytes = encode(&identity, &histogram);
     for length in 0..bytes.len() {
         assert_eq!(
-            codec::decode(&bytes[..length], &identity, &histogram),
+            codec::decode::<Histogram<2>>(&bytes[..length], &identity, histogram.upper_bounds()),
             Err(StoreError::MalformedRecord)
         );
     }
@@ -545,11 +532,17 @@ fn histogram_corruption_and_maximum_bound_size_are_admitted_explicitly() {
         value.record(observation);
     }
     let bytes = encode(&identity, &value);
-    assert_eq!(codec::decode(&bytes, &identity, &value), Ok(value));
+    assert_eq!(
+        codec::decode::<Histogram<256>>(&bytes, &identity, value.upper_bounds()),
+        Ok(value)
+    );
     let mut zero = Histogram::new([]).unwrap();
     zero.record(0);
     let bytes = encode(&identity, &zero);
-    assert_eq!(codec::decode(&bytes, &identity, &zero), Ok(zero));
+    assert_eq!(
+        codec::decode::<Histogram<0>>(&bytes, &identity, zero.upper_bounds()),
+        Ok(zero)
+    );
 }
 
 #[test]
@@ -570,7 +563,7 @@ fn checkpoints_reject_same_count_rewrites_and_admit_order_after_overflow() {
     summary.record(3);
     store.save(&summary_key, &identity(), &summary).unwrap();
     assert_eq!(
-        store.load(&summary_key, &identity(), &Summary::EMPTY),
+        store.load_summary(&summary_key, &identity()),
         Ok(Some(summary))
     );
 }
@@ -603,7 +596,7 @@ impl Memory for WriteCountingMemory {
 
 #[test]
 fn identical_checkpoints_validate_without_stable_writes() {
-    fn check<T: crate::DurableMetric>(initial: &T, changed: &T) {
+    fn check<T: crate::metric::StoredMetric>(initial: &T, changed: &T) {
         let memory = WriteCountingMemory::default();
         let writes = memory.writes.clone();
         let mut store = MetricsStore::new(BTreeMap::init(memory));
@@ -618,7 +611,13 @@ fn identical_checkpoints_validate_without_stable_writes() {
             writes.set(0);
             store.save(&key, &identity(), value).unwrap();
             assert_eq!(writes.get(), 0);
-            assert!(store.load(&key, &identity(), value).unwrap().as_ref() == Some(value));
+            assert!(
+                store
+                    .load::<T>(&key, &identity(), value.configuration())
+                    .unwrap()
+                    .as_ref()
+                    == Some(value)
+            );
         }
         writes.set(0);
         assert_eq!(
@@ -695,17 +694,20 @@ fn histogram_checkpoints_preserve_each_bucket_count_and_flag() {
             Err(StoreError::StateRegression)
         );
         assert_eq!(writes.get(), 0);
-        assert_eq!(store.load(&key, &identity(), &previous), Ok(Some(previous)));
+        assert_eq!(
+            store.load_histogram(&key, &identity(), previous.upper_bounds()),
+            Ok(Some(previous))
+        );
     }
 }
 
 #[test]
 fn v1_encoding_has_exact_lengths_and_bounded_histograms() {
-    fn check<T: crate::DurableMetric>(value: &T, size: usize) {
+    fn check<T: crate::metric::StoredMetric>(value: &T, size: usize) {
         let identity = MetricIdentity::new(&"x".repeat(64), 3).unwrap();
         let bytes = encode(&identity, value);
         assert_eq!(bytes.len(), size + 64);
-        assert!(codec::decode(&bytes, &identity, value).unwrap() == *value);
+        assert!(codec::decode::<T>(&bytes, &identity, value.configuration()).unwrap() == *value);
     }
     check(&Aggregate::EMPTY, 47);
     check(&Counter::ZERO, 31);
@@ -720,29 +722,29 @@ fn v1_encoding_has_exact_lengths_and_bounded_histograms() {
     check(&wide, 47);
     check(&Summary::from_parts(wide, Some(u64::MAX)).unwrap(), 55);
     assert_eq!(
-        <Histogram<257> as crate::metric::Sealed>::encoded_size(crate::metric::ACCESS),
+        <Histogram<257> as crate::metric::StoredMetric>::encoded_size(),
         Err(StoreError::TooManyBounds)
     );
 }
 
 #[test]
 fn histogram_equality_shortcut_preserves_full_state_comparison() {
-    use crate::metric::{ACCESS, Sealed};
+    use crate::metric::StoredMetric;
     fn check<const N: usize>() {
         let bounds = std::array::from_fn::<_, N, _>(|i| i as u64);
         let empty = Histogram::new(bounds).unwrap();
-        assert!(empty.same_state(ACCESS, &empty));
+        assert!(empty.same_state(&empty));
         let mut previous = empty;
         previous.record(0);
-        assert!(previous.same_state(ACCESS, &previous));
+        assert!(previous.same_state(&previous));
         for sample in [0, u64::MAX] {
             let mut current = previous;
             current.record(sample);
-            assert!(!current.same_state(ACCESS, &previous));
+            assert!(!current.same_state(&previous));
         }
         let other_bounds =
             Histogram::new(std::array::from_fn::<_, N, _>(|i| 1 + i as u64)).unwrap();
-        assert_eq!(empty.same_state(ACCESS, &other_bounds), N == 0);
+        assert_eq!(empty.same_state(&other_bounds), N == 0);
         // A clipped aggregate can remain unchanged while distribution changes.
         let aggregate =
             Aggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, true).unwrap();
@@ -751,7 +753,7 @@ fn histogram_equality_shortcut_preserves_full_state_comparison() {
         let mut continued = clipped;
         continued.record(0);
         assert_eq!(continued.aggregate(), clipped.aggregate());
-        assert_eq!(continued.same_state(ACCESS, &clipped), N == 0);
+        assert_eq!(continued.same_state(&clipped), N == 0);
         if N != 0 {
             let mut counts = [0; N];
             counts[0] = u64::MAX;
@@ -761,7 +763,7 @@ fn histogram_equality_shortcut_preserves_full_state_comparison() {
             flags[0] = true;
             let overflowed_bucket =
                 Histogram::from_parts(bounds, counts, u64::MAX, flags, true, aggregate).unwrap();
-            assert!(!exact_bucket.same_state(ACCESS, &overflowed_bucket));
+            assert!(!exact_bucket.same_state(&overflowed_bucket));
         }
     }
     check::<0>();
@@ -769,4 +771,33 @@ fn histogram_equality_shortcut_preserves_full_state_comparison() {
     check::<4>();
     check::<8>();
     check::<256>();
+}
+
+#[test]
+fn public_histogram_load_admits_expected_bounds_before_reading_a_row() {
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
+    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let key = key("app");
+    let identity = identity();
+    for retained in [None, Some(vec![0])] {
+        if let Some(bytes) = retained.as_ref() {
+            store.map.insert(key.0.clone(), bytes.clone());
+        }
+        writes.set(0);
+        for bounds in [[10, 10], [10, 0]] {
+            assert_eq!(
+                store.load_histogram(&key, &identity, &bounds),
+                Err(StoreError::InvalidState(
+                    ic_metrics::MeasurementStateError::InvalidBounds
+                ))
+            );
+        }
+        assert_eq!(
+            store.load_histogram(&key, &identity, &[0; 257]),
+            Err(StoreError::TooManyBounds)
+        );
+        assert_eq!(store.map.get(&key.0), retained);
+        assert_eq!(writes.get(), 0);
+    }
 }

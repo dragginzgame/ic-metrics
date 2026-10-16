@@ -156,7 +156,7 @@ repository's formatting hook:
 ```sh
 make install-tools
 make tools-check
-export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin:$PATH"
+export PATH="$PWD/.tools/host/bin:$PWD/.tools/rust/common/bin:$PATH"
 make install-hooks
 ```
 

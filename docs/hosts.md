@@ -65,7 +65,8 @@ Both packages use that minimum:
 
 Use Git, GNU Make, Bash 3.2 or newer and standard Unix utilities. The
 [local setup guide](local-setup.md#bootstrap-prerequisites) owns system bootstrap,
-installer dependencies and the pinned common host, IC and Cargo-tool inventory.
+installer dependencies and the pinned common host/Cargo-tool inventory. IC
+executables remain explicit product selections for optional experiments.
 The reviewed [Make interface](make-interface.md) routes common setup, formatting,
 hooks and releases; product gates remain local.
 
@@ -73,7 +74,7 @@ hooks and releases; product gates remain local.
 make install-tools
 make tools-check
 cargo fetch --locked
-export PATH="$PWD/.tools/host/bin:$PWD/.tools/ic/bin:$PWD/.tools/rust/common/bin:$PATH"
+export PATH="$PWD/.tools/host/bin:$PWD/.tools/rust/common/bin:$PATH"
 make install-hooks
 ```
 

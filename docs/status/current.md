@@ -5,59 +5,72 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.11.8
+## Prepared 0.12.0
 
-This compatible batch updates Memory integration guidance and validation fixtures.
-Package versions remain 0.11.7. The production `ic-memory` 0.44 dependency,
-collection-type identity, arithmetic, stable V1 format and Rust 1.91 floor remain
-unchanged. The proposed direct stable-structures dependency was declined and
-was never applied.
+This is a breaking stable-package API cut. Package/workspace versions remain
+0.11.8; the incoming manifest/lock selection of Memory 0.45.0 is preserved.
+The public generic `DurableMetric` bound and `load`/`save` are replaced by concrete
+counter, aggregate, summary and const-generic histogram operations. Histogram
+loads take finite bounds directly, admitting size/order before reading a row.
+The [stable guide](../../crates/ic-metrics-stable/README.md#store-operations)
+owns the caller changes. Codec/configuration dispatch stays private without the
+old capability token. V1 bytes, kind IDs, typed corruption/regression refusal,
+unchanged-checkpoint write avoidance and one-map reopening remain intact.
 
-The host declares one permanent metrics-store allocation, admits it through
-`ic-memory` bootstrap and injects the opened map. Components share that store;
-namespace/name keys distinguish rows without new memory IDs. The stable guide
-links the exact published Memory 0.44 source for declaration/bootstrap APIs,
-replacing the stale 0.41 selection and removed global opener. Its native examples
-retain Memory's collection re-export and qualify storage behavior only.
+Hosts retain permanent allocation keys, bootstrap and collection lifecycle.
+Production callers supply checked `ic_memory::RuntimeMemory`; native tests use
+isolated `VectorMemory` only for codec/storage behavior. Memory 0.45's separate
+allocator-format retirement stays with the host's explicit disposition. This
+batch neither resets retained memory nor introduces another memory-ID allocator.
 
-The validation logger's generic fallback/retry qualification stays in Shared
-Tooling's producer fixture through
-[PR #249](https://github.com/dragginzgame/shared-tooling/pull/249), source
-`09fc963a4c7ec7638009e6b01a7d41b428f297ff`. It verifies unchanged prior raw logs
-after repeated ordinary and fallback failures, including directory/copy refusal
-and distinct reported scratch logs. Metrics keeps one actual adapter failure
-check for consumed setup authority, offline selection, release version/commit,
-gate refusal and the configured evidence destination. Its second-gate, input
-identity and recovery checks remain intact. The production logger bytes match
-the selected snapshot, so no snapshot refresh is needed for this fixture-only
-contribution. The PR is open for upstream review/integration.
+Shared Tooling is selected at reviewed commit
+`7f792c92f623a410c521ee3261dc9fb6b24d2f2f` from the isolated
+[PR #254](https://github.com/dragginzgame/shared-tooling/pull/254), with its display
+version 0.18.0 and pending optional-bundle contract. All 113 snapshot files were
+refreshed through the distribution helper from a clean committed checkout.
+Common setup, offline checking, version reports and PATH now require host/Cargo
+tools. IC executables remain explicit product selections for optional experiments;
+Metrics' workflow no longer projects unused IC receipts. No pins were upgraded.
+An existing invalid Cargo-tool receipt first failed offline admission; explicit
+pinned setup repaired the selection, and actual offline checks then passed.
 
-Focused logs and before-images remain under
-`/tmp/metrics-memory-docs-logger.5BkWbA/`. Metrics release/hook retention and the
-Shared logger fixture pass on Bash 5 and genuine Bash 3.2.57 on Linux. The stable
-package doctests pass on the unchanged locked graph. Selected ShellCheck, local
-document links and diff checks pass. The linked Memory guide was checked against
-the registry package's exact source. Full CI/MSRV gates and native macOS
-qualification were not run. Local source changes are uncommitted; the root index,
-Git refs, package versions and dependency lock remain unchanged.
+The statistics partitioning candidate was rejected after matched IC execution.
+It adds 1,267 raw Wasm bytes and regresses every measured five/eight-sample case;
+larger inputs have mixed results. The arithmetic source is restored byte-for-byte.
+The [frozen study](../evidence/sample-selection-0120.md) owns the rejected source,
+720 raw observations and independently reproduced Wasms/instruction/cycle rows.
+The sorted-slice, summation-order and typed-error contracts remain unchanged.
 
-Stable corruption tests now share rejection assertions after a summary's map is
-reopened, preserving the corrupted bytes and checking zero stable writes. The
-bounded V1 test retains exact encoded lengths, round trips and histogram limits;
-it no longer treats final vector capacity as evidence of allocation history.
-All five affected named tests and stable-package all-target Clippy pass on Linux
-after `make fmt`. Before-images are retained under
-`/tmp/metrics-stable-test-cleanup.bTdmU9/`. The local memory observer remains
-until the package supplying Testkit PR #97 is published, as tracked by
+Focused Linux qualification passes: 17 stable unit tests, three compiled API
+examples, native/Wasm Clippy, native/Wasm Rust 1.91 package checks, actual common
+tool/pin/snapshot checks, workflow evidence and release/hook retention fixtures.
+Before-images and logs remain under `/tmp/metrics-hard-cut.PHfsVi/`. Full local
+CI/MSRV workspace gates and native macOS qualification were not run for this batch.
+The first Shared hosted run exposed an old tool-command fixture expectation; it
+was corrected and its normal/path-context cases pass locally. The updated PR
+retains its required hosted matrix; local fixtures are not native-host acceptance.
+
+Bounded source review found no stable-package callers in the selected public
+IcyDB, Canic, Timers, Backup and Blob Storage crate/manifest paths. The published
+contracts still require owning adoption review; excluded private repositories
+were not inspected. First durable-consumer acceptance stays with
+[#83 — Qualify the first opt-in durable scalar counter consumer](https://github.com/dragginzgame/ic-metrics/issues/83).
+Observer publication/adoption stays with
 [#82 — Adopt published Testkit memory observations and retire the local observer](https://github.com/dragginzgame/ic-metrics/issues/82).
+The local observer remains until a supplying package is published.
 
-## Finalized 0.11.7
+The root index, Git refs, package versions and original incoming dependency
+selection are unchanged. Metrics source changes remain uncommitted; only the
+isolated Shared contribution has scoped commits and a topic-branch push.
 
-Commit `a3a70170ef99c46f85fb635dba8e0b401e398e0e` identifies the finalized
-baseline. Its
-[source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/a3a70170ef99c46f85fb635dba8e0b401e398e0e/docs/status/current.md)
-retains earlier snapshot, fixture and measured-experiment evidence, source
-identities and upstream contributions. Finalization alone does not establish
-registry publication or complete hosted/native acceptance. The existing observer
-adoption follow-up stays with
-[#82](https://github.com/dragginzgame/ic-metrics/issues/82).
+## Finalized 0.11.8
+
+Commit `05a83629ee8789926db5f3af4528fc5afe689472` identifies the finalized
+baseline. Both registry packages are present and non-yanked at 0.11.8.
+[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38929177858)
+passes Linux, both native macOS runners and the native/Wasm MSRV job. This
+qualifies the released Memory 0.44 graph, not the pending hard cut.
+
+The [source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/05a83629ee8789926db5f3af4528fc5afe689472/docs/status/current.md)
+retains the earlier Memory integration, logger ownership and stable-test cleanup
+identities, frozen artifacts and qualification limits.
