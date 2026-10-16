@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.11.8]
+## [0.11.8] - 2026-10-16
 
 - Keep Memory allocation/bootstrap instructions at their version-bound owner,
   retaining the adapter’s `ic-memory` integration and host-owned memory ID.
