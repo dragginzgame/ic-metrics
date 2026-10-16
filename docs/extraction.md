@@ -85,10 +85,10 @@ serialization or stable-memory dependency. Scalar checkpoints use
 distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
-owns bounded structural inspection. Metrics selects its exact CLI through the
-shared managed installer for optional evidence work, outside both library graphs.
-Common setup, CI and release preflight require no inspector. It does not execute
-canisters or estimate instruction/cycle costs. PocketIC provisioning and lifecycle
+owns bounded structural inspection and its managed installation guide. Optional
+experiments retain their own qualified tool identity; Metrics maintains no CLI
+adapter or pin. Common setup, CI and release preflight require no inspector. It
+does not execute canisters or estimate instruction/cycle costs. PocketIC provisioning and lifecycle
 belong to IC Testkit; this workspace has no maintained server caller.
 No IC Host package is required to compile or use either published Metrics library.
 
@@ -108,8 +108,11 @@ contracts change. Consumers explicitly select registry dependencies, remove
 superseded arithmetic and qualify their own runtime/native contracts. Exposed
 shared types require a consistent dependency identity. Publication and a lock
 update do not establish owning acceptance. GitHub issues retain current work;
-[Metrics #10](https://github.com/dragginzgame/ic-metrics/issues/10) owns the original
-remaining consumer qualification, and [Toko #49](https://github.com/dragginzgame/toko-miner/issues/49)
+remaining original Canic qualification stays with
+[#447](https://github.com/dragginzgame/canic/issues/447) and
+[#99](https://github.com/dragginzgame/canic/issues/99).
+[Metrics #10](https://github.com/dragginzgame/ic-metrics/issues/10) retains the
+retired root coordination history, and [Toko #49](https://github.com/dragginzgame/toko-miner/issues/49)
 owns the database quality bridge/UI. The
 [six-consumer review](evidence/consumer-review-082.md) retains its observed sources.
 

@@ -22,6 +22,8 @@ offline checking and PATH publication after success. The always-run Metrics
 collector projects its `RUNNER_TEMP/tools-install.log` and `tools-check.log` into
 the retained `tools-setup.log` and `tools-check.log` names. Setup failures keep
 their actual stdout/stderr; skipped setup does not select unrelated temp logs.
+Shared Tooling tests the action's installation and PATH mechanics; Metrics tests
+its action reference, outcome/log projection and complete recovery evidence.
 
 ## Prerequisites and focused checks
 
@@ -71,16 +73,12 @@ against the committed tree. The selected-commit metadata fixture reads committed
 so its graph must also be prepared when local manifest/lock edits differ from
 HEAD; a prepared working-tree graph alone cannot qualify that offline check.
 
-The optional evidence tool is published `ic-host-wasm-inspect` 0.17.10, selected through
-the shared Cargo-tool installer. `make install-wasm-inspector` prepares that
-selection explicitly; `make wasm-inspector-tools-check` verifies it offline.
-`bash scripts/dev/wasm-inspector.sh run PATH MAX_BYTES MAX_SECTIONS MAX_EXPORTS MAX_CUSTOM_SECTIONS`
-consumes only the admitted executable path. IC Host owns its compiler floor,
-implementation and complete CLI test suite; it is not a Metrics workspace package.
-Common setup/check, CI and release preflight do not install or require this CLI.
-Neither library requires IC Host to build or run. Explicit `make wasm-inspect-check`
-checks evidence-tool wiring and dispatch; it establishes no canister behavior.
-Existing experiment identities remain frozen.
+Optional structural Wasm inspection follows the
+[IC Host inspector guide](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect).
+Experiments select their qualified published version, managed installation and
+budgets directly. Metrics has no inspector wrapper, pin or Make targets; common
+setup/check, CI, release preflight and both libraries require no inspector.
+Existing experiment sources, executable identities and artifacts remain frozen.
 The reviewed snapshot owns default pins in `ci/tool-versions.env` and
 `ci/ic-tools.tsv`; host, Rust and IC exceptions are independently selected
 under the shared catalog contract. Use the same optional
@@ -99,7 +97,6 @@ packages; select direct Cargo commands when only one package or test is affected
 | Both packages | `make check check-wasm clippy docs-check test` |
 | One package | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
 | Named tests | `cargo test -p ic-metrics --locked <test-name>` or `cargo test -p ic-metrics-stable --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
-| Host inspector | `make wasm-inspect-check` |
 | Snapshot/pins | `make shared-tooling-check check-pins` |
 | Local tools/hooks | `make tools-check hook-check` |
 | Release/evidence adapters | `make release-tools-check ci-evidence-check` |
@@ -110,10 +107,8 @@ builds before source mutation or compilation. Bare Cargo commands select the
 arithmetic package. Builds use locked dependencies. The arithmetic graph has no
 third-party dependency, platform reader, IC feature or server harness. Native
 stable tests use `VectorMemory` for storage/codec reopening, not IC execution.
-The upstream inspector tests argument/file/budget admission, report publication and typed
-output failure at its IC Host owner. Metrics checks offline tool admission and
-actual dispatch to the published CLI; smoke inputs remain under
-`target/evidence/wasm-inspector/`.
+The inspector's CLI checks stay at IC Host; existing smoke artifacts under
+`target/evidence/wasm-inspector/` remain retained historical evidence.
 
 Formatting fixtures use Shared Tooling's current-source selector for maintained
 Rust sources and Cargo manifests, including pending additions and deletions.

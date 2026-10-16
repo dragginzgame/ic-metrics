@@ -5,63 +5,61 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Pending 0.11.4
+## Prepared 0.11.5
 
-The reviewed 114-file Shared Tooling 0.15.2 candidate is
-`c550bc7b8bcff48723402c7dfcb94e73bd440284`
-([Shared PR #231](https://github.com/dragginzgame/shared-tooling/pull/231), stacked on
-[#229](https://github.com/dragginzgame/shared-tooling/pull/229)). It ports
-[PR #227](https://github.com/dragginzgame/shared-tooling/pull/227)'s unchanged common-tool
-action and Make-fixture bootstrap onto Metrics' existing reviewed baseline. The
-supplying PR's older complete tree lacks evidence helpers Metrics still selects;
-this scoped branch preserves them and the optional maintenance selection contract.
-No baseline-rule, compiler, Cargo dependency or library API change is included.
+The next pending version is 0.11.5: compatible private admission cleanup, with no
+public API, stored-format, dependency or Rust-floor change. Quantile admission
+avoids redundant result plumbing and arithmetic on rejected count quality;
+durable ASCII identifiers share byte validation. The early overflow-bucket guard
+remains after its removal proved expensive on malformed large histograms.
+[The matched IC experiment](../evidence/admission-cleanup-0115.md) retains both
+accepted candidates, the rejected prototype and the invalid-UTF-8 cost trade-off.
 
-Native CI delegates common installation, checks and PATH publication to the
-selected action. Metrics' always-run collector projects the action logs into the
-existing setup/check diagnostic filenames, including failed setup; skipped setup
-does not select unrelated temp files. The actual action body remains exercised
-by the Metrics fixture, including command order, failure status, logs, PATH timing
-and outer Git recovery-state retention. Release fixtures use the shared Make
-bootstrap and add their local validation logger/checksum inputs. Every Metrics
-target retains four-mode unsafe-execution refusal and the actual Cargo/metadata
-targets retain pipe-jobserver checks. Exhaustive flag aliases/inheritance and
-common-tool leaf failures stay at Shared Tooling. Metrics keeps representative
-install/check/admission failures, diagnostic projection and Git recovery custody.
+Contributor tooling keeps common action installation/PATH mechanics with its
+shared producer, while Metrics supplies action outcomes to its actual diagnostic
+collector. Real Cargo offline-policy qualification now uses a minimal frozen
+graph in [Shared PR #235](https://github.com/dragginzgame/shared-tooling/pull/235),
+passing on Bash 5/3.2 with ShellCheck and documentation checks. Metrics retains
+release-authority routing, the actual two-package graph and Git/index custody.
+The optional inspector wrapper, pin, three Make targets and smoke-only dispatch
+are retired; [Host PR #156](https://github.com/dragginzgame/ic-host-tooling/pull/156)
+documents direct managed installation/check/run. Both producer contributions are
+topic-branch PRs; neither has been merged. No snapshot payload was patched.
+The earlier simulated cases from [PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)
+were separately incorporated at Shared `5910c9f` and that PR is closed.
 
-Aggregate/counter corruption tests share one private refusal assertion. It checks
-typed load/save errors, exact retained bytes and zero stable writes. Encoding
-vectors, explicit removal, summary reopening and all runtime arithmetic remain
-unchanged. The earlier pending source at
-`1a10c4a593e93835455f669dfb5ee2b2ba78dd49` passed full local `make ci` and
-Rust 1.91 native/Wasm workspace checks,
-including all stable tests/doctests and warning-denied Clippy. Producer common-tool/
-Make cases and actual Metrics native evidence/release/admission fixtures pass on
-Bash 5 and genuine Bash 3.2, with affected retention, ShellCheck, actionlint and
-documentation checks. That upstream port's exact-source hosted Linux, Intel
-macOS and Apple Silicon checks also completed successfully. Those results retain
-their earlier source identity; the new fixture-selection batch uses focused
-producer/consumer checks. Local/substitute results do not establish hosted
-acceptance of the pending Metrics working tree.
+Metrics' native-source/evidence and release-tool fixtures pass in an isolated
+committed copy, preserving the real index. The changed evidence/admission
+fixtures also pass on genuine Bash 3.2.57 on Linux; affected ShellCheck,
+documentation links and snapshot verification pass. Shared's common action
+fixture passes Bash 5/3.2 at its producer. These substituted/local checks do not
+establish new native macOS or hosted Metrics acceptance. Source before-images
+and focused logs remain at `/tmp/metrics-tooling-cleanup.EjxscE/`.
 
-The current selection batch passes the actual release/evidence fixtures on Bash
-5 and genuine Bash 3.2, consumer retention/admission checks, snapshot/pin checks,
-focused ShellCheck and documentation links. Shared's changed flow/action fixtures
-also pass both Bash versions and its retention checks. PR #231 has passing scope
-and lint checks; the hosted native matrix remains in progress. No full local
-suite was rerun for this fixture-only batch; package/compiler/dependency metadata
-and all Rust files are byte-identical to its starting working tree.
+Focused histogram/state tests and stable library tests, native/Wasm Clippy and
+both package Rust 1.91 floors pass. Full CI and release gates were not run for
+this batch; source remains local and package versions remain 0.11.4. Consumer
+contracts are unchanged, so this slice requires no downstream source migration.
 
-Generic selected-source metadata rejection cases now live in
-[Shared PR #232](https://github.com/dragginzgame/shared-tooling/pull/232). Its unchanged
-runtime helper matches the selected snapshot; this test-only contribution needs
-no snapshot refresh. Metrics retains the actual two-package selected-commit check
-and rejected-version receipt, while dropping the duplicate direct-runner flag
-matrix. Both producer fixtures and the actual Metrics admission fixture pass on
-Bash 5 and genuine Bash 3.2; consumer parent/retention checks also pass. README
-usage is current, with older release receipts retained through the fixed link below.
-The independent incoming Memory 0.43 manifest/lock update is preserved; these
-fixture checks do not qualify that dependency graph.
+## Released 0.11.4
+
+Commit `9665613f05f6477fe97ad60562e54185ed875aac` and tag `v0.11.4` identify
+the latest finalized release. The official registry lists both packages as
+non-yanked with Rust 1.91; stable selects Memory 0.43.
+[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38874976758)
+has passed Linux, Apple Silicon and native/Wasm floors; Intel macOS remains in
+progress at this review, so complete native acceptance is not yet established.
+
+This release shares common-tool preparation and Make fixture setup, keeps
+exhaustive test permutations at Shared Tooling and preserves Metrics release,
+corruption and evidence-custody checks. Its
+[source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/9665613f05f6477fe97ad60562e54185ed875aac/docs/status/current.md)
+retains the original local observations and selected snapshot identities.
+Shared PRs [#231](https://github.com/dragginzgame/shared-tooling/pull/231) and
+[#232](https://github.com/dragginzgame/shared-tooling/pull/232) now have complete
+passing hosted matrices. The separately refreshed [PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)
+passes focused Bash 5/3.2 preflight, ShellCheck and documentation checks; its
+new branch source needs its own hosted acceptance. No PR was merged.
 
 ## Released 0.11.3
 
@@ -90,7 +88,7 @@ is complete after publication and exact-source native acceptance; Testkit's norm
 registry adoption/delivery remains with [Testkit #103](https://github.com/dragginzgame/ic-testkit/issues/103).
 Ratio [PR #81](https://github.com/dragginzgame/ic-metrics/pull/81) is closed as
 superseded by published code, with its branch retained. Query's independent input
-and percentage acceptance remains with [#80](https://github.com/dragginzgame/ic-metrics/issues/80).
+and percentage acceptance is recorded in [#80](https://github.com/dragginzgame/ic-metrics/issues/80).
 
 The test-only memory observer replacement remains with [#82](https://github.com/dragginzgame/ic-metrics/issues/82)
 and [Testkit PR #97](https://github.com/dragginzgame/ic-testkit/pull/97); adopt only a
@@ -105,6 +103,9 @@ remains host-owned. Existing callers are not opted into persistence by publicati
 Downstream acceptance stays with [the owning contract issues](../extraction.md#downstream-contract-checks).
 Direct summary projections are tracked by [Timers #59](https://github.com/dragginzgame/ic-timers/issues/59)
 and [Backup #47](https://github.com/dragginzgame/ic-backup/issues/47), while
-[#10](https://github.com/dragginzgame/ic-metrics/issues/10) owns the original
-remaining arithmetic-reader qualification. Publication, registry selection and
-producer CI do not establish an owning application's acceptance.
+the original remaining Canic qualification stays with
+[#447](https://github.com/dragginzgame/canic/issues/447) and
+[#99](https://github.com/dragginzgame/canic/issues/99).
+The coordination-only [#10](https://github.com/dragginzgame/ic-metrics/issues/10)
+is retired as not planned, preserving its evidence. Canic acceptance remains
+unresolved; publication, registry selection and producer CI do not establish it.

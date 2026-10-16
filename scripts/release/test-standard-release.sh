@@ -166,14 +166,13 @@ chmod +x "$fixture/bin/cargo"
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
 chmod +x "$fixture/bin/rustc"
 cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv)
-tool_targets=(install-wasm-inspector wasm-inspector-tools-check wasm-inspect-check)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
 # Shared Tooling owns flag aliases and inheritance permutations. Keep all actual
 # consumer targets under each unsafe behavior, without repeating that matrix.
 PATH="$fixture/bin:$PATH" make_probe_target_admission "$real_make" "$root/Makefile" "$fixture" "$EVENTS" \
     release-patch release-minor release-major release-resume fmt fmt-check \
-    "${cargo_targets[@]}" "${tool_targets[@]}" "${metadata_targets[@]}"
+    "${cargo_targets[@]}" "${metadata_targets[@]}"
 rm "$fixture/bin/bash"
 
 # The real consumer Makefile must leave both pipe descriptors open at every

@@ -25,8 +25,6 @@ cleanup() {
 }
 trap cleanup EXIT
 source_commit="$(git -C "$root" rev-parse HEAD)"
-original_cargo_home="${CARGO_HOME-}"
-original_cargo_home_set="${CARGO_HOME+x}"
 selected_commit="$source_commit"
 source_objects="$(git -C "$root" rev-parse --git-path objects)"
 case "$source_objects" in /*) ;; *) source_objects="$root/$source_objects" ;; esac
@@ -74,7 +72,6 @@ case "$*" in
         fi ;;
 
     'fetch --locked'|'fetch --locked --offline')
-        if [[ "${ADMISSION_REAL_FETCH:-0}" == 1 ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
         if [[ ! -e "$ADMISSION_CACHE/input" ]]; then
             if [[ "$*" == *' --offline' || "${CARGO_NET_OFFLINE:-false}" == true ]]; then
                 echo 'controlled missing cache under explicit offline policy' >&2
@@ -145,11 +142,9 @@ setup() {
     git checkout-index --all
     : > "$ADMISSION_CARGO_EVENTS"
     unset RELEASE_COMMIT ADMISSION_FAIL_GIT IC_METRICS_RELEASE_CACHE_PREPARE
-    unset CARGO_NET_OFFLINE ADMISSION_FETCH_FAILURE ADMISSION_REAL_FETCH
+    unset CARGO_NET_OFFLINE ADMISSION_FETCH_FAILURE
     unset ADMISSION_TOOL_FAIL ADMISSION_TOOL_CHANGE RUST_TOOL_VERSIONS
     export ADMISSION_TOOL_ROOT="$root"
-    if [[ -n "$original_cargo_home_set" ]]; then export CARGO_HOME="$original_cargo_home";
-    else unset CARGO_HOME; fi
     export ADMISSION_CACHE="$fixture/cache/$name"
     mkdir -p "$ADMISSION_CACHE"
     # Existing admission scenarios have prepared inputs; new cache cases start cold.
@@ -203,35 +198,8 @@ for scenario in cold standalone-offline; do
     [[ ! -e .git/release-state ]] || exit 1
 done
 
-# Cargo itself admits explicit offline configuration/environment with an empty
-# cache. Only tool probes are substituted; fetch executes the committed graph.
-for policy in environment config; do
-    setup "actual-offline-$policy" "$source_commit"
-    for path in Cargo.toml Cargo.lock; do git show "$source_commit:$path" > "$path"; done
-    # Keep the real committed Cargo graph, but own the cache fixture's notes.
-    # A repository draft may select a minor release instead of this test's patch.
-    printf '# Changelog\n\n## [%s] - %s\n\n- Offline cache fixture.\n' \
-        "$selected_version" "$selected_date" > CHANGELOG.md
-    export RELEASE_PREVIOUS="$selected_version"
-    export RELEASE_VERSION="${selected_version%.*}.$((${selected_version##*.} + 1))"
-    export IC_METRICS_RELEASE_CACHE_PREPARE=1 ADMISSION_REAL_FETCH=1
-    export CARGO_HOME="$fixture/actual-cargo-home-$policy"
-    mkdir "$CARGO_HOME"
-    if [[ "$policy" == environment ]]; then export CARGO_NET_OFFLINE=true;
-    else printf '[net]\noffline = true\n' > "$CARGO_HOME/config.toml"; fi
-    originals="$fixture/actual-originals-$policy"
-    mkdir "$originals"
-    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cp "$path" "$originals/$path"; done
-    cp .git/index "$originals/index"
-    status=0
-    bash "$root/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
-    [[ "$status" == 101 ]] || exit 1
-    printf '%s\n' 'fetch --locked' > "$fixture/actual-events"
-    cmp "$fixture/actual-events" "$ADMISSION_CARGO_EVENTS"
-    for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
-    cmp .git/index "$originals/index"
-    [[ ! -e .git/release-state ]] || exit 1
-done
+# Shared PR #235 owns real Cargo environment/config offline refusal with a
+# frozen minimal graph. This consumer retains authority routing and Git custody.
 
 ## The actual runner must stop on fetch refusal before validation or preparation.
 # Only Make dispatch is adapted: consumer preflight/version stay real, and a
@@ -539,5 +507,5 @@ set -- "$worktree"/tmp/validation.*
 jq -e -s '.[0]["Cargo.toml"] == .[1]["Cargo.toml"] and
     .[0]["Cargo.lock"] != .[1]["Cargo.lock"]' "$1/inputs.json" "$1/0-after-inputs.json" > /dev/null
 
-echo 'release admission, cache preparation, selected-commit metadata and Make/logger retention passed (real Git/offline fetch; remaining Cargo effects and gates substituted)'
+echo 'release admission, cache preparation, selected-commit metadata and Make/logger retention passed (real Git/locked offline metadata; other Cargo effects and gates substituted)'
 fixture_complete=true

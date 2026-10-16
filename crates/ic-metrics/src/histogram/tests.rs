@@ -344,19 +344,20 @@ fn nearest_rank_matches_wide_oracle_across_product_boundaries() {
         ] {
             let product = u128::from(samples) * u128::from(numerator);
             let divisor = u128::from(denominator);
-            let expected = if samples == 0 {
-                None
-            } else {
-                Some(product / divisor + u128::from(product % divisor != 0))
-            };
-            assert_eq!(quantile_rank(samples, numerator, denominator), Ok(expected));
+            let expected = product / divisor + u128::from(product % divisor != 0);
+            assert_eq!(quantile_rank(samples, numerator, denominator), expected);
         }
     }
     // Invalid fractions precede emptiness on both sides of the product boundary.
     for samples in [0, 1, u64::MAX] {
+        let aggregate =
+            MeasurementAggregate::from_parts(samples, 0, (samples != 0).then_some(0), false, false)
+                .unwrap();
+        let histogram =
+            MeasurementHistogram::from_parts([], [], samples, [], false, aggregate).unwrap();
         for (numerator, denominator) in [(0, 0), (0, 1), (1, 0), (u64::MAX, u64::MAX - 1)] {
             assert_eq!(
-                quantile_rank(samples, numerator, denominator),
+                histogram.quantile_bucket(numerator, denominator),
                 Err(HistogramQueryError::InvalidQuantile)
             );
         }
