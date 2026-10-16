@@ -79,8 +79,9 @@ V1 snapshots for counters, aggregates, summaries and histograms in one host-supp
 namespace/name keys distinguish rows. Hosts own bootstrap, map initialization,
 update-message synchronization, write cadence, authorization and resets. Queries
 cannot make stable writes durable, and adapter errors never silently reset data.
-Generic `DurableMetric` bounds support store operations; raw codec/kind and
-continuity dispatch require an adapter-private capability. The core has no
+The prepared 0.12 API uses concrete load/save operations for each metric family;
+histogram loads take bounds directly. Codec/kind and continuity dispatch remain
+private, without a public generic trait or capability-token surface. The core has no
 serialization or stable-memory dependency. Scalar checkpoints use
 distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
 

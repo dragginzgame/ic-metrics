@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.12.0]
+
+### Breaking
+
+- Replace public `DurableMetric` and generic stable `load`/`save` with concrete
+  counter, aggregate, summary and histogram operations. Use `load_counter`,
+  `load_aggregate`, `load_summary` or `load_histogram`, and the matching `save_*`.
+  Histogram loads take finite bounds directly. V1 records, kind IDs, corruption
+  refusal and host-owned `ic-memory` allocation/bootstrap are preserved.
+
+### Changed
+
+- Select IC Memory 0.45 through its unchanged stable-structures collection
+  re-export. Keep host allocation/bootstrap guidance bound to the supplying
+  source, distinguishing Memory's allocator-format retirement from Metrics'
+  unchanged V1 record layout.
+
+- Adopt the reviewed Shared Tooling optional IC-bundle contract. Common setup,
+  checks, version reports and PATH use host/Cargo tools; remove Metrics' unused
+  IC receipt projection. Standalone IC setup remains available for experiments
+  ([Shared PR #254](https://github.com/dragginzgame/shared-tooling/pull/254)).
+- Retain sorted finite-sample statistics after the partitioning trial increased
+  raw Wasm size and common small-sample IC costs. The
+  [frozen comparison](docs/evidence/sample-selection-0120.md) records the rejected
+  candidate and independent replay; the statistics API remains unchanged.
+
 ## [0.11.8] - 2026-10-16
 
 - Keep Memory allocation/bootstrap instructions at their version-bound owner,

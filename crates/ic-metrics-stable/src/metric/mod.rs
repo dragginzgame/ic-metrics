@@ -1,36 +1,29 @@
-//! Sealed adapters to the core's canonical restored-state admission.
+//! Private adapters to the core's canonical restored-state admission.
 
 use ic_metrics::{
     MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementSummary,
 };
 
 use crate::{
-    DurableMetric, MAX_HISTOGRAM_BOUNDS, StoreError,
+    MAX_HISTOGRAM_BOUNDS, StoreError,
     codec::{self, Decoder},
 };
 
-// Public inside this private module so the sealed signatures remain legal.
-// Its private field prevents safe external construction, even through an
-// inferred generic supertrait call. Store dispatch alone supplies this token.
-#[derive(Clone, Copy)]
-pub struct Access(());
-
-pub const ACCESS: Access = Access(());
-
-pub trait Sealed: Sized + Eq {
-    fn kind(access: Access) -> u8;
-    fn same_state(&self, _: Access, previous: &Self) -> bool {
+pub trait StoredMetric: Sized + Eq {
+    type Configuration: ?Sized;
+    fn configuration(&self) -> &Self::Configuration;
+    fn kind() -> u8;
+    fn same_state(&self, previous: &Self) -> bool {
         self == previous
     }
-    fn encoded_size(_: Access) -> Result<usize, StoreError>;
+    fn encoded_size() -> Result<usize, StoreError>;
     // Called only after encoded_size admits this metric's static shape.
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>);
+    fn encode_state(&self, bytes: &mut Vec<u8>);
     fn decode_state(
-        configuration: &Self,
-        _: Access,
+        configuration: &Self::Configuration,
         decoder: &mut Decoder<'_>,
     ) -> Result<Self, StoreError>;
-    fn continues(&self, _: Access, previous: &Self) -> bool;
+    fn continues(&self, previous: &Self) -> bool;
 }
 
 fn continues(current: MeasurementAggregate, previous: MeasurementAggregate) -> bool {
@@ -44,73 +37,85 @@ fn continues(current: MeasurementAggregate, previous: MeasurementAggregate) -> b
             || current == previous)
 }
 
-impl DurableMetric for MeasurementCounter {}
+impl StoredMetric for MeasurementCounter {
+    type Configuration = ();
 
-impl Sealed for MeasurementCounter {
-    fn kind(_: Access) -> u8 {
+    fn configuration(&self) -> &() {
+        &()
+    }
+
+    fn kind() -> u8 {
         4
     }
 
-    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+    fn encoded_size() -> Result<usize, StoreError> {
         Ok(codec::COUNTER_BYTES)
     }
 
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
+    fn encode_state(&self, bytes: &mut Vec<u8>) {
         bytes.extend_from_slice(&self.total().to_le_bytes());
         bytes.push(u8::from(self.total_overflowed()));
     }
 
-    fn decode_state(_: &Self, _: Access, decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
+    fn decode_state((): &(), decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
         Ok(Self::from_parts(decoder.u128()?, decoder.flag()?)?)
     }
 
-    fn continues(&self, _: Access, previous: &Self) -> bool {
+    fn continues(&self, previous: &Self) -> bool {
         self.total() >= previous.total()
             && (!previous.total_overflowed() || self.total_overflowed())
     }
 }
 
-impl DurableMetric for MeasurementAggregate {}
+impl StoredMetric for MeasurementAggregate {
+    type Configuration = ();
 
-impl Sealed for MeasurementAggregate {
-    fn kind(_: Access) -> u8 {
+    fn configuration(&self) -> &() {
+        &()
+    }
+
+    fn kind() -> u8 {
         1
     }
 
-    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+    fn encoded_size() -> Result<usize, StoreError> {
         Ok(codec::AGGREGATE_BYTES)
     }
 
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
+    fn encode_state(&self, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, *self);
     }
 
-    fn decode_state(_: &Self, _: Access, decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
+    fn decode_state((): &(), decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
         decoder.aggregate()
     }
 
-    fn continues(&self, _: Access, previous: &Self) -> bool {
+    fn continues(&self, previous: &Self) -> bool {
         continues(*self, *previous)
     }
 }
 
-impl DurableMetric for MeasurementSummary {}
+impl StoredMetric for MeasurementSummary {
+    type Configuration = ();
 
-impl Sealed for MeasurementSummary {
-    fn kind(_: Access) -> u8 {
+    fn configuration(&self) -> &() {
+        &()
+    }
+
+    fn kind() -> u8 {
         2
     }
 
-    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+    fn encoded_size() -> Result<usize, StoreError> {
         Ok(codec::SUMMARY_BYTES)
     }
 
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
+    fn encode_state(&self, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, self.aggregate());
         bytes.extend_from_slice(&self.latest().unwrap_or(0).to_le_bytes());
     }
 
-    fn decode_state(_: &Self, _: Access, decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
+    fn decode_state((): &(), decoder: &mut Decoder<'_>) -> Result<Self, StoreError> {
         let aggregate = decoder.aggregate()?;
         let latest = decoder.u64()?;
         if aggregate.samples() == 0 && latest != 0 {
@@ -122,7 +127,7 @@ impl Sealed for MeasurementSummary {
         )?)
     }
 
-    fn continues(&self, _: Access, previous: &Self) -> bool {
+    fn continues(&self, previous: &Self) -> bool {
         continues(self.aggregate(), previous.aggregate())
             && (self.aggregate().samples_overflowed()
                 || self.aggregate().samples() != previous.aggregate().samples()
@@ -130,14 +135,18 @@ impl Sealed for MeasurementSummary {
     }
 }
 
-impl<const N: usize> DurableMetric for MeasurementHistogram<N> {}
+impl<const N: usize> StoredMetric for MeasurementHistogram<N> {
+    type Configuration = [u64; N];
 
-impl<const N: usize> Sealed for MeasurementHistogram<N> {
-    fn kind(_: Access) -> u8 {
+    fn configuration(&self) -> &[u64; N] {
+        self.upper_bounds()
+    }
+
+    fn kind() -> u8 {
         3
     }
 
-    fn same_state(&self, _: Access, previous: &Self) -> bool {
+    fn same_state(&self, previous: &Self) -> bool {
         // Tiny arrays already reject cheaply. Larger matching arrays are costly
         // when recording changes a bucket but leaves overflow unchanged.
         if N < 4 {
@@ -149,14 +158,14 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
         }
     }
 
-    fn encoded_size(_: Access) -> Result<usize, StoreError> {
+    fn encoded_size() -> Result<usize, StoreError> {
         if N > MAX_HISTOGRAM_BOUNDS {
             return Err(StoreError::TooManyBounds);
         }
         Ok(codec::HISTOGRAM_BASE_BYTES + codec::HISTOGRAM_BUCKET_BYTES * N)
     }
 
-    fn encode_state(&self, _: Access, bytes: &mut Vec<u8>) {
+    fn encode_state(&self, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, self.aggregate());
         #[expect(
             clippy::cast_possible_truncation,
@@ -179,8 +188,7 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
     }
 
     fn decode_state(
-        configuration: &Self,
-        _: Access,
+        configuration: &Self::Configuration,
         decoder: &mut Decoder<'_>,
     ) -> Result<Self, StoreError> {
         let aggregate = decoder.aggregate()?;
@@ -209,13 +217,13 @@ impl<const N: usize> Sealed for MeasurementHistogram<N> {
             overflow_count_overflowed,
             aggregate,
         )?;
-        if value.upper_bounds() != configuration.upper_bounds() {
+        if value.upper_bounds() != configuration {
             return Err(StoreError::BoundsMismatch);
         }
         Ok(value)
     }
 
-    fn continues(&self, _: Access, previous: &Self) -> bool {
+    fn continues(&self, previous: &Self) -> bool {
         continues(self.aggregate(), previous.aggregate())
             && self.overflow() >= previous.overflow()
             && (!previous.overflow_count_overflowed() || self.overflow_count_overflowed())

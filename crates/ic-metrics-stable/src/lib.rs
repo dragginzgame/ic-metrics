@@ -15,74 +15,18 @@
 use std::{error::Error, fmt};
 
 use ic_memory::ic_stable_structures::{BTreeMap, Memory};
-use ic_metrics::MeasurementStateError;
+use ic_metrics::{
+    MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementStateError,
+    MeasurementSummary,
+};
+
+use metric::StoredMetric;
 
 mod codec;
 mod metric;
 
 #[cfg(test)]
 mod tests;
-
-/// A supported arithmetic type with an admitted durable encoding.
-///
-/// Implemented only for `MeasurementCounter`, `MeasurementAggregate`,
-/// `MeasurementSummary` and `MeasurementHistogram<N>`.
-/// Histograms support at most 256 finite bounds.
-/// Supported snapshots have exact structural equality.
-/// The bound supports generic store operations; raw codec and continuity
-/// dispatch require an adapter-private capability.
-///
-/// ```
-/// use ic_memory::ic_stable_structures::Memory;
-/// use ic_metrics_stable::{DurableMetric, MetricIdentity, MetricKey, MetricsStore, StoreError};
-/// fn checkpoint<M: Memory, T: DurableMetric>(
-///     store: &mut MetricsStore<M>, key: &MetricKey, identity: &MetricIdentity, value: &T,
-/// ) -> Result<Option<T>, StoreError> {
-///     store.save(key, identity, value)?;
-///     store.load(key, identity, value)
-/// }
-/// ```
-///
-/// The sealed bound alone cannot dispatch raw state encoding, size admission,
-/// kind selection or continuity checks:
-///
-/// ```compile_fail,E0061
-/// use ic_metrics_stable::DurableMetric;
-/// fn raw<T: DurableMetric>(value: &T) {
-///     let _ = value.encode_state(&mut Vec::new());
-/// }
-/// ```
-///
-/// ```compile_fail,E0061
-/// use ic_metrics_stable::DurableMetric;
-/// fn raw<T: DurableMetric>() {
-///     let _ = T::encoded_size();
-/// }
-/// ```
-///
-/// ```compile_fail,E0061
-/// use ic_metrics_stable::DurableMetric;
-/// fn raw<T: DurableMetric>() {
-///     let _ = T::kind();
-/// }
-/// ```
-///
-/// ```compile_fail,E0061
-/// use ic_metrics_stable::DurableMetric;
-/// fn raw<T: DurableMetric>(value: &T) {
-///     let _ = value.continues(value);
-/// }
-/// ```
-///
-/// An inferred argument cannot manufacture the private capability:
-///
-/// ```compile_fail,E0277
-/// use ic_metrics_stable::DurableMetric;
-/// fn raw<T: DurableMetric>(value: &T) {
-///     let _ = value.encode_state(Default::default(), &mut Vec::new());
-/// }
-/// ```
-pub trait DurableMetric: metric::Sealed {}
 
 /// Maximum finite bounds per stored histogram, bounding codec work and records.
 pub const MAX_HISTOGRAM_BOUNDS: usize = 256;
@@ -106,7 +50,7 @@ pub enum StoreError {
     BoundsMismatch,
     /// The histogram exceeds the adapter's bound-count limit.
     TooManyBounds,
-    /// Restored numeric fields fail core arithmetic admission.
+    /// Expected bounds or restored fields violate arithmetic invariants.
     InvalidState(MeasurementStateError),
     /// A checkpoint decreases counts/totals/maxima or clears sticky overflow.
     StateRegression,
@@ -228,58 +172,168 @@ impl<M: Memory> MetricsStore<M> {
         Self { map }
     }
 
-    /// Load a snapshot, checking identity, kind and histogram bounds.
+    /// Load a counter, checking its stored kind, unit and reset epoch.
     ///
-    /// `configuration` selects the type and, for histograms, the finite bounds;
-    /// its current observations are ignored. Absence is `None`, not measured zero.
+    /// Absence is `None`, distinct from a stored empty or zero value.
     ///
     /// # Errors
-    /// Rejects malformed/incompatible stored records or unsupported bound counts.
-    pub fn load<T: DurableMetric>(
+    /// Rejects malformed records, incompatible identities/kinds and invalid state.
+    pub fn load_counter(
         &self,
         key: &MetricKey,
         identity: &MetricIdentity,
-        configuration: &T,
-    ) -> Result<Option<T>, StoreError> {
-        T::encoded_size(crate::metric::ACCESS)?;
-        self.load_admitted(key, identity, configuration)
+    ) -> Result<Option<MeasurementCounter>, StoreError> {
+        self.load::<MeasurementCounter>(key, identity, &())
     }
 
-    // Both public entrypoints admit the static size before inspecting stored bytes.
-    fn load_admitted<T: DurableMetric>(
+    /// Checkpoint a counter, preserving numeric continuity and sticky overflow.
+    ///
+    /// Identical retained values succeed without encoding or stable writes.
+    ///
+    /// # Errors
+    /// Rejects retained-record errors or state regression before mutating the map.
+    pub fn save_counter(
+        &mut self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        value: &MeasurementCounter,
+    ) -> Result<(), StoreError> {
+        self.save(key, identity, value)
+    }
+
+    /// Load a aggregate, checking its stored kind, unit and reset epoch.
+    ///
+    /// Absence is `None`, distinct from a stored empty or zero value.
+    ///
+    /// # Errors
+    /// Rejects malformed records, incompatible identities/kinds and invalid state.
+    pub fn load_aggregate(
         &self,
         key: &MetricKey,
         identity: &MetricIdentity,
-        configuration: &T,
+    ) -> Result<Option<MeasurementAggregate>, StoreError> {
+        self.load::<MeasurementAggregate>(key, identity, &())
+    }
+
+    /// Checkpoint a aggregate, preserving numeric continuity and sticky overflow.
+    ///
+    /// Identical retained values succeed without encoding or stable writes.
+    ///
+    /// # Errors
+    /// Rejects retained-record errors or state regression before mutating the map.
+    pub fn save_aggregate(
+        &mut self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        value: &MeasurementAggregate,
+    ) -> Result<(), StoreError> {
+        self.save(key, identity, value)
+    }
+
+    /// Load a summary, checking its stored kind, unit and reset epoch.
+    ///
+    /// Absence is `None`, distinct from a stored empty or zero value.
+    ///
+    /// # Errors
+    /// Rejects malformed records, incompatible identities/kinds and invalid state.
+    pub fn load_summary(
+        &self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+    ) -> Result<Option<MeasurementSummary>, StoreError> {
+        self.load::<MeasurementSummary>(key, identity, &())
+    }
+
+    /// Checkpoint a summary, preserving numeric continuity and sticky overflow.
+    ///
+    /// Identical retained values succeed without encoding or stable writes.
+    ///
+    /// # Errors
+    /// Rejects retained-record errors or state regression before mutating the map.
+    pub fn save_summary(
+        &mut self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        value: &MeasurementSummary,
+    ) -> Result<(), StoreError> {
+        self.save(key, identity, value)
+    }
+
+    /// Load a histogram with exactly the expected strictly increasing finite bounds.
+    ///
+    /// Absence is `None`. Bounds are configuration only; no empty histogram is needed.
+    ///
+    /// # Errors
+    /// Rejects more than 256 bounds or invalid expected bounds before inspecting a row,
+    /// then malformed/incompatible records or invalid stored arithmetic state.
+    pub fn load_histogram<const N: usize>(
+        &self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        bounds: &[u64; N],
+    ) -> Result<Option<MeasurementHistogram<N>>, StoreError> {
+        MeasurementHistogram::<N>::encoded_size()?;
+        if bounds.windows(2).any(|pair| pair[0] >= pair[1]) {
+            return Err(StoreError::InvalidState(
+                MeasurementStateError::InvalidBounds,
+            ));
+        }
+        self.load_admitted::<MeasurementHistogram<N>>(key, identity, bounds)
+    }
+
+    /// Checkpoint a histogram with its immutable bounds and complete distribution.
+    ///
+    /// Identical retained values succeed without encoding or stable writes.
+    ///
+    /// # Errors
+    /// Rejects more than 256 bounds, retained-record errors or any state regression
+    /// before mutating the map, including decreased buckets or cleared overflow flags.
+    pub fn save_histogram<const N: usize>(
+        &mut self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        value: &MeasurementHistogram<N>,
+    ) -> Result<(), StoreError> {
+        self.save(key, identity, value)
+    }
+
+    fn load<T: StoredMetric>(
+        &self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        configuration: &T::Configuration,
+    ) -> Result<Option<T>, StoreError> {
+        T::encoded_size()?;
+        self.load_admitted::<T>(key, identity, configuration)
+    }
+
+    // Callers admit the static size before inspecting stored bytes.
+    fn load_admitted<T: StoredMetric>(
+        &self,
+        key: &MetricKey,
+        identity: &MetricIdentity,
+        configuration: &T::Configuration,
     ) -> Result<Option<T>, StoreError> {
         self.map
             .get(&key.0)
-            .map(|bytes| codec::decode(&bytes, identity, configuration))
+            .map(|bytes| codec::decode::<T>(&bytes, identity, configuration))
             .transpose()
     }
 
-    /// Checkpoint a complete snapshot, preserving append-only numeric continuity.
-    ///
-    /// An identical retained snapshot succeeds without encoding or writing again.
-    /// This is replacement, not
-    /// merging; hosts own measurement admission and commit cadence. Batch observations
-    /// within an update message, then save at its chosen attribution boundary.
-    ///
-    /// # Errors
-    /// Rejects load errors, incompatible identity/configuration or regressing
-    /// counts, totals, maxima, buckets and overflow flags before any map mutation.
-    pub fn save<T: DurableMetric>(
+    // One checkpoint flow for all concrete adapters: validate the retained row,
+    // skip identical state, reject regression, then encode and write.
+    fn save<T: StoredMetric>(
         &mut self,
         key: &MetricKey,
         identity: &MetricIdentity,
         value: &T,
     ) -> Result<(), StoreError> {
-        let payload_size = T::encoded_size(crate::metric::ACCESS)?;
-        if let Some(previous) = self.load_admitted(key, identity, value)? {
-            if value.same_state(crate::metric::ACCESS, &previous) {
+        let payload_size = T::encoded_size()?;
+        if let Some(previous) = self.load_admitted::<T>(key, identity, value.configuration())? {
+            if value.same_state(&previous) {
                 return Ok(());
             }
-            if !value.continues(crate::metric::ACCESS, &previous) {
+            if !value.continues(&previous) {
                 return Err(StoreError::StateRegression);
             }
         }

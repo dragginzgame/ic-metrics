@@ -138,11 +138,6 @@ jobs:
             "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
             "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME" "$APPLICATION_OUTCOME" \
             > target/evidence/native-ci/outcome.txt
-          if [[ -f .tools/ic/files.sha256 ]]; then
-            cp .tools/ic/files.sha256 target/evidence/native-ci/ic-tool-files.sha256
-            cp .tools/ic/pins.tsv target/evidence/native-ci/ic-tool-pins.tsv
-            cp .tools/ic/host target/evidence/native-ci/ic-tool-host.txt
-          fi
           # Shared mechanics; Metrics owns this explicit roster and outer Git custody.
           collection_status=0
           collection_outcome="$TOOLS_OUTCOME"
@@ -152,8 +147,7 @@ jobs:
             "${RUNNER_TEMP:-${TMPDIR:-/tmp}}" "$collection_outcome" \
             "$PWD/ci/tool-versions.env" "$PWD/ci/ic-tools.tsv" \
             inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
-            prerequisites.log host-tools.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log \
-            ic-tool-files.sha256 ic-tool-pins.tsv ic-tool-host.txt || collection_status=$?
+            prerequisites.log host-tools.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log || collection_status=$?
           [[ "$collection_status" != 2 ]] || exit "$collection_status"
           bash scripts/ci/collect-native-evidence.sh \
             target/evidence/native-ci target/evidence/native-ci.tar.gz

@@ -5,7 +5,7 @@
 
 use ic_metrics::MeasurementAggregate;
 
-use crate::{DurableMetric, MAX_HISTOGRAM_BOUNDS, MAX_UNIT_BYTES, MetricIdentity, StoreError};
+use crate::{MAX_HISTOGRAM_BOUNDS, MAX_UNIT_BYTES, MetricIdentity, StoreError};
 
 pub const AGGREGATE_BYTES: usize = 33;
 pub const COUNTER_BYTES: usize = 16 + 1;
@@ -127,13 +127,13 @@ pub fn envelope<'a>(
     Ok((kind, decoder))
 }
 
-pub fn encode<T: DurableMetric>(
+pub fn encode<T: crate::metric::StoredMetric>(
     identity: &MetricIdentity,
     value: &T,
     payload_size: usize,
 ) -> Vec<u8> {
     // The store has already admitted T::encoded_size before reading any row.
-    // Sealed encoders write that exact payload size; units are constructor-admitted.
+    // Private encoders write that exact payload size; units are constructor-admitted.
     #[expect(
         clippy::cast_possible_truncation,
         reason = "constructor-admitted units fit in u8 by the layout budget assertion"
@@ -142,23 +142,23 @@ pub fn encode<T: DurableMetric>(
     let capacity = HEADER_BYTES + identity.unit.len() + payload_size;
     let mut bytes = Vec::with_capacity(capacity);
     bytes.extend_from_slice(MAGIC);
-    bytes.extend_from_slice(&[T::kind(crate::metric::ACCESS), length]);
+    bytes.extend_from_slice(&[T::kind(), length]);
     bytes.extend_from_slice(identity.unit.as_bytes());
     bytes.extend_from_slice(&identity.epoch.to_le_bytes());
-    value.encode_state(crate::metric::ACCESS, &mut bytes);
+    value.encode_state(&mut bytes);
     bytes
 }
 
-pub fn decode<T: DurableMetric>(
+pub fn decode<T: crate::metric::StoredMetric>(
     bytes: &[u8],
     identity: &MetricIdentity,
-    configuration: &T,
+    configuration: &T::Configuration,
 ) -> Result<T, StoreError> {
     let (kind, mut decoder) = envelope(bytes, identity)?;
-    if kind != T::kind(crate::metric::ACCESS) {
+    if kind != T::kind() {
         return Err(StoreError::KindMismatch);
     }
-    let value = T::decode_state(configuration, crate::metric::ACCESS, &mut decoder)?;
+    let value = T::decode_state(configuration, &mut decoder)?;
     if !decoder.remaining.is_empty() {
         return Err(StoreError::MalformedRecord);
     }
