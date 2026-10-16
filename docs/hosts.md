@@ -180,7 +180,10 @@ consumer keeps source/outcome selection, Git custody and uploads. Formatter
 log discovery uses the shared selector. Local cleanup probes delegate actual
 initialization/EXIT prefixes to the shared helper; Metrics retains its fixture
 roster, consumer-log forwarding and intentional successful retention. Shared
-Tooling owns assertions about its checkers' nested fixture payloads.
+Tooling owns assertions about its checkers' nested fixture payloads. Its validation
+logger fixture owns unusable-destination fallback and preservation of earlier
+failure logs. Metrics retains the actual release adapter's environment, gate
+order, selected release identities and chosen evidence destination.
 
 Per-target Make admission and parallel dispatch use shared probes against the
 actual consumer Makefile. Each target refuses ignore-errors, dry-run, touch and

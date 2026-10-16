@@ -388,10 +388,11 @@ done
 
 # Execute this consumer's release-verify adapter, substituting only cheap gates.
 # Nested Make must preserve release selections and never route to the parent CI.
-for scenario in retention fallback; do
-    setup "logger-$scenario"
-    prepare_validation_adapter
-    cat > Makefile <<'MAKE'
+# Shared qualifies fallback destinations and repeated-failure log preservation.
+# Keep the actual adapter's selected destination, environment and gate refusal.
+setup logger-retention
+prepare_validation_adapter
+cat > Makefile <<'MAKE'
 .PHONY: ci msrv
 ci:
 	@test -z "$${IC_METRICS_RELEASE_CACHE_PREPARE+x}"
@@ -399,36 +400,22 @@ ci:
 	@test "$(RELEASE_VERSION)" = 9.8.7
 	@test "$(RELEASE_COMMIT)" = selected-fixture-commit
 	@echo "error: retained-gate-failure"
-	@echo "attempt=$$(cat attempt)"
 	@exit 7
 msrv:
 	@echo incorrect-msrv-route >> incorrect-route
 	@exit 9
 MAKE
-    if [[ "$scenario" == fallback ]]; then
-        mkdir -p .git/release-state
-        printf 'Blocked retention destination.\n' > .git/release-state/validation-failures
-    fi
-    for attempt in 1 2; do
-        printf '%s\n' "$attempt" > attempt
-        if IC_METRICS_RELEASE_CACHE_PREPARE=1 TMPDIR="$worktree/tmp" make --no-print-directory -f "$root/Makefile" release-verify \
-            RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit \
-            > "$fixture/result.log" 2>&1; then
-            echo 'release-verify unexpectedly passed failed gate' >&2
-            exit 1
-        fi
-        grep -F retained-gate-failure "$fixture/result.log" >/dev/null
-    done
-    [[ ! -e incorrect-route ]] || exit 1
-    if [[ "$scenario" == retention ]]; then
-        logs=(.git/release-state/validation-failures/*-0-ci.log)
-    else
-        logs=(tmp/validation.*/0.log)
-        grep -F 'Validation logs retained at:' "$fixture/result.log" >/dev/null
-    fi
-    [[ "${#logs[@]}" == 2 ]] || exit 1
-    for log in "${logs[@]}"; do grep -F retained-gate-failure "$log" >/dev/null; done
-done
+if IC_METRICS_RELEASE_CACHE_PREPARE=1 TMPDIR="$worktree/tmp" make --no-print-directory -f "$root/Makefile" release-verify \
+    RELEASE_VERSION=9.8.7 RELEASE_COMMIT=selected-fixture-commit \
+    > "$fixture/result.log" 2>&1; then
+    echo 'release-verify unexpectedly passed failed gate' >&2
+    exit 1
+fi
+grep -F retained-gate-failure "$fixture/result.log" >/dev/null
+[[ ! -e incorrect-route ]] || exit 1
+logs=(.git/release-state/validation-failures/*-0-ci.log)
+[[ "${#logs[@]}" == 1 ]] || exit 1
+grep -F retained-gate-failure "${logs[0]}" >/dev/null
 
 # The second gate still runs after successful CI; its failures are retained too.
 setup logger-second-gate

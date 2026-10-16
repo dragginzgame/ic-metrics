@@ -31,7 +31,7 @@ fn assert_rejected_record<T: crate::DurableMetric + std::fmt::Debug>(
     value: &T,
     (bytes, error): (Vec<u8>, StoreError),
 ) {
-    store.map.insert(key.0.clone(), bytes.clone());
+    // Callers install the record before this check, including before reopening.
     writes.set(0);
     assert_eq!(store.load(key, identity, value), Err(error));
     assert_eq!(store.save(key, identity, value), Err(error));
@@ -62,6 +62,7 @@ fn stored_unit_bytes_preserve_malformed_and_identity_errors() {
         } else {
             StoreError::MalformedRecord
         };
+        store.map.insert(key.0.clone(), bytes.clone());
         assert_rejected_record(
             &mut store,
             &writes,
@@ -212,6 +213,7 @@ fn corrupted_records_never_reset_or_overwrite_implicitly() {
     let bytes = encode(&identity(), &Aggregate::EMPTY);
     for length in 0..bytes.len() {
         let truncated = bytes[..length].to_vec();
+        store.map.insert(key.0.clone(), truncated.clone());
         assert_rejected_record(
             &mut store,
             &writes,
@@ -403,6 +405,7 @@ fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
     let mut store = MetricsStore::new(BTreeMap::init(memory));
     let key = key("app");
     for record in malformed {
+        store.map.insert(key.0.clone(), record.0.clone());
         assert_rejected_record(&mut store, &writes, &key, &identity, &value, record);
     }
     assert_eq!(
@@ -432,7 +435,8 @@ fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
 
 #[test]
 fn inconsistent_summary_latest_rejects_load_and_save_without_overwrite() {
-    let memory = VectorMemory::default();
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
     let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
     let key = key("app");
     let identity = identity();
@@ -446,19 +450,17 @@ fn inconsistent_summary_latest_rejects_load_and_save_without_overwrite() {
     store.map.insert(key.0.clone(), bytes.clone());
     drop(store);
     let mut reopened = MetricsStore::new(BTreeMap::init(memory));
-    assert_eq!(
-        reopened.load(&key, &identity, &Summary::EMPTY),
-        Err(StoreError::InvalidState(
-            ic_metrics::MeasurementStateError::InvalidLatest,
-        ))
+    assert_rejected_record(
+        &mut reopened,
+        &writes,
+        &key,
+        &identity,
+        &summary,
+        (
+            bytes,
+            StoreError::InvalidState(ic_metrics::MeasurementStateError::InvalidLatest),
+        ),
     );
-    assert_eq!(
-        reopened.save(&key, &identity, &summary),
-        Err(StoreError::InvalidState(
-            ic_metrics::MeasurementStateError::InvalidLatest,
-        ))
-    );
-    assert_eq!(reopened.map.get(&key.0), Some(bytes));
 }
 
 #[test]
@@ -698,13 +700,11 @@ fn histogram_checkpoints_preserve_each_bucket_count_and_flag() {
 }
 
 #[test]
-fn v1_encoding_reserves_the_complete_bounded_record() {
+fn v1_encoding_has_exact_lengths_and_bounded_histograms() {
     fn check<T: crate::DurableMetric>(value: &T, size: usize) {
         let identity = MetricIdentity::new(&"x".repeat(64), 3).unwrap();
         let bytes = encode(&identity, value);
         assert_eq!(bytes.len(), size + 64);
-        // No encoder growth after its single exact reservation.
-        assert_eq!(bytes.capacity(), bytes.len());
         assert!(codec::decode(&bytes, &identity, value).unwrap() == *value);
     }
     check(&Aggregate::EMPTY, 47);

@@ -6,14 +6,18 @@ namespace/name keys. Adding this package is the opt-in: `ic-metrics` alone stays
 allocation-free, dependency-free, `no_std` and volatile. This adapter uses `std`,
 allocates bounded records and supports native hosts and Wasm with Rust 1.91.
 
-The host owns one `ic-memory` allocation pool and bootstrap. With the selected
-Memory 0.41, include a `MemoryRequest` for one permanent store key such as `app.metrics.v1`
-in the host's complete owned request list, then seal that list with
-`SealedDeclarationSnapshot::new(requests)`. After bootstrap, open its admitted memory and one
-`MetricsMap`. Pass that map to `MetricsStore::new`; pass access to the same store
-to each component. No numeric ID per metric or component is needed. `ic-memory`'s
-governance allocations are separate. This package never initializes memory,
-registers keys, creates a global store or installs lifecycle hooks.
+The host owns one `ic-memory` allocation pool and bootstrap. It declares one
+permanent metrics-store key, such as `app.metrics.v1`, and admits that allocation
+before opening the map. Follow the
+[IC Memory 0.44 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/f4630f7dbe90c2c92f5029479f8420c1a1076a89/crates/ic-memory/README.md#quick-start-for-developers)
+for the selected dependency's declaration and lifecycle APIs.
+
+After bootstrap, the host opens the admitted memory and one `MetricsMap`, then
+passes that map to `MetricsStore::new`. Components share access to that store;
+namespace/name keys distinguish rows without allocating an ID per metric or
+component. `ic-memory`'s governance allocations are separate. This package never
+initializes memory, registers keys, creates a global store or installs lifecycle
+hooks.
 
 The following example reopens the same collection in native memory. It proves
 storage/codec behavior, not IC upgrade execution or instruction/cycle costs:
@@ -41,10 +45,9 @@ assert_eq!(reopened.load(&key, &identity, &MeasurementSummary::EMPTY)?, Some(sum
 ```
 
 For an IC host, import collections through
-`ic_memory::ic_stable_structures` so their memory types match. After the host's
-initialization/post-upgrade bootstrap, obtain
-`ic_memory::open_default_memory_manager_memory("app.metrics.v1")?` and open that
-store's map under its existing collection lifecycle contract. `BTreeMap::init`
+`ic_memory::ic_stable_structures` so their memory types match. The host retains its
+bootstrapped runtime and injects the opened memory for the permanent metrics key;
+open that store's map under its existing collection lifecycle contract. `BTreeMap::init`
 can initialize unrecognized memory: never use it as a recovery fallback for an
 unknown or corrupt store. The host must establish that a region is new or belongs
 to this map. Allocator/collection corruption and capacity traps remain upstream

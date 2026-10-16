@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.8]
+
+- Keep Memory allocation/bootstrap instructions at their version-bound owner,
+  retaining the adapter’s `ic-memory` integration and host-owned memory ID.
+- Keep generic logger fallback/retry qualification in Shared Tooling while
+  preserving Metrics’ actual release-adapter routing and recovery checks.
+- Reuse stable-record rejection checks after reopening a corrupted summary,
+  including zero-write verification. Test encoded lengths and round trips without
+  treating allocator capacity as proof of allocation history.
+
 ## [0.11.7] - 2026-10-16
 
 - Let Git create isolated release-fixture checkouts and read selected metadata
