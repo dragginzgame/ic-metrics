@@ -171,8 +171,6 @@ exec "$FIXTURE_REAL_CARGO" "$@"
 CARGO
 chmod +x "$fixture/bin/cargo"
 export FIXTURE_REAL_CARGO="$real_cargo"
-real_tar="$(command -v tar)"
-export FIXTURE_REAL_TAR="$real_tar"
 real_bash="$(command -v bash)"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
 cat >> "$fixture/bin/bash" <<'BASH'
@@ -194,31 +192,29 @@ if [[ "$1" == scripts/ci/collect-native-diagnostics.sh && "${FIXTURE_COLLECTION_
     "$FIXTURE_REAL_BASH" "$@"
     exit "$FIXTURE_COLLECTION_STATUS"
 fi
-if [[ "${!#}" == --check ]]; then
-    case "$1" in
-        */install-host-tools.sh|*/install-rust-tools.sh|*/install-ic-tools.sh)
-            printf '%s\n' "$FIXTURE_REPORT_BIN"
-            exit 0 ;;
-    esac
+if [[ "$1" == scripts/ci/report-tool-versions.sh ]]; then
+    [[ $# == 2 && "$2" == "$GITHUB_WORKSPACE" ]] || exit 99
+    # Shared qualifies catalog selection, admission and executable probes.
+    # Metrics owns the workflow's partial-log retention and later-step refusal.
+    printf 'reporter partial stdout\n'
+    printf 'reporter partial stderr\n' >&2
+    [[ "$FIXTURE_FAILURE" != tool-inputs ]] || exit 43
+    exit 0
+fi
+if [[ "$1" == scripts/ci/collect-native-evidence.sh && "$FIXTURE_ARCHIVE_STATUS" != 0 ]]; then
+    [[ $# == 3 && "$2" == target/evidence/native-ci && "$3" == target/evidence/native-ci.tar.gz ]] || exit 99
+    # Substitute the producer boundary, not its internal tar command.
+    printf 'outer archive stdout\n'
+    printf 'outer archive stderr\n' >&2
+    exit "$FIXTURE_ARCHIVE_STATUS"
 fi
 exec "$FIXTURE_REAL_BASH" "$@"
 BASH
 chmod +x "$fixture/bin/bash"
 FIXTURE_REAL_BASH="$real_bash"
 export FIXTURE_REAL_BASH
-export FIXTURE_REPORT_BIN="$fixture/report-bin"
-mkdir -p "$FIXTURE_REPORT_BIN"
-for tool in jq yq rg cloc cargo-sort cargo-sort-derives candid-extractor icp didc ic-wasm quill wasm-opt; do
-    cat > "$FIXTURE_REPORT_BIN/$tool" <<'TOOL'
-#!/usr/bin/env bash
-printf 'observed %s\n' "${0##*/}"
-printf 'tool observation stderr\n' >&2
-[[ "${FIXTURE_FAILURE:-}" != tool-inputs ]] || exit 43
-TOOL
-    chmod +x "$FIXTURE_REPORT_BIN/$tool"
-done
 # Keep this workflow's action-result projection and Git/evidence custody.
-for scenario in success skipped-setup host-tools tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-write; do (
+for scenario in success skipped-setup host-tools tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-failure; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -238,7 +234,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     mkdir -p "$RUNNER_TEMP" "$TMPDIR"
     export FIXTURE_COMMANDS="$worktree/commands.log" FIXTURE_FAILURE=""
     export FIXTURE_FORMATTING=no
-    export FIXTURE_COLLECTION_STATUS=0
+    export FIXTURE_COLLECTION_STATUS=0 FIXTURE_ARCHIVE_STATUS=0
     export PATH="$fixture/bin:$root/.tools/rust/common/bin:$root/.tools/host/bin:$PATH"
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
     export HOST_TOOLS_OUTCOME=skipped
@@ -256,6 +252,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     case "$scenario" in
         collection-partial) FIXTURE_COLLECTION_STATUS=1 ;;
         collection-failure) FIXTURE_COLLECTION_STATUS=2 ;;
+        native-archive-failure) FIXTURE_ARCHIVE_STATUS=23 ;;
     esac
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
@@ -289,7 +286,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     fi
     printf '%s\n' "$status" > status.txt
     case "$scenario" in
-        success|skipped-setup|native-archive-write) [[ "$status" == 0 ]] || exit 1 ;;
+        success|skipped-setup|native-archive-failure) [[ "$status" == 0 ]] || exit 1 ;;
         *) [[ "$status" == 43 ]] || exit 1 ;;
     esac
     # No later application/native effect can follow a failed action or fetch.
@@ -320,18 +317,15 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         grep -Fx 'tools=failure' target/evidence/native-ci/outcome.txt > /dev/null
         exit 0
     fi
-    if [[ "$scenario" == native-archive-write ]]; then
-        mkdir archive-bin
-        # shellcheck disable=SC2016 # The stub substitutes only outer tar writing.
-        printf '#!%s\ncase "$*" in *"-C target/evidence/native-ci .") printf "partial native archive"; exit 23 ;; esac\nexec "$FIXTURE_REAL_TAR" "$@"\n' "$real_bash" > archive-bin/tar
-        chmod +x archive-bin/tar
-        export PATH="$worktree/archive-bin:$PATH"
+    if [[ "$scenario" == native-archive-failure ]]; then
         archive_status=0
         "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || archive_status=$?
         [[ "$archive_status" == 23 ]] || exit 1
         shasum -a 256 -c target/evidence/native-diagnostics.tar.gz.sha256 > diagnostic-check.log
-        [[ "$(cat target/evidence/native-ci.tar.gz)" == 'partial native archive' &&
-           ! -e target/evidence/native-ci.tar.gz.sha256 ]] || exit 1
+        [[ ! -e target/evidence/native-ci.tar.gz && ! -e target/evidence/native-ci.tar.gz.sha256 ]] || exit 1
+        grep -Fx 'outer archive stdout' archive.log > /dev/null
+        grep -Fx 'outer archive stderr' archive.log > /dev/null
+        [[ "$(cat target/evidence/native-ci/scratch/release/.git/index)" == 'retained index' ]] || exit 1
         [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
         exit 0
     fi
@@ -397,8 +391,8 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
             native|formatting) failed_log=native-ci.log ;;
         esac
         if [[ "$scenario" == tool-inputs ]]; then
-            grep -Fx 'observed cloc' "diagnostic-readback/$failed_log" > /dev/null
-            grep -Fx 'tool observation stderr' "diagnostic-readback/$failed_log" > /dev/null
+            grep -Fx 'reporter partial stdout' "diagnostic-readback/$failed_log" > /dev/null
+            grep -Fx 'reporter partial stderr' "diagnostic-readback/$failed_log" > /dev/null
             [[ "$APPLICATION_OUTCOME" == skipped && "$NATIVE_OUTCOME" == skipped ]] || exit 1
             [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]] || exit 1
             exit 0

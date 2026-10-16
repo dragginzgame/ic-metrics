@@ -23,7 +23,7 @@ trap cleanup EXIT
 source "$root/scripts/ci/make-adapter-probes.sh"
 mkdir -p "$fixture/bin"
 bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$fixture"
-cp "$root/scripts/ci/check-msrv.sh" "$fixture/scripts/ci/"
+cp "$root/scripts/ci/check-msrv.sh" "$root/scripts/ci/read-cargo-workspace-rust-version.sh" "$fixture/scripts/ci/"
 real_bash="$(command -v bash)"
 export STANDARD_RELEASE_REAL_BASH="$real_bash"
 export EVENTS="$fixture/events"
