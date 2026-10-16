@@ -146,12 +146,12 @@ impl From<MeasurementStateError> for StoreError {
 
 const MAX_UNIT_BYTES: usize = 64;
 
-fn identifier(value: &str, limit: usize) -> Result<(), StoreError> {
+fn identifier(value: &[u8], limit: usize) -> Result<(), StoreError> {
     if value.is_empty()
         || value.len() > limit
         || !value
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || b"._/-:".contains(&byte))
+            .iter()
+            .all(|byte| byte.is_ascii_alphanumeric() || b"._/-:".contains(byte))
     {
         return Err(StoreError::InvalidIdentifier);
     }
@@ -172,8 +172,8 @@ impl MetricKey {
     /// Rejects empty/oversized identifiers or bytes other than letters, digits,
     /// dot, underscore, slash, hyphen and colon.
     pub fn new(namespace: &str, name: &str) -> Result<Self, StoreError> {
-        identifier(namespace, 64)?;
-        identifier(name, 128)?;
+        identifier(namespace.as_bytes(), 64)?;
+        identifier(name.as_bytes(), 128)?;
         let mut bytes = Vec::with_capacity(namespace.len() + 1 + name.len());
         bytes.extend_from_slice(namespace.as_bytes());
         bytes.push(0);
@@ -198,7 +198,7 @@ impl MetricIdentity {
     /// # Errors
     /// Returns `StoreError::InvalidIdentifier` for an invalid unit.
     pub fn new(unit: &str, epoch: u64) -> Result<Self, StoreError> {
-        identifier(unit, MAX_UNIT_BYTES)?;
+        identifier(unit.as_bytes(), MAX_UNIT_BYTES)?;
         Ok(Self {
             unit: unit.to_owned(),
             epoch,

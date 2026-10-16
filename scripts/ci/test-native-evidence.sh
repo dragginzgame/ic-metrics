@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Execute the consumer workflow's source/setup/archive bodies with substitute
-# Make effects. This proves local IO and failure status, not hosted execution.
+# Execute the consumer workflow's source/setup/archive bodies with substituted
+# action results and Make effects. This proves local IO/status, not hosted execution.
 unset MAKEFLAGS MFLAGS MAKEOVERRIDES GNUMAKEFLAGS MAKEFILES GIT_DIR GIT_WORK_TREE
 root="${BASH_SOURCE[0]}"
 [[ "$root" == /* ]] || root="$PWD/$root"
@@ -47,9 +47,21 @@ for step in native_inputs native_host toolchain tool_inputs application_sources 
     PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
         "$fixture/steps.json" "$step" > "$fixture/commands/$step.sh"
 done
-"$yq" -o=json '.runs.steps' "$root/.github/actions/prepare-common-tools/action.yml" > "$fixture/common-tool-steps.json"
-PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
-    "$fixture/common-tool-steps.json" prepare-tools > "$fixture/commands/tools.sh"
+# Shared owns the action body, Make aggregate, leaf ordering and PATH admission.
+# Supply only its public outcomes/logs to the actual Metrics collector below.
+cat > "$fixture/commands/tools.sh" <<'TOOLS'
+set -euo pipefail
+printf 'tools\n' >> "$FIXTURE_COMMANDS"
+for phase in install check; do
+    printf 'tool action stdout: %s\ntool action stderr: %s\n' "$phase" "$phase" \
+        > "$RUNNER_TEMP/tools-$phase.log"
+    if [[ "$FIXTURE_FAILURE" == "tools-$phase" ]]; then
+        mkdir -p .tools/rust
+        printf 'retained candidate\n' > .tools/rust/failure:payload
+        exit 43
+    fi
+done
+TOOLS
 "$yq" -o=json '.jobs.msrv.steps' "$root/.github/workflows/ci.yml" > "$fixture/msrv-steps.json"
 PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
     "$fixture/msrv-steps.json" toolchain > "$fixture/commands/minimum_toolchain.sh"
@@ -136,24 +148,11 @@ if [[ "${1:-}" == --no-print-directory ]]; then shift; fi
 printf '%s\n' "$*" >> "$FIXTURE_COMMANDS"
 printf 'make stdout: %s\n' "$*"
 printf 'make stderr: %s\n' "$*" >&2
-# Run the actual consumer aggregate, substituting only its recursive leaf effects.
-if [[ "$*" == install-tools || "$*" == tools-check ]]; then
-    exec "$FIXTURE_REAL_MAKE" --no-print-directory -j2 "$@" \
-        MAKE="$0" MAKE_COMMAND="$FIXTURE_REAL_MAKE"
-fi
 if [[ "${FIXTURE_FORMATTING:-no}" == yes && "$*" == ci ]]; then
     bash scripts/ci/run-formatting.sh --check bash -c \
         'echo formatter-stdout; echo formatter-stderr >&2; exit 43'
 fi
-if [[ "$*" == "$FIXTURE_FAILURE" ]]; then
-    if [[ "$*" == *rust* ]]; then
-        mkdir -p .tools/rust
-        printf 'retained candidate\n' > .tools/rust/failure:payload
-        # Shared's archive fixture owns filename/mode/link fidelity. This fixture
-        # retains a payload marker to prove the consumer selected real evidence.
-    fi
-    exit 43
-fi
+if [[ "$*" == "$FIXTURE_FAILURE" ]]; then exit 43; fi
 MAKE
 chmod +x "$fixture/bin/make"
 real_cargo="$(command -v cargo)"
@@ -190,29 +189,11 @@ if [[ "${!#}" == --check ]]; then
             exit 0 ;;
     esac
 fi
-if [[ "$1" == scripts/dev/wasm-inspector.sh ]]; then
-    echo 'unexpected optional inspector dispatch' >&2
-    exit 99
-fi
-if [[ "${!#}" == --preflight ]]; then
-    case "$1" in
-        */install-ic-tools.sh|*/install-rust-tools.sh)
-            phase="${1##*/}"
-            phase="${phase%.sh}-preflight"
-            printf '%s\n' "$phase" >> "$FIXTURE_COMMANDS"
-            printf 'preflight stdout: %s\n' "$phase"
-            printf 'preflight stderr: %s\n' "$phase" >&2
-            [[ "$phase" != "$FIXTURE_FAILURE" ]] || exit 43
-            exit 0 ;;
-    esac
-fi
 exec "$FIXTURE_REAL_BASH" "$@"
 BASH
 chmod +x "$fixture/bin/bash"
 FIXTURE_REAL_BASH="$real_bash"
 export FIXTURE_REAL_BASH
-FIXTURE_REAL_MAKE="$(command -v make)"
-export FIXTURE_REAL_MAKE
 export FIXTURE_REPORT_BIN="$fixture/report-bin"
 mkdir -p "$FIXTURE_REPORT_BIN"
 for tool in jq yq rg cloc cargo-sort cargo-sort-derives candid-extractor icp didc ic-wasm quill wasm-opt; do
@@ -224,9 +205,8 @@ printf 'tool observation stderr\n' >&2
 TOOL
     chmod +x "$FIXTURE_REPORT_BIN/$tool"
 done
-# Shared Tooling owns every common-tool leaf permutation. Retain representative
-# install/check/admission failures for this workflow's logs, PATH and Git custody.
-for scenario in success tool-inputs application-sources rust-install rust-check rust-admission native formatting collection-partial collection-failure native-archive-write; do (
+# Keep this workflow's action-result projection and Git/evidence custody.
+for scenario in success skipped-setup tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-write; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -247,9 +227,8 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
     case "$scenario" in
         tool-inputs) FIXTURE_FAILURE="tool-inputs" ;;
         application-sources) FIXTURE_FAILURE=application-sources ;;
-        rust-install|collection-partial|collection-failure) FIXTURE_FAILURE=install-rust-tools ;;
-        rust-admission) FIXTURE_FAILURE=install-rust-tools-preflight ;;
-        rust-check) FIXTURE_FAILURE=rust-tools-check ;;
+        tools-install|collection-partial|collection-failure) FIXTURE_FAILURE=tools-install ;;
+        tools-check) FIXTURE_FAILURE=tools-check ;;
         native) FIXTURE_FAILURE=ci ;;
         formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
     esac
@@ -260,41 +239,40 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
     status=0
-    for step in tools tool_inputs application_sources native_ci; do
-        step_status=0
-        "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/$step.sh" > "$step.log" 2>&1 || step_status=$?
-        outcome=success
-        if [[ "$step_status" != 0 ]]; then outcome=failure; status="$step_status"; fi
-        case "$step" in
-            tools) TOOLS_OUTCOME="$outcome" ;;
-            tool_inputs) TOOL_INPUT_OUTCOME="$outcome" ;;
-            application_sources) APPLICATION_OUTCOME="$outcome" ;;
-            native_ci) NATIVE_OUTCOME="$outcome" ;;
-        esac
-        if [[ "$step_status" != 0 ]]; then break; fi
-    done
-    if [[ "$TOOLS_OUTCOME" == success ]]; then
-        printf '%s\n' "$worktree/.tools/host/bin" "$worktree/.tools/ic/bin" \
-            "$worktree/.tools/rust/common/bin" > expected-tool-path
-        cmp expected-tool-path "$GITHUB_PATH"
+    if [[ "$scenario" == skipped-setup ]]; then
+        HOST_OUTCOME=failure
+        printf 'unrelated log\n' > "$RUNNER_TEMP/tools-install.log"
+        printf 'unrelated log\n' > "$RUNNER_TEMP/tools-check.log"
+        : > commands.log
     else
-        [[ ! -s "$GITHUB_PATH" ]] || exit 1
+        for step in tools tool_inputs application_sources native_ci; do
+            step_status=0
+            "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/$step.sh" > "$step.log" 2>&1 || step_status=$?
+            outcome=success
+            if [[ "$step_status" != 0 ]]; then outcome=failure; status="$step_status"; fi
+            case "$step" in
+                tools) TOOLS_OUTCOME="$outcome" ;;
+                tool_inputs) TOOL_INPUT_OUTCOME="$outcome" ;;
+                application_sources) APPLICATION_OUTCOME="$outcome" ;;
+                native_ci) NATIVE_OUTCOME="$outcome" ;;
+            esac
+            if [[ "$step_status" != 0 ]]; then break; fi
+        done
     fi
     printf '%s\n' "$status" > status.txt
     case "$scenario" in
-        success|native-archive-write) [[ "$status" == 0 ]] || exit 1 ;;
-        native|formatting|application-sources|tool-inputs) [[ "$status" == 43 ]] || exit 1 ;;
-        *) [[ "$status" == 2 ]] || exit 1 ;; # GNU Make preserves its failing aggregate status.
+        success|skipped-setup|native-archive-write) [[ "$status" == 0 ]] || exit 1 ;;
+        *) [[ "$status" == 43 ]] || exit 1 ;;
     esac
-    # No later set/check/native effect can follow the first refused leaf.
-    phases=(install-tools install-ic-tools-preflight install-rust-tools-preflight
-            install-host-tools install-ic-tools install-rust-tools
-            tools-check host-tools-check ic-tools-check rust-tools-check application-sources ci)
+    # No later application/native effect can follow a failed action or fetch.
     : > expected-commands
-    for phase in "${phases[@]}"; do
-        printf '%s\n' "$phase" >> expected-commands
-        if [[ "$phase" == "$FIXTURE_FAILURE" || ( "$scenario" == tool-inputs && "$phase" == rust-tools-check ) ]]; then break; fi
-    done
+    if [[ "$scenario" != skipped-setup ]]; then
+        printf 'tools\n' >> expected-commands
+        if [[ "$TOOLS_OUTCOME" == success && "$TOOL_INPUT_OUTCOME" == success ]]; then
+            printf 'application-sources\n' >> expected-commands
+            if [[ "$APPLICATION_OUTCOME" == success ]]; then printf 'ci\n' >> expected-commands; fi
+        fi
+    fi
     cmp expected-commands commands.log
     # The outer archive owns full failed-release evidence, including Git state.
     mkdir -p target/evidence/native-ci/scratch/release/.git/release-state
@@ -368,10 +346,13 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
     if [[ "$scenario" == success ]]; then
         [[ -s unpacked/target/evidence/native-ci/tool-versions.txt ]] || exit 1
         [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]] || exit 1
+    elif [[ "$scenario" == skipped-setup ]]; then
+        [[ ! -e diagnostic-readback/tools-setup.log && ! -e diagnostic-readback/tools-check.log ]] || exit 1
+        [[ ! -e unpacked/target/evidence/native-ci/tools-setup.log && ! -e unpacked/target/evidence/native-ci/tools-check.log ]] || exit 1
     else
         case "$scenario" in
-            *-check) failed_log=tools-check.log ;;
-            rust-*|collection-*) failed_log=tools-setup.log ;;
+            tools-check) failed_log=tools-check.log ;;
+            tools-install|collection-*) failed_log=tools-setup.log ;;
             application-sources) failed_log=application-sources.log ;;
             tool-inputs) failed_log="tool-versions.txt" ;;
             native|formatting) failed_log=native-ci.log ;;
@@ -389,12 +370,17 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
             [[ "$NATIVE_OUTCOME" == skipped ]] || exit 1
             exit 0
         fi
-        effect='make'
-        if [[ "$scenario" == *-admission ]]; then effect=preflight; fi
-        grep -Fx "$effect stdout: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
-        grep -Fx "$effect stderr: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
-        [[ "$(tail -1 commands.log)" == "$FIXTURE_FAILURE" ]] || exit 1
-        if [[ "$scenario" == *-admission || "$scenario" == native || "$scenario" == formatting ]]; then
+        case "$scenario" in
+            tools-*|collection-*)
+                phase=install
+                [[ "$scenario" != tools-check ]] || phase=check
+                grep -Fx "tool action stdout: $phase" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
+                grep -Fx "tool action stderr: $phase" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null ;;
+            *)
+                grep -Fx "make stdout: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null
+                grep -Fx "make stderr: $FIXTURE_FAILURE" "unpacked/target/evidence/native-ci/$failed_log" > /dev/null ;;
+        esac
+        if [[ "$scenario" == native || "$scenario" == formatting ]]; then
             [[ ! -f unpacked/target/evidence/native-ci/tool-candidates.tar.gz ]] || exit 1
         else
             mkdir recovered-candidates
@@ -403,5 +389,5 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
         fi
     fi
 ) done
-echo 'Native evidence source/setup/archive cases passed (Make effects substituted; no hosted CI claim)'
+echo 'Native evidence source/setup/archive cases passed (action results and Make effects substituted; no hosted CI claim)'
 fixture_complete=true

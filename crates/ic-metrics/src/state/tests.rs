@@ -4,6 +4,22 @@ use crate::{
 };
 
 #[test]
+fn overflow_bucket_flag_admission_preserves_typed_priority() {
+    for overflow in [0, 1, u64::MAX - 1] {
+        assert_eq!(
+            Histogram::from_parts([], [], overflow, [], true, Aggregate::EMPTY),
+            Err(Error::InvalidOverflowFlag)
+        );
+        for flags in [[false; 2], [true, false], [false, true]] {
+            assert_eq!(
+                Histogram::from_parts([0, 1], [0; 2], overflow, flags, true, Aggregate::EMPTY),
+                Err(Error::InvalidOverflowFlag)
+            );
+        }
+    }
+}
+
+#[test]
 fn restored_observations_continue_without_replay() {
     let mut original = Summary::EMPTY;
     for value in [0, u64::MAX, u64::MAX, 7] {

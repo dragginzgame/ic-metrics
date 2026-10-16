@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.11.5]
+
+### Changed
+
+- Admit histogram quantile inputs once and validate ASCII durable units directly
+  as bytes, preserving public results, typed failures and stable V1 records.
+  Matched IC probes show lower quantile and valid-unit instruction costs, with
+  a bounded invalid-UTF-8 trade-off; see the
+  [measured cleanup decisions](docs/evidence/admission-cleanup-0115.md).
+- Keep common installation/PATH mechanics and real Cargo offline-policy
+  qualification at Shared Tooling. Metrics retains workflow result projection,
+  recovery evidence and actual release-adapter checks
+  ([Shared PR #235](https://github.com/dragginzgame/shared-tooling/pull/235)).
+- Retire `install-wasm-inspector`, `wasm-inspector-tools-check` and
+  `wasm-inspect-check`. Optional experiments select and invoke the published
+  inspector directly through the managed installer; the
+  [IC Host guide](https://github.com/dragginzgame/ic-host-tooling/pull/156)
+  owns the commands. Existing experiment identities and artifacts are retained.
+
 ## [0.11.4] - 2026-10-16
 
 ### Changed

@@ -387,14 +387,16 @@ impl<const N: usize> MeasurementHistogram<N> {
         numerator: u64,
         denominator: u64,
     ) -> Result<Option<HistogramRange>, HistogramQueryError> {
-        let rank = match quantile_rank(self.aggregate.samples(), numerator, denominator) {
-            Ok(Some(rank)) => rank,
-            Ok(None) => return Ok(None),
-            Err(error) => return Err(error),
-        };
+        if numerator == 0 || numerator > denominator {
+            return Err(HistogramQueryError::InvalidQuantile);
+        }
+        if self.aggregate.samples() == 0 {
+            return Ok(None);
+        }
         if self.aggregate.samples_overflowed() {
             return Err(HistogramQueryError::CountOverflow);
         }
+        let rank = quantile_rank(self.aggregate.samples(), numerator, denominator);
         // Recording, merging and restoration carry every bucket's count loss
         // into the aggregate. An exact aggregate count admits the distribution.
         let mut index = 0;
@@ -440,23 +442,12 @@ const fn validate_bounds<const N: usize>(
 }
 
 // Use native-width division when the product fits; otherwise retain exact wide ranks.
-const fn quantile_rank(
-    samples: u64,
-    numerator: u64,
-    denominator: u64,
-) -> Result<Option<u128>, HistogramQueryError> {
-    if numerator == 0 || numerator > denominator {
-        return Err(HistogramQueryError::InvalidQuantile);
-    }
-    if samples == 0 {
-        return Ok(None);
-    }
+const fn quantile_rank(samples: u64, numerator: u64, denominator: u64) -> u128 {
+    // The sole query caller admits a nonzero count and 0 < numerator <= denominator.
     if let Some(product) = samples.checked_mul(numerator) {
-        return Ok(Some(product.div_ceil(denominator) as u128));
+        return product.div_ceil(denominator) as u128;
     }
-    Ok(Some(
-        ((samples as u128) * (numerator as u128)).div_ceil(denominator as u128),
-    ))
+    ((samples as u128) * (numerator as u128)).div_ceil(denominator as u128)
 }
 
 // Canonical admission derives counts, highest bucket and total range together.

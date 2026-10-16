@@ -144,14 +144,11 @@ Use rustup with the pinned Rust 1.99.0 toolchain, Git, GNU Make and Bash 3.2 or
 newer. Install `wasm32-unknown-unknown` for Wasm checks. The arithmetic library's
 minimum compiler is Rust 1.91.0.
 
-The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
-reports raw/encoded bytes and structural counts for explicitly supplied Wasms
-with caller-selected bounds. Metrics selects version 0.17.10 as a managed tool,
-separate from both library dependency graphs. Neither published library needs
-IC Host to build or run. Common setup, CI and release preflight omit this optional
-evidence tool. Prepare it with `make install-wasm-inspector`, then run
-`bash scripts/dev/wasm-inspector.sh run module.wasm 20000000 1000 10000 1000`.
-It executes no canister; bare Cargo commands select the arithmetic package.
+Optional structural Wasm inspection uses the published
+[IC Host inspector and its installation guide](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect).
+Experiments select their own qualified tool identity and limits. Metrics has no
+inspector wrapper or pin; neither library requires IC Host to build or run.
+Bare Cargo commands select the arithmetic package.
 
 Prepare and check the reviewed tools, select their paths, then install the
 repository's formatting hook:
@@ -173,7 +170,7 @@ vendored; normal commands need no Shared Tooling sibling checkout.
 without editing. `make help` lists focused commands. Select named tests during
 implementation. `make check`, `make check-wasm`, `make clippy`, `make docs-check`
 and `make test` cover both workspace packages; use `cargo ... -p PACKAGE --locked`
-for focused package checks. `make wasm-inspect-check` checks the selected host tool.
+for focused package checks.
 Full release validation uses `make ci` and workspace-native/Wasm `make msrv`;
 implementation, inspection and documentation use focused checks under the shared
 validation policy. The [host support and qualification guide](https://github.com/dragginzgame/ic-metrics/blob/main/docs/hosts.md#prerequisites-and-focused-checks)
@@ -199,8 +196,8 @@ Members inherit with `ic-metrics = { workspace = true }`. Published consumers
 resolve the registry package; consumers exposing shared types coordinate the
 same released dependency identity. The [changelog](https://github.com/dragginzgame/ic-metrics/blob/main/CHANGELOG.md)
 owns release history and required hard-cut changes. The [extraction contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md)
-and [consumer qualification issue](https://github.com/dragginzgame/ic-metrics/issues/10)
-own integration scope and acceptance; the [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
+maps integration scope and the owning consumer qualification issues;
+the [current handoff](https://github.com/dragginzgame/ic-metrics/blob/main/docs/status/current.md)
 distinguishes local preparation, publication and hosted qualification.
 
 Contributions follow the [shared contribution rules](https://github.com/dragginzgame/ic-metrics/blob/main/rules/contributions.md).

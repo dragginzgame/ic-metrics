@@ -40,6 +40,40 @@ fn assert_rejected_record<T: crate::DurableMetric + std::fmt::Debug>(
 }
 
 #[test]
+fn stored_unit_bytes_preserve_malformed_and_identity_errors() {
+    let identity = MetricIdentity::new("x", 3).unwrap();
+    let encoded = encode(&identity, &Aggregate::EMPTY);
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
+    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let key = key("app");
+    for byte in 0..=u8::MAX {
+        let mut bytes = encoded.clone();
+        bytes[6] = byte;
+        if byte == b'x' {
+            assert_eq!(
+                codec::decode(&bytes, &identity, &Aggregate::EMPTY),
+                Ok(Aggregate::EMPTY)
+            );
+            continue;
+        }
+        let error = if byte.is_ascii_alphanumeric() || b"._/-:".contains(&byte) {
+            StoreError::IdentityMismatch
+        } else {
+            StoreError::MalformedRecord
+        };
+        assert_rejected_record(
+            &mut store,
+            &writes,
+            &key,
+            &identity,
+            &Aggregate::EMPTY,
+            (bytes, error),
+        );
+    }
+}
+
+#[test]
 fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
     let memory = VectorMemory::default();
     let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));

@@ -15,9 +15,9 @@ and [the extraction contract](docs/extraction.md) before implementation.
   Its native/Wasm Rust floor is 1.91. Hosts own the allocation key, bootstrap,
   collection lifecycle, identities, synchronization, write cadence and resets.
   Never add stable-memory dependencies to the arithmetic package.
-- IC Host owns the published `ic-host-wasm-inspect` CLI and its Rust floor.
-  Metrics selects it through the shared managed Cargo-tool installer; it remains
-  outside this workspace and the arithmetic/stable dependency graphs.
+- IC Host owns the published `ic-host-wasm-inspect` CLI, its installation guide
+  and Rust floor. Optional evidence experiments select their own qualified tool
+  identity; Metrics owns no inspector wrapper, pin or workspace dependency.
   Source-less lock packages must be workspace-owned; external path dependencies
   are not permitted. Release metadata advances both local workspace rows together.
 - Consumer code owns measurement attribution, registries, labels, replication

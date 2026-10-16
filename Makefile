@@ -47,7 +47,6 @@ release-files:
 
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
 .PHONY: ci-evidence-check
-.PHONY: wasm-inspect-check install-wasm-inspector wasm-inspector-tools-check
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
@@ -59,9 +58,8 @@ help:
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
-	@echo "CI evidence fixture: ci-evidence-check (substitute Make effects, no hosted run)"
+	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
-	@echo "Optional Wasm evidence tool: install-wasm-inspector, wasm-inspector-tools-check, wasm-inspect-check"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
 	@echo "Workspace gates cover arithmetic and the durable adapter; native/Wasm minimum: msrv"
 	@echo "Full release validation (or explicit check request): ci, msrv"
@@ -108,15 +106,6 @@ msrv:
 	+cargo +$(MSRV) --version
 	+cargo +$(MSRV) check --workspace --locked
 	+cargo +$(MSRV) check --workspace --locked --target wasm32-unknown-unknown
-
-install-wasm-inspector:
-	+bash scripts/dev/wasm-inspector.sh install
-
-wasm-inspector-tools-check:
-	+bash scripts/dev/wasm-inspector.sh check
-
-wasm-inspect-check:
-	+bash scripts/dev/test-wasm-inspector.sh
 
 check-pins:
 	bash scripts/ci/check-dependency-pins.sh --cargo-inheritance

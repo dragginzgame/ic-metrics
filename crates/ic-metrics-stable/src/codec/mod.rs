@@ -122,10 +122,9 @@ pub fn envelope<'a>(
     }
     let length = usize::from(decoder.byte()?);
     let unit = decoder.take(length)?;
-    let unit = std::str::from_utf8(unit).map_err(|_| StoreError::MalformedRecord)?;
     crate::identifier(unit, MAX_UNIT_BYTES).map_err(|_| StoreError::MalformedRecord)?;
     let epoch = decoder.u64()?;
-    if unit != identity.unit || epoch != identity.epoch {
+    if unit != identity.unit.as_bytes() || epoch != identity.epoch {
         return Err(StoreError::IdentityMismatch);
     }
     Ok((kind, decoder))
