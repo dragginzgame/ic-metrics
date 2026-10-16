@@ -16,16 +16,14 @@ fixture_complete=false
 cleanup() {
     local status=$?
     if [[ "$status" != 0 ]]; then
-        fixture_replay_logs "$fixture/format-tools.log" "$fixture/hook.log" \
+        fixture_replay_logs "$fixture/hook.log" \
             "$fixture"/formatting-adoption.*/*.log "$fixture"/formatting-adoption.*/*/.git/*.log
     fi
     fixture_finish "$status" "$fixture" "failed formatting hook fixture retained"
 }
 trap cleanup EXIT
-# shellcheck source=ci/tool-versions.env
-source "$root/ci/tool-versions.env"
-bash "$root/scripts/ci/check-format-tools.sh" "$SHARED_TOOLING_CARGO_SORT_VERSION" > "$fixture/format-tools.log" 2>&1
 # The shared checker owns disposable exports and mechanical hook cases.
+# Its baseline fmt-check also owns formatter prerequisite admission.
 # Nest its retained failures under this consumer's reported evidence directory.
 TMPDIR="$fixture" bash "$root/scripts/ci/check-formatting-hooks.sh" "$root" \
     crates/ic-metrics/src/lib.rs crates/ic-metrics/Cargo.toml \

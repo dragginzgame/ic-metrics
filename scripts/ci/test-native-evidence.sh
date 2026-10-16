@@ -32,7 +32,8 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(.id) | index("native_inputs")) < (map(.id) | index("native_host")) and
     (map(.id) | index("native_inputs")) < (map(.id) | index("toolchain")) and
     (map(.id) | index("toolchain")) < (map(.id) | index("tools")) and
-    (map(.id) | index("prerequisites")) < (map(.id) | index("tools")) and
+    (map(.id) | index("prerequisites")) < (map(.id) | index("host_tools")) and
+    (map(.id) | index("host_tools")) < (map(.id) | index("toolchain")) and
     (map(.id) | index("tools")) < (map(.id) | index("tool_inputs")) and
     (map(.id) | index("tool_inputs")) < (map(.id) | index("application_sources")) and
     (map(.id) | index("application_sources")) < (map(.id) | index("native_ci")) and
@@ -43,7 +44,7 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(select(.uses != null and .with.name == "native-${{ matrix.runner }}-${{ github.run_attempt }}"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
-for step in native_inputs native_host toolchain tool_inputs application_sources native_ci native_artifacts; do
+for step in native_inputs native_host host_tools toolchain tool_inputs application_sources native_ci native_artifacts; do
     PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
         "$fixture/steps.json" "$step" > "$fixture/commands/$step.sh"
 done
@@ -78,7 +79,7 @@ for lane in development minimum; do
     if [[ "$lane" == development ]]; then
         version="$("$yq" -p toml -o yaml -r '.toolchain.channel' "$root/rust-toolchain.toml")"
         command_file=toolchain
-        components=(--component rustfmt --component clippy)
+        components=(--component clippy --component rustfmt)
     else
         version="$("$yq" -p toml -o yaml -r '.workspace.package."rust-version"' "$root/Cargo.toml")"
         command_file=minimum_toolchain
@@ -176,6 +177,17 @@ real_bash="$(command -v bash)"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
 cat >> "$fixture/bin/bash" <<'BASH'
 set -euo pipefail
+if [[ "$1" == scripts/dev/install-host-tools.sh ]]; then
+    printf 'host-tools\n' >> "$FIXTURE_COMMANDS"
+    printf 'host setup stdout\n'
+    printf 'host setup stderr\n' >&2
+    if [[ "$FIXTURE_FAILURE" == host-tools ]]; then
+        mkdir -p .tools/host-set.fixture
+        printf 'retained host candidate\n' > .tools/host-set.fixture/failure:payload
+        exit 43
+    fi
+    exit 0
+fi
 if [[ "$1" == scripts/ci/collect-native-diagnostics.sh && "${FIXTURE_COLLECTION_STATUS:-0}" != 0 ]]; then
     # The producer owns collector failures; exercise this workflow's handling of
     # its status after real readable diagnostics and candidates are published.
@@ -206,11 +218,18 @@ TOOL
     chmod +x "$FIXTURE_REPORT_BIN/$tool"
 done
 # Keep this workflow's action-result projection and Git/evidence custody.
-for scenario in success skipped-setup tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-write; do (
+for scenario in success skipped-setup host-tools tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-write; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
     cd "$worktree"
+    # Exercise filename escaping through the actual workflow hash body below,
+    # rather than maintaining a second hashing loop in the selector fixture.
+    if [[ "$scenario" == success ]]; then
+        mkdir -p crates/filename-fixture
+        names=('space file.rs' $'line\nfile.rs' 'back\slash.rs')
+        for name in "${names[@]}"; do printf 'pending\n' > "crates/filename-fixture/$name"; done
+    fi
     export GIT_DIR="$git_dir" GIT_WORK_TREE="$worktree"
     export GITHUB_WORKSPACE="$worktree" GITHUB_RUN_ID=123 GITHUB_RUN_ATTEMPT=2 GITHUB_EVENT_NAME=fixture
     export GITHUB_PATH="$worktree/github-path" TMPDIR="$worktree/scratch"
@@ -222,9 +241,11 @@ for scenario in success skipped-setup tool-inputs application-sources tools-inst
     export FIXTURE_COLLECTION_STATUS=0
     export PATH="$fixture/bin:$root/.tools/rust/common/bin:$root/.tools/host/bin:$PATH"
     export INPUT_OUTCOME=success HOST_OUTCOME=success TOOLCHAIN_OUTCOME=success PREREQUISITES_OUTCOME=success
+    export HOST_TOOLS_OUTCOME=skipped
     export APPLICATION_OUTCOME=skipped
     export TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped NATIVE_OUTCOME=skipped
     case "$scenario" in
+        host-tools) FIXTURE_FAILURE=host-tools; TOOLCHAIN_OUTCOME=skipped ;;
         tool-inputs) FIXTURE_FAILURE="tool-inputs" ;;
         application-sources) FIXTURE_FAILURE=application-sources ;;
         tools-install|collection-partial|collection-failure) FIXTURE_FAILURE=tools-install ;;
@@ -238,6 +259,12 @@ for scenario in success skipped-setup tool-inputs application-sources tools-inst
     esac
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
+    if [[ "$scenario" == success ]]; then
+        for name in "${names[@]}"; do
+            perl -0e '$name = shift; while (<>) { $found=1 if $_ eq "$name\0" } exit(!$found)' \
+                "crates/filename-fixture/$name" target/evidence/native-ci/source-files.nul
+        done
+    fi
     status=0
     if [[ "$scenario" == skipped-setup ]]; then
         HOST_OUTCOME=failure
@@ -245,12 +272,13 @@ for scenario in success skipped-setup tool-inputs application-sources tools-inst
         printf 'unrelated log\n' > "$RUNNER_TEMP/tools-check.log"
         : > commands.log
     else
-        for step in tools tool_inputs application_sources native_ci; do
+        for step in host_tools tools tool_inputs application_sources native_ci; do
             step_status=0
             "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/$step.sh" > "$step.log" 2>&1 || step_status=$?
             outcome=success
             if [[ "$step_status" != 0 ]]; then outcome=failure; status="$step_status"; fi
             case "$step" in
+                host_tools) HOST_TOOLS_OUTCOME="$outcome" ;;
                 tools) TOOLS_OUTCOME="$outcome" ;;
                 tool_inputs) TOOL_INPUT_OUTCOME="$outcome" ;;
                 application_sources) APPLICATION_OUTCOME="$outcome" ;;
@@ -267,6 +295,9 @@ for scenario in success skipped-setup tool-inputs application-sources tools-inst
     # No later application/native effect can follow a failed action or fetch.
     : > expected-commands
     if [[ "$scenario" != skipped-setup ]]; then
+        printf 'host-tools\n' >> expected-commands
+    fi
+    if [[ "$HOST_TOOLS_OUTCOME" == success ]]; then
         printf 'tools\n' >> expected-commands
         if [[ "$TOOLS_OUTCOME" == success && "$TOOL_INPUT_OUTCOME" == success ]]; then
             printf 'application-sources\n' >> expected-commands
@@ -339,9 +370,9 @@ for scenario in success skipped-setup tool-inputs application-sources tools-inst
     else
         [[ ! -f unpacked/target/evidence/native-ci/formatting-logs.tar.gz ]] || exit 1
     fi
-    expected="$(printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\ntool_inputs=%s\napplication_sources=%s' \
+    expected="$(printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s\napplication_sources=%s' \
         "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$TOOLS_OUTCOME" "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
-        "$PREREQUISITES_OUTCOME" "$TOOL_INPUT_OUTCOME" "$APPLICATION_OUTCOME")"
+        "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME" "$APPLICATION_OUTCOME")"
     [[ "$(cat unpacked/target/evidence/native-ci/outcome.txt)" == "$expected" ]] || exit 1
     if [[ "$scenario" == success ]]; then
         [[ -s unpacked/target/evidence/native-ci/tool-versions.txt ]] || exit 1
@@ -349,6 +380,14 @@ for scenario in success skipped-setup tool-inputs application-sources tools-inst
     elif [[ "$scenario" == skipped-setup ]]; then
         [[ ! -e diagnostic-readback/tools-setup.log && ! -e diagnostic-readback/tools-check.log ]] || exit 1
         [[ ! -e unpacked/target/evidence/native-ci/tools-setup.log && ! -e unpacked/target/evidence/native-ci/tools-check.log ]] || exit 1
+    elif [[ "$scenario" == host-tools ]]; then
+        grep -Fx 'host setup stdout' diagnostic-readback/host-tools.log > /dev/null
+        grep -Fx 'host setup stderr' diagnostic-readback/host-tools.log > /dev/null
+        [[ "$TOOLCHAIN_OUTCOME" == skipped && "$TOOLS_OUTCOME" == skipped &&
+           "$APPLICATION_OUTCOME" == skipped && "$NATIVE_OUTCOME" == skipped ]] || exit 1
+        mkdir recovered-host-candidates
+        tar -xzf unpacked/target/evidence/native-ci/tool-candidates.tar.gz -C recovered-host-candidates
+        cmp .tools/host-set.fixture/failure:payload recovered-host-candidates/.tools/host-set.fixture/failure:payload
     else
         case "$scenario" in
             tools-check) failed_log=tools-check.log ;;

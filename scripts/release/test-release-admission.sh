@@ -211,6 +211,7 @@ set -euo pipefail
 target=''
 for argument in "$@"; do
     case "$argument" in
+        install-rust-tools|rust-tools-check) exec "${BASH_SOURCE[0]%/*}/make" "$@" ;;
         RELEASE_*=*) export "$argument" ;;
         release-*) target="$argument" ;;
     esac

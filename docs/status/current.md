@@ -5,50 +5,107 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.11.5
+## Prepared 0.11.6
 
-The next pending version is 0.11.5: compatible private admission cleanup, with no
-public API, stored-format, dependency or Rust-floor change. Quantile admission
-avoids redundant result plumbing and arithmetic on rejected count quality;
-durable ASCII identifiers share byte validation. The early overflow-bucket guard
-remains after its removal proved expensive on malformed large histograms.
-[The matched IC experiment](../evidence/admission-cleanup-0115.md) retains both
-accepted candidates, the rejected prototype and the invalid-UTF-8 cost trade-off.
+The private storage and development-tooling candidate is 0.11.6: compatible cleanup,
+with no public API, V1 storage, dependency or Rust-floor change of its own. Fixed-size
+reads now share bounded cursor admission. The matched four-type probe saves
+46 raw Wasm bytes and 19 instructions per valid four-bound histogram load; all
+other measured outcomes and the limitations are in
+[the decoder comparison](../evidence/decoder-cleanup-0116.md).
 
-Contributor tooling keeps common action installation/PATH mechanics with its
-shared producer, while Metrics supplies action outcomes to its actual diagnostic
-collector. Real Cargo offline-policy qualification now uses a minimal frozen
-graph in [Shared PR #235](https://github.com/dragginzgame/shared-tooling/pull/235),
-passing on Bash 5/3.2 with ShellCheck and documentation checks. Metrics retains
-release-authority routing, the actual two-package graph and Git/index custody.
-The optional inspector wrapper, pin, three Make targets and smoke-only dispatch
-are retired; [Host PR #156](https://github.com/dragginzgame/ic-host-tooling/pull/156)
-documents direct managed installation/check/run. Both producer contributions are
-topic-branch PRs; neither has been merged. No snapshot payload was patched.
-The earlier simulated cases from [PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)
-were separately incorporated at Shared `5910c9f` and that PR is closed.
+Retention checks use the existing shared selected-assertion and exit helpers.
+The fake parser/JSON rewrite and per-case synthetic Git checkouts are removed;
+Metrics retains its roster, retained-success policy, real metadata bodies and
+payload checks. Caller-selected TMPDIR is honored, with native CI evidence as
+the default parent.
 
-Metrics' native-source/evidence and release-tool fixtures pass in an isolated
-committed copy, preserving the real index. The changed evidence/admission
-fixtures also pass on genuine Bash 3.2.57 on Linux; affected ShellCheck,
-documentation links and snapshot verification pass. Shared's common action
-fixture passes Bash 5/3.2 at its producer. These substituted/local checks do not
-establish new native macOS or hosted Metrics acceptance. Source before-images
-and focused logs remain at `/tmp/metrics-tooling-cleanup.EjxscE/`.
+The reviewed snapshot now selects committed Shared Tooling source
+`9b555ad46b7a74e8fbbeba234b8df60829be58ce` (base display version 0.15.8),
+including the TOML-driven Rust setup in
+[PR #239](https://github.com/dragginzgame/shared-tooling/pull/239). That PR is not
+merged; this source selection does not claim a supplying release. CI prepares
+pinned host parsers first, reads development/floor policy from the existing TOML
+files and retains parser setup failures. The normal common-tool action reuses
+the prepared host set. The upstream contribution uses an isolated checkout;
+the normal Shared Tooling checkout is unchanged.
 
-Focused histogram/state tests and stable library tests, native/Wasm Clippy and
-both package Rust 1.91 floors pass. Full CI and release gates were not run for
-this batch; source remains local and package versions remain 0.11.4. Consumer
-contracts are unchanged, so this slice requires no downstream source migration.
+The hook wrapper no longer repeats formatter admission. Its baseline-failure
+probe preserves nested diagnostics, while generic formatter-version failures
+stay upstream. Unusual filenames use the real workflow hashing step; the focused
+selector fixture retains inclusion, exclusion and missing-tracked-source checks.
+
+CI now dispatches complete release/hook fixtures only through their retention
+suite, preserving standalone focused entrypoints. Unexpected child failures
+replay their active log before reporting retained evidence. Both native artifact
+uploads disable recompression of the gzip archives. The observer replacement
+remains publication-gated under [#82](https://github.com/dragginzgame/ic-metrics/issues/82).
+
+The MSRV gate now derives its default from Cargo at execution time and keeps an
+explicit prepared-toolchain override. The metadata adapter owns one NUL-delimited
+release-file roster for Make, source admission and diff checks. The unit's private
+representation is now immutable `Box<str>`; the
+[matched identity study](../evidence/identity-storage-0116.md) qualifies its
+construction/clone savings and unchanged decoder costs without changing V1 bytes.
+
+Earlier focused stable tests, native/Wasm Clippy and actual Rust 1.91 package
+checks passed with selected Memory 0.43. The incoming workspace/lock selection of
+Memory 0.44 is preserved. The later unit-storage batch separately passes the 16
+stable tests, native/Wasm Clippy and Rust 1.91 stable-package checks on that graph;
+it does not establish complete downstream adoption or full release acceptance.
+The retained release/hook/evidence fixture passes on Bash 5 and genuine Bash
+3.2.57 on Linux; a relative parent with spaces preserves its failure status and
+evidence. Full CI/MSRV release gates and new native macOS qualification were not
+run. Package versions remain 0.11.5; source changes remain uncommitted.
+Before-images and focused logs remain at `/tmp/metrics-decoder-cleanup.qnfxcC/`.
+The tooling batch's separate before-images and logs remain at
+`/tmp/metrics-workflow-cleanup.43ct3Y/`.
+Its focused workflow, source-selector and retention checks pass on Bash 5 and
+genuine Bash 3.2.57 on Linux, including baseline formatter failure and retained
+host-tool candidates after early setup failure. The isolated Shared installer
+fixtures pass on both shells. ShellCheck, workflow lint, offline host-tool
+admission, documentation links and all 114 snapshot digests pass. The source
+selection also adopts the upstream Make-executable routing; the release fixture
+now forwards its tool calls through the selected substitute. Full CI/MSRV and
+native macOS runs were not performed for this tooling batch. At the final review,
+PR #239 was open at the selected commit with no hosted check results reported.
+
+The dispatch/upload cleanup passes the actual `make release-tools-check` entry
+on Bash 5 and the retention suite on genuine Bash 3.2.57, selected for its children
+too. A substituted-gate probe executes the actual CI recipe and verifies its
+roster and fail-fast behavior without running full CI. A separate unexpected
+metadata-child failure verifies stdout/stderr replay, refused success and retained
+status/input logs. Workflow lint, unchanged upload fields, documentation links
+and ShellCheck pass. Before-images and logs for this slice remain at
+`/tmp/metrics-ci-dispatch.0gOp7e/`; no Rust or dependency edits were made here.
+
+Policy/unit before-images and logs remain at `/tmp/metrics-policy-unit.VGvbsA/`.
+The MSRV default/override, failed compiler and failed parser cases use substitute
+compilers against the actual Make/validation adapters. Real package-floor checks
+are separately recorded above. Release/hook retention and roster projection pass
+on Bash 5; no-tool roster reads preserve byte boundaries in ordinary and spaced
+checkouts. The same retention suite passes on genuine Bash 3.2.57, selected for
+its children. The frozen IC replay reproduces all four Wasms byte-for-byte and all
+576 instruction/projection observations. No package version, root index or Git
+ref is changed by this batch; full CI/MSRV release gates remain unrun.
+
+## Finalized 0.11.5
+
+Commit `0efa8d8d7aadb2bcebbd929364a50d3c317924ca` and tag `v0.11.5` identify
+the finalized baseline. Its
+[source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/0efa8d8d7aadb2bcebbd929364a50d3c317924ca/docs/status/current.md)
+retains the original local observations, source identities and upstream
+contributions. Finalization alone does not establish registry publication or
+complete hosted/native acceptance.
 
 ## Released 0.11.4
 
 Commit `9665613f05f6477fe97ad60562e54185ed875aac` and tag `v0.11.4` identify
-the latest finalized release. The official registry lists both packages as
+that finalized release. At its recorded review, the registry listed both packages as
 non-yanked with Rust 1.91; stable selects Memory 0.43.
 [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38874976758)
-has passed Linux, Apple Silicon and native/Wasm floors; Intel macOS remains in
-progress at this review, so complete native acceptance is not yet established.
+had passed Linux, Apple Silicon and native/Wasm floors; Intel macOS remained in
+progress, so complete native acceptance was not yet established by that observation.
 
 This release shares common-tool preparation and Make fixture setup, keeps
 exhaustive test permutations at Shared Tooling and preserves Metrics release,
@@ -64,7 +121,7 @@ new branch source needs its own hosted acceptance. No PR was merged.
 ## Released 0.11.3
 
 Commit `362406df49365ef7894f52ad53a843760517a0b7` and tag `v0.11.3` identify
-the latest finalized release. [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38781538090)
+that finalized release. [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38781538090)
 has completed Linux, Intel macOS, Apple Silicon and native/Wasm floor acceptance.
 This release adopts explicit shared Rust setup, trims maintenance payload copies
 and keeps simulated preflight cases with their producer. Its

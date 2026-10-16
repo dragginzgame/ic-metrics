@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 PACKAGE := ic-metrics
-MSRV ?= 1.91.0
+export MSRV
 export RELEASE_DELIVERY ?= direct
 export YQ := $(CURDIR)/.tools/host/bin/yq
 
@@ -43,7 +43,7 @@ release-prepared-check release-committed-check release-tagged-check release-push
 	+@bash scripts/release/metadata.sh check
 
 release-files:
-	@printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md
+	@bash scripts/release/metadata.sh files
 
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
 .PHONY: ci-evidence-check
@@ -102,18 +102,13 @@ test:
 	+cargo test --workspace --locked
 
 msrv:
-	rustc +$(MSRV) --version
-	+cargo +$(MSRV) --version
-	+cargo +$(MSRV) check --workspace --locked
-	+cargo +$(MSRV) check --workspace --locked --target wasm32-unknown-unknown
+	+bash scripts/ci/check-msrv.sh
 
 check-pins:
 	bash scripts/ci/check-dependency-pins.sh --cargo-inheritance
 
+# Retention runs the full release and hook fixtures, plus failure/custody cases.
 release-tools-check:
-	bash scripts/release/test-standard-release.sh
-	bash scripts/release/test-metadata.sh
-	bash scripts/release/test-release-admission.sh
 	bash scripts/release/test-fixture-retention.sh
 
 # Keep order explicit: stop on a failed gate, including any Clippy warning.
@@ -124,7 +119,6 @@ ci:
 	+$(MAKE) --no-print-directory check-pins
 	+$(MAKE) --no-print-directory ci-evidence-check
 	+$(MAKE) --no-print-directory release-tools-check
-	+$(MAKE) --no-print-directory hook-check
 	+$(MAKE) --no-print-directory fmt-check
 	+$(MAKE) --no-print-directory check
 	+$(MAKE) --no-print-directory check-wasm

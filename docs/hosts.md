@@ -17,7 +17,10 @@ Native input hashing and workflow fixture copies use
 including pending source. The workflow records common managed tool paths, hashes
 and observed versions through Shared Tooling; compiler selection stays local. Failed observations retain partial diagnostics.
 
-The selected `prepare-common-tools` action owns ordered common installation,
+CI prepares pinned host parsers before reading Rust policy from TOML. The
+separate `host-tools.log` and outcome survive setup failure; Rust and subsequent
+common setup are skipped when parser preparation fails. The selected
+`prepare-common-tools` action reuses those host tools and owns complete common installation,
 offline checking and PATH publication after success. The always-run Metrics
 collector projects its `RUNNER_TEMP/tools-install.log` and `tools-check.log` into
 the retained `tools-setup.log` and `tools-check.log` names. Setup failures keep
@@ -31,16 +34,26 @@ Prepare the pinned Rust 1.99.0 development toolchain with rustfmt, Clippy and
 `wasm32-unknown-unknown`. Prepare Rust 1.91.0, including its Wasm
 target, for the advertised package floors.
 
-Local setup and both CI lanes use the selected shared installer:
+Local setup and both CI lanes use the selected shared installer. Prepare the
+host tools first so the installer uses the pinned TOML/JSON parsers:
 
 ```sh
-bash scripts/dev/prepare-rust-toolchain.sh 1.99.0 \
-    --component rustfmt --component clippy --target wasm32-unknown-unknown
-bash scripts/dev/prepare-rust-toolchain.sh 1.91.0 --target wasm32-unknown-unknown
+make install-host-tools
+export PATH="$PWD/.tools/host/bin:$PATH"
+bash scripts/dev/prepare-rust-toolchain.sh --toolchain-file rust-toolchain.toml
+bash scripts/dev/prepare-rust-toolchain.sh --workspace-manifest Cargo.toml \
+    --target wasm32-unknown-unknown
 ```
 
-Setup preserves the default toolchain. Checks still require prepared compilers;
+The TOML files own compiler selections; CI does not repeat their version pins or
+development component/target roster. Setup preserves the default toolchain. Checks still require prepared compilers;
 they never call this installer implicitly.
+
+The `msrv` validation adapter reads `workspace.package.rust-version` at execution
+time using the prepared host parsers. `MSRV` can explicitly override it with one
+already prepared toolchain; Rustup auto-install is disabled. Help and unrelated
+Make targets do not parse Cargo just to select the floor. Full `make msrv` retains
+its release/explicit-check authority; focused package commands remain below.
 
 Both packages use that minimum:
 
@@ -190,33 +203,61 @@ The producer's [native diagnostic regression contribution](https://github.com/dr
 owns the six generic referenced-store and candidate-archive cases. Metrics keeps
 the actual workflow's fatal/nonfatal collector handling: fatal status stops the
 outer archive; partial collection retains it and remains nonzero. Its remaining
-fixture also checks setup/check ordering, selected diagnostics, formatting logs,
+fixture also checks action outcomes, selected diagnostics, formatting logs,
 and hidden Git recovery state. Producer tests remain upstream rather than being
 added to this consumer's snapshot or CI.
+
+Both native artifact uploads disable ZIP compression because their payloads are
+already gzip-compressed archives; archive/checksum pairing and retention stay
+unchanged.
 
 Release, hook and evidence fixtures substitute only their declared effects;
 actual Git index, Make dispatch, receipt admission and failure retention retain
 independent checks. These fixtures perform no real Metrics release or registry
 publication. The admission fixture isolates parent validation/failure/summary
 paths. Successful cleanup affects only invocation-owned scratch, while failed
-inputs stay under `target/evidence/native-ci/`. Substitute execution does not
+inputs stay under caller-selected `TMPDIR`, defaulting to native CI evidence for
+the retention fixture. Its exit probes use shared setup/dispatch against the real
+read-only source checkout; no per-case Git repository or helper tree is built.
+The version predicate uses the shared selected-assertion probe, while actual
+metadata bodies and retained-input checks remain independent. Substitute execution does not
 prove live GitHub release recovery or canister measurement behavior.
+
+`make release-tools-check` runs the retention suite as the single CI entry for
+release and hook fixtures. Its success cases execute the complete standard,
+metadata and hook bodies, and its admission case runs the complete admission
+fixture with parent-owned evidence destinations. Failure/custody probes remain
+additional checks. CI does not run these bodies again as separate gates;
+`make hook-check` and the standalone scripts remain focused entrypoints.
+Unexpected child failures replay their active log before reporting retained
+evidence.
+
+`scripts/release/metadata.sh files` owns the NUL-delimited release-file roster
+projected by `make release-files`. The same roster feeds source admission,
+regular-file checks and the final diff guard. Listing requires no Cargo/Git or
+parser dispatch; the independent validation boundaries remain in place.
+
+The hook wrapper relies on the shared checker's baseline `fmt-check` for
+formatter prerequisites. Metrics injects a failure at that baseline to verify
+retained/replayed logs; Shared Tooling owns formatter-version admission cases.
+Unusual source filenames are qualified through the actual workflow hash body,
+while the focused selector fixture owns inclusion, exclusions and missing
+tracked-source selection.
 
 The actual development/MSRV workflow setup bodies execute the shared Rust
 installer against a substitute rustup in the native evidence fixture. Metrics
-checks its compiler pins, components, Wasm targets and failed setup status; Shared
+checks its TOML-selected compilers, components, Wasm targets and failed setup status; Shared
 Tooling owns generic installer argument admission. Simulated cold/warm cache and
 tool-availability matrices live with Shared's preflight fixture
 ([PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)). Metrics retains
-the real committed-graph Cargo offline checks, internal preparation selection,
-runner ordering, explicit catalog overrides and Git-state custody.
-The common-tool fixture executes the selected action's actual body, checking
-local command ordering, log projection and PATH publication only after success.
-The producer owns exhaustive action/bootstrap admission and failure cases,
-including both preflights and every common-tool install/check leaf through the
-actual shared Make aggregate. Metrics retains representative Rust install,
-check and admission failures for its log projection, PATH and candidate custody;
-the other workflow/collector/formatting/recovery cases remain consumer-owned.
+actual committed-graph Cargo metadata, internal preparation selection, runner
+ordering, explicit catalog overrides and Git-state custody. Real Cargo offline
+policy is qualified at Shared on a frozen minimal graph
+([PR #235](https://github.com/dragginzgame/shared-tooling/pull/235)).
+Shared's common-tool fixture executes the action body and shared Make aggregate,
+covering installation/check order, logs, PATH publication and leaf failures.
+Metrics supplies action outcomes and logs to its own collector, retaining failed
+and skipped setup, formatting, candidate custody and complete recovery evidence.
 
 Shared Tooling also owns generic selected-commit identity, missing-release-field
 and failed-Git retention cases, plus the validation runner's Make-flag matrix

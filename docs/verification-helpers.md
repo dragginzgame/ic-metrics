@@ -812,10 +812,18 @@ runs locked offline Cargo fetching followed by check targets; PREPARE=1 runs
 locked fetching followed by the caller's complete ordered preparation targets.
 Explicit Cargo offline policy remains authoritative. Cargo retains the caller's
 selected-source working directory; tool targets run with Make in TOOL-ROOT.
+`RELEASE_MAKE` selects one Make executable (including a path with spaces),
+defaulting to `make`; its failure status is preserved without fallback.
 Every selected catalog is hashed before preparation and rechecked after each
 tool target. Failures preserve fetch/Make status or refuse changed selections.
 The helper owns no version/source admission, index, release or publication effect.
-Focused coverage is `scripts/ci/test-cargo-release-preflight.sh`.
+Focused coverage is `scripts/ci/test-cargo-release-preflight.sh`, including
+simulated cold/warm caches, offline policy, fetch failure, missing executables,
+setup/check failure and selected-pin drift. These use substituted Cargo/Make
+effects. A frozen one-dependency workspace additionally uses real Cargo with an
+empty cache to verify environment/configuration offline refusal before tool
+dispatch, preserving its manifest and lock. Consumers retain preparation
+authority, catalog overrides, runner ordering and Git-state custody.
 
 ## Current Rust formatting inputs
 
@@ -863,8 +871,12 @@ the tool collector's nonfatal status on partial collection, or 2 on fatal
 admission/archive errors. Consumers retain source/outcome records, the selected
 roster, upload policy and complete outer archives including Git recovery state.
 
-Focused coverage is `scripts/ci/test-consumer-flow-probes.sh`; no helper is a
-sandbox for an unreviewed Makefile, script or selected payload.
+Focused coverage is `scripts/ci/test-consumer-flow-probes.sh` and
+`scripts/ci/test-native-diagnostics.sh`. The latter owns referenced host/IC/Rust
+bundle selection, rejected-store local retention and fatal candidate-archive
+failures after readable diagnostics are published. Consumers retain actual
+workflow dispatch/status and outer recovery-state checks. No helper is a sandbox
+for an unreviewed Makefile, script or selected payload.
 ## Assertion retention probes
 
 Source `scripts/ci/fixture-retention-probes.sh` for
@@ -943,3 +955,18 @@ It writes no temporary/output file, preserves failed reader/selector status and
 keeps empty notes advisory. Coordinated metadata preparation remains the writer;
 consumer source, tag, impact and release authority stay local. Focused coverage
 is `scripts/ci/test-release-changelog.sh`.
+
+## Focused verifier qualification
+
+`bash scripts/ci/test-snapshot-verifier.sh` checks generic snapshot directory
+admission, ordinary aliases, resolved manifest parents and corruption of inert
+checksum helpers against a controlled three-file export. Distribution tests
+retain refresh/source/index obligations; consumers retain their actual exported
+manifest and representative payload corruption checks. This Bash 3.2 fixture
+requires no Git repository, tool installation or Cargo inputs.
+
+`python3 scripts/ci/test-failure-evidence.py` owns generic downloaded-archive,
+compact-tool receipt and hosted-scenario rejection cases. The standard-library
+suite runs in Linux CI; it adds no Python prerequisite to native shell consumers.
+Consumers retain actual collector integration, source/run identity, caller pin
+selection and representative rejection checks through their own verifier.

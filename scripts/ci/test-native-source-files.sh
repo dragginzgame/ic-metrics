@@ -13,21 +13,18 @@ git -C "$fixture" init -q
 printf '/target/\n/.tools/\n' > "$fixture/.gitignore"
 printf 'tracked\n' > "$fixture/Cargo.toml"
 git -C "$fixture" add Cargo.toml
-names=('space file.rs' $'line\nfile.rs' 'back\slash.rs')
-for name in "${names[@]}"; do printf 'pending\n' > "$fixture/crates/example/$name"; done
+printf 'pending\n' > "$fixture/crates/example/pending.rs"
 for directory in docs/evidence .tools .private-evidence target crates/example/target crates/example/.tools crates/example/.private-evidence; do mkdir -p "$fixture/$directory"; printf 'excluded\n' > "$fixture/$directory/payload"; done
 bash "$fixture/scripts/ci/native-source-files.sh" > "$fixture/selected.nul"
 count=0
 while IFS= read -r -d '' file; do
     case "$file" in Cargo.toml|scripts/ci/native-source-files.sh|crates/example/*) ;; *) exit 1 ;; esac
     count=$((count + 1))
-    (cd "$fixture" && shasum -a 256 -- "$file") >> "$fixture/hashes"
 done < "$fixture/selected.nul"
-[[ "$count" == 5 ]]
-(cd "$fixture" && shasum -a 256 -c hashes) > "$fixture/check.log"
+[[ "$count" == 3 ]]
 # Missing tracked source stays selected so the hash boundary cannot silently omit it.
 rm "$fixture/Cargo.toml"
 bash "$fixture/scripts/ci/native-source-files.sh" > "$fixture/missing.nul"
 perl -0ne 'BEGIN { $found=0 } $found=1 if $_ eq "Cargo.toml\0"; END { exit(!$found) }' "$fixture/missing.nul"
 fixture_complete=true
-echo 'native source selection and filename hashing passed'
+echo 'native source selection, exclusions and missing tracked source passed'

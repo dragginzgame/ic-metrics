@@ -48,12 +48,9 @@ impl<'a> Decoder<'a> {
     }
 
     fn array<const N: usize>(&mut self) -> Result<[u8; N], StoreError> {
-        let (bytes, remaining) = self
-            .remaining
-            .split_first_chunk::<N>()
-            .ok_or(StoreError::MalformedRecord)?;
-        self.remaining = remaining;
-        Ok(*bytes)
+        self.take(N)?
+            .try_into()
+            .map_err(|_| StoreError::MalformedRecord)
     }
 
     pub fn byte(&mut self) -> Result<u8, StoreError> {
