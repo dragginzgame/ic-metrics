@@ -17,6 +17,12 @@ Native input hashing and workflow fixture copies use
 including pending source. The workflow records common managed tool paths, hashes
 and observed versions through Shared Tooling; compiler selection stays local. Failed observations retain partial diagnostics.
 
+The selected `prepare-common-tools` action owns ordered common installation,
+offline checking and PATH publication after success. The always-run Metrics
+collector projects its `RUNNER_TEMP/tools-install.log` and `tools-check.log` into
+the retained `tools-setup.log` and `tools-check.log` names. Setup failures keep
+their actual stdout/stderr; skipped setup does not select unrelated temp logs.
+
 ## Prerequisites and focused checks
 
 Prepare the pinned Rust 1.99.0 development toolchain with rustfmt, Clippy and
@@ -167,8 +173,12 @@ initialization/EXIT prefixes to the shared helper; Metrics retains its fixture
 roster, consumer-log forwarding and intentional successful retention. Shared
 Tooling owns assertions about its checkers' nested fixture payloads.
 
-Generic Make execution-mode matrices and parallel dispatch also use shared probes
-against the actual consumer Makefile. Metrics owns the target lists and stubs.
+Per-target Make admission and parallel dispatch use shared probes against the
+actual consumer Makefile. Each target refuses ignore-errors, dry-run, touch and
+question modes before effects. Shared Tooling owns exhaustive flag aliases and
+inherited/replaced/hidden-flag permutations; Metrics owns target lists and stubs.
+The shared `prepare-make-fixture.sh` copies the common Make/include runner
+skeleton; release fixtures add their local validation logger/checksum inputs.
 The exhaustive release-root isolation matrix stays with Shared Tooling; Metrics
 keeps one actual include-admission check. Workflow run bodies use the shared
 unique-step extractor, while ordering, conditions and execution remain local.
@@ -205,6 +215,19 @@ tool-availability matrices live with Shared's preflight fixture
 ([PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)). Metrics retains
 the real committed-graph Cargo offline checks, internal preparation selection,
 runner ordering, explicit catalog overrides and Git-state custody.
+The common-tool fixture executes the selected action's actual body, checking
+local command ordering, log projection and PATH publication only after success.
+The producer owns exhaustive action/bootstrap admission and failure cases,
+including both preflights and every common-tool install/check leaf through the
+actual shared Make aggregate. Metrics retains representative Rust install,
+check and admission failures for its log projection, PATH and candidate custody;
+the other workflow/collector/formatting/recovery cases remain consumer-owned.
+
+Shared Tooling also owns generic selected-commit identity, missing-release-field
+and failed-Git retention cases, plus the validation runner's Make-flag matrix
+([PR #232](https://github.com/dragginzgame/shared-tooling/pull/232)). Metrics retains
+the actual two-package committed source, one rejected-version receipt, index
+admission and release-verify gate ordering, log retention and input-drift checks.
 
 [Released 0.8.1 acceptance](evidence/release-081.md) verifies all three native
 receipts and the complete Rust-floor run on its exact published source.

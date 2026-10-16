@@ -47,7 +47,7 @@ printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
 cat >> "$fixture/bin/git" <<'GIT'
 set -euo pipefail
 case "${ADMISSION_FAIL_GIT:-}:$1" in
-    type:cat-file|export:archive|status:status)
+    status:status)
         "$ADMISSION_REAL_GIT" "$@"
         exit 43 ;;
     *) exec "$ADMISSION_REAL_GIT" "$@" ;;
@@ -159,9 +159,9 @@ setup() {
     export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-06
 }
 prepare_validation_adapter() {
-    mkdir -p scripts/ci make "$worktree/tmp"
-    cp "$root"/make/{consumer,tools,release,rust-format,execution}.mk make/
-    cp "$root"/scripts/ci/{run-validation-targets,check-make-execution,verify-file-checksum,run-formatting}.sh scripts/ci/
+    mkdir -p "$worktree/tmp"
+    bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$worktree"
+    cp "$root"/scripts/ci/{run-validation-targets,verify-file-checksum}.sh scripts/ci/
 }
 
 reject() {
@@ -424,49 +424,9 @@ for path in Cargo.toml Cargo.lock CHANGELOG.md; do
     git show "$selected_commit:$path" > "$fixture/expected-metadata"
     cmp "$fixture/expected-metadata" "$1/source/$path"
 done
-export RELEASE_VERSION="$selected_version" RELEASE_DATE=1999-01-01
-reject check
-export RELEASE_DATE="$selected_date" RELEASE_COMMIT=abcdef0
-reject check
-export RELEASE_COMMIT=0000000000000000000000000000000000000000
-reject check
-RELEASE_COMMIT="$(git rev-parse "$source_commit:Cargo.toml")"
-export RELEASE_COMMIT
-reject check
-
-# Valid-looking output cannot override a failed Git producer. Incomplete checks
-# also retain selected inputs; type failures stop before creating them.
-for scenario in type export missing-version missing-date; do
-    setup "selected-failed-$scenario"
-    export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" RELEASE_DATE="$selected_date"
-    case "$scenario" in
-        type|export) export ADMISSION_FAIL_GIT="$scenario" ;;
-        missing-version) unset RELEASE_VERSION ;;
-        missing-date) unset RELEASE_DATE ;;
-    esac
-    status=0
-    bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1 || status=$?
-    case "$scenario" in
-        type|export) [[ "$status" == 43 ]] || exit 1 ;;
-        *) [[ "$status" == 1 ]] || exit 1 ;;
-    esac
-    case "$scenario" in
-        type|export) [[ ! -s "$ADMISSION_CARGO_EVENTS" ]] || exit 1 ;;
-        *) cmp "$fixture/expected-order-only" "$ADMISSION_CARGO_EVENTS" ;;
-    esac
-    unset ADMISSION_FAIL_GIT
-    if [[ "$scenario" == type ]]; then
-        for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done
-    else
-        set -- "$TMPDIR"/cargo-release-check.*
-        [[ $# == 1 && -f "$1/source/Cargo.toml" ]] || exit 1
-        grep -F "failed Cargo metadata check retained: $1" "$fixture/result.log" >/dev/null
-        for path in Cargo.toml Cargo.lock CHANGELOG.md; do
-            git show "$selected_commit:$path" > "$fixture/expected-metadata"
-            cmp "$fixture/expected-metadata" "$1/source/$path"
-        done
-    fi
-done
+# Shared owns the invalid Git identity, missing-variable and failed-producer
+# matrix. The actual two-package selected source and its rejected-version receipt
+# remain checked above through this consumer's adapter.
 
 # Execute this consumer's release-verify adapter, substituting only cheap gates.
 # Nested Make must preserve release selections and never route to the parent CI.
@@ -510,27 +470,6 @@ MAKE
     fi
     [[ "${#logs[@]}" == 2 ]] || exit 1
     for log in "${logs[@]}"; do grep -F retained-gate-failure "$log" >/dev/null; done
-done
-
-# Rejected Make modes cannot execute a gate or announce successful validation.
-# Use the current consumer logger directly; no release or real CI is dispatched.
-for mode in i n q t v --ignore-errors; do
-    setup "logger-make-mode-$mode"
-    cat > Makefile <<'MAKE'
-.PHONY: ci
-ci:
-	@echo reached >> gate-events
-	@exit 7
-MAKE
-    if MAKEFLAGS="$mode" VALIDATION_REPOSITORY_ROOT="$worktree" \
-        bash "$root/scripts/ci/run-validation-targets.sh" --fail-fast ci \
-        > "$fixture/result.log" 2>&1; then
-        echo 'consumer logger accepted an incompatible Make mode' >&2
-        exit 1
-    fi
-    grep -F 'requires recipe execution and failure propagation' "$fixture/result.log" >/dev/null
-    [[ ! -e gate-events ]] || exit 1
-    if grep -F 'VALIDATION PASSED' "$fixture/result.log" >/dev/null; then exit 1; fi
 done
 
 # The second gate still runs after successful CI; its failures are retained too.

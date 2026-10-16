@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.11.4]
+
+### Changed
+
+- Adopt the reviewed 114-file Shared Tooling 0.15.2 candidate at
+  `c550bc7b8bcff48723402c7dfcb94e73bd440284`, carrying the common hosted-tool
+  action and Make-fixture bootstrap onto the existing Metrics baseline
+  ([Shared PR #229](https://github.com/dragginzgame/shared-tooling/pull/229) and
+  [#231](https://github.com/dragginzgame/shared-tooling/pull/231)).
+- Delegate common CI installation/check/PATH mechanics to the shared action,
+  preserving Metrics' setup/check diagnostic filenames and failed-setup logs.
+  Release fixtures share the Make bootstrap and retain their local logger inputs.
+- Share malformed-row refusal assertions across aggregate/counter tests; verify
+  typed load/save errors, unchanged retained bytes and zero stable writes.
+  Encoding vectors, explicit removal and runtime arithmetic remain unchanged.
+- Keep exhaustive Make flag and common-tool leaf failure permutations at Shared
+  Tooling. Check each Metrics target with four unsafe Make behaviors, retaining
+  parallel dispatch, publication arguments, representative setup/check/admission
+  failures, diagnostic selection and hidden Git recovery evidence.
+- Keep generic selected-source metadata rejection and validation-runner flag
+  coverage at Shared Tooling ([PR #232](https://github.com/dragginzgame/shared-tooling/pull/232)),
+  retaining the actual Metrics release adapter and recovery checks. Current
+  onboarding links to historical changes and release receipts at their owners.
+
 ## [0.11.3] - 2026-10-15
 
 ### Changed

@@ -49,25 +49,15 @@ fractional information: samples 3 and 4 yield 35 at scale ten. Admitted scaled
 means fit `u128` without a ratio-projection failure.
 Accumulator flags cannot restore a clamped input sample.
 
-In the current API, summaries and histograms expose these projections
-through `aggregate()`: use `summary.aggregate().mean()` or
-`summary.aggregate().scaled_mean(10)`. Summary `samples`, `total`, `maximum`,
-`mean` and `scaled_mean` forwarding methods are removed; `latest()` remains
-summary-specific. Stored V1 layouts and measurement semantics are unchanged.
+Summaries and histograms expose aggregate projections through `aggregate()`:
+use `summary.aggregate().mean()` or `summary.aggregate().scaled_mean(10)`.
+The latest observation remains summary-specific.
 
 `MeasurementAggregate::merge` combines count/total and maximum without claiming
 ordering or deduplication. `interval_since(previous)` returns checked count/total
 differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
-
-Overflow flags use `*_overflowed` names, including
-`bucket_overflowed()` and `overflow_count_overflowed()` for histogram counts.
-Remaining overflow errors use `SampleCountOverflow`, `TotalOverflow`,
-`CountOverflow` and `InvalidOverflowFlag`; arithmetic and quality stay unchanged.
-Generic-ratio errors remain unchanged. Raw stable codec dispatch is internal;
-use the supported generic `MetricsStore` operations.
-The stable V1 encoding and host allocation lifecycle require no reset.
 
 The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
 counters, aggregates, summaries and histograms in one host-owned stable B-tree map using
@@ -197,9 +187,8 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both 0.11.1 packages are published and require Rust 1.91 on native and Wasm.
-Consumers select the 0.11 contract in the root catalog and qualify their owning
-integration:
+Both packages require Rust 1.91 on native and Wasm. Consumers select the 0.11
+contract in the root catalog and qualify their owning integration:
 
 ```toml
 [workspace.dependencies]
