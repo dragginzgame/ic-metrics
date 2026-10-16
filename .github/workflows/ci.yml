@@ -82,12 +82,7 @@ jobs:
           esac 2>&1 | tee target/evidence/native-ci/prerequisites.log
       - name: Install and verify the complete common toolset
         id: tools
-        run: |
-          make install-tools 2>&1 | tee target/evidence/native-ci/tools-setup.log
-          make tools-check 2>&1 | tee target/evidence/native-ci/tools-check.log
-          echo "$GITHUB_WORKSPACE/.tools/host/bin" >> "$GITHUB_PATH"
-          echo "$GITHUB_WORKSPACE/.tools/ic/bin" >> "$GITHUB_PATH"
-          echo "$GITHUB_WORKSPACE/.tools/rust/common/bin" >> "$GITHUB_PATH"
+        uses: ./.github/actions/prepare-common-tools
       - name: Record installed tool versions
         id: tool_inputs
         run: |
@@ -121,6 +116,16 @@ jobs:
           TOOL_INPUT_OUTCOME: ${{ steps.tool_inputs.outcome }}
         run: |
           mkdir -p target/evidence/native-ci
+          # Project the action's logs into Metrics' retained diagnostic names.
+          case "$TOOLS_OUTCOME" in
+            success|failure|cancelled)
+              if [[ -f "$RUNNER_TEMP/tools-install.log" ]]; then
+                cp "$RUNNER_TEMP/tools-install.log" target/evidence/native-ci/tools-setup.log
+              fi
+              if [[ -f "$RUNNER_TEMP/tools-check.log" ]]; then
+                cp "$RUNNER_TEMP/tools-check.log" target/evidence/native-ci/tools-check.log
+              fi ;;
+          esac
           git rev-parse HEAD > target/evidence/native-ci/source-commit.txt
           printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\ntool_inputs=%s\napplication_sources=%s\n' \
             "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$TOOLS_OUTCOME" \

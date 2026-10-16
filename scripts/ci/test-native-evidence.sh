@@ -37,15 +37,19 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(.id) | index("tool_inputs")) < (map(.id) | index("application_sources")) and
     (map(.id) | index("application_sources")) < (map(.id) | index("native_ci")) and
     (map(.id) | index("native_inputs")) < (map(.id) | index("prerequisites")) and
+    (map(select(.id == "tools"))[0].uses == "./.github/actions/prepare-common-tools") and
     (map(select(.id == "native_artifacts"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''") and
     (map(select(.uses != null and .with.name == "native-${{ matrix.runner }}-${{ github.run_attempt }}"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
-for step in native_inputs native_host toolchain tools tool_inputs application_sources native_ci native_artifacts; do
+for step in native_inputs native_host toolchain tool_inputs application_sources native_ci native_artifacts; do
     PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
         "$fixture/steps.json" "$step" > "$fixture/commands/$step.sh"
 done
+"$yq" -o=json '.runs.steps' "$root/.github/actions/prepare-common-tools/action.yml" > "$fixture/common-tool-steps.json"
+PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
+    "$fixture/common-tool-steps.json" prepare-tools > "$fixture/commands/tools.sh"
 "$yq" -o=json '.jobs.msrv.steps' "$root/.github/workflows/ci.yml" > "$fixture/msrv-steps.json"
 PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
     "$fixture/msrv-steps.json" toolchain > "$fixture/commands/minimum_toolchain.sh"
@@ -142,15 +146,9 @@ if [[ "${FIXTURE_FORMATTING:-no}" == yes && "$*" == ci ]]; then
         'echo formatter-stdout; echo formatter-stderr >&2; exit 43'
 fi
 if [[ "$*" == "$FIXTURE_FAILURE" ]]; then
-    case "$*" in
-        *rust*) candidate=.tools/rust ;;
-        *host*) candidate=.tools/host-set.fixture ;;
-        *ic*) candidate=.tools/ic-set.fixture ;;
-        *) candidate="" ;;
-    esac
-    if [[ -n "$candidate" && "$FIXTURE_ADMISSION" != yes ]]; then
-        mkdir -p "$candidate"
-        printf 'retained candidate\n' > "$candidate/failure:payload"
+    if [[ "$*" == *rust* ]]; then
+        mkdir -p .tools/rust
+        printf 'retained candidate\n' > .tools/rust/failure:payload
         # Shared's archive fixture owns filename/mode/link fidelity. This fixture
         # retains a payload marker to prove the consumer selected real evidence.
     fi
@@ -226,9 +224,9 @@ printf 'tool observation stderr\n' >&2
 TOOL
     chmod +x "$FIXTURE_REPORT_BIN/$tool"
 done
-# Shared Tooling owns store/reference admission and candidate-archive failures.
-# Keep this workflow's effect ordering, log selection and outer Git custody here.
-for scenario in success tool-inputs application-sources rust-install rust-check rust-admission ic-admission host-install host-check ic-install ic-check native formatting collection-partial collection-failure native-archive-write; do (
+# Shared Tooling owns every common-tool leaf permutation. Retain representative
+# install/check/admission failures for this workflow's logs, PATH and Git custody.
+for scenario in success tool-inputs application-sources rust-install rust-check rust-admission native formatting collection-partial collection-failure native-archive-write; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -239,7 +237,7 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
     export SHARED_TOOLING_STORE="$worktree/shared-store"
     export RUNNER_TEMP="$worktree/runner temp"
     mkdir -p "$RUNNER_TEMP" "$TMPDIR"
-    export FIXTURE_COMMANDS="$worktree/commands.log" FIXTURE_FAILURE="" FIXTURE_ADMISSION=no
+    export FIXTURE_COMMANDS="$worktree/commands.log" FIXTURE_FAILURE=""
     export FIXTURE_FORMATTING=no
     export FIXTURE_COLLECTION_STATUS=0
     export PATH="$fixture/bin:$root/.tools/rust/common/bin:$root/.tools/host/bin:$PATH"
@@ -251,12 +249,7 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
         application-sources) FIXTURE_FAILURE=application-sources ;;
         rust-install|collection-partial|collection-failure) FIXTURE_FAILURE=install-rust-tools ;;
         rust-admission) FIXTURE_FAILURE=install-rust-tools-preflight ;;
-        ic-admission) FIXTURE_FAILURE=install-ic-tools-preflight ;;
         rust-check) FIXTURE_FAILURE=rust-tools-check ;;
-        host-install) FIXTURE_FAILURE=install-host-tools ;;
-        host-check) FIXTURE_FAILURE=host-tools-check ;;
-        ic-install) FIXTURE_FAILURE=install-ic-tools ;;
-        ic-check) FIXTURE_FAILURE=ic-tools-check ;;
         native) FIXTURE_FAILURE=ci ;;
         formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
     esac
@@ -264,7 +257,6 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
         collection-partial) FIXTURE_COLLECTION_STATUS=1 ;;
         collection-failure) FIXTURE_COLLECTION_STATUS=2 ;;
     esac
-    if [[ "$scenario" == *-admission ]]; then FIXTURE_ADMISSION=yes; fi
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
     status=0
@@ -281,6 +273,13 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
         esac
         if [[ "$step_status" != 0 ]]; then break; fi
     done
+    if [[ "$TOOLS_OUTCOME" == success ]]; then
+        printf '%s\n' "$worktree/.tools/host/bin" "$worktree/.tools/ic/bin" \
+            "$worktree/.tools/rust/common/bin" > expected-tool-path
+        cmp expected-tool-path "$GITHUB_PATH"
+    else
+        [[ ! -s "$GITHUB_PATH" ]] || exit 1
+    fi
     printf '%s\n' "$status" > status.txt
     case "$scenario" in
         success|native-archive-write) [[ "$status" == 0 ]] || exit 1 ;;
@@ -372,7 +371,7 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
     else
         case "$scenario" in
             *-check) failed_log=tools-check.log ;;
-            rust-*|host-*|ic-*|collection-*) failed_log=tools-setup.log ;;
+            rust-*|collection-*) failed_log=tools-setup.log ;;
             application-sources) failed_log=application-sources.log ;;
             tool-inputs) failed_log="tool-versions.txt" ;;
             native|formatting) failed_log=native-ci.log ;;
@@ -400,12 +399,7 @@ for scenario in success tool-inputs application-sources rust-install rust-check 
         else
             mkdir recovered-candidates
             tar -xzf unpacked/target/evidence/native-ci/tool-candidates.tar.gz -C recovered-candidates
-            for candidate in .tools/host-set.* .tools/ic-set.* .tools/rust .tools/rust/rust-set.*; do
-                if [[ -d "$candidate" ]]; then
-                    recovered="recovered-candidates/$candidate"
-                    cmp "$candidate/failure:payload" "$recovered/failure:payload"
-                fi
-            done
+            cmp .tools/rust/failure:payload recovered-candidates/.tools/rust/failure:payload
         fi
     fi
 ) done

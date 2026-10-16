@@ -23,6 +23,22 @@ fn encode<T: crate::DurableMetric>(identity: &MetricIdentity, value: &T) -> Vec<
     codec::encode(identity, value, payload_size)
 }
 
+fn assert_rejected_record<T: crate::DurableMetric + std::fmt::Debug>(
+    store: &mut MetricsStore<WriteCountingMemory>,
+    writes: &Cell<usize>,
+    key: &MetricKey,
+    identity: &MetricIdentity,
+    value: &T,
+    (bytes, error): (Vec<u8>, StoreError),
+) {
+    store.map.insert(key.0.clone(), bytes.clone());
+    writes.set(0);
+    assert_eq!(store.load(key, identity, value), Err(error));
+    assert_eq!(store.save(key, identity, value), Err(error));
+    assert_eq!(store.map.get(&key.0), Some(bytes));
+    assert_eq!(writes.get(), 0);
+}
+
 #[test]
 fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
     let memory = VectorMemory::default();
@@ -155,15 +171,21 @@ fn exact_caps_and_overflow_flags_survive_storage_and_continue() {
 
 #[test]
 fn corrupted_records_never_reset_or_overwrite_implicitly() {
-    let mut store = store();
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
+    let mut store = MetricsStore::new(BTreeMap::init(memory));
     let key = key("app");
     let bytes = encode(&identity(), &Aggregate::EMPTY);
     for length in 0..bytes.len() {
         let truncated = bytes[..length].to_vec();
-        store.map.insert(key.0.clone(), truncated.clone());
-        assert!(store.load(&key, &identity(), &Aggregate::EMPTY).is_err());
-        assert!(store.save(&key, &identity(), &Aggregate::EMPTY).is_err());
-        assert_eq!(store.map.get(&key.0), Some(truncated));
+        assert_rejected_record(
+            &mut store,
+            &writes,
+            &key,
+            &identity(),
+            &Aggregate::EMPTY,
+            (truncated, StoreError::MalformedRecord),
+        );
     }
     let mut unknown = bytes.clone();
     unknown[3] = 99;
@@ -346,13 +368,8 @@ fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
     let writes = memory.writes.clone();
     let mut store = MetricsStore::new(BTreeMap::init(memory));
     let key = key("app");
-    for (bytes, error) in malformed {
-        store.map.insert(key.0.clone(), bytes.clone());
-        writes.set(0);
-        assert_eq!(store.load(&key, &identity, &Counter::ZERO), Err(error));
-        assert_eq!(store.save(&key, &identity, &value), Err(error));
-        assert_eq!(writes.get(), 0);
-        assert_eq!(store.map.get(&key.0), Some(bytes));
+    for record in malformed {
+        assert_rejected_record(&mut store, &writes, &key, &identity, &value, record);
     }
     assert_eq!(
         store.remove(&key, &identity),

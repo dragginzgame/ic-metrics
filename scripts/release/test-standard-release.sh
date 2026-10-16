@@ -21,9 +21,8 @@ cleanup() {
 trap cleanup EXIT
 # shellcheck source=scripts/ci/make-adapter-probes.sh
 source "$root/scripts/ci/make-adapter-probes.sh"
-mkdir -p "$fixture/bin" "$fixture/make" "$fixture/scripts/ci"
-cp "$root/make/consumer.mk" "$root/make/tools.mk" "$root/make/release.mk" "$root/make/rust-format.mk" "$root/make/execution.mk" "$fixture/make/"
-cp "$root/scripts/ci/check-make-execution.sh" "$root/scripts/ci/run-formatting.sh" "$fixture/scripts/ci/"
+mkdir -p "$fixture/bin"
+bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$fixture"
 real_bash="$(command -v bash)"
 export STANDARD_RELEASE_REAL_BASH="$real_bash"
 export EVENTS="$fixture/events"
@@ -170,7 +169,9 @@ cargo_targets=(publish publish-check check check-wasm clippy docs-check test msr
 tool_targets=(install-wasm-inspector wasm-inspector-tools-check wasm-inspect-check)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
-PATH="$fixture/bin:$PATH" make_probe_execution_modes "$real_make" "$root/Makefile" "$fixture" "$EVENTS" \
+# Shared Tooling owns flag aliases and inheritance permutations. Keep all actual
+# consumer targets under each unsafe behavior, without repeating that matrix.
+PATH="$fixture/bin:$PATH" make_probe_target_admission "$real_make" "$root/Makefile" "$fixture" "$EVENTS" \
     release-patch release-minor release-major release-resume fmt fmt-check \
     "${cargo_targets[@]}" "${tool_targets[@]}" "${metadata_targets[@]}"
 rm "$fixture/bin/bash"
