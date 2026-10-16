@@ -17,17 +17,20 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 reader="$root/scripts/ci/read-cargo-workspace-version.sh"
+release_paths=(Cargo.toml Cargo.lock CHANGELOG.md)
+source_arguments=()
+for path in "${release_paths[@]}"; do source_arguments+=(--allow "$path"); done
 case "$operation" in
+    files) printf '%s\0' "${release_paths[@]}" ;;
     version) bash "$reader" Cargo.toml ;;
     preflight)
-        if ! bash "$root/scripts/ci/check-release-source.sh" \
-            --allow Cargo.toml --allow Cargo.lock --allow CHANGELOG.md; then
+        if ! bash "$root/scripts/ci/check-release-source.sh" "${source_arguments[@]}"; then
             echo 'release preflight refused; this attempt has not started validation or version preparation' >&2
             exit 1
         fi
         current_version="$(bash "$reader" Cargo.toml)"
         [[ "$current_version" == "${RELEASE_PREVIOUS:?}" ]] || exit 1
-        for path in Cargo.toml Cargo.lock CHANGELOG.md; do
+        for path in "${release_paths[@]}"; do
             [[ -f "$path" && ! -L "$path" ]] || exit 1
         done
         # Refuse conflicting pending notes before a gate or preparation intent.
@@ -47,11 +50,10 @@ case "$operation" in
             [[ -z "${RELEASE_COMMIT:-}" ]] || exit 1
         fi
         bash "$root/scripts/ci/cargo-release-metadata.sh" check ic-metrics --manifest-order
-        bash "$root/scripts/ci/check-release-source.sh" \
-            --allow Cargo.toml --allow Cargo.lock --allow CHANGELOG.md
+        bash "$root/scripts/ci/check-release-source.sh" "${source_arguments[@]}"
         if [[ "$operation" == commit-check ]]; then
-            git diff --quiet -- Cargo.toml Cargo.lock CHANGELOG.md
+            git diff --quiet -- "${release_paths[@]}"
         fi
         ;;
-    *) echo 'usage: metadata.sh version|preflight|prepare|check|commit-check' >&2; exit 2 ;;
+    *) echo 'usage: metadata.sh files|version|preflight|prepare|check|commit-check' >&2; exit 2 ;;
 esac

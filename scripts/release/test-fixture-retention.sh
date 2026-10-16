@@ -3,7 +3,7 @@ set -euo pipefail
 export RELEASE_DELIVERY=direct
 
 # Exercise real consumer fixtures through controlled executable failures.
-# Keep intentional failures under the native CI artifact owner, including inputs.
+# Use caller-owned scratch, defaulting to native CI evidence, including inputs.
 root="${BASH_SOURCE[0]}"
 [[ "$root" == /* ]] || root="$PWD/$root"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
@@ -11,12 +11,13 @@ root="${root%/.}"
 mkdir -p "$root/target/evidence/native-ci"
 # shellcheck source=scripts/ci/fixture-lifecycle.sh
 source "$root/scripts/ci/fixture-lifecycle.sh"
-evidence="$(fixture_create "$root/target/evidence/native-ci/fixture-retention.XXXXXX")"
+evidence="$(fixture_create "${TMPDIR:-$root/target/evidence/native-ci}/fixture-retention.XXXXXX")"
 fixture_complete=false
 cleanup() {
     local status=$?
     fixture_completion_status "$status" "$fixture_complete" || status=$?
     if [[ "$status" != 0 ]]; then
+        fixture_replay_logs "${active_log:-}"
         echo "fixture retention check failed; evidence retained: $evidence" >&2
     fi
     exit "$status"
@@ -31,8 +32,6 @@ export FIXTURE_RETENTION_REAL_BASH="$real_bash"
 FIXTURE_RETENTION_REAL_MAKE="$(command -v make)"
 FIXTURE_RETENTION_REAL_CMP="$(command -v cmp)"
 export FIXTURE_RETENTION_REAL_MAKE FIXTURE_RETENTION_REAL_CMP
-FIXTURE_RETENTION_REAL_YQ="${YQ:-$(command -v yq)}"
-export FIXTURE_RETENTION_REAL_YQ
 git -C "$root" rev-parse HEAD > "$evidence/source-commit.txt"
 
 for kind in standard metadata hook; do
@@ -45,21 +44,20 @@ for kind in standard metadata hook; do
     scenarios=(success child)
     if [[ "$kind" == metadata ]]; then scenarios+=(assertion); fi
     if [[ "$kind" == standard ]]; then scenarios+=(publication-child publication-assertion); fi
-    if [[ "$kind" == hook ]]; then scenarios+=(formatter-version); fi
-    if [[ "$kind" == metadata ]]; then scenarios+=(predicate-assertion); fi
+    if [[ "$kind" == hook ]]; then scenarios+=(baseline); fi
     for scenario in "${scenarios[@]}"; do
         run="$evidence/$kind-$scenario"
+        active_log="$run/result.log"
         mkdir -p "$run/tmp" "$run/bin"
         if [[ "$scenario" != success ]]; then
             executable="$child"
             if [[ "$scenario" == publication-child ]]; then executable='make'; fi
+            if [[ "$scenario" == baseline ]]; then executable='make'; fi
             if [[ "$scenario" == *assertion ]]; then executable='cmp'; fi
-            if [[ "$scenario" == formatter-version ]]; then executable=cargo; fi
-            if [[ "$scenario" == predicate-assertion ]]; then executable=yq; fi
             printf '#!%s\n' "$real_bash" > "$run/bin/$executable"
             if [[ "$executable" == cargo ]]; then
                 cat >> "$run/bin/$executable" <<'CARGO'
-if [[ "${1:-}" != generate-lockfile && "${FIXTURE_RETENTION_SCENARIO:-}" != formatter-version ]]; then
+if [[ "${1:-}" != generate-lockfile ]]; then
     exec "$FIXTURE_RETENTION_REAL_CARGO" "$@"
 fi
 CARGO
@@ -72,7 +70,17 @@ case "${1:-}" in
 esac
 BASH
             fi
-            if [[ "$scenario" == publication-child ]]; then
+            if [[ "$scenario" == baseline ]]; then
+                cat >> "$run/bin/$executable" <<'MAKE'
+for argument in "$@"; do
+    if [[ "$argument" == fmt-check ]]; then
+        echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
+        exit 43
+    fi
+done
+exec "$FIXTURE_RETENTION_REAL_MAKE" "$@"
+MAKE
+            elif [[ "$scenario" == publication-child ]]; then
                 cat >> "$run/bin/$executable" <<'MAKE'
 publication=false
 for argument in "$@"; do
@@ -95,44 +103,24 @@ case "$1" in
 esac
 CMP
             fi
-            if [[ "$scenario" == predicate-assertion ]]; then
-                # Return successful parser output contradicting the first assertion.
-                cat >> "$run/bin/$executable" <<'YQ'
-set -euo pipefail
-"$FIXTURE_RETENTION_REAL_YQ" "$@" > "$FIXTURE_RETENTION_PROBE/original.json"
-if [[ ! -e "$FIXTURE_RETENTION_PROBE/changed" ]]; then
-    touch "$FIXTURE_RETENTION_PROBE/changed"
-    echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
-    jq '.workspace.package.version = "0.9.9"' "$FIXTURE_RETENTION_PROBE/original.json"
-else
-    cat "$FIXTURE_RETENTION_PROBE/original.json"
-fi
-YQ
-            elif [[ "$scenario" == formatter-version ]]; then
-                # The expected stdout must not hide this producer's failure.
-                printf '%s\n' 'printf "cargo-sort 2.1.4\n"' >> "$run/bin/$executable"
-            fi
-            if [[ "$scenario" != predicate-assertion ]]; then
-                cat >> "$run/bin/$executable" <<'FAIL'
+            cat >> "$run/bin/$executable" <<'FAIL'
 echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
 exit 43
 FAIL
-            fi
             chmod +x "$run/bin/$executable"
         fi
         expected_status=43
         case "$scenario" in
             success) expected_status=0 ;;
-            predicate-assertion|formatter-version) expected_status=1 ;;
             publication-child) expected_status=1 ;;
         esac
-        fixture_yq="$FIXTURE_RETENTION_REAL_YQ"
-        if [[ "$scenario" == predicate-assertion ]]; then fixture_yq="$run/bin/yq"; fi
-        PATH="$run/bin:$PATH" FIXTURE_RETENTION_SCENARIO="$scenario" \
-            FIXTURE_RETENTION_PROBE="$run" YQ="$fixture_yq" \
+        PATH="$run/bin:$PATH" \
             fixture_probe_effect "$root/$script" "$run" "$prefix" "$expected_status" "$real_bash" \
                 FIXTURE_RETENTION_INJECTED_FAILURE
-        if [[ "$scenario" == success ]]; then continue; fi
+        if [[ "$scenario" == success ]]; then
+            echo "$kind fixture passed (full body; success cleanup checked)"
+            continue
+        fi
         retained="$fixture_effect_retained"
         grep -Fq "fixture retained: $retained" "$run/result.log"
         case "$kind" in
@@ -144,11 +132,6 @@ FAIL
                 fi
                 ;;
             metadata)
-                if [[ "$scenario" == predicate-assertion ]]; then
-                    [[ -f "$retained/version-input/original.toml" && ! -e "$retained/prepared" ]] || exit 1
-                    cmp "$retained/version-input/original.toml" "$retained/version-input/Cargo.toml"
-                    continue
-                fi
                 [[ -f "$retained/prepared/Cargo.toml" && -f "$retained/prepared/setup.log" ]] || exit 1
                 if [[ "$scenario" == assertion ]]; then
                     [[ -f "$retained/prepared/expected-packages" && -f "$retained/prepared/actual-packages" ]] || exit 1
@@ -156,18 +139,26 @@ FAIL
                 fi
                 ;;
             hook)
-                if [[ "$scenario" == formatter-version ]]; then
-                    [[ ! -e "$retained/hook.log" ]] || exit 1
-                    continue
-                fi
                 [[ -f "$retained/hook.log" ]] || exit 1
+                if [[ "$scenario" == baseline ]]; then
+                    grep -Fq FIXTURE_RETENTION_INJECTED_FAILURE "$retained"/formatting-adoption.*/baseline.log
+                fi
                 ;;
         esac
     done
 done
+# Contradict the actual version predicate through the shared assertion probe.
+# The selected prefix runs no fixture body, parser, installer or release effect;
+# full-body metadata and retained-input checks remain above.
+# shellcheck disable=SC2016 # The prefix and bindings execute only in the child.
+fixture_probe_assertion "$root/scripts/release/test-metadata.sh" "$evidence" "$root" metadata-version \
+    --selected "$root/scripts/release/test-metadata.sh" \
+    '[[ "$(bash "$root/scripts/release/metadata.sh" version)" ==' \
+    'RELEASE_PREVIOUS=0.1.1; bash() { printf "0.9.9\n"; }' || exit 1
 # Execute the actual admission fixture with parent-owned evidence destinations.
 # Its synthetic failures must use its own logs and leave the parent untouched.
 run="$evidence/admission-parent"
+active_log="$run/result.log"
 mkdir -p "$run/logs" "$run/failures" "$run/tmp"
 printf 'parent-owned evidence\n' > "$run/expected"
 for destination in logs/sentinel failures/sentinel summary.md; do
@@ -200,14 +191,9 @@ for script in scripts/release/test-standard-release.sh scripts/release/test-meta
     esac
     for scenario in nounset premature "$success"; do
         run="$evidence/cleanup-${name%.sh}-$scenario"
-        probe_source="$run/source"
-        mkdir -p "$probe_source/scripts/ci" "$probe_source/scripts/dev" "$probe_source/.githooks" "$probe_source/crates/ic-metrics/src"
-        cp "$root/scripts/ci/fixture-lifecycle.sh" "$root/scripts/ci/fixture-retention-probes.sh" \
-            "$root/scripts/ci/check-make-execution.sh" "$probe_source/scripts/ci/"
-        # The native fixture observes its checkout before installing its trap.
-        git init --quiet "$probe_source"
+        mkdir -p "$run"
         FIXTURE_PROBE_ROOT_VARIABLE=root FIXTURE_PROBE_DIRECTORY_VARIABLE="$directory_variable" \
-            fixture_probe_exit "$root/$script" "$run" "$probe_source" "${name%.sh}" "$scenario" || exit 1
+            fixture_probe_exit "$root/$script" "$run" "$root" "${name%.sh}" "$scenario" || exit 1
     done
 done
 echo "fixture success cleanup and child/assertion failure retention passed; evidence: $evidence"

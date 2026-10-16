@@ -65,11 +65,6 @@ jobs:
           else
             bash scripts/ci/check-native-host.sh "$EXPECTED_OS" "$EXPECTED_ARCHITECTURE"
           fi
-      - name: Prepare development Rust
-        id: toolchain
-        run: |
-          bash scripts/dev/prepare-rust-toolchain.sh 1.99.0 \
-            --component rustfmt --component clippy --target wasm32-unknown-unknown
       - name: Install native tooling prerequisites
         id: prerequisites
         run: |
@@ -80,6 +75,16 @@ jobs:
             Darwin) brew install xz ;;
             *) echo 'unsupported native host' >&2; exit 1 ;;
           esac 2>&1 | tee target/evidence/native-ci/prerequisites.log
+      - name: Prepare host parsers
+        id: host_tools
+        run: |
+          bash scripts/dev/install-host-tools.sh --consumer "$PWD" \
+            2>&1 | tee target/evidence/native-ci/host-tools.log
+      - name: Prepare development Rust
+        id: toolchain
+        run: |
+          PATH="$PWD/.tools/host/bin:$PATH" bash scripts/dev/prepare-rust-toolchain.sh \
+            --toolchain-file rust-toolchain.toml
       - name: Install and verify the complete common toolset
         id: tools
         uses: ./.github/actions/prepare-common-tools
@@ -113,6 +118,7 @@ jobs:
           HOST_OUTCOME: ${{ steps.native_host.outcome }}
           TOOLCHAIN_OUTCOME: ${{ steps.toolchain.outcome }}
           PREREQUISITES_OUTCOME: ${{ steps.prerequisites.outcome }}
+          HOST_TOOLS_OUTCOME: ${{ steps.host_tools.outcome }}
           TOOL_INPUT_OUTCOME: ${{ steps.tool_inputs.outcome }}
         run: |
           mkdir -p target/evidence/native-ci
@@ -127,10 +133,10 @@ jobs:
               fi ;;
           esac
           git rev-parse HEAD > target/evidence/native-ci/source-commit.txt
-          printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\ntool_inputs=%s\napplication_sources=%s\n' \
+          printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s\napplication_sources=%s\n' \
             "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$TOOLS_OUTCOME" \
             "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
-            "$PREREQUISITES_OUTCOME" "$TOOL_INPUT_OUTCOME" "$APPLICATION_OUTCOME" \
+            "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME" "$APPLICATION_OUTCOME" \
             > target/evidence/native-ci/outcome.txt
           if [[ -f .tools/ic/files.sha256 ]]; then
             cp .tools/ic/files.sha256 target/evidence/native-ci/ic-tool-files.sha256
@@ -139,12 +145,14 @@ jobs:
           fi
           # Shared mechanics; Metrics owns this explicit roster and outer Git custody.
           collection_status=0
+          collection_outcome="$TOOLS_OUTCOME"
+          if [[ "$HOST_TOOLS_OUTCOME" == failure ]]; then collection_outcome=failure; fi
           bash scripts/ci/collect-native-diagnostics.sh \
             "$PWD" "$PWD/target/evidence/native-ci" target/evidence/native-diagnostics.tar.gz \
-            "${RUNNER_TEMP:-${TMPDIR:-/tmp}}" "$TOOLS_OUTCOME" \
+            "${RUNNER_TEMP:-${TMPDIR:-/tmp}}" "$collection_outcome" \
             "$PWD/ci/tool-versions.env" "$PWD/ci/ic-tools.tsv" \
             inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
-            prerequisites.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log \
+            prerequisites.log host-tools.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log \
             ic-tool-files.sha256 ic-tool-pins.tsv ic-tool-host.txt || collection_status=$?
           [[ "$collection_status" != 2 ]] || exit "$collection_status"
           bash scripts/ci/collect-native-evidence.sh \
@@ -156,6 +164,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-diagnostics-${{ matrix.runner }}-${{ github.run_attempt }}
+          compression-level: 0
           path: |
             target/evidence/native-diagnostics.tar.gz
             target/evidence/native-diagnostics.tar.gz.sha256
@@ -167,6 +176,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-${{ matrix.runner }}-${{ github.run_attempt }}
+          compression-level: 0
           path: |
             target/evidence/native-ci.tar.gz
             target/evidence/native-ci.tar.gz.sha256
@@ -179,9 +189,12 @@ jobs:
     steps:
       # actions/checkout v6
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Prepare host parsers
+        run: bash scripts/dev/install-host-tools.sh --consumer "$PWD"
       - name: Prepare minimum Rust
         id: toolchain
         run: |
-          bash scripts/dev/prepare-rust-toolchain.sh 1.91.0 --target wasm32-unknown-unknown
+          PATH="$PWD/.tools/host/bin:$PATH" bash scripts/dev/prepare-rust-toolchain.sh \
+            --workspace-manifest Cargo.toml --target wasm32-unknown-unknown
       - name: Check workspace native and Wasm MSRV
         run: make msrv

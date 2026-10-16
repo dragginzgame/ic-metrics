@@ -23,11 +23,16 @@ trap cleanup EXIT
 source "$root/scripts/ci/make-adapter-probes.sh"
 mkdir -p "$fixture/bin"
 bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$fixture"
+cp "$root/scripts/ci/check-msrv.sh" "$fixture/scripts/ci/"
 real_bash="$(command -v bash)"
 export STANDARD_RELEASE_REAL_BASH="$real_bash"
 export EVENTS="$fixture/events"
 cd "$fixture"
 real_make="$(command -v make)"
+# The actual Make entry projects the metadata owner's NUL-delimited roster.
+(cd "$root" && "$real_make" --no-print-directory release-files) > "$fixture/release-files"
+printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md > "$fixture/expected-release-files"
+cmp "$fixture/expected-release-files" "$fixture/release-files"
 for selection in default direct; do
     if [[ "$selection" == default ]]; then unset RELEASE_DELIVERY; else export RELEASE_DELIVERY=direct; fi
     TMPDIR="$fixture" "$real_bash" "$root/scripts/ci/check-release-commands.sh" "$root" \
@@ -177,7 +182,8 @@ rm "$fixture/bin/bash"
 
 # The real consumer Makefile must leave both pipe descriptors open at every
 # owned Cargo boundary. Cargo effects are substituted; Make admission is real.
-PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 make_probe_parallel_dispatch "$real_make" "$root/Makefile" "$fixture" "$EVENTS" "${cargo_targets[@]}"
+PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 MSRV=prepared-fixture \
+    make_probe_parallel_dispatch "$real_make" "$root/Makefile" "$fixture" "$EVENTS" "${cargo_targets[@]}"
 # Metadata also dispatches Cargo, so its Bash entry must retain the descriptors.
 cp "$fixture/mode-bash" "$fixture/bin/bash"
 PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 make_probe_parallel_dispatch "$real_make" "$root/Makefile" "$fixture" "$EVENTS" "${metadata_targets[@]}"

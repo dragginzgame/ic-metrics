@@ -188,7 +188,7 @@ impl MetricKey {
 /// metric. A reset does; counter/call-context continuity is a separate contract.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MetricIdentity {
-    unit: String,
+    unit: Box<str>,
     epoch: u64,
 }
 
@@ -200,7 +200,7 @@ impl MetricIdentity {
     pub fn new(unit: &str, epoch: u64) -> Result<Self, StoreError> {
         identifier(unit.as_bytes(), MAX_UNIT_BYTES)?;
         Ok(Self {
-            unit: unit.to_owned(),
+            unit: unit.into(),
             epoch,
         })
     }

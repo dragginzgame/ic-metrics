@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.11.6]
+
+### Changed
+
+- Share bounded cursor admission for fixed-size stable record reads, preserving
+  V1 bytes and typed errors. The matched four-type probe is smaller and reduces
+  histogram decoding instructions; see the
+  [decoder comparison](docs/evidence/decoder-cleanup-0116.md).
+- Reuse shared assertion and exit probes without fake parser responses or
+  per-case Git repositories. Retention fixtures honor caller-selected `TMPDIR`,
+  preserving actual metadata, release and retained-input checks.
+- Read CI Rust setup from existing TOML policy through the reviewed Shared
+  Tooling helper ([PR #239](https://github.com/dragginzgame/shared-tooling/pull/239)),
+  preparing pinned host parsers first and retaining setup failures. Remove the
+  hook wrapper's repeated formatter admission and exercise unusual filenames
+  through the actual workflow hashing step.
+- Run complete release/hook fixtures through their retention suite without
+  duplicate CI dispatch, replay unexpected child failures, and upload compressed
+  evidence without another compression pass.
+- Derive the validation Rust floor from Cargo unless explicitly overridden, and
+  give the metadata adapter one release-file roster for Make and source checks.
+- Store immutable metric units without growable-string capacity metadata,
+  preserving V1 records and reducing measured construction/clone instructions;
+  see the [identity comparison](docs/evidence/identity-storage-0116.md).
+
 ## [0.11.5] - 2026-10-16
 
 ### Changed

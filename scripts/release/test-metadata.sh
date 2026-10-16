@@ -50,7 +50,11 @@ mkdir -p "$bootstrap/scripts/release" "$bootstrap/scripts/ci"
 cp "$root/scripts/release/metadata.sh" "$bootstrap/scripts/release/"
 cp "$root/scripts/ci/read-cargo-workspace-version.sh" "$bootstrap/scripts/ci/"
 cp original.toml "$bootstrap/Cargo.toml"
+printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md > "$fixture/expected-release-files"
 for entry in scripts/release/metadata.sh "$bootstrap/scripts/release/metadata.sh"; do
+    # Listing does not parse Cargo or inspect Git; it works without prepared tools.
+    (cd "$bootstrap"; PATH="$fixture/no-tools" "$real_bash" "$entry" files) > "$fixture/release-files"
+    cmp "$fixture/expected-release-files" "$fixture/release-files"
     actual="$(cd "$bootstrap"; CDPATH="$fixture:$root" bash "$entry" version)"
     [[ "$actual" == "$RELEASE_PREVIOUS" ]] || exit 1
 done
