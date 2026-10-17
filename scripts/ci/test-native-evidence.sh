@@ -23,6 +23,8 @@ cleanup() {
     exit "$status"
 }
 trap cleanup EXIT
+# shellcheck source=scripts/ci/fixture-workflow-steps.sh
+source "$root/scripts/ci/fixture-workflow-steps.sh"
 mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
 "$yq" -o=json '.jobs.native.steps' "$root/.github/workflows/ci.yml" > "$fixture/steps.json"
 # These are live workflow effect boundaries, not checks of display prose.
@@ -269,20 +271,10 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         printf 'unrelated log\n' > "$RUNNER_TEMP/tools-check.log"
         : > commands.log
     else
-        for step in host_tools tools tool_inputs application_sources native_ci; do
-            step_status=0
-            "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/$step.sh" > "$step.log" 2>&1 || step_status=$?
-            outcome=success
-            if [[ "$step_status" != 0 ]]; then outcome=failure; status="$step_status"; fi
-            case "$step" in
-                host_tools) HOST_TOOLS_OUTCOME="$outcome" ;;
-                tools) TOOLS_OUTCOME="$outcome" ;;
-                tool_inputs) TOOL_INPUT_OUTCOME="$outcome" ;;
-                application_sources) APPLICATION_OUTCOME="$outcome" ;;
-                native_ci) NATIVE_OUTCOME="$outcome" ;;
-            esac
-            if [[ "$step_status" != 0 ]]; then break; fi
-        done
+        fixture_run_steps "$real_bash" "$fixture/commands" "$PWD" \
+            host_tools HOST_TOOLS_OUTCOME tools TOOLS_OUTCOME \
+            tool_inputs TOOL_INPUT_OUTCOME application_sources APPLICATION_OUTCOME \
+            native_ci NATIVE_OUTCOME || status=$?
     fi
     printf '%s\n' "$status" > status.txt
     case "$scenario" in

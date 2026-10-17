@@ -378,16 +378,9 @@ cmp "$fixture/expected-selected-events" "$ADMISSION_CARGO_EVENTS"
 for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done
 export RELEASE_VERSION=9.8.7
 reject check
-set -- "$TMPDIR"/cargo-release-check.*
-[[ $# == 1 && -d "$1" ]] || exit 1
-grep -F "failed Cargo metadata check retained: $1" "$fixture/result.log" >/dev/null
-for path in Cargo.toml Cargo.lock CHANGELOG.md; do
-    git show "$selected_commit:$path" > "$fixture/expected-metadata"
-    cmp "$fixture/expected-metadata" "$1/source/$path"
-done
-# Shared owns the invalid Git identity, missing-variable and failed-producer
-# matrix. The actual two-package selected source and its rejected-version receipt
-# remain checked above through this consumer's adapter.
+# Keep the adapter's rejection/receipt route; Shared's metadata fixture owns
+# retained source contents and the complete selected-source failure matrix.
+grep -F 'failed Cargo metadata check retained:' "$fixture/result.log" >/dev/null
 
 # Execute this consumer's release-verify adapter, substituting only cheap gates.
 # Nested Make must preserve release selections and never route to the parent CI.
