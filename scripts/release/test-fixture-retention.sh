@@ -38,13 +38,13 @@ for kind in standard metadata hook; do
     case "$kind" in
         standard) script=scripts/release/test-standard-release.sh; prefix=standard-release-entry; child=bash ;;
         metadata) script=scripts/release/test-metadata.sh; prefix=metrics-metadata-test; child=cargo ;;
-        hook) script=scripts/dev/test-format-hook.sh; prefix=metrics-format-hook; child=bash ;;
+        hook) script=scripts/dev/test-format-hook.sh; prefix=formatting-adoption; child='make' ;;
     esac
     cp "$root/$script" "$evidence/$kind-source.sh"
     scenarios=(success child)
     if [[ "$kind" == metadata ]]; then scenarios+=(assertion); fi
     if [[ "$kind" == standard ]]; then scenarios+=(publication-child publication-assertion); fi
-    if [[ "$kind" == hook ]]; then scenarios+=(baseline); fi
+    if [[ "$kind" == hook ]]; then scenarios=(success baseline); fi
     for scenario in "${scenarios[@]}"; do
         run="$evidence/$kind-$scenario"
         active_log="$run/result.log"
@@ -65,7 +65,7 @@ CARGO
             if [[ "$executable" == bash ]]; then
                 cat >> "$run/bin/$executable" <<'BASH'
 case "${1:-}" in
-    */scripts/ci/check-release-commands.sh|*/scripts/ci/check-formatting-hooks.sh) ;;
+    */scripts/ci/check-release-commands.sh) ;;
     *) exec "$FIXTURE_RETENTION_REAL_BASH" "$@" ;;
 esac
 BASH
@@ -122,7 +122,11 @@ FAIL
             continue
         fi
         retained="$fixture_effect_retained"
-        grep -Fq "fixture retained: $retained" "$run/result.log"
+        if [[ "$kind" == hook ]]; then
+            grep -Fxq "Formatting adoption evidence retained: $retained" "$run/result.log"
+        else
+            grep -Fq "fixture retained: $retained" "$run/result.log"
+        fi
         case "$kind" in
             standard)
                 [[ -f "$retained/output" ]] || exit 1
@@ -139,22 +143,11 @@ FAIL
                 fi
                 ;;
             hook)
-                [[ -f "$retained/hook.log" ]] || exit 1
-                if [[ "$scenario" == baseline ]]; then
-                    grep -Fq FIXTURE_RETENTION_INJECTED_FAILURE "$retained"/formatting-adoption.*/baseline.log
-                fi
+                grep -Fq FIXTURE_RETENTION_INJECTED_FAILURE "$retained/baseline.log"
                 ;;
         esac
     done
 done
-# Contradict the actual version predicate through the shared assertion probe.
-# The selected prefix runs no fixture body, parser, installer or release effect;
-# full-body metadata and retained-input checks remain above.
-# shellcheck disable=SC2016 # The prefix and bindings execute only in the child.
-fixture_probe_assertion "$root/scripts/release/test-metadata.sh" "$evidence" "$root" metadata-version \
-    --selected "$root/scripts/release/test-metadata.sh" \
-    '[[ "$(bash "$root/scripts/release/metadata.sh" version)" ==' \
-    'RELEASE_PREVIOUS=0.1.1; bash() { printf "0.9.9\n"; }' || exit 1
 # Execute the actual admission fixture with parent-owned evidence destinations.
 # Its synthetic failures must use its own logs and leave the parent untouched.
 run="$evidence/admission-parent"
@@ -180,7 +173,7 @@ echo 'Admission fixture preserves inherited parent logs and summary'
 # Probe actual initialization/cleanup prefixes through the shared owner.
 # Consumer rosters and successful diagnostic retention remain explicit here.
 for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \
-    scripts/release/test-release-admission.sh scripts/dev/test-format-hook.sh \
+    scripts/release/test-release-admission.sh \
     scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh; do
     name="${script##*/}"
     success=completed

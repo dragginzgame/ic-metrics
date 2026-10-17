@@ -101,9 +101,9 @@ the same owning boundary as its identity change.
 For per-operation means, maxima or distributions, keep aggregates, summaries or
 histograms. Counting events with `MeasurementAggregate::record(1)` also preserves
 quality, but retains observation statistics that a scalar total does not need.
-The optional stable adapter currently admits only those three observation types;
-it does not encode the scalar counter. Do not reinterpret an existing stored kind
-or extract persistence and lifecycle policy into this arithmetic type.
+The optional stable adapter's [store guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics-stable/README.md#store-operations)
+owns supported durable operations and host integration. Do not reinterpret an
+existing stored kind or extract persistence and lifecycle policy into this arithmetic type.
 
 ### Admission and attribution
 

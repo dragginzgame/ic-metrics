@@ -60,8 +60,9 @@ append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
 The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
-counters, aggregates, summaries and histograms in one host-owned stable B-tree map using
-`ic-memory`'s collection types. Namespaced records retain units, reset epochs,
+counters, aggregates, summaries and histograms in one host-owned stable B-tree map,
+using IC Storage's governed collection over admitted IC Memory handles.
+Namespaced records retain units, reset epochs,
 wide totals and overflow flags. Adding `ic-metrics-stable` is the opt-in; existing
 arithmetic callers remain volatile. The adapter requires Rust 1.91 on host and
 Wasm. Hosts own allocation/bootstrap, synchronization, write cadence and resets;
@@ -184,12 +185,12 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both packages require Rust 1.91 on native and Wasm. Consumers select the 0.11
+Both packages require Rust 1.91 on native and Wasm. Consumers select the 0.13
 contract in the root catalog and qualify their owning integration:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.11"
+ic-metrics = "0.13"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

@@ -22,7 +22,7 @@ trap cleanup EXIT
 # shellcheck source=scripts/ci/make-adapter-probes.sh
 source "$root/scripts/ci/make-adapter-probes.sh"
 mkdir -p "$fixture/bin"
-bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$fixture"
+bash "$root/scripts/ci/prepare-script-fixture.sh" "$root" "$fixture" make/consumer.mk
 mkdir -p "$fixture/ci"
 cp "$root/ci/release-delivery.txt" "$fixture/ci/"
 cp "$root/scripts/ci/check-msrv.sh" "$root/scripts/ci/read-cargo-workspace-rust-version.sh" "$fixture/scripts/ci/"

@@ -148,7 +148,7 @@ setup() {
 }
 prepare_validation_adapter() {
     mkdir -p "$worktree/tmp"
-    bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$worktree"
+    bash "$root/scripts/ci/prepare-script-fixture.sh" "$root" "$worktree" make/consumer.mk
     mkdir -p "$worktree/ci"
     cp "$root/ci/release-delivery.txt" "$worktree/ci/"
     cp "$root"/scripts/ci/{run-validation-targets,verify-file-checksum}.sh scripts/ci/

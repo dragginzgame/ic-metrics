@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.13.4]
+
+- Consolidate truncated-record checks across all four durable metric families,
+  including empty and populated summaries. Every rejected prefix must preserve
+  stored bytes and perform no writes; independent V1 byte fixtures remain intact.
+- Remove overlapping native/Wasm check passes from CI while retaining strict
+  Clippy coverage and standalone check commands. Point arithmetic documentation
+  to the stable adapter's current store guide for persistence capabilities.
+- Delegate hook failure-log replay and scratch custody to Shared Tooling; remove
+  the extra fixture and redundant assertion meta-test while preserving actual
+  metadata and retention checks. Correct README adoption to the 0.13 contract
+  and IC Storage's governed map over IC Memory handles.
+- Adopt reviewed Shared Tooling 0.23.0 and its companion-closure fixture preparer,
+  retaining unchanged tool pins and the workflow executor from
+  [Shared PR #276 — Consumer fixture execution and formatting diagnostics](https://github.com/dragginzgame/shared-tooling/pull/276).
+
 ## [0.13.3] - 2026-10-17
 
 - Reuse Shared Tooling's shell fixture executor while retaining Metrics' workflow
