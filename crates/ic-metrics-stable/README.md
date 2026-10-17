@@ -3,7 +3,7 @@
 Optional durable counter, aggregate, summary and histogram snapshots in **one stable
 B-tree map per canister**. Multiple components share that map with permanent
 namespace/name keys. Adding this package is the opt-in: `ic-metrics` alone stays
-allocation-free, dependency-free, `no_std` and volatile. This adapter uses `std`,
+allocation-free, dependency-free, `no_std` and volatile. This adapter uses `std` and IC Storage’s governed upstream-map facade,
 allocates bounded records and supports native hosts and Wasm with Rust 1.91.
 
 The host owns one `ic-memory` allocation pool and bootstrap. It declares one
@@ -43,40 +43,78 @@ Histogram loads admit at most 256 strictly increasing bounds before reading a ro
 invalid expected bounds return `StoreError::InvalidState(InvalidBounds)`.
 Serialization, kind selection and continuity dispatch are private implementation.
 
-The following example reopens the same collection in native memory. It proves
-storage/codec behavior, not IC upgrade execution or instruction/cycle costs:
+The 0.13 collection boundary uses `ic_storage::adapter::StableBTreeMap` through
+`MetricsMap`. Its generic parameter is the runtime's backing memory, rather than
+an already opened virtual handle. Replace raw collection constructors with
+`MetricsMap::init` for known fresh storage and `MetricsMap::load` for a known
+retained map, supplying `runtime.open_memory(permanent_key)?` in either case.
+The wrapper preserves the existing upstream B-tree format and Metrics V1 rows;
+it does not adopt IC Storage's custom tree format or allocate another memory ID.
+
+This complete native example owns bootstrap once, opens only admitted handles,
+checkpoints all four families and reopens the same map. It proves storage/codec
+behavior, not IC upgrade execution or instruction/cycle costs:
 
 ```rust
-use ic_memory::ic_stable_structures::{BTreeMap, VectorMemory};
-use ic_metrics::MeasurementSummary;
-use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsStore};
+use ic_memory::{
+    GenericAllocationPolicy, MemoryAllocationPool, MemoryAuthority, MemoryRequest,
+    MemoryRuntime, SealedDeclarationSnapshot, ic_stable_structures::VectorMemory,
+};
+use ic_metrics::{MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementSummary};
+use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsMap, MetricsStore};
 
-# fn main() -> Result<(), ic_metrics_stable::StoreError> {
-let memory = VectorMemory::default();
-let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
-let key = MetricKey::new("canic", "endpoint.create")?;
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+const STORE_KEY: &str = "app.metrics.v1";
+let pool = MemoryAllocationPool::new(
+    vec![MemoryAuthority::new("app", "app.")?], vec![],
+)?;
+let declarations = SealedDeclarationSnapshot::new(vec![MemoryRequest::new("app", STORE_KEY)?])?;
+let mut runtime = MemoryRuntime::new(VectorMemory::default())?;
+runtime.bootstrap(&declarations, &pool, &GenericAllocationPolicy)?;
+let mut store = MetricsStore::new(MetricsMap::init(runtime.open_memory(STORE_KEY)?));
 let identity = MetricIdentity::new("instructions", 0)?;
-let mut summary = store.load_summary(&key, &identity)?
-    .unwrap_or(MeasurementSummary::EMPTY);
+let key = MetricKey::new("canic", "endpoint.create")?;
+let mut summary = store.load_summary(&key, &identity)?.unwrap_or(MeasurementSummary::EMPTY);
 summary.record(42);
 store.save_summary(&key, &identity, &summary)?;
+
+let bytes_key = MetricKey::new("app", "processed.bytes")?;
+let bytes_identity = MetricIdentity::new("bytes", 0)?;
+let mut bytes = store.load_counter(&bytes_key, &bytes_identity)?.unwrap_or(MeasurementCounter::ZERO);
+bytes.add(32_768);
+store.save_counter(&bytes_key, &bytes_identity, &bytes)?;
+let aggregate_key = MetricKey::new("app", "batch.size")?;
+let items = MetricIdentity::new("items", 0)?;
+let mut aggregate = store.load_aggregate(&aggregate_key, &items)?.unwrap_or(MeasurementAggregate::EMPTY);
+aggregate.record(3);
+store.save_aggregate(&aggregate_key, &items, &aggregate)?;
+let histogram_key = MetricKey::new("app", "batch.distribution")?;
+let bounds = [0, 10];
+let mut histogram = store.load_histogram(&histogram_key, &items, &bounds)?
+    .unwrap_or(MeasurementHistogram::new(bounds)?);
+histogram.record(3);
+store.save_histogram(&histogram_key, &items, &histogram)?;
 drop(store);
 
-let reopened = MetricsStore::new(BTreeMap::init(memory));
+let reopened = MetricsStore::new(MetricsMap::load(runtime.open_memory(STORE_KEY)?));
 assert_eq!(reopened.load_summary(&key, &identity)?, Some(summary));
+assert_eq!(reopened.load_counter(&bytes_key, &bytes_identity)?, Some(bytes));
+assert_eq!(reopened.load_aggregate(&aggregate_key, &items)?, Some(aggregate));
+assert_eq!(reopened.load_histogram(&histogram_key, &items, &bounds)?, Some(histogram));
 # Ok(())
 # }
 ```
 
-For an IC host, import collections through
-`ic_memory::ic_stable_structures` so their memory types match, and supply
-`ic_memory::RuntimeMemory` issued by the admitted, committed runtime. The host retains its
-bootstrapped runtime and injects the opened memory for the permanent metrics key;
-open that store's map under its existing collection lifecycle contract. `BTreeMap::init`
-can initialize unrecognized memory: never use it as a recovery fallback for an
-unknown or corrupt store. The host must establish that a region is new or belongs
-to this map. Allocator/collection corruption and capacity traps remain upstream
-contracts; typed adapter errors cover identifiers, values and numeric admission.
+Production hosts retain one bootstrapped runtime and inject the opened handle
+for the permanent metrics key. IC Storage requires `ic_memory::RuntimeMemory`
+when opening the collection; a raw backing or raw upstream map cannot enter
+`MetricsStore`. Memory 0.45 handles can still be cloned: the host must prevent
+concurrent collections over the same allocation. Drop each collection before
+reopening. `MetricsMap::init` can initialize unrecognized memory; never use it as
+an unknown/corrupt-store recovery fallback. Hosts own the new-versus-retained
+format decision. Allocation/collection corruption and capacity traps remain
+upstream contracts; typed adapter errors cover identifiers, values and numeric
+admission.
 
 ## Durable contract
 
@@ -127,25 +165,7 @@ update-message boundary. Absent and stored zero remain distinct. Exact
 later clear its flag or decrease without explicit removal and a new reset epoch.
 These diagnostics never replace authoritative balances, quotas or ledger debt.
 
-```rust
-use ic_memory::ic_stable_structures::{BTreeMap, VectorMemory};
-use ic_metrics::MeasurementCounter;
-use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsStore};
-
-# fn main() -> Result<(), ic_metrics_stable::StoreError> {
-let mut store = MetricsStore::new(BTreeMap::init(VectorMemory::default()));
-let key = MetricKey::new("app", "processed.bytes")?;
-let identity = MetricIdentity::new("bytes", 0)?;
-let mut bytes = store.load_counter(&key, &identity)?
-    .unwrap_or(MeasurementCounter::ZERO);
-bytes.add(32_768);
-store.save_counter(&key, &identity, &bytes)?;
-assert_eq!(store.load_counter(&key, &identity)?, Some(bytes));
-# Ok(())
-# }
-```
-
-This native example verifies codec/storage behavior, not IC checkpoint costs or
+The native example verifies codec/storage behavior, not IC checkpoint costs or
 upgrade execution. Hosts choose which completed work contributes and when to
 write; persistence does not establish attribution or reset continuity.
 Stable map reads/writes add allocation and IC costs. The repository's frozen
@@ -155,25 +175,3 @@ costs under a matched workload. Batch observations before checkpointing at the
 owning message boundary; measured costs depend on workload, map state and cadence.
 The arithmetic-only cost evidence and native reopen tests retain their separate
 scope and do not qualify live consumer execution.
-
-```rust
-use ic_memory::ic_stable_structures::{BTreeMap, VectorMemory};
-use ic_metrics::{MeasurementAggregate, MeasurementHistogram};
-use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsStore};
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
-let mut store = MetricsStore::new(BTreeMap::init(VectorMemory::default()));
-let identity = MetricIdentity::new("items", 0)?;
-let total_key = MetricKey::new("app", "batch.size")?;
-let mut aggregate = store.load_aggregate(&total_key, &identity)?
-    .unwrap_or(MeasurementAggregate::EMPTY);
-aggregate.record(3);
-store.save_aggregate(&total_key, &identity, &aggregate)?;
-let distribution_key = MetricKey::new("app", "batch.distribution")?;
-let bounds = [0, 10];
-let mut histogram = store.load_histogram(&distribution_key, &identity, &bounds)?
-    .unwrap_or(MeasurementHistogram::new(bounds)?);
-histogram.record(3);
-store.save_histogram(&distribution_key, &identity, &histogram)?;
-# Ok(())
-# }
-```

@@ -65,6 +65,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-memory"
+version = "0.47.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb7b7b796f475840ef38d8eaefab4e37fa6bd8c655c3ba3221d4391e9a5de187"
+dependencies = [
+ "ciborium",
+ "ic-stable-structures",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "ic-metrics"
 version = "0.12.0"
 
@@ -72,8 +84,9 @@ version = "0.12.0"
 name = "ic-metrics-stable"
 version = "0.12.0"
 dependencies = [
- "ic-memory",
+ "ic-memory 0.47.0",
  "ic-metrics",
+ "ic-storage",
 ]
 
 [[package]]
@@ -83,6 +96,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ee3372ddc0cf2a747fc26ce2d075a240ed6bfab151e63bc70109e8967f7ce6f"
 dependencies = [
  "ic_principal",
+]
+
+[[package]]
+name = "ic-storage"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f8f32bc383c0332e671dcb7caf319608988e59c21351de82db4009985a79404"
+dependencies = [
+ "ic-memory 0.45.0",
+ "ic-stable-structures",
 ]
 
 [[package]]

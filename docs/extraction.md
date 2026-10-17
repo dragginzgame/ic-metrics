@@ -16,11 +16,16 @@ crate documentation and supplies compiled examples.
 | `summarize_samples` | Sort a caller-owned finite floating-point slice without allocation; project mean, median and a selected observed nearest-rank value. No retained state, collection, attribution or serialization. |
 | `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics. Optional stable checkpoints retain only its scalar state. |
 
-In the current 0.11 contract, summaries and histograms project count, total,
+Summaries and histograms project count, total,
 maximum, mean and scaled mean through `aggregate()`. The summary's latest
 observation remains summary-owned. Consumers updating from before 0.10 replace
 the removed summary forwarding methods with aggregate projections; 0.11 also
 requires Rust 1.91 on native and Wasm. Each consumer qualifies its own integration.
+
+`validate_histogram_bounds` admits borrowed strictly increasing bounds without
+constructing temporary measurement state. Construction, restored-state admission
+and the stable adapter share this ordering rule. Stored bytes still receive
+independent arithmetic validation; the adapter owns its bound-count limit.
 
 The tracked integer APIs use `u64` observations, sample counts and bucket counts; accumulated
 quantities and means use `u128`. Zero is a valid observation. Empty aggregates
@@ -75,15 +80,20 @@ separate contracts; there is no attribution-mode switch or product dependency.
 
 The optional [stable package](../crates/ic-metrics-stable/README.md) owns validated
 V1 snapshots for counters, aggregates, summaries and histograms in one host-supplied
-`ic-memory` B-tree map. One permanent store allocation resolves to one memory ID;
+governed upstream B-tree map from `ic_storage::adapter`. Its opening requires an
+admitted `ic-memory::RuntimeMemory` handle. The prepared 0.13 collection API takes
+the runtime's backing type as its generic argument, rather than an opened virtual
+handle. IC Storage's upstream facade preserves existing map bytes; its custom
+tree format is not used. One permanent store allocation resolves to one memory ID;
 namespace/name keys distinguish rows. Hosts own bootstrap, map initialization,
 update-message synchronization, write cadence, authorization and resets. Queries
 cannot make stable writes durable, and adapter errors never silently reset data.
-The prepared 0.12 API uses concrete load/save operations for each metric family;
+The 0.12 API uses concrete load/save operations for each metric family;
 histogram loads take bounds directly. Codec/kind and continuity dispatch remain
 private, without a public generic trait or capability-token surface. The core has no
 serialization or stable-memory dependency. Scalar checkpoints use
 distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
+The codec owns typed kind admission; stored numeric tags remain unchanged.
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
 owns bounded structural inspection and its managed installation guide. Optional

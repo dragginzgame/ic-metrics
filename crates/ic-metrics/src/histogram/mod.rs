@@ -177,7 +177,7 @@ impl<const N: usize> MeasurementHistogram<N> {
         overflow_count_overflowed: bool,
         aggregate: MeasurementAggregate,
     ) -> Result<Self, MeasurementStateError> {
-        if validate_bounds(&upper_bounds).is_err() {
+        if validate_histogram_bounds(&upper_bounds).is_err() {
             return Err(MeasurementStateError::InvalidBounds);
         }
         if let Err(error) = validate_distribution(
@@ -210,7 +210,7 @@ impl<const N: usize> MeasurementHistogram<N> {
     /// Returns [`HistogramBoundsError`] for the first duplicate or descending
     /// bound. The error identifies the right-hand bound in that pair.
     pub const fn new(upper_bounds: [u64; N]) -> Result<Self, HistogramBoundsError> {
-        if let Err(error) = validate_bounds(&upper_bounds) {
+        if let Err(error) = validate_histogram_bounds(&upper_bounds) {
             return Err(error);
         }
         Ok(Self {
@@ -426,13 +426,25 @@ impl<const N: usize> MeasurementHistogram<N> {
     }
 }
 
-// Borrow bounds for both construction and restoration, without temporary state.
-const fn validate_bounds<const N: usize>(
-    upper_bounds: &[u64; N],
-) -> Result<(), HistogramBoundsError> {
+/// Validate borrowed inclusive histogram bounds without constructing a histogram.
+///
+/// Empty bounds, zero and `u64::MAX` are valid. This checks ordering only;
+/// storage adapters own their bound-count limits and units remain caller-owned.
+///
+/// # Errors
+/// Returns [`HistogramBoundsError`] for the first duplicate or descending bound,
+/// identifying the right-hand bound in that pair.
+///
+/// ```
+/// use ic_metrics::validate_histogram_bounds;
+/// assert_eq!(validate_histogram_bounds(&[]), Ok(()));
+/// assert_eq!(validate_histogram_bounds(&[0, 10, u64::MAX]), Ok(()));
+/// assert_eq!(validate_histogram_bounds(&[10, 10]).unwrap_err().index(), 1);
+/// ```
+pub const fn validate_histogram_bounds(upper_bounds: &[u64]) -> Result<(), HistogramBoundsError> {
     let mut index = 1;
-    while index < N {
-        // Both indices are within the array, including when N is zero.
+    while index < upper_bounds.len() {
+        // Both indices are within the slice, including when it is empty.
         if upper_bounds[index - 1] >= upper_bounds[index] {
             return Err(HistogramBoundsError { index });
         }
