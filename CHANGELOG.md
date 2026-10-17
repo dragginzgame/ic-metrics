@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.13.3]
+
+- Reuse Shared Tooling's shell fixture executor while retaining Metrics' workflow
+  scenarios and archive checks. Keep generic release-recovery assertions with
+  their shared owner and current guidance separate from historical handoffs
+  ([Shared PR #276 — Share ordered shell fixture execution and outcomes](https://github.com/dragginzgame/shared-tooling/pull/276)).
+- Adopt Shared Tooling 0.21.0, including Rust policy admission fixes. Common tool
+  pins are unchanged; optional IC tools select ICP CLI 1.7.0. Developers using
+  that bundle must rerun `make install-ic-tools` before its offline check.
+
 ## [0.13.2] - 2026-10-17
 
 - Reuse IC Memory's admitted fixture bootstrap and express fixed codec sizes as
