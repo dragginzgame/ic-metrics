@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.13.4]
+## [0.13.4] - 2026-10-17
 
 - Consolidate truncated-record checks across all four durable metric families,
   including empty and populated summaries. Every rejected prefix must preserve
