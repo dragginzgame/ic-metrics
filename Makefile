@@ -105,6 +105,7 @@ release-tools-check:
 	bash scripts/release/test-fixture-retention.sh
 
 # Keep order explicit: stop on a failed gate, including any Clippy warning.
+# Clippy checks all native targets and Wasm libraries; standalone checks stay focused.
 ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
 	+$(MAKE) --no-print-directory check-doc-links
@@ -113,8 +114,6 @@ ci:
 	+$(MAKE) --no-print-directory ci-evidence-check
 	+$(MAKE) --no-print-directory release-tools-check
 	+$(MAKE) --no-print-directory fmt-check
-	+$(MAKE) --no-print-directory check
-	+$(MAKE) --no-print-directory check-wasm
 	+$(MAKE) --no-print-directory clippy
 	+$(MAKE) --no-print-directory docs-check
 	+$(MAKE) --no-print-directory test

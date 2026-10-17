@@ -140,7 +140,11 @@ Run full local suites only for an explicitly authorized release or an explicit
 request for those checks. The full gate is `make ci`, then workspace-native/Wasm `make msrv`; reuse passing evidence only for unchanged inputs. Full CI
 admits tools and pins before compilation, denies Clippy warnings, and checks
 builds, docs and tests for both packages. Configured CI and required branch
-checks remain unchanged. Inspection and documentation-only work use narrower
+checks remain unchanged. Strict native all-target and Wasm library Clippy supply
+CI type checking; `make check` and `make check-wasm` remain focused entrypoints.
+Both workspace packages currently contain only libraries. If other Wasm targets
+are added, extend the Clippy target selection to preserve their CI coverage.
+Inspection and documentation-only work use narrower
 checks. [AGENTS.md](../AGENTS.md) retains product constraints and separate release
 and publication authority.
 
@@ -190,8 +194,9 @@ Per-target Make admission and parallel dispatch use shared probes against the
 actual consumer Makefile. Each target refuses ignore-errors, dry-run, touch and
 question modes before effects. Shared Tooling owns exhaustive flag aliases and
 inherited/replaced/hidden-flag permutations; Metrics owns target lists and stubs.
-The shared `prepare-make-fixture.sh` copies the common Make/include runner
-skeleton; release fixtures add their local validation logger/checksum inputs.
+The shared `prepare-script-fixture.sh` copies the declared companion closure
+rooted at `make/consumer.mk`; release fixtures add their local validation
+logger/checksum inputs.
 The exhaustive release-root isolation matrix stays with Shared Tooling; Metrics
 keeps one actual include-admission check. Workflow run bodies use the shared
 unique-step extractor, while ordering, conditions and execution remain local.
@@ -224,8 +229,8 @@ paths. Successful cleanup affects only invocation-owned scratch, while failed
 inputs stay under caller-selected `TMPDIR`, defaulting to native CI evidence for
 the retention fixture. Its exit probes use shared setup/dispatch against the real
 read-only source checkout; no per-case Git repository or helper tree is built.
-The version predicate uses the shared selected-assertion probe, while actual
-metadata bodies and retained-input checks remain independent. Substitute execution does not
+Shared Tooling owns assertion-probe mechanics; Metrics exercises actual metadata
+bodies and retained inputs. Substitute execution does not
 prove live GitHub release recovery or canister measurement behavior.
 
 `make release-tools-check` runs the retention suite as the single CI entry for
@@ -235,7 +240,8 @@ fixture with parent-owned evidence destinations. Failure/custody probes remain
 additional checks. CI does not run these bodies again as separate gates;
 `make hook-check` and the standalone scripts remain focused entrypoints.
 Unexpected child failures replay their active log before reporting retained
-evidence.
+evidence. The hook wrapper delegates directly to the shared checker, which
+replays baseline and per-checkout hook logs and owns its single scratch directory.
 
 `scripts/release/metadata.sh files` owns the NUL-delimited release-file roster
 projected by `make release-files`. The same roster feeds source admission,

@@ -182,6 +182,44 @@ fn assert_rejected_record<T: crate::metric::StoredMetric + std::fmt::Debug>(
 }
 
 #[test]
+fn truncated_records_reject_all_metric_families_without_writes() {
+    fn check<T: crate::metric::StoredMetric + std::fmt::Debug>(value: &T) {
+        let memory = WriteCountingMemory::default();
+        let writes = memory.writes.clone();
+        let mut store = MetricsStore::new(map(memory));
+        let key = key("app");
+        let identity = identity();
+        let bytes = encode(&identity, value);
+        for length in 0..bytes.len() {
+            let truncated = bytes[..length].to_vec();
+            store.map.insert(key.0.clone(), truncated.clone());
+            assert_rejected_record(
+                &mut store,
+                &writes,
+                &key,
+                &identity,
+                value,
+                (truncated, StoreError::MalformedRecord),
+            );
+        }
+    }
+
+    check(&Aggregate::EMPTY);
+    let mut aggregate = Aggregate::EMPTY;
+    aggregate.record(7);
+    check(&aggregate);
+    check(&Summary::EMPTY);
+    check(&Summary::from_parts(aggregate, Some(7)).unwrap());
+    check(&Counter::ZERO);
+    check(&Counter::from_parts(7, false).unwrap());
+    let mut histogram = Histogram::new([0, 10]).unwrap();
+    check(&histogram);
+    histogram.record(5);
+    check(&histogram);
+    check(&Histogram::new([]).unwrap());
+}
+
+#[test]
 fn stored_unit_bytes_preserve_malformed_and_identity_errors() {
     let identity = MetricIdentity::new("x", 3).unwrap();
     let encoded = encode(&identity, &Aggregate::EMPTY);
@@ -340,24 +378,10 @@ fn exact_caps_and_overflow_flags_survive_storage_and_continue() {
 }
 
 #[test]
-fn corrupted_records_never_reset_or_overwrite_implicitly() {
-    let memory = WriteCountingMemory::default();
-    let writes = memory.writes.clone();
-    let mut store = MetricsStore::new(map(memory));
+fn aggregate_v1_envelope_errors_and_explicit_removal() {
+    let mut store = store();
     let key = key("app");
     let bytes = encode(&identity(), &Aggregate::EMPTY);
-    for length in 0..bytes.len() {
-        let truncated = bytes[..length].to_vec();
-        store.map.insert(key.0.clone(), truncated.clone());
-        assert_rejected_record(
-            &mut store,
-            &writes,
-            &key,
-            &identity(),
-            &Aggregate::EMPTY,
-            (truncated, StoreError::MalformedRecord),
-        );
-    }
     let mut unknown = bytes.clone();
     unknown[3] = 99;
     assert_eq!(
@@ -505,9 +529,6 @@ fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
     expected.push(0);
     assert_eq!(bytes, expected);
     let mut malformed = Vec::new();
-    for length in 0..bytes.len() {
-        malformed.push((bytes[..length].to_vec(), StoreError::MalformedRecord));
-    }
     let mut trailing = bytes.clone();
     trailing.push(0);
     malformed.push((trailing, StoreError::MalformedRecord));
@@ -654,17 +675,8 @@ fn bounded_inputs_empty_zero_and_idempotent_checkpoints() {
 }
 
 #[test]
-fn histogram_corruption_and_maximum_bound_size_are_admitted_explicitly() {
+fn histogram_checkpoints_cover_maximum_and_zero_bound_counts() {
     let identity = identity();
-    let mut histogram = Histogram::new([0, 10]).unwrap();
-    histogram.record(5);
-    let bytes = encode(&identity, &histogram);
-    for length in 0..bytes.len() {
-        assert_eq!(
-            codec::decode::<Histogram<2>>(&bytes[..length], &identity, histogram.upper_bounds()),
-            Err(StoreError::MalformedRecord)
-        );
-    }
     let bounds = std::array::from_fn::<_, 256, _>(|index| u64::try_from(index).unwrap());
     let mut value = Histogram::new(bounds).unwrap();
     for observation in [0, 127, 255, 256] {
