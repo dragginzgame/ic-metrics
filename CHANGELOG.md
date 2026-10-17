@@ -4,9 +4,14 @@
 
 ### Changed
 
+- Declare supported release delivery once and reuse Shared Tooling 0.20 admission
+  in Make and standalone metadata commands. Preserve direct-only delivery and
+  refusal before effects, including the merged-preflight entrypoint; package
+  versions, library APIs and dependency selections are unchanged
+  ([#90 — Adopt Shared 0.20 release-delivery admission](https://github.com/dragginzgame/ic-metrics/issues/90)).
 - Own full native recovery-archive packaging and its focused fixtures locally,
   preserving hidden Git state, inventory replay and partial-failure evidence.
-  Retire the shared archive snapshot entrypoint at its existing pinned revision;
+  Retire the shared archive snapshot entrypoint;
   sanitized diagnostic collection stays with Shared Tooling. Published library
   APIs, package versions and dependency selections are unchanged
   ([#89 — Own native recovery-archive packaging](https://github.com/dragginzgame/ic-metrics/issues/89)).

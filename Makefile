@@ -3,6 +3,7 @@
 PACKAGE := ic-metrics
 export MSRV
 export RELEASE_DELIVERY ?= direct
+override RELEASE_DELIVERY_POLICY := $(CURDIR)/ci/release-delivery.txt
 export YQ := $(CURDIR)/.tools/host/bin/yq
 
 # Common commands use this checkout's reviewed snapshot, including scratch exports.
@@ -10,16 +11,7 @@ override SHARED_TOOLING_ROOT := $(CURDIR)
 export SHARED_TOOLING_ROOT
 include make/consumer.mk
 
-# PR delivery requires merged-checkout adapters and qualification we do not own.
-# Refuse it before dispatching any release runner or metadata operation.
-_release_targets := release-patch release-minor release-major release-resume release-version release-preflight release-verify release-prepare-version release-prepared-check release-files release-commit-check release-committed-check release-tagged-check release-push-check
-ifneq ($(filter $(_release_targets),$(MAKECMDGOALS)),)
-ifneq ($(RELEASE_DELIVERY),direct)
-$(error ic-metrics supports RELEASE_DELIVERY=direct only)
-endif
-endif
-
-.PHONY: $(_release_targets)
+.PHONY: $(SHARED_RELEASE_TARGETS)
 
 release-patch release-minor release-major release-resume: export IC_METRICS_RELEASE_CACHE_PREPARE := 1
 

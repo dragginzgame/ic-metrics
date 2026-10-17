@@ -46,9 +46,11 @@ cp Cargo.toml original.toml
 [[ "$(bash "$root/scripts/release/metadata.sh" version)" == "$RELEASE_PREVIOUS" ]] || exit 1
 cmp original.toml Cargo.toml
 bootstrap="$fixture/checkout with spaces"
-mkdir -p "$bootstrap/scripts/release" "$bootstrap/scripts/ci"
+mkdir -p "$bootstrap/scripts/release" "$bootstrap/scripts/ci" "$bootstrap/ci"
 cp "$root/scripts/release/metadata.sh" "$bootstrap/scripts/release/"
 cp "$root/scripts/ci/read-cargo-workspace-version.sh" "$bootstrap/scripts/ci/"
+cp "$root/scripts/ci/check-release-delivery.sh" "$bootstrap/scripts/ci/"
+cp "$root/ci/release-delivery.txt" "$bootstrap/ci/"
 cp original.toml "$bootstrap/Cargo.toml"
 printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md > "$fixture/expected-release-files"
 for entry in scripts/release/metadata.sh "$bootstrap/scripts/release/metadata.sh"; do

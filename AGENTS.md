@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`7f792c92f623a410c521ee3261dc9fb6b24d2f2f` and file digests are recorded in
+`3f87ddc1a0c1616775b2114c42a4adee7376c9b1` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -49,7 +49,8 @@ and [the extraction contract](docs/extraction.md) before implementation.
   a version bump, tag, release or publication. An explicitly requested standard
   release includes its documented gate, commit, tag and atomic push; publication
   remains a separate effect. Preserve branch protections and required checks.
-- This consumer supports `RELEASE_DELIVERY=direct` only. PR release delivery
+- [The delivery policy](ci/release-delivery.txt) selects `direct` only for common
+  Make admission and the standalone metadata adapter. PR release delivery
   needs separately adopted merged-checkout adapters and qualification; ordinary
   contribution PRs retain the shared contribution rules.
 - Use Rust edition 2024 and ordinary directory modules. Public APIs need docs;

@@ -153,6 +153,16 @@ Late metadata checks use Shared's `--manifest-order` option to check ordering
 in that same selected source; literal version preparation never sorts it.
 Neither validation nor release performs artifact cleanup.
 
+Metrics declares its supported delivery in [ci/release-delivery.txt](../ci/release-delivery.txt).
+The shared Make include and standalone metadata adapter admit the selection from
+that same data file before effects. Only direct delivery is qualified; PR,
+invalid and explicitly empty selections refuse, including merged preflight.
+Ordinary goals do not read the policy. The adapter's file listing still needs
+no Cargo, Git or prepared external tools. Generic policy parsing and the complete
+release-hook roster belong to Shared Tooling; Metrics qualifies actual dispatch,
+bootstrap and its source/receipt/recovery boundaries
+([#90 — Adopt Shared 0.20 release-delivery admission](https://github.com/dragginzgame/ic-metrics/issues/90)).
+
 ## Native evidence
 
 Native host admission uses Shared's read-only validator with the local matrix's
