@@ -5,7 +5,34 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.12.0
+## Prepared 0.12.1 tooling adoption
+
+The isolated delivery-policy contribution is based on recovery-packaging
+[PR #88](https://github.com/dragginzgame/ic-metrics/pull/88), source
+`1b45b7574edc16cb43d887a5bad673d20d06b29c`. It canonically refreshes the existing
+snapshot to committed Shared 0.20.0 at
+`3f87ddc1a0c1616775b2114c42a4adee7376c9b1`, with 113 payloads and unchanged tool
+pins. The local recovery archive owner remains in place. Other Shared command
+retirements have no remaining Metrics callers; literal catalogs and optional IC
+setup retain the existing consumer selection.
+
+[The delivery policy](../../ci/release-delivery.txt) declares direct delivery
+once. Common Make admission and the standalone adapter share its read-only
+check, replacing the duplicated predicate and private target roster. Existing
+release file sets, source/index admission, cache preparation and recovery remain
+independent. This is contributor tooling only; library code, package versions,
+selected dependencies, original evidence archives and the normal sibling checkout
+are untouched. Owner integration and hosted native qualification remain separate
+([#90 — Adopt Shared 0.20 release-delivery admission](https://github.com/dragginzgame/ic-metrics/issues/90)).
+
+Focused Linux checks pass: standard release dispatch/refusal, coordinated-package
+metadata, source/index/cache admission and recovery, formatting hooks and failure
+retention, workflow evidence, source selection, recovery packaging, snapshot,
+sourced ShellCheck and documentation links. Release/Cargo/action substitutes are
+labelled by their fixtures; they do not establish a live release or native macOS
+qualification. No full local workspace or MSRV gate was run.
+
+## 0.12.0 preparation record
 
 This is a breaking stable-package API cut. Package/workspace versions remain
 0.11.8; the incoming manifest/lock selection of Memory 0.45.0 is preserved.

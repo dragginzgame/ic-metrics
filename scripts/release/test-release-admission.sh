@@ -149,6 +149,8 @@ setup() {
 prepare_validation_adapter() {
     mkdir -p "$worktree/tmp"
     bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$worktree"
+    mkdir -p "$worktree/ci"
+    cp "$root/ci/release-delivery.txt" "$worktree/ci/"
     cp "$root"/scripts/ci/{run-validation-targets,verify-file-checksum}.sh scripts/ci/
 }
 
@@ -271,10 +273,11 @@ for scenario in standalone-missing explicit-pins-changed; do
             tool_root="$(cd -P "$tool_root" && printf '%s/.' "$PWD")"
             tool_root="${tool_root%/.}"
             cp "$root/scripts/release/metadata.sh" "$tool_root/scripts/release/"
-            for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh cargo-release-preflight.sh check-release-changelog.sh finalize-release-changelog.awk; do
+            for helper in read-cargo-workspace-version.sh check-release-source.sh verify-file-checksum.sh cargo-release-preflight.sh check-release-changelog.sh finalize-release-changelog.awk check-release-delivery.sh; do
                 cp "$root/scripts/ci/$helper" "$tool_root/scripts/ci/"
             done
             cp "$root/ci/tool-versions.env" "$tool_root/ci/"
+            cp "$root/ci/release-delivery.txt" "$tool_root/ci/"
             export ADMISSION_TOOL_ROOT="$tool_root" ADMISSION_TOOL_CHANGE=yes
             export RUST_TOOL_VERSIONS="$fixture/selected Rust pins.env"
             cp "$root/ci/tool-versions.env" "$RUST_TOOL_VERSIONS"
