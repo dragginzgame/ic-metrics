@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.13.2]
+## [0.13.2] - 2026-10-17
 
 - Reuse IC Memory's admitted fixture bootstrap and express fixed codec sizes as
   constants, retaining typed oversized-histogram refusal and unchanged V1 rows.
