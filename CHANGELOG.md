@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.12.1]
+
+### Changed
+
+- Own full native recovery-archive packaging and its focused fixtures locally,
+  preserving hidden Git state, inventory replay and partial-failure evidence.
+  Retire the shared archive snapshot entrypoint at its existing pinned revision;
+  sanitized diagnostic collection stays with Shared Tooling. Published library
+  APIs, package versions and dependency selections are unchanged.
+
 ## [0.12.0] - 2026-10-16
 
 ### Breaking
