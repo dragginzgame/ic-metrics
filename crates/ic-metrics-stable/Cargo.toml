@@ -15,5 +15,8 @@ ic-memory.workspace = true
 ic-metrics.workspace = true
 ic-storage.workspace = true
 
+[dev-dependencies]
+ic-stable-structures.workspace = true
+
 [lints]
 workspace = true

@@ -11,6 +11,12 @@
   The upstream B-tree format, Metrics V1 records and permanent allocation keys
   are preserved; this cut requires no Metrics store reset.
 
+- Select IC Memory 0.47 and IC Storage 0.4 together. Use Memory's narrow
+  root backing imports; handles are exclusive leases. Drop the owning store/map
+  before reopening its allocation, and preserve host backing custody across
+  runtimes. Existing Memory 0.45 allocation images and Metrics V1 records need
+  no reset ([#87 — Finish narrow imports in the governed metrics-map adoption](https://github.com/dragginzgame/ic-metrics/issues/87)).
+
 ### Changed
 
 - Declare supported release delivery once and reuse Shared Tooling admission in
