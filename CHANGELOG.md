@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.1]
+
+- Restore the arithmetic dependency's registry version requirement so the stable
+  package can be published. Release preparation keeps this requirement aligned
+  with future workspace minor versions.
+
 ## [0.13.0] - 2026-10-17
 
 ### Breaking
