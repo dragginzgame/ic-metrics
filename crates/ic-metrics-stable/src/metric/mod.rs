@@ -6,13 +6,13 @@ use ic_metrics::{
 
 use crate::{
     MAX_HISTOGRAM_BOUNDS, StoreError,
-    codec::{self, Decoder},
+    codec::{self, Decoder, MetricKind},
 };
 
 pub trait StoredMetric: Sized + Eq {
     type Configuration: ?Sized;
     fn configuration(&self) -> &Self::Configuration;
-    fn kind() -> u8;
+    const KIND: MetricKind;
     fn same_state(&self, previous: &Self) -> bool {
         self == previous
     }
@@ -38,14 +38,11 @@ fn continues(current: MeasurementAggregate, previous: MeasurementAggregate) -> b
 }
 
 impl StoredMetric for MeasurementCounter {
+    const KIND: MetricKind = MetricKind::Counter;
     type Configuration = ();
 
     fn configuration(&self) -> &() {
         &()
-    }
-
-    fn kind() -> u8 {
-        4
     }
 
     fn encoded_size() -> Result<usize, StoreError> {
@@ -68,14 +65,11 @@ impl StoredMetric for MeasurementCounter {
 }
 
 impl StoredMetric for MeasurementAggregate {
+    const KIND: MetricKind = MetricKind::Aggregate;
     type Configuration = ();
 
     fn configuration(&self) -> &() {
         &()
-    }
-
-    fn kind() -> u8 {
-        1
     }
 
     fn encoded_size() -> Result<usize, StoreError> {
@@ -96,14 +90,11 @@ impl StoredMetric for MeasurementAggregate {
 }
 
 impl StoredMetric for MeasurementSummary {
+    const KIND: MetricKind = MetricKind::Summary;
     type Configuration = ();
 
     fn configuration(&self) -> &() {
         &()
-    }
-
-    fn kind() -> u8 {
-        2
     }
 
     fn encoded_size() -> Result<usize, StoreError> {
@@ -136,14 +127,11 @@ impl StoredMetric for MeasurementSummary {
 }
 
 impl<const N: usize> StoredMetric for MeasurementHistogram<N> {
+    const KIND: MetricKind = MetricKind::Histogram;
     type Configuration = [u64; N];
 
     fn configuration(&self) -> &[u64; N] {
         self.upper_bounds()
-    }
-
-    fn kind() -> u8 {
-        3
     }
 
     fn same_state(&self, previous: &Self) -> bool {

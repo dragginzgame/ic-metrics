@@ -14,12 +14,13 @@
 
 use std::{error::Error, fmt};
 
-use ic_memory::ic_stable_structures::{BTreeMap, Memory};
+use ic_memory::ic_stable_structures::Memory;
 use ic_metrics::{
     MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementStateError,
-    MeasurementSummary,
+    MeasurementSummary, validate_histogram_bounds,
 };
 
+use ic_storage::adapter::StableBTreeMap;
 use metric::StoredMetric;
 
 mod codec;
@@ -155,9 +156,28 @@ impl MetricIdentity {
 /// Byte values make decoding fallible outside `Storable::from_bytes`; both keys
 /// and record writes are bounded by this adapter. The underlying map owns its
 /// structural allocation/decoding contract and may allocate while reading bytes.
-pub type MetricsMap<M> = BTreeMap<Vec<u8>, Vec<u8>, M>;
+/// `M` is the runtime's backing memory; opening this collection requires an
+/// admitted `ic_memory::RuntimeMemory<M>` handle through IC Storage's facade.
+///
+/// ```compile_fail
+/// use ic_memory::ic_stable_structures::VectorMemory;
+/// use ic_metrics_stable::MetricsMap;
+/// let _ = MetricsMap::<VectorMemory>::init(VectorMemory::default());
+/// ```
+pub type MetricsMap<M> = StableBTreeMap<Vec<u8>, Vec<u8>, M>;
 
 /// Shared durable metric snapshots in one application memory region.
+///
+/// The governed collection is required even when a raw upstream map already
+/// carries an admitted memory handle:
+///
+/// ```compile_fail
+/// use ic_memory::{RuntimeMemory, ic_stable_structures::{BTreeMap, VectorMemory}};
+/// use ic_metrics_stable::MetricsStore;
+/// fn raw_map(map: BTreeMap<Vec<u8>, Vec<u8>, RuntimeMemory<VectorMemory>>) {
+///     let _ = MetricsStore::new(map);
+/// }
+/// ```
 pub struct MetricsStore<M: Memory> {
     map: MetricsMap<M>,
 }
@@ -273,7 +293,7 @@ impl<M: Memory> MetricsStore<M> {
         bounds: &[u64; N],
     ) -> Result<Option<MeasurementHistogram<N>>, StoreError> {
         MeasurementHistogram::<N>::encoded_size()?;
-        if bounds.windows(2).any(|pair| pair[0] >= pair[1]) {
+        if validate_histogram_bounds(bounds).is_err() {
             return Err(StoreError::InvalidState(
                 MeasurementStateError::InvalidBounds,
             ));

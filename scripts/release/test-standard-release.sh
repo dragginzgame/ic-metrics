@@ -23,6 +23,8 @@ trap cleanup EXIT
 source "$root/scripts/ci/make-adapter-probes.sh"
 mkdir -p "$fixture/bin"
 bash "$root/scripts/ci/prepare-make-fixture.sh" "$root" "$fixture"
+mkdir -p "$fixture/ci"
+cp "$root/ci/release-delivery.txt" "$fixture/ci/"
 cp "$root/scripts/ci/check-msrv.sh" "$root/scripts/ci/read-cargo-workspace-rust-version.sh" "$fixture/scripts/ci/"
 real_bash="$(command -v bash)"
 export STANDARD_RELEASE_REAL_BASH="$real_bash"
@@ -37,7 +39,8 @@ for selection in default direct; do
     if [[ "$selection" == default ]]; then unset RELEASE_DELIVERY; else export RELEASE_DELIVERY=direct; fi
     TMPDIR="$fixture" "$real_bash" "$root/scripts/ci/check-release-commands.sh" "$root" \
         make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
-        scripts/ci/check-make-execution.sh scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
+        scripts/ci/check-make-execution.sh scripts/ci/check-release-delivery.sh \
+        ci/release-delivery.txt scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
 done
 
 # Keep one real-consumer include-admission check. Shared Tooling owns the
@@ -58,7 +61,7 @@ EXTERNAL
 printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
 cat >> "$fixture/bin/bash" <<'BASH'
 case "${1:-}" in
-    */scripts/ci/check-make-execution.sh) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
+    */scripts/ci/check-make-execution.sh|*/scripts/ci/check-release-delivery.sh) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
     scripts/release/metadata.sh)
         if [[ "${REQUIRE_RUST_CATALOG:-0}" == 1 ]]; then
             [[ "$2" == preflight && "$RUST_TOOL_VERSIONS" == "$EXPECTED_RUST_CATALOG" ]] || exit 1

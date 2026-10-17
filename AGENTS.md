@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`7f792c92f623a410c521ee3261dc9fb6b24d2f2f` and file digests are recorded in
+`1bffab48a1c71015525c9f2d57bdbda215235711` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -11,7 +11,8 @@ and [the extraction contract](docs/extraction.md) before implementation.
 - Own small, allocation-free measurement arithmetic. Keep the library
   dependency-free and `no_std`; consumers own platform counter reads.
 - The separately opted-in `ic-metrics-stable` package owns one-map snapshot
-  encoding and validated restoration, using `ic-memory`'s exact collection types.
+  encoding and validated restoration, using IC Storage's governed upstream-map
+  facade over handles issued by `ic-memory`.
   Its native/Wasm Rust floor is 1.91. Hosts own the allocation key, bootstrap,
   collection lifecycle, identities, synchronization, write cadence and resets.
   Never add stable-memory dependencies to the arithmetic package.

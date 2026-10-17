@@ -17,6 +17,28 @@ const MAGIC: &[u8; 4] = b"ICM\x01";
 const MAX_RECORD_BYTES: usize = 4608;
 const HEADER_BYTES: usize = 4 + 1 + 1 + 8;
 
+/// The frozen V1 discriminators; conversion admits unknown stored bytes here.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum MetricKind {
+    Aggregate = 1,
+    Summary = 2,
+    Histogram = 3,
+    Counter = 4,
+}
+
+impl MetricKind {
+    const fn from_byte(byte: u8) -> Result<Self, StoreError> {
+        match byte {
+            value if value == Self::Aggregate as u8 => Ok(Self::Aggregate),
+            value if value == Self::Summary as u8 => Ok(Self::Summary),
+            value if value == Self::Histogram as u8 => Ok(Self::Histogram),
+            value if value == Self::Counter as u8 => Ok(Self::Counter),
+            _ => Err(StoreError::KindMismatch),
+        }
+    }
+}
+
 // Only the sealed, shape-admitted encoders can write records. Keep their budgets
 // tied to the same constants used by identity and payload-size admission.
 const _: () = {
@@ -105,7 +127,7 @@ pub fn aggregate(bytes: &mut Vec<u8>, value: MeasurementAggregate) {
 pub fn envelope<'a>(
     bytes: &'a [u8],
     identity: &MetricIdentity,
-) -> Result<(u8, Decoder<'a>), StoreError> {
+) -> Result<(MetricKind, Decoder<'a>), StoreError> {
     if bytes.len() > MAX_RECORD_BYTES {
         return Err(StoreError::RecordTooLarge);
     }
@@ -113,10 +135,7 @@ pub fn envelope<'a>(
     if decoder.take(4)? != MAGIC {
         return Err(StoreError::UnsupportedFormat);
     }
-    let kind = decoder.byte()?;
-    if !(1..=4).contains(&kind) {
-        return Err(StoreError::KindMismatch);
-    }
+    let kind = MetricKind::from_byte(decoder.byte()?)?;
     let length = usize::from(decoder.byte()?);
     let unit = decoder.take(length)?;
     crate::identifier(unit, MAX_UNIT_BYTES).map_err(|_| StoreError::MalformedRecord)?;
@@ -142,7 +161,7 @@ pub fn encode<T: crate::metric::StoredMetric>(
     let capacity = HEADER_BYTES + identity.unit.len() + payload_size;
     let mut bytes = Vec::with_capacity(capacity);
     bytes.extend_from_slice(MAGIC);
-    bytes.extend_from_slice(&[T::kind(), length]);
+    bytes.extend_from_slice(&[T::KIND as u8, length]);
     bytes.extend_from_slice(identity.unit.as_bytes());
     bytes.extend_from_slice(&identity.epoch.to_le_bytes());
     value.encode_state(&mut bytes);
@@ -155,7 +174,7 @@ pub fn decode<T: crate::metric::StoredMetric>(
     configuration: &T::Configuration,
 ) -> Result<T, StoreError> {
     let (kind, mut decoder) = envelope(bytes, identity)?;
-    if kind != T::kind() {
+    if kind != T::KIND {
         return Err(StoreError::KindMismatch);
     }
     let value = T::decode_state(configuration, &mut decoder)?;

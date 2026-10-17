@@ -1,12 +1,118 @@
 use std::{cell::Cell, rc::Rc};
 
-use ic_memory::ic_stable_structures::{BTreeMap, Memory, VectorMemory};
+use ic_memory::{
+    GenericAllocationPolicy, MemoryAllocationPool, MemoryAuthority, MemoryRequest, MemoryRuntime,
+    RuntimeMemory, SealedDeclarationSnapshot,
+    ic_stable_structures::{BTreeMap as RawMap, Memory, VectorMemory},
+};
 use ic_metrics::{
     MeasurementAggregate as Aggregate, MeasurementCounter as Counter,
     MeasurementHistogram as Histogram, MeasurementSummary as Summary,
 };
 
-use crate::{MetricIdentity, MetricKey, MetricsStore, StoreError, codec};
+use crate::{MetricIdentity, MetricKey, MetricsMap, MetricsStore, StoreError, codec};
+
+// Isolated native host: declare a permanent key and commit allocation before opening.
+fn memory<M: Memory>(backing: M) -> RuntimeMemory<M> {
+    let mut runtime = MemoryRuntime::new(backing).unwrap();
+    let pool = MemoryAllocationPool::new(
+        vec![MemoryAuthority::new("metrics_test", "metrics.").unwrap()],
+        vec![],
+    )
+    .unwrap();
+    let declarations = SealedDeclarationSnapshot::new(vec![
+        MemoryRequest::new("metrics_test", "metrics.store.v1").unwrap(),
+    ])
+    .unwrap();
+    runtime
+        .bootstrap(&declarations, &pool, &GenericAllocationPolicy)
+        .unwrap();
+    runtime.open_memory("metrics.store.v1").unwrap()
+}
+
+fn map<M: Memory>(backing: M) -> MetricsMap<M> {
+    MetricsMap::init(memory(backing))
+}
+
+#[test]
+fn governed_map_preserves_original_collection_bytes_and_kind_tags() {
+    let backing = VectorMemory::default();
+    let mut original = RawMap::<Vec<u8>, Vec<u8>, _>::init(memory(backing.clone()));
+    let id = MetricIdentity::new("x", 3).unwrap();
+    // Independent frozen V1 empty rows for all four metric families. In the
+    // zero-bound histogram the finite-bound count and overflow are both zero.
+    for (name, kind, payload) in [
+        ("aggregate", 1, 33),
+        ("summary", 2, 41),
+        ("histogram", 3, 44),
+        ("counter", 4, 17),
+    ] {
+        let key = MetricKey::new("app", name).unwrap();
+        let mut bytes = b"ICM\x01".to_vec();
+        bytes.extend_from_slice(&[kind, 1, b'x']);
+        bytes.extend_from_slice(&3_u64.to_le_bytes());
+        bytes.resize(bytes.len() + payload, 0);
+        original.insert(key.0, bytes);
+    }
+    let before: Vec<_> = original
+        .iter()
+        .map(|entry| (entry.key().clone(), entry.value()))
+        .collect();
+    drop(original);
+    let store = MetricsStore::new(map(backing.clone()));
+    let key = |name| MetricKey::new("app", name).unwrap();
+    assert_eq!(
+        store.load_aggregate(&key("aggregate"), &id),
+        Ok(Some(Aggregate::EMPTY))
+    );
+    assert_eq!(
+        store.load_summary(&key("summary"), &id),
+        Ok(Some(Summary::EMPTY))
+    );
+    assert_eq!(
+        store.load_histogram(&key("histogram"), &id, &[]),
+        Ok(Some(Histogram::new([]).unwrap()))
+    );
+    assert_eq!(
+        store.load_counter(&key("counter"), &id),
+        Ok(Some(Counter::ZERO))
+    );
+    assert_eq!(
+        store
+            .into_map()
+            .iter()
+            .map(|entry| (entry.key().clone(), entry.value()))
+            .collect::<Vec<_>>(),
+        before
+    );
+    let mut store = MetricsStore::new(map(backing.clone()));
+    store
+        .save_counter(
+            &key("counter"),
+            &id,
+            &Counter::from_parts(9, false).unwrap(),
+        )
+        .unwrap();
+    drop(store);
+    let original = RawMap::<Vec<u8>, Vec<u8>, _>::load(memory(backing));
+    let bytes = original.get(&key("counter").0).unwrap();
+    assert_eq!(&bytes[..7], b"ICM\x01\x04\x01x");
+    assert_eq!(&bytes[15..31], &9_u128.to_le_bytes());
+}
+
+#[test]
+fn stored_kind_admission_rejects_every_unknown_tag_before_identity() {
+    let id = identity();
+    let mut bytes = encode(&id, &Counter::ZERO);
+    for kind in 0..=u8::MAX {
+        bytes[4] = kind;
+        let result = codec::envelope(&bytes, &id);
+        assert_eq!(result.is_ok(), (1..=4).contains(&kind));
+        if !(1..=4).contains(&kind) {
+            assert!(matches!(result, Err(StoreError::KindMismatch)));
+        }
+    }
+}
 
 fn identity() -> MetricIdentity {
     MetricIdentity::new("instructions", 0).unwrap()
@@ -15,7 +121,7 @@ fn key(namespace: &str) -> MetricKey {
     MetricKey::new(namespace, "work").unwrap()
 }
 fn store() -> MetricsStore<VectorMemory> {
-    MetricsStore::new(BTreeMap::init(VectorMemory::default()))
+    MetricsStore::new(map(VectorMemory::default()))
 }
 
 fn encode<T: crate::metric::StoredMetric>(identity: &MetricIdentity, value: &T) -> Vec<u8> {
@@ -48,7 +154,7 @@ fn stored_unit_bytes_preserve_malformed_and_identity_errors() {
     let encoded = encode(&identity, &Aggregate::EMPTY);
     let memory = WriteCountingMemory::default();
     let writes = memory.writes.clone();
-    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let mut store = MetricsStore::new(map(memory));
     let key = key("app");
     for byte in 0..=u8::MAX {
         let mut bytes = encoded.clone();
@@ -80,7 +186,7 @@ fn stored_unit_bytes_preserve_malformed_and_identity_errors() {
 #[test]
 fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
     let memory = VectorMemory::default();
-    let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
+    let mut store = MetricsStore::new(map(memory.clone()));
     let mut aggregate = Aggregate::EMPTY;
     let mut summary = Summary::EMPTY;
     let mut histogram = Histogram::new([0, 10]).unwrap();
@@ -104,7 +210,7 @@ fn one_map_reopens_mixed_types_and_namespaces_with_wide_totals() {
         .save_counter(&key("backup"), &bytes_identity, &counter)
         .unwrap();
     drop(store);
-    let reopened = MetricsStore::new(BTreeMap::init(memory));
+    let reopened = MetricsStore::new(map(memory));
     assert_eq!(
         reopened.load_aggregate(&key("icydb"), &identity()),
         Ok(Some(aggregate))
@@ -204,7 +310,7 @@ fn exact_caps_and_overflow_flags_survive_storage_and_continue() {
 fn corrupted_records_never_reset_or_overwrite_implicitly() {
     let memory = WriteCountingMemory::default();
     let writes = memory.writes.clone();
-    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let mut store = MetricsStore::new(map(memory));
     let key = key("app");
     let bytes = encode(&identity(), &Aggregate::EMPTY);
     for length in 0..bytes.len() {
@@ -291,7 +397,7 @@ fn v1_encoding_is_explicit_and_rejects_invalid_numeric_state() {
 fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
     let memory = WriteCountingMemory::default();
     let writes = memory.writes.clone();
-    let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
+    let mut store = MetricsStore::new(map(memory.clone()));
     let key = key("app");
     let identity = MetricIdentity::new("bytes", 7).unwrap();
     assert_eq!(store.load_counter(&key, &identity), Ok(None));
@@ -305,7 +411,7 @@ fn counter_checkpoints_preserve_wide_caps_identity_and_explicit_resets() {
         assert_eq!(store.load_counter(&key, &identity), Ok(Some(value)));
     }
     drop(store);
-    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let mut store = MetricsStore::new(map(memory));
     let retained = Counter::from_parts(u128::MAX, true).unwrap();
     assert_eq!(store.load_counter(&key, &identity), Ok(Some(retained)));
     writes.set(0);
@@ -389,7 +495,7 @@ fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
     malformed.push((unknown_format, StoreError::UnsupportedFormat));
     let memory = WriteCountingMemory::default();
     let writes = memory.writes.clone();
-    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let mut store = MetricsStore::new(map(memory));
     let key = key("app");
     for record in malformed {
         store.map.insert(key.0.clone(), record.0.clone());
@@ -424,7 +530,7 @@ fn counter_v1_records_reject_corruption_before_checkpoint_or_reset() {
 fn inconsistent_summary_latest_rejects_load_and_save_without_overwrite() {
     let memory = WriteCountingMemory::default();
     let writes = memory.writes.clone();
-    let mut store = MetricsStore::new(BTreeMap::init(memory.clone()));
+    let mut store = MetricsStore::new(map(memory.clone()));
     let key = key("app");
     let identity = identity();
     let mut summary = Summary::EMPTY;
@@ -436,7 +542,7 @@ fn inconsistent_summary_latest_rejects_load_and_save_without_overwrite() {
     bytes[latest_offset..].copy_from_slice(&0_u64.to_le_bytes());
     store.map.insert(key.0.clone(), bytes.clone());
     drop(store);
-    let mut reopened = MetricsStore::new(BTreeMap::init(memory));
+    let mut reopened = MetricsStore::new(map(memory));
     assert_rejected_record(
         &mut reopened,
         &writes,
@@ -599,7 +705,7 @@ fn identical_checkpoints_validate_without_stable_writes() {
     fn check<T: crate::metric::StoredMetric>(initial: &T, changed: &T) {
         let memory = WriteCountingMemory::default();
         let writes = memory.writes.clone();
-        let mut store = MetricsStore::new(BTreeMap::init(memory));
+        let mut store = MetricsStore::new(map(memory));
         let key = key("app");
         writes.set(0);
         store.save(&key, &identity(), initial).unwrap();
@@ -685,7 +791,7 @@ fn histogram_checkpoints_preserve_each_bucket_count_and_flag() {
     for (previous, regressing) in pairs {
         let memory = WriteCountingMemory::default();
         let writes = memory.writes.clone();
-        let mut store = MetricsStore::new(BTreeMap::init(memory));
+        let mut store = MetricsStore::new(map(memory));
         let key = key("app");
         store.save(&key, &identity(), &previous).unwrap();
         writes.set(0);
@@ -777,7 +883,7 @@ fn histogram_equality_shortcut_preserves_full_state_comparison() {
 fn public_histogram_load_admits_expected_bounds_before_reading_a_row() {
     let memory = WriteCountingMemory::default();
     let writes = memory.writes.clone();
-    let mut store = MetricsStore::new(BTreeMap::init(memory));
+    let mut store = MetricsStore::new(map(memory));
     let key = key("app");
     let identity = identity();
     for retained in [None, Some(vec![0])] {

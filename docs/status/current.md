@@ -5,72 +5,70 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.12.0
+## Prepared 0.13.0
 
-This is a breaking stable-package API cut. Package/workspace versions remain
-0.11.8; the incoming manifest/lock selection of Memory 0.45.0 is preserved.
-The public generic `DurableMetric` bound and `load`/`save` are replaced by concrete
-counter, aggregate, summary and const-generic histogram operations. Histogram
-loads take finite bounds directly, admitting size/order before reading a row.
-The [stable guide](../../crates/ic-metrics-stable/README.md#store-operations)
-owns the caller changes. Codec/configuration dispatch stays private without the
-old capability token. V1 bytes, kind IDs, typed corruption/regression refusal,
-unchanged-checkpoint write avoidance and one-map reopening remain intact.
+This is a stable-package collection API cut. MetricsMap now uses IC Storage's
+governed upstream B-tree facade; its generic argument is the runtime backing,
+rather than an already opened virtual handle. Hosts open the map with an admitted
+Memory runtime handle and supply it to MetricsStore. The
+[stable guide](../../crates/ic-metrics-stable/README.md#store-operations) owns caller
+changes and the compiled host example. Package versions remain 0.12.0. The lock
+adds Storage 0.3.1; Memory 0.45.0 and all other selected packages are unchanged.
+The arithmetic package remains dependency-free.
 
-Hosts retain permanent allocation keys, bootstrap and collection lifecycle.
-Production callers supply checked `ic_memory::RuntimeMemory`; native tests use
-isolated `VectorMemory` only for codec/storage behavior. Memory 0.45's separate
-allocator-format retirement stays with the host's explicit disposition. This
-batch neither resets retained memory nor introduces another memory-ID allocator.
+Host-owned bootstrap, permanent allocation keys, concurrency, checkpoint cadence
+and resets are preserved. IC Storage's custom tree format is not selected. The
+upstream collection format and Metrics V1 rows remain unchanged; the codec owns
+typed admission of frozen kind IDs 1/2/3/4. Raw backing and raw upstream map inputs
+are rejected by compiled examples. Memory 0.45's cloneable handles do not enforce
+exclusive collection ownership; hosts still prevent concurrent stores per region.
+Memory's separate allocator-format disposition is not a Metrics store reset.
+
+The [frozen IC upgrade study](../evidence/governed-store-0130.md) retains original
+0.12 and prepared sources, the exact fixture graph, two Wasms and 24 observations.
+All four kinds survive the forward upgrade byte-for-byte at the same allocation;
+new checkpoints, including actual scalar overflow, remain readable after a
+reverse binary upgrade. Independent fresh-target replay reproduces both Wasms,
+all raw replies and every instruction/cycle row. The whole probe is 79 Wasm bytes
+smaller; overlapping load-cost ranges establish no general performance gain.
+An initially reused host driver was detected before execution and is identified
+separately in the evidence. No product runtime endpoint or server caller is added.
 
 Shared Tooling is selected at reviewed commit
-`7f792c92f623a410c521ee3261dc9fb6b24d2f2f` from the isolated
-[PR #254](https://github.com/dragginzgame/shared-tooling/pull/254), with its display
-version 0.18.0 and pending optional-bundle contract. All 113 snapshot files were
-refreshed through the distribution helper from a clean committed checkout.
-Common setup, offline checking, version reports and PATH now require host/Cargo
-tools. IC executables remain explicit product selections for optional experiments;
-Metrics' workflow no longer projects unused IC receipts. No pins were upgraded.
-An existing invalid Cargo-tool receipt first failed offline admission; explicit
-pinned setup repaired the selection, and actual offline checks then passed.
+`1bffab48a1c71015525c9f2d57bdbda215235711`, display version 0.17.2, through the
+canonical exporter from a clean committed isolated checkout (114 files).
+[PR #259](https://github.com/dragginzgame/shared-tooling/pull/259) is stacked on
+[PR #254](https://github.com/dragginzgame/shared-tooling/pull/254), preserving the
+already selected optional IC-tool contract. Metrics declares direct delivery once
+in ci/release-delivery.txt. Make and standalone metadata reuse the same admission;
+unsupported modes refuse before effects. Producer focused fixtures/ShellCheck and
+Metrics' release, metadata, failure-retention and workflow fixtures pass. Shared
+hosted lint checks pass; its required native matrix remains separately qualified.
 
-The statistics partitioning candidate was rejected after matched IC execution.
-It adds 1,267 raw Wasm bytes and regresses every measured five/eight-sample case;
-larger inputs have mixed results. The arithmetic source is restored byte-for-byte.
-The [frozen study](../evidence/sample-selection-0120.md) owns the rejected source,
-720 raw observations and independently reproduced Wasms/instruction/cycle rows.
-The sorted-slice, summation-order and typed-error contracts remain unchanged.
+Focused Linux qualification passes: 19 stable units, the complete four-family
+host example and two negative admission examples, native/Wasm Clippy and native/
+Wasm Rust 1.91 package checks. Pin/snapshot, formatting, documentation and diff
+checks pass. Full local CI/MSRV gates and native macOS checks were not run for this
+batch. Before-images and logs remain under `/tmp/metrics-governed.5eerdy/`.
+Root staging, Git refs and package versions are unchanged; Metrics changes remain
+uncommitted. Only the isolated Shared contribution has scoped commits and a
+review-branch push.
 
-Focused Linux qualification passes: 17 stable unit tests, three compiled API
-examples, native/Wasm Clippy, native/Wasm Rust 1.91 package checks, actual common
-tool/pin/snapshot checks, workflow evidence and release/hook retention fixtures.
-Before-images and logs remain under `/tmp/metrics-hard-cut.PHfsVi/`. Full local
-CI/MSRV workspace gates and native macOS qualification were not run for this batch.
-The first Shared hosted run exposed an old tool-command fixture expectation; it
-was corrected and its normal/path-context cases pass locally. The updated PR
-retains its required hosted matrix; local fixtures are not native-host acceptance.
-
-Bounded source review found no stable-package callers in the selected public
-IcyDB, Canic, Timers, Backup and Blob Storage crate/manifest paths. The published
-contracts still require owning adoption review; excluded private repositories
-were not inspected. First durable-consumer acceptance stays with
+The incoming borrowed-bounds API and rejected rank/ratio refactors are preserved
+in this minor batch. Their [earlier study](../evidence/bounds-rank-0121.md) keeps its
+original 0.12.1 preparation identity; it is not relabelled as a new measurement.
+Selected public sibling crate/manifest paths contain no stable-package callers;
+their arithmetic interfaces require no changes for this cut. Excluded private
+repositories were not inspected. First durable-consumer acceptance stays with
 [#83 — Qualify the first opt-in durable scalar counter consumer](https://github.com/dragginzgame/ic-metrics/issues/83).
 Observer publication/adoption stays with
 [#82 — Adopt published Testkit memory observations and retire the local observer](https://github.com/dragginzgame/ic-metrics/issues/82).
-The local observer remains until a supplying package is published.
 
-The root index, Git refs, package versions and original incoming dependency
-selection are unchanged. Metrics source changes remain uncommitted; only the
-isolated Shared contribution has scoped commits and a topic-branch push.
+## Finalized 0.12.0
 
-## Finalized 0.11.8
-
-Commit `05a83629ee8789926db5f3af4528fc5afe689472` identifies the finalized
-baseline. Both registry packages are present and non-yanked at 0.11.8.
-[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/38929177858)
-passes Linux, both native macOS runners and the native/Wasm MSRV job. This
-qualifies the released Memory 0.44 graph, not the pending hard cut.
-
-The [source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/05a83629ee8789926db5f3af4528fc5afe689472/docs/status/current.md)
-retains the earlier Memory integration, logger ownership and stable-test cleanup
-identities, frozen artifacts and qualification limits.
+Commit `1c56fdfdd331e1bd26cfdb14519b1296ad3e88f0` and tag `v0.12.0` identify the
+finalized release source. The
+[source-bound preparation handoff](https://github.com/dragginzgame/ic-metrics/blob/1c56fdfdd331e1bd26cfdb14519b1296ad3e88f0/docs/status/current.md)
+retains the stable API cut, Shared Tooling adoption, earlier rejected statistics
+trial and their qualification limits. Its preparation checks are not relabelled
+as hosted release or publication evidence.

@@ -1,5 +1,6 @@
 use super::{
     HistogramBoundsError, HistogramQueryError, HistogramRange, MeasurementHistogram, quantile_rank,
+    validate_histogram_bounds,
 };
 use crate::MeasurementAggregate;
 
@@ -7,11 +8,41 @@ use crate::MeasurementAggregate;
 fn rejects_first_duplicate_or_descending_bound() {
     for (bounds, index) in [([3, 3, 4], 1), ([3, 2, 4], 1), ([1, 4, 3], 2)] {
         assert_eq!(
+            validate_histogram_bounds(&bounds),
+            Err(HistogramBoundsError { index })
+        );
+        assert_eq!(
             MeasurementHistogram::new(bounds),
             Err(HistogramBoundsError { index })
         );
         assert_eq!(HistogramBoundsError { index }.index(), index);
+        assert_eq!(
+            MeasurementHistogram::from_parts(
+                bounds,
+                [0; 3],
+                0,
+                [false; 3],
+                false,
+                MeasurementAggregate::EMPTY,
+            ),
+            Err(crate::MeasurementStateError::InvalidBounds)
+        );
     }
+}
+
+#[test]
+fn borrowed_bounds_admit_empty_single_and_extreme_values_in_const_context() {
+    const VALID: Result<(), HistogramBoundsError> = validate_histogram_bounds(&[0, 1, u64::MAX]);
+    assert_eq!(VALID, Ok(()));
+    for bounds in [&[][..], &[0][..], &[u64::MAX][..], &[0, u64::MAX][..]] {
+        assert_eq!(validate_histogram_bounds(bounds), Ok(()));
+    }
+    // Dynamic slices retain the index relative to the supplied bounds.
+    let bounds = [9, 10, 20, 20, 30];
+    assert_eq!(
+        validate_histogram_bounds(&bounds[1..]),
+        Err(HistogramBoundsError { index: 2 })
+    );
 }
 
 #[test]

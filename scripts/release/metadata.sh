@@ -8,14 +8,12 @@ operation="${1:-}"
 # admission. Consume the internal selection before any helper or Cargo child.
 release_cache_prepare="${IC_METRICS_RELEASE_CACHE_PREPARE:-0}"
 unset IC_METRICS_RELEASE_CACHE_PREPARE
-if [[ "${RELEASE_DELIVERY-direct}" != direct ]]; then
-    echo 'ic-metrics supports RELEASE_DELIVERY=direct only' >&2
-    exit 2
-fi
 root="${BASH_SOURCE[0]}"
 [[ "$root" == /* ]] || root="$PWD/$root"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
+"$BASH" "$root/scripts/ci/check-release-delivery.sh" \
+    "$root/ci/release-delivery.txt" "${RELEASE_DELIVERY-direct}"
 reader="$root/scripts/ci/read-cargo-workspace-version.sh"
 release_paths=(Cargo.toml Cargo.lock CHANGELOG.md)
 source_arguments=()

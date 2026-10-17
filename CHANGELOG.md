@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.13.0]
+
+### Breaking
+
+- Require IC Storage's governed upstream-map facade for durable metrics. Open
+  `MetricsMap` with the host's admitted `ic-memory` runtime handle; its generic
+  parameter now names the runtime backing. Replace raw-map constructors and
+  update explicit store types under the [stable guide](crates/ic-metrics-stable/README.md#store-operations).
+  The upstream B-tree format, Metrics V1 records and permanent allocation keys
+  are preserved; this cut requires no Metrics store reset.
+
+### Changed
+
+- Declare supported release delivery once and reuse Shared Tooling admission in
+  Make and standalone metadata checks. Unsupported modes still refuse before
+  effects ([Shared PR #259](https://github.com/dragginzgame/shared-tooling/pull/259)).
+
+- Expose allocation-free `validate_histogram_bounds` for borrowed bounds and use
+  it for histogram construction, restoration and stable-load configuration.
+  Keep first-invalid-bound reporting, size-before-row admission and V1 records.
+- Retain separate rank and scaled-ratio paths after reviewing their IC costs.
+  The [narrower rank trial](docs/evidence/bounds-rank-0121.md) preserves histogram
+  costs but grows sample-statistics Wasm and regresses wide fractions; the
+  [existing ratio trial](docs/evidence/arithmetic-convergence-0112.md) remains
+  applicable to the unchanged ratio implementation.
+
 ## [0.12.0] - 2026-10-16
 
 ### Breaking
