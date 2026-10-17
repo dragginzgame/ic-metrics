@@ -149,7 +149,7 @@ jobs:
             inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
             prerequisites.log host-tools.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log || collection_status=$?
           [[ "$collection_status" != 2 ]] || exit "$collection_status"
-          bash scripts/ci/collect-native-evidence.sh \
+          bash scripts/ci/package-native-recovery-evidence.sh \
             target/evidence/native-ci target/evidence/native-ci.tar.gz
           exit "$collection_status"
       # actions/upload-artifact v7

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.13.2]
+
+- Reuse IC Memory's admitted fixture bootstrap and express fixed codec sizes as
+  constants, retaining typed oversized-histogram refusal and unchanged V1 rows.
+- Adopt committed Shared Tooling 0.20.0, including literal tool-catalog admission
+  and common release-version validation. Tool pins remain unchanged.
+- Own native recovery-archive packaging and its fixtures locally, preserving
+  hidden Git state, checksum replay and partial-failure evidence. Sanitized
+  diagnostic exports remain shared
+  ([#89 — Own native recovery-archive packaging in Metrics](https://github.com/dragginzgame/ic-metrics/issues/89)).
+
 ## [0.13.1] - 2026-10-17
 
 - Restore the arithmetic dependency's registry version requirement so the stable

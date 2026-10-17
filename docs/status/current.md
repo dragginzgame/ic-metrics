@@ -5,19 +5,63 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.13.1
+## Prepared 0.13.2
+
+Reuse Memory 0.47's `testing::fixture_runtime` in native store fixtures and the
+lease-transfer test. Its `test-support` feature is selected only by the stable
+package's development dependency; production hosts still own their bootstrap.
+Private codec sizes are associated constants, including typed bound-count
+refusal before stored-row reads. The over-limit constant is also checked at
+`usize::MAX` without evaluating overflowing size arithmetic. V1 layouts,
+identities, checkpoint ordering and no-write behavior remain unchanged.
+
+Adopt committed Shared Tooling 0.20.0 at
+`3f87ddc1a0c1616775b2114c42a4adee7376c9b1` through the canonical exporter from a
+clean isolated checkout. Its 113 payloads include literal catalog admission,
+canonical release-version validation and the include-owned delivery guard.
+Host, Rust and IC pin catalogs are unchanged; common setup and offline checks
+pass. The sibling's uncommitted 0.20.1 changes are excluded.
+
+Metrics now owns `package-native-recovery-evidence.sh`, its focused packaging
+fixture and workflow wiring, adopting the implementation prepared in
+[PR #88](https://github.com/dragginzgame/ic-metrics/pull/88). The old shared
+collector is retired through snapshot ownership proof. Full recovery archives
+retain hidden Git state; sanitized diagnostics remain shared. Delivery remains
+with [#89 — Own native recovery-archive packaging in Metrics](https://github.com/dragginzgame/ic-metrics/issues/89).
+
+The Testkit observer package still has no official registry entry. The local
+write observer remains until the replacement is published and qualified under
+[#82 — Adopt published Testkit memory observations and retire the local observer](https://github.com/dragginzgame/ic-metrics/issues/82).
+No sibling sources, product versions, locked package versions or existing evidence
+archives are changed. The selected Memory/Storage pair remains 0.47.0/0.4.0.
+
+Focused Linux Rust checks pass: 20 stable units, three doctests, strict native/
+Wasm Clippy and actual Rust 1.91 native/Wasm package checks and doctests. The
+actual release/hook/metadata/admission retention fixture passes. The workflow
+source/setup/archive fixture passes in the isolated committed source; the local
+packaging matrix, selected ShellCheck, workflow lint, LOC report and snapshot,
+formatting, pin and documentation checks also pass. Logs and
+before-images are under `target/cleanup-shared-020/review.GGcoKH/`. Workflow
+qualification uses an isolated committed source because snapshot retirement
+leaves a missing tracked file before the maintainer commits it. This does not
+weaken the source selector's deliberate refusal of missing tracked inputs.
+Full local CI/MSRV gates and native macOS checks were not run for this batch.
+Changes remain uncommitted on `6cb257e4e8673a776fe50a90127d2a50036e01e2`;
+the real index, Git refs and package versions are unchanged.
+
+## Finalized 0.13.1
 
 Restore the workspace arithmetic dependency's registry requirement (`0.13`)
 alongside its local path. Cargo strips that path during publication; without
-the requirement, the stable package cannot be packaged. Package versions remain
-0.13.0. The existing release renderer advances simple local version requirements
+the requirement, the stable package cannot be packaged. The supplying release
+source is `6cb257e4e8673a776fe50a90127d2a50036e01e2`; package versions are 0.13.1. The existing release renderer advances simple local version requirements
 with workspace minor changes; its two-package metadata fixture qualifies that
 boundary. Publication and release execution remain separate maintainer actions.
 Both packages pass a real Cargo publication dry run with packaged compilation;
 uploads were explicitly aborted by `--dry-run`. The metadata fixture, formatting,
 pin and documentation checks pass. Logs remain under
-`target/publish-metadata-repair/review.6uTSxJ/`. This fix remains uncommitted;
-the existing 0.13.0 tag and package versions have not been changed.
+`target/publish-metadata-repair/review.6uTSxJ/`. That dry run selected the prepared
+0.13.0 package identity; it is not relabelled as publication of 0.13.1.
 
 ## Finalized 0.13.0
 

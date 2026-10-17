@@ -292,7 +292,7 @@ impl<M: Memory> MetricsStore<M> {
         identity: &MetricIdentity,
         bounds: &[u64; N],
     ) -> Result<Option<MeasurementHistogram<N>>, StoreError> {
-        MeasurementHistogram::<N>::encoded_size()?;
+        MeasurementHistogram::<N>::ENCODED_SIZE?;
         if validate_histogram_bounds(bounds).is_err() {
             return Err(StoreError::InvalidState(
                 MeasurementStateError::InvalidBounds,
@@ -323,7 +323,7 @@ impl<M: Memory> MetricsStore<M> {
         identity: &MetricIdentity,
         configuration: &T::Configuration,
     ) -> Result<Option<T>, StoreError> {
-        T::encoded_size()?;
+        T::ENCODED_SIZE?;
         self.load_admitted::<T>(key, identity, configuration)
     }
 
@@ -348,7 +348,7 @@ impl<M: Memory> MetricsStore<M> {
         identity: &MetricIdentity,
         value: &T,
     ) -> Result<(), StoreError> {
-        let payload_size = T::encoded_size()?;
+        let payload_size = T::ENCODED_SIZE?;
         if let Some(previous) = self.load_admitted::<T>(key, identity, value.configuration())? {
             if value.same_state(&previous) {
                 return Ok(());

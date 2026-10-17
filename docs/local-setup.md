@@ -247,7 +247,10 @@ an attempt already in flight can finish after the retry window. Permanent HTTP
 errors and checksum/admission failures are not retried. Exhaustion returns curl's
 final failure status and preserves the failed candidate and previous selection.
 Cleanup remains explicit. The `--versions` option
-selects a reviewed shell file, which is executable code like a Makefile.
+selects reviewed literal assignment data. Host/Rust installers, freshness checks
+and cache identities use the same parser. Shell commands, substitutions, duplicate
+keys and nonliteral values refuse before installation or cache output. Replace
+computed catalogs with complete literal selections before adopting this cut.
 
 Setup and offline checks admit the literal `.tools/host` link target. Malformed
 managed names, including trailing newlines, are refused before tool execution
@@ -300,8 +303,10 @@ non-Rust repositories. The narrow commands remain useful for explicit retries
 or diagnostics; they do not establish that the complete toolset is ready.
 Shared Make commands include `.tools/rust/common/bin` on PATH; interactive shells use
 the export at the top of this guide. The standard formatting hook and its
-adoption check preserve the original checkout's host, IC and Rust tool paths
-while formatting isolated index inputs. The helper never prepares or upgrades a
+adoption check preserve the original checkout's common host and Rust tool paths
+while formatting isolated index inputs. IC formatters select their prepared tool
+PATH explicitly; the hook exposes `SHARED_TOOLING_FORMAT_TOOLS_FROM` for product
+Make recipes that need the original checkout's tool root. The helper never prepares or upgrades a
 toolchain implicitly. Installation may fetch registry dependencies and compile;
 failed candidates, completed build output and install logs remain in shared
 `rust-<identity>/set.*` generations, referenced from the originating checkout.

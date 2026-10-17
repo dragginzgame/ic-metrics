@@ -199,7 +199,7 @@ The shared effectful-fixture driver requires exact status, a failure marker and
 one retained directory, or successful cleanup; Metrics checks retained payloads.
 Native diagnostic collection uses the explicit local filename roster, publishes
 the small archive first and returns fatal admission/archive errors before outer
-collection. Shared's complete-tree packager then inventories top-level files
+collection. Metrics' complete-tree packager then inventories top-level files
 and retains Git recovery state verbatim. Occupied destinations refuse; inventory,
 archive or checksum failure retains inputs and partial output with its command
 status. Metrics keeps incomplete-collection status and artifact upload policy.
@@ -248,6 +248,14 @@ retained/replayed logs; Shared Tooling owns formatter-version admission cases.
 Unusual source filenames are qualified through the actual workflow hash body,
 while the focused selector fixture owns inclusion, exclusions and missing
 tracked-source selection.
+
+Metrics owns `scripts/ci/package-native-recovery-evidence.sh` and its full native
+recovery archive, including hidden Git state and the top-level checksum inventory.
+The workflow first publishes separately selected diagnostics through Shared
+Tooling's sanitized exporter. Keep both custody contracts distinct.
+`bash scripts/ci/test-native-recovery-evidence.sh` qualifies packaging, replay,
+containment, existing-output refusal and retained partial failures; it also runs
+under `make ci-evidence-check` alongside the actual workflow-body fixture.
 
 The actual development/MSRV workflow setup bodies execute the shared Rust
 installer against a substitute rustup in the native evidence fixture. Metrics

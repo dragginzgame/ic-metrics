@@ -17,8 +17,8 @@ Parsing it never installs tools, activates hooks or starts a release.
 
 To restrict release delivery, set `RELEASE_DELIVERY_POLICY` before the include
 to a consumer-owned regular data file containing `direct`, `pr`, or both, one
-per line. The common include refuses unsupported selections before any standard
-release command or metadata hook. Unset selection defaults to direct; an explicit
+per line. The common include refuses unsupported selections when a standard
+release command or metadata hook is requested as a Make goal. Unset selection defaults to direct; an explicit
 empty selection refuses. Unrelated goals do not read the policy. Without a policy
 file, the existing direct/PR contract is unchanged. `SHARED_RELEASE_TARGETS`
 provides the canonical command/hook roster for consumer declarations.
@@ -28,6 +28,8 @@ Standalone metadata entrypoints call
 before effects, using that same file; never source it as shell code. An empty
 file-path argument admits the standard direct/PR set. File selection and delivery
 choice remain consumer-owned; this helper grants no release or merge authority.
+Make admission resolves the helper beside the selected include, independently of
+runtime `SHARED_TOOLING_ROOT` overrides. Keep its snapshot companion selected.
 
 Selecting `make/consumer.mk` as a snapshot entrypoint includes the common
 installers, common pin catalogs and default LOC helper through their declared
@@ -70,7 +72,7 @@ Add prerequisites and target-specific environment to common targets when the
 consumer needs stronger admission; do not define a second recipe. For example:
 
 ```make
-release-patch release-minor release-major release-resume: release-delivery-check
+release-patch release-minor release-major release-resume: local-release-preflight
 release-patch release-minor release-major release-resume: export LOCAL_RELEASE_PREPARE := 1
 format-tools-check: local-formatter-check
 ```

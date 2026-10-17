@@ -151,7 +151,7 @@ pub fn encode<T: crate::metric::StoredMetric>(
     value: &T,
     payload_size: usize,
 ) -> Vec<u8> {
-    // The store has already admitted T::encoded_size before reading any row.
+    // The store has already admitted T::ENCODED_SIZE before reading any row.
     // Private encoders write that exact payload size; units are constructor-admitted.
     #[expect(
         clippy::cast_possible_truncation,
