@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.13.3]
+## [0.13.3] - 2026-10-17
 
 - Reuse Shared Tooling's shell fixture executor while retaining Metrics' workflow
   scenarios and archive checks. Keep generic release-recovery assertions with
