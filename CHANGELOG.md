@@ -8,7 +8,8 @@
   preserving hidden Git state, inventory replay and partial-failure evidence.
   Retire the shared archive snapshot entrypoint at its existing pinned revision;
   sanitized diagnostic collection stays with Shared Tooling. Published library
-  APIs, package versions and dependency selections are unchanged.
+  APIs, package versions and dependency selections are unchanged
+  ([#89 — Own native recovery-archive packaging](https://github.com/dragginzgame/ic-metrics/issues/89)).
 
 ## [0.12.0] - 2026-10-16
 
