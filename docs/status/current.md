@@ -13,16 +13,26 @@ rather than an already opened virtual handle. Hosts open the map with an admitte
 Memory runtime handle and supply it to MetricsStore. The
 [stable guide](../../crates/ic-metrics-stable/README.md#store-operations) owns caller
 changes and the compiled host example. Package versions remain 0.12.0. The lock
-adds Storage 0.3.1; Memory 0.45.0 and all other selected packages are unchanged.
-The arithmetic package remains dependency-free.
+selects published Storage 0.4.0 and Memory 0.47.0 together; all other selected
+package identities remain unchanged. The arithmetic package remains dependency-free.
+The old Memory collection re-export is retired from production and examples.
+Its narrow root backing imports remain the generic/host boundary; Storage owns
+collection opening. The independent original-map byte-compatibility test uses
+an explicitly test-only substrate dependency and still opens that map through
+an admitted Memory runtime handle. No raw collection is publicly re-exported.
+The adoption addresses
+[#87 — Finish narrow imports in the governed metrics-map adoption](https://github.com/dragginzgame/ic-metrics/issues/87).
 
 Host-owned bootstrap, permanent allocation keys, concurrency, checkpoint cadence
 and resets are preserved. IC Storage's custom tree format is not selected. The
 upstream collection format and Metrics V1 rows remain unchanged; the codec owns
-typed admission of frozen kind IDs 1/2/3/4. Raw backing and raw upstream map inputs
-are rejected by compiled examples. Memory 0.45's cloneable handles do not enforce
-exclusive collection ownership; hosts still prevent concurrent stores per region.
-Memory's separate allocator-format disposition is not a Metrics store reset.
+typed admission of frozen kind IDs 1/2/3/4. Compiled examples reject raw backing
+at map opening and reject an admitted handle where a governed map is required.
+Memory handles are non-cloneable allocation leases. A second open through the
+same runtime refuses while the store or its transferred map is alive; dropping
+the collection permits reopening. Hosts retain exclusive backing custody across
+runtimes. Memory 0.47 preserves 0.45 allocation images; no reset is part of this
+adoption.
 
 The [frozen IC upgrade study](../evidence/governed-store-0130.md) retains original
 0.12 and prepared sources, the exact fixture graph, two Wasms and 24 observations.
@@ -31,6 +41,8 @@ new checkpoints, including actual scalar overflow, remain readable after a
 reverse binary upgrade. Independent fresh-target replay reproduces both Wasms,
 all raw replies and every instruction/cycle row. The whole probe is 79 Wasm bytes
 smaller; overlapping load-cost ranges establish no general performance gain.
+That frozen study selects Memory 0.45 and Storage 0.3.1, not the newly selected
+graph; its IC costs are not relabelled as measurements of this adoption.
 An initially reused host driver was detected before execution and is identified
 separately in the evidence. No product runtime endpoint or server caller is added.
 
@@ -45,14 +57,19 @@ unsupported modes refuse before effects. Producer focused fixtures/ShellCheck an
 Metrics' release, metadata, failure-retention and workflow fixtures pass. Shared
 hosted lint checks pass; its required native matrix remains separately qualified.
 
-Focused Linux qualification passes: 19 stable units, the complete four-family
-host example and two negative admission examples, native/Wasm Clippy and native/
-Wasm Rust 1.91 package checks. Pin/snapshot, formatting, documentation and diff
-checks pass. Full local CI/MSRV gates and native macOS checks were not run for this
-batch. Before-images and logs remain under `/tmp/metrics-governed.5eerdy/`.
-Root staging, Git refs and package versions are unchanged; Metrics changes remain
-uncommitted. Only the isolated Shared contribution has scoped commits and a
-review-branch push.
+Focused Linux qualification of the published graph passes: the actual
+`make check` failure point, 20 stable units, the complete four-family host
+example and two constructor-refusal doctests, strict native/Wasm Clippy and
+actual Rust 1.91 native/Wasm checks and doctests. The new lease test verifies
+that transferring the map out of the store retains its lease and dropping it
+permits reopening with the stored counter intact. Logs and before-images are
+under `target/memory-047-adoption/review.WdXJWZ/`. Full local CI/MSRV gates and
+native macOS qualification were not run for this adoption. The earlier collection-cut
+before-images and logs remain under `/tmp/metrics-governed.5eerdy/`; its passing
+results do not qualify the newly selected dependencies. The previous Memory 0.45
+build-repair evidence remains under `target/memory-ci-repair/review.9VQeRQ/`.
+Staging, Git refs and package versions remain unchanged during this adoption.
+The dependency adoption and caller updates remain uncommitted.
 
 The incoming borrowed-bounds API and rejected rank/ratio refactors are preserved
 in this minor batch. Their [earlier study](../evidence/bounds-rank-0121.md) keeps its

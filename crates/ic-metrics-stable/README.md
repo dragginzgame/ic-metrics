@@ -9,7 +9,7 @@ allocates bounded records and supports native hosts and Wasm with Rust 1.91.
 The host owns one `ic-memory` allocation pool and bootstrap. It declares one
 permanent metrics-store key, such as `app.metrics.v1`, and admits that allocation
 before opening the map. Follow the
-[IC Memory 0.45 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/93463259a07295f50146beb57c36adab303d9a37/crates/ic-memory/README.md#quick-start-for-developers)
+[IC Memory 0.47 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/b179ab9514b549f4ede75afd3757db264d3ce412/crates/ic-memory/README.md#quick-start-for-developers)
 for the selected dependency's declaration and lifecycle APIs.
 
 After bootstrap, the host opens the admitted memory and one `MetricsMap`, then
@@ -20,10 +20,10 @@ initializes memory, registers keys, creates a global store or installs lifecycle
 hooks.
 
 Metrics' V1 record layout is separate from Memory's allocation-ledger format.
-Hosts upgrading their allocator to Memory 0.45 must follow its
-[durable-format disposition](https://github.com/dragginzgame/ic-memory/blob/93463259a07295f50146beb57c36adab303d9a37/crates/ic-memory/README.md#operations-and-advanced-integration):
-earlier allocator images require fresh/reset memory. An unchanged Metrics record
-format does not qualify that host upgrade or authorize clearing existing memory.
+Memory 0.47 preserves the 0.45 allocation ledger, manager bytes and memory IDs;
+this adoption requires no reset. Hosts coming from earlier allocator formats
+must follow Memory's version-bound durable-format disposition. An unchanged
+Metrics record format does not authorize clearing existing memory.
 
 ## Store operations
 
@@ -58,7 +58,7 @@ behavior, not IC upgrade execution or instruction/cycle costs:
 ```rust
 use ic_memory::{
     GenericAllocationPolicy, MemoryAllocationPool, MemoryAuthority, MemoryRequest,
-    MemoryRuntime, SealedDeclarationSnapshot, ic_stable_structures::VectorMemory,
+    MemoryRuntime, RuntimeOpenError, SealedDeclarationSnapshot, VectorMemory,
 };
 use ic_metrics::{MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementSummary};
 use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsMap, MetricsStore};
@@ -72,6 +72,7 @@ let declarations = SealedDeclarationSnapshot::new(vec![MemoryRequest::new("app",
 let mut runtime = MemoryRuntime::new(VectorMemory::default())?;
 runtime.bootstrap(&declarations, &pool, &GenericAllocationPolicy)?;
 let mut store = MetricsStore::new(MetricsMap::init(runtime.open_memory(STORE_KEY)?));
+assert!(matches!(runtime.open_memory(STORE_KEY), Err(RuntimeOpenError::AlreadyOpen { .. })));
 let identity = MetricIdentity::new("instructions", 0)?;
 let key = MetricKey::new("canic", "endpoint.create")?;
 let mut summary = store.load_summary(&key, &identity)?.unwrap_or(MeasurementSummary::EMPTY);
@@ -108,8 +109,9 @@ assert_eq!(reopened.load_histogram(&histogram_key, &items, &bounds)?, Some(histo
 Production hosts retain one bootstrapped runtime and inject the opened handle
 for the permanent metrics key. IC Storage requires `ic_memory::RuntimeMemory`
 when opening the collection; a raw backing or raw upstream map cannot enter
-`MetricsStore`. Memory 0.45 handles can still be cloned: the host must prevent
-concurrent collections over the same allocation. Drop each collection before
+`MetricsStore`. Memory 0.47 handles cannot be cloned, and another live open
+through the same runtime returns `RuntimeOpenError::AlreadyOpen`. Hosts still
+prevent aliased backing access across runtimes. Drop each collection before
 reopening. `MetricsMap::init` can initialize unrecognized memory; never use it as
 an unknown/corrupt-store recovery fallback. Hosts own the new-versus-retained
 format decision. Allocation/collection corruption and capacity traps remain

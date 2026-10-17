@@ -1,9 +1,8 @@
 use std::{cell::Cell, rc::Rc};
 
 use ic_memory::{
-    GenericAllocationPolicy, MemoryAllocationPool, MemoryAuthority, MemoryRequest, MemoryRuntime,
-    RuntimeMemory, SealedDeclarationSnapshot,
-    ic_stable_structures::{BTreeMap as RawMap, Memory, VectorMemory},
+    GenericAllocationPolicy, Memory, MemoryAllocationPool, MemoryAuthority, MemoryRequest,
+    MemoryRuntime, RuntimeMemory, RuntimeOpenError, SealedDeclarationSnapshot, VectorMemory,
 };
 use ic_metrics::{
     MeasurementAggregate as Aggregate, MeasurementCounter as Counter,
@@ -11,6 +10,10 @@ use ic_metrics::{
 };
 
 use crate::{MetricIdentity, MetricKey, MetricsMap, MetricsStore, StoreError, codec};
+
+// Independent original-collection compatibility boundary. Even this test-only
+// upstream map receives a checked runtime handle, never an independently assigned ID.
+use ic_stable_structures::BTreeMap as RawMap;
 
 // Isolated native host: declare a permanent key and commit allocation before opening.
 fn memory<M: Memory>(backing: M) -> RuntimeMemory<M> {
@@ -32,6 +35,46 @@ fn memory<M: Memory>(backing: M) -> RuntimeMemory<M> {
 
 fn map<M: Memory>(backing: M) -> MetricsMap<M> {
     MetricsMap::init(memory(backing))
+}
+
+#[test]
+fn store_retains_allocation_lease_through_map_transfer() {
+    let mut runtime = MemoryRuntime::new(VectorMemory::default()).unwrap();
+    let pool = MemoryAllocationPool::new(
+        vec![MemoryAuthority::new("metrics_test", "metrics.").unwrap()],
+        vec![],
+    )
+    .unwrap();
+    let declarations = SealedDeclarationSnapshot::new(vec![
+        MemoryRequest::new("metrics_test", "metrics.store.v1").unwrap(),
+    ])
+    .unwrap();
+    runtime
+        .bootstrap(&declarations, &pool, &GenericAllocationPolicy)
+        .unwrap();
+    let mut store = MetricsStore::new(MetricsMap::init(
+        runtime.open_memory("metrics.store.v1").unwrap(),
+    ));
+    store
+        .save_counter(&key("app"), &identity(), &Counter::ZERO)
+        .unwrap();
+    assert!(matches!(
+        runtime.open_memory("metrics.store.v1"),
+        Err(RuntimeOpenError::AlreadyOpen { .. })
+    ));
+    let map = store.into_map();
+    assert!(matches!(
+        runtime.open_memory("metrics.store.v1"),
+        Err(RuntimeOpenError::AlreadyOpen { .. })
+    ));
+    drop(map);
+    let reopened = MetricsStore::new(MetricsMap::load(
+        runtime.open_memory("metrics.store.v1").unwrap(),
+    ));
+    assert_eq!(
+        reopened.load_counter(&key("app"), &identity()),
+        Ok(Some(Counter::ZERO))
+    );
 }
 
 #[test]

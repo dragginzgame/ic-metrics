@@ -81,7 +81,10 @@ separate contracts; there is no attribution-mode switch or product dependency.
 The optional [stable package](../crates/ic-metrics-stable/README.md) owns validated
 V1 snapshots for counters, aggregates, summaries and histograms in one host-supplied
 governed upstream B-tree map from `ic_storage::adapter`. Its opening requires an
-admitted `ic-memory::RuntimeMemory` handle. The prepared 0.13 collection API takes
+admitted `ic-memory::RuntimeMemory` handle. Memory 0.47 and Storage 0.4 share
+that exact handle identity; each handle is a non-cloneable allocation lease.
+Drop the store or transferred map before reopening through the same runtime.
+Hosts still exclude aliased backing access across runtimes. The prepared 0.13 collection API takes
 the runtime's backing type as its generic argument, rather than an opened virtual
 handle. IC Storage's upstream facade preserves existing map bytes; its custom
 tree format is not used. One permanent store allocation resolves to one memory ID;

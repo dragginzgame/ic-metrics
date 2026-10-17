@@ -14,7 +14,7 @@
 
 use std::{error::Error, fmt};
 
-use ic_memory::ic_stable_structures::Memory;
+use ic_memory::Memory;
 use ic_metrics::{
     MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementStateError,
     MeasurementSummary, validate_histogram_bounds,
@@ -160,7 +160,7 @@ impl MetricIdentity {
 /// admitted `ic_memory::RuntimeMemory<M>` handle through IC Storage's facade.
 ///
 /// ```compile_fail
-/// use ic_memory::ic_stable_structures::VectorMemory;
+/// use ic_memory::VectorMemory;
 /// use ic_metrics_stable::MetricsMap;
 /// let _ = MetricsMap::<VectorMemory>::init(VectorMemory::default());
 /// ```
@@ -168,14 +168,14 @@ pub type MetricsMap<M> = StableBTreeMap<Vec<u8>, Vec<u8>, M>;
 
 /// Shared durable metric snapshots in one application memory region.
 ///
-/// The governed collection is required even when a raw upstream map already
-/// carries an admitted memory handle:
+/// The governed collection is required even when a memory handle has already
+/// passed allocation admission:
 ///
 /// ```compile_fail
-/// use ic_memory::{RuntimeMemory, ic_stable_structures::{BTreeMap, VectorMemory}};
+/// use ic_memory::{RuntimeMemory, VectorMemory};
 /// use ic_metrics_stable::MetricsStore;
-/// fn raw_map(map: BTreeMap<Vec<u8>, Vec<u8>, RuntimeMemory<VectorMemory>>) {
-///     let _ = MetricsStore::new(map);
+/// fn admitted_handle(memory: RuntimeMemory<VectorMemory>) {
+///     let _ = MetricsStore::new(memory);
 /// }
 /// ```
 pub struct MetricsStore<M: Memory> {
