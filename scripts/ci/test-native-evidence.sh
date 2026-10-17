@@ -201,9 +201,9 @@ if [[ "$1" == scripts/ci/report-tool-versions.sh ]]; then
     [[ "$FIXTURE_FAILURE" != tool-inputs ]] || exit 43
     exit 0
 fi
-if [[ "$1" == scripts/ci/collect-native-evidence.sh && "$FIXTURE_ARCHIVE_STATUS" != 0 ]]; then
+if [[ "$1" == scripts/ci/package-native-recovery-evidence.sh && "$FIXTURE_ARCHIVE_STATUS" != 0 ]]; then
     [[ $# == 3 && "$2" == target/evidence/native-ci && "$3" == target/evidence/native-ci.tar.gz ]] || exit 99
-    # Substitute the producer boundary, not its internal tar command.
+    # Substitute the local packaging boundary, not its internal tar command.
     printf 'outer archive stdout\n'
     printf 'outer archive stderr\n' >&2
     exit "$FIXTURE_ARCHIVE_STATUS"

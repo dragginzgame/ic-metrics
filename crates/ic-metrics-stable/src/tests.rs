@@ -1,8 +1,8 @@
 use std::{cell::Cell, rc::Rc};
 
 use ic_memory::{
-    GenericAllocationPolicy, Memory, MemoryAllocationPool, MemoryAuthority, MemoryRequest,
-    MemoryRuntime, RuntimeMemory, RuntimeOpenError, SealedDeclarationSnapshot, VectorMemory,
+    Memory, MemoryManagerConfig, RuntimeMemory, RuntimeOpenError, VectorMemory,
+    testing::fixture_runtime,
 };
 use ic_metrics::{
     MeasurementAggregate as Aggregate, MeasurementCounter as Counter,
@@ -17,19 +17,14 @@ use ic_stable_structures::BTreeMap as RawMap;
 
 // Isolated native host: declare a permanent key and commit allocation before opening.
 fn memory<M: Memory>(backing: M) -> RuntimeMemory<M> {
-    let mut runtime = MemoryRuntime::new(backing).unwrap();
-    let pool = MemoryAllocationPool::new(
-        vec![MemoryAuthority::new("metrics_test", "metrics.").unwrap()],
-        vec![],
+    let runtime = fixture_runtime(
+        backing,
+        "metrics_test",
+        "metrics.",
+        &["metrics.store.v1"],
+        MemoryManagerConfig::default(),
     )
     .unwrap();
-    let declarations = SealedDeclarationSnapshot::new(vec![
-        MemoryRequest::new("metrics_test", "metrics.store.v1").unwrap(),
-    ])
-    .unwrap();
-    runtime
-        .bootstrap(&declarations, &pool, &GenericAllocationPolicy)
-        .unwrap();
     runtime.open_memory("metrics.store.v1").unwrap()
 }
 
@@ -39,19 +34,14 @@ fn map<M: Memory>(backing: M) -> MetricsMap<M> {
 
 #[test]
 fn store_retains_allocation_lease_through_map_transfer() {
-    let mut runtime = MemoryRuntime::new(VectorMemory::default()).unwrap();
-    let pool = MemoryAllocationPool::new(
-        vec![MemoryAuthority::new("metrics_test", "metrics.").unwrap()],
-        vec![],
+    let runtime = fixture_runtime(
+        VectorMemory::default(),
+        "metrics_test",
+        "metrics.",
+        &["metrics.store.v1"],
+        MemoryManagerConfig::default(),
     )
     .unwrap();
-    let declarations = SealedDeclarationSnapshot::new(vec![
-        MemoryRequest::new("metrics_test", "metrics.store.v1").unwrap(),
-    ])
-    .unwrap();
-    runtime
-        .bootstrap(&declarations, &pool, &GenericAllocationPolicy)
-        .unwrap();
     let mut store = MetricsStore::new(MetricsMap::init(
         runtime.open_memory("metrics.store.v1").unwrap(),
     ));
@@ -168,7 +158,7 @@ fn store() -> MetricsStore<VectorMemory> {
 }
 
 fn encode<T: crate::metric::StoredMetric>(identity: &MetricIdentity, value: &T) -> Vec<u8> {
-    let payload_size = T::encoded_size().unwrap();
+    let payload_size = T::ENCODED_SIZE.unwrap();
     codec::encode(identity, value, payload_size)
 }
 
@@ -871,7 +861,11 @@ fn v1_encoding_has_exact_lengths_and_bounded_histograms() {
     check(&wide, 47);
     check(&Summary::from_parts(wide, Some(u64::MAX)).unwrap(), 55);
     assert_eq!(
-        <Histogram<257> as crate::metric::StoredMetric>::encoded_size(),
+        <Histogram<257> as crate::metric::StoredMetric>::ENCODED_SIZE,
+        Err(StoreError::TooManyBounds)
+    );
+    assert_eq!(
+        <Histogram<{ usize::MAX }> as crate::metric::StoredMetric>::ENCODED_SIZE,
         Err(StoreError::TooManyBounds)
     );
 }

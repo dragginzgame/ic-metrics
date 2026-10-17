@@ -68,6 +68,7 @@ hook-check:
 ci-evidence-check:
 	bash scripts/ci/test-native-source-files.sh
 	bash scripts/ci/test-native-evidence.sh
+	bash scripts/ci/test-native-recovery-evidence.sh
 
 check:
 	+cargo check --workspace --all-targets --locked

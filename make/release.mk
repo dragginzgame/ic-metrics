@@ -2,6 +2,7 @@
 # Shared companions: scripts/ci/run-release.sh scripts/ci/check-release-delivery.sh make/execution.mk
 _shared_release_default_goal := $(.DEFAULT_GOAL)
 SHARED_TOOLING_ROOT ?= $(CURDIR)
+_shared_release_delivery_check := $(dir $(lastword $(MAKEFILE_LIST)))../scripts/ci/check-release-delivery.sh
 include $(dir $(lastword $(MAKEFILE_LIST)))execution.mk
 RELEASE_REMOTE ?= origin
 RELEASE_BRANCH ?= main
@@ -11,10 +12,10 @@ RELEASE_RESUME_CHECK_COMMAND ?= :
 RELEASE_DELIVERY_POLICY ?=
 
 # Consumers can reuse this canonical interface roster without repeating hook names.
-override SHARED_RELEASE_TARGETS := release-patch release-minor release-major release-resume release-version release-preflight release-verify release-prepare-version release-prepared-check release-files release-commit-check release-committed-check release-tagged-check release-push-check
+override SHARED_RELEASE_TARGETS := release-patch release-minor release-major release-resume release-version release-preflight release-verify release-prepare-version release-prepared-check release-files release-commit-check release-committed-check release-tagged-check release-push-check release-merged-preflight
 ifneq ($(filter $(SHARED_RELEASE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(RELEASE_DELIVERY_POLICY),)
-ifneq ($(shell bash '$(subst ','"'"',$(SHARED_TOOLING_ROOT))/scripts/ci/check-release-delivery.sh' '$(subst ','"'"',$(RELEASE_DELIVERY_POLICY))' '$(subst ','"'"',$(if $(filter undefined,$(origin RELEASE_DELIVERY)),direct,$(RELEASE_DELIVERY)))' && printf admitted),admitted)
+ifneq ($(shell bash '$(subst ','"'"',$(_shared_release_delivery_check))' '$(subst ','"'"',$(RELEASE_DELIVERY_POLICY))' '$(subst ','"'"',$(if $(filter undefined,$(origin RELEASE_DELIVERY)),direct,$(RELEASE_DELIVERY)))' && printf admitted),admitted)
 $(error Consumer release delivery policy refused this command)
 endif
 endif

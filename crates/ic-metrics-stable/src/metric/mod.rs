@@ -16,8 +16,8 @@ pub trait StoredMetric: Sized + Eq {
     fn same_state(&self, previous: &Self) -> bool {
         self == previous
     }
-    fn encoded_size() -> Result<usize, StoreError>;
-    // Called only after encoded_size admits this metric's static shape.
+    const ENCODED_SIZE: Result<usize, StoreError>;
+    // Called only after ENCODED_SIZE admits this metric's static shape.
     fn encode_state(&self, bytes: &mut Vec<u8>);
     fn decode_state(
         configuration: &Self::Configuration,
@@ -45,9 +45,7 @@ impl StoredMetric for MeasurementCounter {
         &()
     }
 
-    fn encoded_size() -> Result<usize, StoreError> {
-        Ok(codec::COUNTER_BYTES)
-    }
+    const ENCODED_SIZE: Result<usize, StoreError> = Ok(codec::COUNTER_BYTES);
 
     fn encode_state(&self, bytes: &mut Vec<u8>) {
         bytes.extend_from_slice(&self.total().to_le_bytes());
@@ -72,9 +70,7 @@ impl StoredMetric for MeasurementAggregate {
         &()
     }
 
-    fn encoded_size() -> Result<usize, StoreError> {
-        Ok(codec::AGGREGATE_BYTES)
-    }
+    const ENCODED_SIZE: Result<usize, StoreError> = Ok(codec::AGGREGATE_BYTES);
 
     fn encode_state(&self, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, *self);
@@ -97,9 +93,7 @@ impl StoredMetric for MeasurementSummary {
         &()
     }
 
-    fn encoded_size() -> Result<usize, StoreError> {
-        Ok(codec::SUMMARY_BYTES)
-    }
+    const ENCODED_SIZE: Result<usize, StoreError> = Ok(codec::SUMMARY_BYTES);
 
     fn encode_state(&self, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, self.aggregate());
@@ -146,18 +140,17 @@ impl<const N: usize> StoredMetric for MeasurementHistogram<N> {
         }
     }
 
-    fn encoded_size() -> Result<usize, StoreError> {
-        if N > MAX_HISTOGRAM_BOUNDS {
-            return Err(StoreError::TooManyBounds);
-        }
+    const ENCODED_SIZE: Result<usize, StoreError> = if N > MAX_HISTOGRAM_BOUNDS {
+        Err(StoreError::TooManyBounds)
+    } else {
         Ok(codec::HISTOGRAM_BASE_BYTES + codec::HISTOGRAM_BUCKET_BYTES * N)
-    }
+    };
 
     fn encode_state(&self, bytes: &mut Vec<u8>) {
         codec::aggregate(bytes, self.aggregate());
         #[expect(
             clippy::cast_possible_truncation,
-            reason = "encoded_size admits at most 256 bounds before encoding"
+            reason = "ENCODED_SIZE admits at most 256 bounds before encoding"
         )]
         let count = N as u16;
         bytes.extend_from_slice(&count.to_le_bytes());
