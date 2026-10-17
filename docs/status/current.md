@@ -5,14 +5,28 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.13.0
+## Prepared 0.13.1
+
+Restore the workspace arithmetic dependency's registry requirement (`0.13`)
+alongside its local path. Cargo strips that path during publication; without
+the requirement, the stable package cannot be packaged. Package versions remain
+0.13.0. The existing release renderer advances simple local version requirements
+with workspace minor changes; its two-package metadata fixture qualifies that
+boundary. Publication and release execution remain separate maintainer actions.
+Both packages pass a real Cargo publication dry run with packaged compilation;
+uploads were explicitly aborted by `--dry-run`. The metadata fixture, formatting,
+pin and documentation checks pass. Logs remain under
+`target/publish-metadata-repair/review.6uTSxJ/`. This fix remains uncommitted;
+the existing 0.13.0 tag and package versions have not been changed.
+
+## Finalized 0.13.0
 
 This is a stable-package collection API cut. MetricsMap now uses IC Storage's
 governed upstream B-tree facade; its generic argument is the runtime backing,
 rather than an already opened virtual handle. Hosts open the map with an admitted
 Memory runtime handle and supply it to MetricsStore. The
 [stable guide](../../crates/ic-metrics-stable/README.md#store-operations) owns caller
-changes and the compiled host example. Package versions remain 0.12.0. The lock
+changes and the compiled host example. Package versions are 0.13.0. The lock
 selects published Storage 0.4.0 and Memory 0.47.0 together; all other selected
 package identities remain unchanged. The arithmetic package remains dependency-free.
 The old Memory collection re-export is retired from production and examples.
@@ -69,7 +83,9 @@ before-images and logs remain under `/tmp/metrics-governed.5eerdy/`; its passing
 results do not qualify the newly selected dependencies. The previous Memory 0.45
 build-repair evidence remains under `target/memory-ci-repair/review.9VQeRQ/`.
 Staging, Git refs and package versions remain unchanged during this adoption.
-The dependency adoption and caller updates remain uncommitted.
+The dependency adoption and caller updates were finalized at
+`dec1510f594e132de9713916ced11996d68a95f7`. The attempted publication failed at
+manifest verification; that release commit alone does not establish publication.
 
 The incoming borrowed-bounds API and rejected rank/ratio refactors are preserved
 in this minor batch. Their [earlier study](../evidence/bounds-rank-0121.md) keeps its

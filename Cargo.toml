@@ -15,7 +15,7 @@ description = "Allocation-free, dependency-free measurement arithmetic"
 [workspace.dependencies]
 # Keep Memory and Storage on the same published runtime-handle API.
 ic-memory = "0.47"
-ic-metrics = { path = "crates/ic-metrics" }
+ic-metrics = { version = "0.13", path = "crates/ic-metrics" }
 ic-stable-structures = "0.7.2"
 ic-storage = "0.4"
 
