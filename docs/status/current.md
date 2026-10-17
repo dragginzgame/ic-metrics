@@ -5,7 +5,17 @@ own sampling, attribution, units, identities, registries, lifecycle and endpoint
 [The extraction contract](../extraction.md) owns integration boundaries;
 [host qualification](../hosts.md) owns validation commands and delivery gates.
 
-## Prepared 0.12.0
+## Prepared 0.12.1
+
+Add `CheckedMeasurementAggregate` for exact wide observations with count, total
+and extrema. Count/total overflow rejects without changing any field. Existing
+saturating aggregates, stable records and their callers are unchanged. Four
+focused unit cases, the compiled API example, strict affected lint, Rust 1.91
+native/Wasm compilation and warning-denied Rustdoc pass on Linux. No instruction,
+cycle, size or native macOS performance/qualification claim is made. Maintainers
+retain full release validation, package versions and publication.
+
+## Prior 0.12.0 preparation
 
 This is a breaking stable-package API cut. Package/workspace versions remain
 0.11.8; the incoming manifest/lock selection of Memory 0.45.0 is preserved.
