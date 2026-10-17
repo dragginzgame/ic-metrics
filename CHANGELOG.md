@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1]
+
+- Add an allocation-free checked accumulator for exact `u128` observations,
+  totals, counts and extrema. Failed recordings leave all fields unchanged;
+  measured zero remains distinct from an empty set. Existing saturating
+  aggregates and stable record formats are unchanged.
+
 ## [0.12.0] - 2026-10-16
 
 ### Breaking

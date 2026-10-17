@@ -17,7 +17,8 @@ mod state;
 mod summary;
 
 pub use aggregate::{
-    MeasurementAggregate, MeasurementInterval, MeasurementIntervalError, MeasurementMeanError,
+    CheckedMeasurementAggregate, MeasurementAggregate, MeasurementInterval,
+    MeasurementIntervalError, MeasurementMeanError, MeasurementRecordError,
 };
 pub use counter::{MeasurementCounter, MeasurementCounterError};
 pub use histogram::{
