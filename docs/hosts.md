@@ -249,6 +249,14 @@ Unusual source filenames are qualified through the actual workflow hash body,
 while the focused selector fixture owns inclusion, exclusions and missing
 tracked-source selection.
 
+Metrics owns `scripts/ci/package-native-recovery-evidence.sh` and its full native
+recovery archive, including hidden Git state and the top-level checksum inventory.
+The workflow first publishes separately selected diagnostics through Shared
+Tooling's sanitized exporter. Keep both custody contracts distinct.
+`bash scripts/ci/test-native-recovery-evidence.sh` qualifies packaging, replay,
+containment, existing-output refusal and retained partial failures; it also runs
+under `make ci-evidence-check` alongside the actual workflow-body fixture.
+
 The actual development/MSRV workflow setup bodies execute the shared Rust
 installer against a substitute rustup in the native evidence fixture. Metrics
 checks its TOML-selected compilers, components, Wasm targets and failed setup status; Shared

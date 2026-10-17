@@ -82,7 +82,6 @@ revision	7f792c92f623a410c521ee3261dc9fb6b24d2f2f
 # entrypoint	scripts/ci/report-tool-versions.sh
 # entrypoint	scripts/ci/make-adapter-probes.sh
 # entrypoint	scripts/ci/collect-native-diagnostics.sh
-# entrypoint	scripts/ci/collect-native-evidence.sh
 # entrypoint	scripts/ci/check-pipe-jobserver.pl
 # entrypoint	scripts/ci/cargo-release-preflight.sh
 # entrypoint	scripts/ci/extract-workflow-step.sh
@@ -169,7 +168,6 @@ file	a022de645d391ca6fd85949d5f4f8c48eb2f5320bc41a161d92887b24f66638d	x	scripts/
 file	cdcee598d34e2ec9d55e5010b68bbd65ebdd0ef7f98b6fa3a26b387dc4330b48	x	scripts/ci/report-tool-versions.sh
 file	380eaee7eb8a61331eba7f7459cbf2247b3897ebb0a1de9d1621aaf5c7c99d14	-	scripts/ci/make-adapter-probes.sh
 file	549ec26d9e89d1c07ccacd275f3504b96f727418d233e77514c55ccc21309511	-	scripts/ci/collect-native-diagnostics.sh
-file	4a631d52685ca188551084dea2820af956fc066c49dd8ae4b0c414773c462bd4	-	scripts/ci/collect-native-evidence.sh
 file	d866bd1ae0bf5c5d22120c3427857968eba86cbc2affa310951f76742e339116	x	scripts/ci/check-pipe-jobserver.pl
 file	1d69a4a04dbf19db8a54a070d820ee89ffea457ded2ca666108777c310b0e9ac	-	scripts/ci/cargo-release-preflight.sh
 file	e2825c554ea3952515ecb2938f7ad592d6539ec5304c3b3107d32a1bfc6b4eda	-	scripts/ci/extract-workflow-step.sh

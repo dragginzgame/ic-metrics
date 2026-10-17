@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Archive a caller-owned native evidence tree verbatim, including hidden Git
-# recovery state. This is not the sanitized diagnostic/tool-candidate exporter.
-[[ $# == 2 ]] || { echo 'usage: collect-native-evidence.sh EVIDENCE OUTPUT' >&2; exit 2; }
+# Metrics owns this full native recovery archive, including hidden Git state.
+# Sanitized diagnostics are published separately through Shared Tooling.
+[[ $# == 2 ]] || { echo 'usage: package-native-recovery-evidence.sh EVIDENCE OUTPUT' >&2; exit 2; }
 evidence="$1" output="$2"
 [[ -d "$evidence" && ! -L "$evidence" && -n "$output" && "$output" != */ ]] || exit 2
 # Do not archive our own output or replace an earlier attempt's evidence.
