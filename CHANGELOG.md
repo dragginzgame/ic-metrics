@@ -20,15 +20,18 @@
 
 ### Changed
 
-- Adopt Shared Tooling 0.24.0 at `cab12cd3dfa4fdb34846b25397f0d72881bb9ae0`.
+- Adopt Shared Tooling 0.24.0 with the reviewed committed fixture correction at
+  `8e90cbdad8b12c9c2f8cb507d60266b162c0dabf` from
+  [Shared PR #276](https://github.com/dragginzgame/shared-tooling/pull/276).
   Label production packages/dependencies and the development-only Memory feature;
   retain matching global manifest order in formatting and release checks.
   Common Rust setup now selects only the two formatters. Verify diagnostic
   sidecars through the checksum owner and keep workflow outcome policy local.
   Production graph inspection is separate from automated exclusion enforcement
-  ([#94](https://github.com/dragginzgame/ic-metrics/issues/94)); the selected
-  snapshot's nested release-fixture refusal awaits
-  [Shared PR #276](https://github.com/dragginzgame/shared-tooling/pull/276).
+  ([#94](https://github.com/dragginzgame/ic-metrics/issues/94)). Nested evidence
+  fixtures now admit their complete companion closure while rejecting copies
+  that would overwrite selected inputs. The normal release-tooling gate passes;
+  this snapshot selects an unmerged upstream fix, not a released 0.24.1.
 
 - Clarify report ownership with a compiled exact-wide-total example: preserve
   source quality and distinguish accumulated observations from independent

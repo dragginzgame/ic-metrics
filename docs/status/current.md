@@ -66,9 +66,12 @@ Memory 0.48 retires earlier allocation images under its own fresh/reset
 requirements. Unchanged Metrics V1 or B-tree bytes do not establish allocator
 compatibility; the adapter never automatically resets backing.
 
-Shared Tooling 0.24.0 is selected at committed revision
-`cab12cd3dfa4fdb34846b25397f0d72881bb9ae0` (115 payloads), refreshed from a
-clean source checkout. Both members and all root dependencies are production;
+Shared Tooling 0.24.0 with its reviewed fixture correction is selected at
+committed revision `8e90cbdad8b12c9c2f8cb507d60266b162c0dabf` (115 payloads),
+refreshed from a clean checkout of
+[Shared PR #276](https://github.com/dragginzgame/shared-tooling/pull/276).
+The PR remains unmerged; no Shared 0.24.1 release is claimed.
+Both members and all root dependencies are production;
 only the stable package's Memory development feature is test-only. Existing
 global sorting matches the current and committed-source release checks.
 Common Rust setup now admits only the two existing pinned formatters; Metrics
@@ -76,27 +79,33 @@ has no Candid extractor caller. Diagnostic archive verification follows the
 shared bare-digest sidecar contract. The native fixture keeps its own step
 outcome projection without the retired shared executor.
 
-Locked production graphs and library builds are qualified on native Linux
-and Wasm with defaults: the core is dependency-free, and the stable graph
-excludes Host, Testkit and Memory's `test-support` feature. This repository has
+The initial 0.24.0 adoption qualified locked production graphs and library builds
+on native Linux and Wasm with defaults: the core is dependency-free, and the
+stable graph excludes Host, Testkit and Memory's `test-support` feature. This repository has
 no deployment command. The missing transitive library CI guard is
 [#94](https://github.com/dragginzgame/ic-metrics/issues/94); role comments and pin
 checks are not that enforcement. See the [host guide](../hosts.md#dependency-roles-and-production-graphs).
 
-The selected 0.24.0 preparer rejects this consumer's nested evidence fixtures:
-plain `make release-tools-check` fails with `roots overlap` before its assertions.
-Configured native CI places scratch under that same evidence root. The fix is
-already owned by [Shared PR #276](https://github.com/dragginzgame/shared-tooling/pull/276);
-the snapshot remains exactly 0.24.0, without a local shared-file patch.
-This ordinary CI/release-fixture route remains blocked until the fix is delivered.
+The delivered 0.24.0 preparer rejected this consumer's nested evidence fixtures
+with `roots overlap`. The selected correction admits the full companion closure
+before any copy and rejects outputs that would overwrite selected source inputs.
+Plain `make release-tools-check` and the configured CI-style nested scratch
+selection now pass under `target/evidence/native-ci`, including child/assertion failures,
+hook diagnostics and current/committed-source metadata checks. The original
+failed-release logs and fixture remain untouched. Snapshot integrity and the
+upstream focused nested/collision tests pass; receipts are under
+`target/fixture-overlap-fix/`. The upstream PR's full hosted matrix still has a
+separate retention-fixture failure; this focused consumer repair does not claim
+that matrix or a full Metrics CI/MSRV pass.
 
-The 0.24.0 adoption passes snapshot/pin/tool admission, formatting with preserved
-role annotations, the real hook sorting fixture, and native/Wasm production
+The initial 0.24.0 adoption passed snapshot/pin/tool admission, formatting with
+preserved role annotations, the real hook sorting fixture, and native/Wasm production
 library builds. Release fixtures pass with an explicitly external temporary root,
 including current and selected committed-source metadata checks. Native workflow
 source/setup/archive and recovery tests pass in an isolated current-source fixture;
-action results and Make effects are substituted. The actual nested-custody failure
-is retained separately. These checks do not claim full CI/MSRV, hosted native
+action results and Make effects were substituted. The original nested-custody failure
+is retained separately. These initial receipts retain their recorded source and
+dependency identities; they do not claim full CI/MSRV, hosted native
 hosts or deployment qualification. Adoption receipts and incoming before-images
 are under `target/shared-tooling-0240/`.
 
