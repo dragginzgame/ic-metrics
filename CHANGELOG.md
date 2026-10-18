@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.3]
+## [0.14.3] - 2026-10-18
 
 - Document lossless scalar reporting and exact-cap versus overflow behavior.
   Forwarded readings with unknown clipping remain a consumer-owned lower bound
