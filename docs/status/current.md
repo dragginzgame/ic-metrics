@@ -7,14 +7,20 @@ and endpoints. [The extraction contract](../extraction.md),
 [stable guide](../../crates/ic-metrics-stable/README.md) and
 [host guide](../hosts.md) own those boundaries and local qualification commands.
 
-## Delivered 0.14.1
+## Delivered 0.14.2
 
-The finalized release is `d773b0512172c1e93de6d8a696ce5901758fa073`; both workspace
-packages are 0.14.1.
-[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39121309886)
+The finalized release is `c336a69e933b22334c7174ea290cb9ca2b3abcd4`; both workspace
+packages are 0.14.2. Both official registry archives match their index checksums
+and embed that exact Git identity.
+[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39135590545)
 passed Linux x86_64, native macOS arm64/Intel and native/Wasm Rust 1.91.
-This identifies delivered source and hosted qualification, not an independent
-registry-publication observation.
+This release corrects Testkit adoption guidance; arithmetic, stable V1 records
+and selected dependencies are unchanged from 0.14.1.
+
+The pending 0.14.3 documentation clarifies exact-cap versus actual-overflow scalar
+reports and prevents restoring uncertain forwarded readings as known exact.
+All 13 arithmetic doctests, local documentation links and diff checks pass.
+This does not change the public API, storage format, dependency graph or Rust floor.
 
 The preceding 0.14.0 release removes floating-point sample statistics and supplies
 the checked wide accumulator. [PR #92](https://github.com/dragginzgame/ic-metrics/pull/92)
@@ -87,27 +93,29 @@ qualification. Publication is a separate observation.
   The earlier contribution's green CI retains its own source identity; it does
   not qualify this release or the separate pending Platform work.
 - [Canic PR #599](https://github.com/dragginzgame/canic/pull/599) remains open at
-  `b3a0500aa7823110fa1eb548b3f2bea0a7116df0`. Alongside typed performance and
-  producer-owned operation projections, Canic-owned diagnostic scalar recorders
-  now use the selected published Metrics 0.11.7 counter. This removes 19 copied
-  saturation sites while retaining attribution, keys, reset/lifecycle ownership
-  and authoritative financial/policy arithmetic. Protected wide scalars carry
-  explicit exactness through Candid, CLI and JSON; public process/operation rows
-  preserve actual source/merge overflow. Forwarded untracked caps stay conservative.
-  The scalar batch passes 101 focused tests, strict selected native/Wasm and
-  governed-caller lint, and actual Rust 1.91 library checks. An extra 1.91 test-target
-  attempt fails at existing development-test macros authored for Rust 1.99; it
-  is retained separately from library-floor acceptance. Six IC Wasm cases pass
-  through an aliased temporary parent after correcting the latest macOS fixture
-  failure, alongside the typed Testkit membership assertion repair.
-  [Fresh hosted CI](https://github.com/dragginzgame/canic/actions/runs/39135238669)
-  is running; no PocketIC/deployment acceptance is claimed. Counter values occupy
-  32 bytes on native/Wasm at Rust 1.91, excluding table padding/allocations.
-  [Canic #535](https://github.com/dragginzgame/canic/issues/535#issuecomment-6250963919)
-  remains open for governed IC heap/recording-cost acceptance. Protected client,
-  artifact/runtime qualification and integration with pending Platform work stay
-  with Canic. The normal dirty integration checkout is untouched; its complete
-  0.112 batch retains its owning Auth/release blockers.
+  `039173ed18e57cb070ceb70c9d54c2404ba2210b`. Canic-owned scalar recorders use
+  the selected published Metrics 0.11.7 counter, removing 19 copied saturation
+  sites while retaining attribution, keys, lifecycle/reset ownership and
+  authoritative financial/policy arithmetic. Wide protected scalars preserve
+  exactness through Candid/CLI/JSON; public rows retain actual source/merge
+  overflow and forwarded untracked caps remain conservative. The preceding 101
+  focused tests and source-bound native/Wasm lint/library-floor receipts retain
+  their scope in Canic's handoff.
+  Ten governed Linux timer-authority cases now pass with actual built Wasm,
+  qualifying bounded sampling/history, authorization, registration and same-source
+  restoration. The existing fixture also measures the scalar recorder separately:
+  2,851 IC instructions for its first Wasm-store record and 1,482 for a warm record,
+  including facade/table work and measurement overhead. It verifies exact
+  publication of the two events. Probe/timer strict lint and an actual Rust 1.91
+  all-target probe check pass. Counter value storage is 32 bytes on native/Wasm;
+  this excludes table padding/allocations and supplies no old-recorder comparison
+  or cycle/Wasm-size improvement claim.
+  [Fresh hosted CI](https://github.com/dragginzgame/canic/actions/runs/39137659353)
+  is running. [Canic #535](https://github.com/dragginzgame/canic/issues/535#issuecomment-6251298002)
+  retains owner review of the storage/cost tradeoff and remaining whole-table
+  acceptance. Complete installed-Fleet, held-HTTP and pending Platform/Auth release
+  qualification remain Canic responsibilities. The normal dirty integration
+  checkout is untouched.
 - [#82 — Published Testkit memory observations](https://github.com/dragginzgame/ic-metrics/issues/82)
   owns replacing the local write observer after the canonical package is published
   and its trait, clone/reset and overflow contracts are qualified. Keep the local

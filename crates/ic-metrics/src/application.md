@@ -98,6 +98,32 @@ must first establish common counter/window identity, units and append-only
 continuity. Reset by replacing the counter with `MeasurementCounter::ZERO` at
 the same owning boundary as its identity change.
 
+Report a scalar's wide total together with its source quality. The same numeric
+value can be exact or a clipped lower bound:
+
+```rust
+use ic_metrics::{MeasurementCounter, MeasurementCounterError};
+
+let mut events = MeasurementCounter::ZERO;
+events.add(u128::MAX);
+events.add(0);
+assert_eq!(events.exact_total(), Ok(u128::MAX));
+let before = events;
+
+events.add(1);
+assert_eq!(events.total(), u128::MAX);
+assert!(events.total_overflowed());
+assert_eq!(events.exact_total(), Err(MeasurementCounterError::TotalOverflow));
+assert_eq!(events.delta_since(before), Err(MeasurementCounterError::TotalOverflow));
+```
+
+`from_parts(total, false)` admits already known exact retained state. It cannot
+establish that a forwarded untracked reading was never clipped. If the source
+cannot distinguish an exact cap from overflow, keep that uncertainty in a
+consumer-owned lower-bound or unavailable report; neither invent an actual-overflow
+flag from the numeric cap nor restore the reading as known exact. Wire formats
+and JSON parsers must retain the full integer width as well as that quality.
+
 For per-operation means, maxima or distributions, keep aggregates, summaries or
 histograms. Counting events with `MeasurementAggregate::record(1)` also preserves
 quality, but retains observation statistics that a scalar total does not need.
@@ -190,8 +216,9 @@ the aggregate availability check above establishes that before using it.
 
 An empty aggregate differs from measured zero. Tracked aggregates and ordered
 summaries return `None` when empty, floor exact means and record actual overflow.
-Counts and individual observations use `u64`; accumulated totals and means use
-`u128`. Every possible exact sample count of `u64` observations fits the total.
+Sample and bucket counts and individual observations use `u64`; scalar totals,
+accumulated measurement totals and means use `u128`. Every possible exact sample
+count of `u64` observations fits the total.
 An exactly reached numeric cap remains exact; adding zero does not lose exactness.
 Inspect overflow flags before using clipped counts/totals in other arithmetic.
 Flags describe accumulation only: consumers must admit exact input observations
@@ -201,7 +228,7 @@ substituting zero. Project report fields from that state; raw numeric caps canno
 establish whether overflow occurred. [`MeasurementSummary`] retains the latest ordered sample;
 mergeable aggregates and histograms retain no latest value. Maximum remains an
 individual observation after overflow. Bucket counts saturate independently;
-they need not sum to a overflowed sample count.
+they need not sum to an overflowed sample count.
 
 Consumers own overflow reporting. Check `samples_overflowed()` and
 `total_overflowed()` on the aggregate, expose unavailable exact projections, and
@@ -214,7 +241,7 @@ When a report or codec still requires `u64`, use a checked conversion and an
 explicit unavailable/overflow representation rather than truncating the total.
 [`MeasurementHistogram::cumulative_count`] needs only its selected bucket prefix
 to remain exact; [`MeasurementHistogram::quantile_bucket`] requires an exact
-sample count and all buckets. A overflowed value total alone does not invalidate
+sample count and all buckets. An overflowed value total alone does not invalidate
 quantile ranges. Overflow has no configured upper bound, and a zero-bound-count
 histogram covers all unsigned values. Invalid indices/fractions and required
 overflow produce [`HistogramQueryError`].
