@@ -2,7 +2,7 @@
 # version	0.24.0
 format	1
 source	https://github.com/dragginzgame/shared-tooling
-revision	cab12cd3dfa4fdb34846b25397f0d72881bb9ae0
+revision	8e90cbdad8b12c9c2f8cb507d60266b162c0dabf
 # entrypoint	rules/contributions.md
 # entrypoint	DRAGGINZGAME.md
 # entrypoint	docs/principles/README.md
@@ -128,11 +128,11 @@ file	235d355481adf5b15dd118bbd2e83174484af4e463d75714bf70fd7f7352a8fc	-	ci/ic-to
 file	537bb28ee126354218ad76ff59999110c102ac7ca22e5b633feb62e321896dfd	x	scripts/dev/install-host-tools.sh
 file	4ca1c966934c66dee358b7d7ca8e91d5781bde49de981e8af6de48c6c8dd7abe	x	scripts/dev/install-ic-tools.sh
 file	ebf236f1db579744a13bc995ec1c58c2ee87e34caed23088a6d9b75e638dd27f	x	scripts/ci/verify-evidence-checksums.sh
-file	dfc1784f37052365425aa9ed4c9b97071b47a092b18c69dcc7e695eb9ad03203	-	docs/verification-helpers.md
+file	fa29ea6a1808a34c7987ea5b88126d10a026111a34197baad6fd8d7cdcc09b63	-	docs/verification-helpers.md
 file	1063002468575e2f821cfec71524bde06a64634bf30455d64d2d9fed872969d6	-	docs/tag-maintenance.md
 file	a04ef3105e7851b83bb682120873e29a6c3c604183c275bc53051dd9e4b300a7	x	scripts/ci/check-documentation-links.pl
 file	dcf4585f8794b2158259054f550dbabea64fadd7d4f07161388ea49a0dfa3d80	x	scripts/ci/check-release-commands.sh
-file	d045920e27a2906821b07ebe5e493d08a8733ef93b9e2cf92abd341a746e63e7	x	scripts/ci/check-formatting-hooks.sh
+file	80c6200724f8542dd4454539bef4f35b56c564f3ca83716235a57275c14755a1	x	scripts/ci/check-formatting-hooks.sh
 file	40f31a19d6115411ebffe7c26e3ed30b8af7eead10dd4830de8d5a9312291222	x	scripts/ci/read-cargo-workspace-version.sh
 file	a52db278800a9f02d85a6b8a780a9b1eed860c49d5442cef9db1f7f9d7ddee0a	x	scripts/ci/check-format-tools.sh
 file	a7f5dbb4f1e9751a34ba6c56641a3f8184eef2f669e09d9aeade0f671577b9b4	-	scripts/distribution/governance-files.txt
@@ -176,7 +176,7 @@ file	e2825c554ea3952515ecb2938f7ad592d6539ec5304c3b3107d32a1bfc6b4eda	-	scripts/
 file	5a4f1abe764e1e46c472bcf1e2e38f7f998085c570f53976591c808eca884d65	-	scripts/ci/check-release-changelog.sh
 file	31c47b675fba90850681c6fac0d685def34b08a68e7e05bc55ae0403419fdf82	x	scripts/dev/prepare-rust-toolchain.sh
 file	62603f4ab5614737c4a17703080b10bc26c4bdb5b0e5c4ad81b2f9b6d53b7b8f	-	.github/actions/prepare-common-tools/action.yml
-file	5304096b9c21cca5155d1763f4616a372a8df3ac9992cc26c315d45555e3619b	x	scripts/ci/prepare-script-fixture.sh
+file	fad9efc74da443a84209fd84ac38c5356e72355ddaef5588cc29757b13ccc6d7	x	scripts/ci/prepare-script-fixture.sh
 file	1b01f4b482fb85986d1ffab592626ccbfec187ac7a5133ab946b0acd51a18381	-	scripts/ci/check-release-delivery.sh
 file	cab304269146b6dc25d7cfc98a4838fc94de83e5d935aee0789e442a0cd6ee35	-	scripts/ci/prepare-cargo-formatting-fixture.pl
 file	7f8a58cc55f1cea0546b39bf97b64fee0a0a0e7fe2aaf31712c158cc43b6320c	-	docs/rust-toolchains.md
