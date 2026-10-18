@@ -16,8 +16,8 @@ ic-metrics.workspace = true
 ic-storage.workspace = true
 
 [dev-dependencies]
+# Tests and tooling only: native backing support, not the production feature set.
 ic-memory = { workspace = true, features = ["test-support"] }
-ic-stable-structures.workspace = true
 
 [lints]
 workspace = true

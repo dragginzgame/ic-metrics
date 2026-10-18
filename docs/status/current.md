@@ -1,82 +1,191 @@
 # Current handoff
 
-IC Metrics owns allocation-free, dependency-free `no_std` arithmetic. Consumers
-own sampling, attribution, units, identities, registries, lifecycle and endpoints.
-[The extraction contract](../extraction.md) owns integration boundaries;
-[host qualification](../hosts.md) owns validation commands and delivery gates.
+IC Metrics owns allocation-free, dependency-free `no_std` integer arithmetic.
+Consumers own sampling, attribution, units, identities, registries, lifecycle and
+endpoints. [The extraction contract](../extraction.md) owns integration boundaries;
+[host qualification](../hosts.md) owns validation commands and release gates.
 The [stable guide](../../crates/ic-metrics-stable/README.md) owns the compiled
 host example and current durable-store API.
 
 ## Source and prepared changes
 
-The finalized source is 0.13.3 at
-`ab328d191a7ac72fd408dd25467b9179eb0d6f59`. This identifies the release commit,
-not an independent registry-publication observation. The prepared 0.13.4 batch
-consolidates truncated-record tests across all four families, including empty
-and populated summaries. Each rejected prefix must preserve the row and perform
-no writes. Independent frozen-byte and original-collection checks remain intact.
-Package versions, locked dependencies, public APIs and stored V1 records are unchanged.
-CI now relies on strict Clippy for native/Wasm type checking, retaining standalone
-check commands. The arithmetic guide links to the stable guide for supported
-persistence operations instead of maintaining a conflicting capability list.
-README onboarding now selects the current 0.13 contract and attributes the
-governed map to IC Storage over admitted IC Memory handles. Hook qualification
-delegates diagnostics and scratch custody directly to Shared Tooling. The
-source-rewriting assertion meta-test is removed; actual metadata and retained-input
-checks remain.
+The finalized source is 0.13.4 at
+`76cca76c8e591d91c9dbed6b276ac2ef57533335`. This identifies the release commit,
+not an independent registry-publication observation. The prepared 0.14.0 hard
+cut removes `summarize_samples`, `SampleStatistics` and `SampleStatisticsError`.
+[The Testkit contribution](https://github.com/dragginzgame/ic-testkit/pull/125)
+moves the implementation and boundary tests into the private development
+reporter, retaining count/mean/p50/p95 and original typed error sources. Unused
+minimum/maximum projections are removed there. Integrate that contribution
+before adopting Metrics 0.14 in Testkit; other sample-API callers must move
+those projections to their owning reporters. Reviewed IcyDB, Canic, Timers,
+Backup, Blob restoration-probe and Toko Miner callers do not use the removed API;
+their integration qualification remains with each owner.
 
-Shared Tooling 0.23.0 is selected at committed revision
-`88d398f01c9be74bd71d1ad67c27bf0ede87cc9b` (116 payloads), supplied by
-[Shared PR #276 — Consumer fixture execution and formatting diagnostics](https://github.com/dragginzgame/shared-tooling/pull/276).
-Metrics retains its workflow scenarios, action substitutes and archive custody.
-The committed companion-closure preparer replaces the retired Make fixture
-copier in both release fixtures. Tool catalogs and product dependencies are
-unchanged. The earlier Testkit package-index observation was HTTP 404; the local
-memory observer remains pending published-source qualification.
+The stable store uses IC Storage's public `adapter::StableBTreeMap` directly.
+Retain the existing `MetricsMap` alias for that exact byte key/value type; it
+adds no collection implementation or lifecycle policy, so removing it would
+create avoidable public API churn. Hosts supply the opened map to
+`MetricsStore::new` and can recover it with `into_map`; neither operation
+initializes storage or releases its allocation lease. Hosts retain allocation,
+bootstrap, fresh-versus-retained selection, write cadence, resets and collection
+lifecycle. Drop the store or transferred map before reopening its allocation.
+The governed map, public map type identity and Metrics V1 bytes stay unchanged.
+
+[Canic PR #599](https://github.com/dragginzgame/canic/pull/599) owns the public
+performance projection and offline timer-comparison correction. It carries source
+quality and registration directly without a new Metrics API or dependency upgrade.
+Its isolated checks qualify that Canic contribution, not the pending Metrics release.
+The remaining protected-report contract belongs to
+[Canic #600](https://github.com/dragginzgame/canic/issues/600): separate latest
+timer delay from work-start counts and carry measurement width and quality.
+Metrics' application guide illustrates exact wide totals using existing APIs;
+wire semantics, client updates and release qualification stay with Canic.
+
+The checked wide accumulator from [PR #92](https://github.com/dragginzgame/ic-metrics/pull/92)
+is prepared in this working tree. `CheckedMeasurementAggregate` records exact
+`u128` observations, count, total and extrema; count/total overflow rejects before
+any state change. Existing tracked accumulators and stable V1 records are
+unchanged. It has no persistence API or reporting policy. The old PR remains open
+until this batch is committed and its delivered source is qualified.
+
+The release-admission fixture now uses the metadata adapter's declared companion
+closure instead of its own helper list. The deliberately minimal tool-free
+bootstrap fixture, actual two-package metadata checks and custody assertions
+remain. Package versions are unchanged. The incoming Memory 0.48.1 and
+Storage 0.5.2 lock selections are preserved as supplied; this store cleanup changes no
+external package version, integer API or Metrics V1 row. The stable test package
+drops its direct stable-structures dependency and imports, using only IC Storage
+for collections. Frozen V1 vectors retain all four kind/byte checks; underlying
+collection-format qualification belongs to Storage. Memory owns allocation
+admission and its backing interfaces. The substrate remains a transitive
+dependency of the governed owners.
+
+The stable guide is corrected for already selected Memory 0.48 and Storage 0.5.
+Memory 0.48 retires earlier allocation images under its own fresh/reset
+requirements. Unchanged Metrics V1 or B-tree bytes do not establish allocator
+compatibility; the adapter never automatically resets backing.
+
+Shared Tooling 0.24.0 is selected at committed revision
+`cab12cd3dfa4fdb34846b25397f0d72881bb9ae0` (115 payloads), refreshed from a
+clean source checkout. Both members and all root dependencies are production;
+only the stable package's Memory development feature is test-only. Existing
+global sorting matches the current and committed-source release checks.
+Common Rust setup now admits only the two existing pinned formatters; Metrics
+has no Candid extractor caller. Diagnostic archive verification follows the
+shared bare-digest sidecar contract. The native fixture keeps its own step
+outcome projection without the retired shared executor.
+
+Locked production graphs and library builds are qualified on native Linux
+and Wasm with defaults: the core is dependency-free, and the stable graph
+excludes Host, Testkit and Memory's `test-support` feature. This repository has
+no deployment command. The missing transitive library CI guard is
+[#94](https://github.com/dragginzgame/ic-metrics/issues/94); role comments and pin
+checks are not that enforcement. See the [host guide](../hosts.md#dependency-roles-and-production-graphs).
+
+The selected 0.24.0 preparer rejects this consumer's nested evidence fixtures:
+plain `make release-tools-check` fails with `roots overlap` before its assertions.
+Configured native CI places scratch under that same evidence root. The fix is
+already owned by [Shared PR #276](https://github.com/dragginzgame/shared-tooling/pull/276);
+the snapshot remains exactly 0.24.0, without a local shared-file patch.
+This ordinary CI/release-fixture route remains blocked until the fix is delivered.
+
+The 0.24.0 adoption passes snapshot/pin/tool admission, formatting with preserved
+role annotations, the real hook sorting fixture, and native/Wasm production
+library builds. Release fixtures pass with an explicitly external temporary root,
+including current and selected committed-source metadata checks. Native workflow
+source/setup/archive and recovery tests pass in an isolated current-source fixture;
+action results and Make effects are substituted. The actual nested-custody failure
+is retained separately. These checks do not claim full CI/MSRV, hosted native
+hosts or deployment qualification. Adoption receipts and incoming before-images
+are under `target/shared-tooling-0240/`.
+
+The architectural-sediment review removes the empty dependency-pin exception
+left after the IC reader retired and replaces the arithmetic-only hook fixture's
+no-dependency selection with the real workspace Metrics/Storage pair. The same
+reviewed Shared revision supplies fixture generation; the stable package supplies
+the Rust perturbation. Failure evidence retains the generated input and nested
+shared checker logs. Current guides describe today's APIs; published migration
+instructions remain in the changelog. The
+[review](../reports/audits/2026/10/18/architectural-sediment/01/report.md) records
+ownership traces, retained integration code and publication limits. This audit
+adds no product API, dependency version or stored-format change.
 
 ## Qualification and limits
 
-The earlier eight selected stable-test results cover shared prefix rejection,
-V1 encoding/admission, histogram boundaries and original-collection compatibility;
-their receipts remain under `target/corruption-cleanup-0134/`.
-The CI/guide cleanup passes strict native all-target and Wasm library Clippy,
-11 core doctests, the actual Make/release adapter fixture, formatting and
-documentation checks. Cargo metadata confirms that both workspace packages have
-only library targets. These receipts are under `target/ci-guide-cleanup-0134/`.
-The hook/fixture cleanup passes the actual release/hook retention suite, canonical
-tool setup and offline verification, snapshot integrity, pins, formatting and
-documentation checks. Its receipts are under `target/hook-replay-0134/`.
-Native workflow source/setup/archive cases pass with substituted effects in a
-disposable committed copy of the prepared source, so the retired tracked helper
-is absent from its inventory; the real index and refs are untouched. Shared
-PR #276 also passes its real Cargo/hook/frontend fixture, failure-log replay and
-custody checks, companion-closure/nested-destination admission, assertion-probe
-and ordered-runner fixtures, affected ShellCheck and documentation links.
-No full local CI/MSRV gate or native macOS qualification was run for this cleanup;
-release qualification remains separate under [host qualification](../hosts.md).
+The checked-wide addition passes four focused units, eleven core doctests, strict
+core native/all-target and Wasm Clippy, and actual Rust 1.91 native/all-target and
+Wasm compilation. Formatting and documentation links pass. These checks qualify
+the prepared source only; no full local CI or new hosted/macOS/IC-cost acceptance
+is claimed. Review receipts and before-images are under `target/issues-prs-0140/`.
+
+Delivered 0.13.4 at the source above passes [exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39049781488)
+on Linux, native macOS arm64 and Intel, and native/Wasm Rust 1.91. That delivered
+source contains the narrow-import adoption, local recovery packaging and common
+release-delivery admission. Issues #87, #89 and #90 close against that evidence;
+superseded PRs #88 and #91 close without merging. This delivered acceptance does
+not qualify the pending 0.14 changes.
+
+The retained `MetricsMap` spelling passes the lease-transfer regression and
+all three stable-package doctests, plus strict native/all-target and Wasm Clippy.
+Source-bound receipts and task before-images are under `target/metrics-canic-0140/`.
+
+The corrected public-map boundary passes strict stable-package native all-target
+and Wasm library Clippy, 21 stable units and three stable-guide/compile-fail
+doctests. Map transfer preserves lease custody; all four frozen V1 kinds, byte
+and truncation checks, and typed corruption/regression errors remain covered.
+Collection opening belongs to Storage rather than a duplicate Metrics constructor.
+The fixed-width decoder uses one checked slice operation. Formatting, snapshot
+integrity, dependency declarations and documentation links pass. Correction
+receipts and starting before-images are under `target/storage-map-correction-0140/`;
+the preceding decoder/guide cleanup remains under `target/store-cut-0140/`.
+Actual stable-package Rust 1.91 checks pass on native all-targets and the Wasm
+library with the selected Memory 0.48.1/Storage 0.5.2 graph.
+
+Earlier arithmetic doctests and release-admission/metadata fixture checks remain
+at `target/hardcut-0140/` for their unchanged inputs. They cover catalog override
+routing, retained Git state, selected-commit metadata and preparation refusal.
+The host guide now links generic mechanics to Shared Tooling and retains only
+the local commands, integration proofs and recovery-evidence obligations.
+
+The isolated Testkit contribution passes five moved statistics units, three
+report-boundary units, strict development-package all-target Clippy, Rust 1.91
+all-target compilation, warning-denied documentation, formatting and local links.
+Its only lock change removes the private development package's direct Metrics
+edge; the published Testkit library retains integer benchmark arithmetic.
+These are source-qualified checks, not native macOS, hosted CI or live benchmark
+acceptance. No full local CI/MSRV gate or new IC cost experiment was run.
+
+The architectural review passes workspace-native/Wasm Clippy, 76 unit tests and
+13 doctests, actual hook sorting/staging and release/metadata/hook retention
+checks. CI evidence checks pass in an isolated current-source checkout that
+represents pending deletions without touching the real index; workflow effects
+are substituted, and archive custody is exercised locally. Snapshot/pin/format,
+ShellCheck and documentation checks pass. Receipts remain under
+`target/architectural-sediment-0140/`.
 
 The [frozen upgrade study](../evidence/governed-store-0130.md) retains its exact
-Memory 0.45/Storage 0.3.1 identities and IC measurements. It does not measure the
-currently selected Memory 0.47/Storage 0.4 graph. Existing evidence archives are
-unchanged. The [archive distribution record](../evidence/archive-distribution-072.md)
-continues to govern public evidence payloads.
+Memory 0.45/Storage 0.3.1 identities and IC measurements. It does not qualify
+the current Memory 0.48.1/Storage 0.5.2 graph or its allocator-format transition.
+Existing evidence archives are unchanged. The
+[archive distribution record](../evidence/archive-distribution-072.md) continues
+to govern public evidence payloads.
 
 ## Owning issues and history
 
-- [#82 — Adopt published Testkit memory observations and retire the local observer](https://github.com/dragginzgame/ic-metrics/issues/82)
-  owns replacement of the local observer after publication and qualification.
-- [Shared #274 — Prepare script fixtures from their declared companion closure](https://github.com/dragginzgame/shared-tooling/issues/274)
-  owns the supplying fixture helper, now adopted from a clean committed source.
+- [#82 — Adopt published Testkit memory observations](https://github.com/dragginzgame/ic-metrics/issues/82)
+  retains the accepted Testkit owner; the earlier alternative Memory engine must
+  not be revived. Testkit PR #97 remains open at
+  `741e2e8e89cd1442e29dd3a8e1ff235260806bf0`, and the official package index
+  still returns HTTP 404. Keep the local write observer until publication and
+  exact trait/overflow/clone/reset qualification; no source override is added.
 - [#83 — Qualify the first opt-in durable scalar counter consumer](https://github.com/dragginzgame/ic-metrics/issues/83)
   owns first durable-consumer acceptance.
-- [Storage #12 — Investigate discard-value mutations for governed stable maps](https://github.com/dragginzgame/ic-storage/issues/12)
-  owns the substrate capability investigation. Existing mutations still extract
-  old values internally; a facade that merely drops them would retain that work.
-  Metrics keeps its current validation-before-write and map format.
-- [#89 — Own native recovery-archive packaging in Metrics](https://github.com/dragginzgame/ic-metrics/issues/89)
-  owns delivery of the locally implemented recovery packaging.
+- [Storage #12 — Investigate discard-value mutations](https://github.com/dragginzgame/ic-storage/issues/12)
+  owns the substrate investigation. The selected governed facade still returns
+  old values; dropping them downstream does not remove substrate extraction.
 
 [The changelog](../../CHANGELOG.md) owns released changes and caller actions.
-The [0.13.3 source-bound handoff](https://github.com/dragginzgame/ic-metrics/blob/ab328d191a7ac72fd408dd25467b9179eb0d6f59/docs/status/current.md)
-preserves earlier preparation narratives, original evidence locations and their
-qualification limits. Historical receipts are not relabelled as current checks.
+The [0.13.4 source-bound handoff](https://github.com/dragginzgame/ic-metrics/blob/76cca76c8e591d91c9dbed6b276ac2ef57533335/docs/status/current.md)
+preserves earlier preparation narratives, evidence locations and qualification
+limits. Historical receipts are not relabelled as current checks.

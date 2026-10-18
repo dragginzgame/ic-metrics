@@ -48,7 +48,7 @@ help:
 	@echo "Registry: publish-check (dry run), publish (upload arithmetic and stable adapter to crates.io)"
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
-	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, msrv, shared-tooling-check, check-pins"
+	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, shared-tooling-check, check-pins"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"

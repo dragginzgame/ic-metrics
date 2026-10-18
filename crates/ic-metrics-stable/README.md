@@ -9,21 +9,23 @@ allocates bounded records and supports native hosts and Wasm with Rust 1.91.
 The host owns one `ic-memory` allocation pool and bootstrap. It declares one
 permanent metrics-store key, such as `app.metrics.v1`, and admits that allocation
 before opening the map. Follow the
-[IC Memory 0.47 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/b179ab9514b549f4ede75afd3757db264d3ce412/crates/ic-memory/README.md#quick-start-for-developers)
+[IC Memory 0.48 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/794cb1cf65acdd28d72685e1fbff80bba012a2bf/crates/ic-memory/README.md#quick-start-for-developers)
 for the selected dependency's declaration and lifecycle APIs.
 
-After bootstrap, the host opens the admitted memory and one `MetricsMap`, then
-passes that map to `MetricsStore::new`. Components share access to that store;
+After bootstrap, the host opens `ic_storage::adapter::StableBTreeMap` with one
+admitted memory handle and passes that public collection to `MetricsStore::new`.
+Components share access to that store;
 namespace/name keys distinguish rows without allocating an ID per metric or
 component. `ic-memory`'s governance allocations are separate. This package never
-initializes memory, registers keys, creates a global store or installs lifecycle
+allocates memory IDs, registers keys, creates a global store or installs lifecycle
 hooks.
 
 Metrics' V1 record layout is separate from Memory's allocation-ledger format.
-Memory 0.47 preserves the 0.45 allocation ledger, manager bytes and memory IDs;
-this adoption requires no reset. Hosts coming from earlier allocator formats
-must follow Memory's version-bound durable-format disposition. An unchanged
-Metrics record format does not authorize clearing existing memory.
+The selected Memory 0.48 allocation format retires earlier ICMSNAP1/ICMREC01
+images and requires host-owned fresh/reset backing under its version-bound
+disposition. Metrics neither converts those images nor clears memory on failure.
+An unchanged Metrics record or B-tree format does not establish allocation-ledger
+compatibility or authorize clearing existing memory.
 
 ## Store operations
 
@@ -37,19 +39,24 @@ identity and, for histograms, finite bounds; they do not take a dummy observatio
 | `MeasurementSummary` | `load_summary(key, identity)` | `save_summary(key, identity, value)` |
 | `MeasurementHistogram<N>` | `load_histogram(key, identity, bounds)` | `save_histogram(key, identity, value)` |
 
-The 0.12 API removes the public `DurableMetric` bound and generic `load`/`save`.
-Replace generic caller helpers with operations for their actual metric types.
 Histogram loads admit at most 256 strictly increasing bounds before reading a row;
 invalid expected bounds return `StoreError::InvalidState(InvalidBounds)`.
 Serialization, kind selection and continuity dispatch are private implementation.
 
-The 0.13 collection boundary uses `ic_storage::adapter::StableBTreeMap` through
-`MetricsMap`. Its generic parameter is the runtime's backing memory, rather than
-an already opened virtual handle. Replace raw collection constructors with
-`MetricsMap::init` for known fresh storage and `MetricsMap::load` for a known
-retained map, supplying `runtime.open_memory(permanent_key)?` in either case.
-The wrapper preserves the existing upstream B-tree format and Metrics V1 rows;
-it does not adopt IC Storage's custom tree format or allocate another memory ID.
+`MetricsMap<M>` names the exact `ic_storage::adapter::StableBTreeMap<Vec<u8>,
+Vec<u8>, M>` type. Hosts may use either spelling; this is a type alias, with no
+collection wrapper or independent initialization policy. `MetricsStore::new(map)`
+and `store.into_map()` transfer that same collection and its allocation lease.
+Hosts select `StableBTreeMap::new(handle)` for known fresh storage or
+`StableBTreeMap::load(handle)` for a known retained map. The store constructor
+wraps the supplied collection without touching storage. The generic parameter
+remains the runtime's backing memory, and the B-tree format and Metrics V1 rows
+are unchanged. No custom tree format or additional memory ID is introduced.
+
+`into_map` transfers the collection and its allocation lease to the host for
+administration. Drop the store or returned map before reopening the allocation.
+Direct map changes are host-owned and must preserve valid Metrics rows; subsequent
+store operations still validate stored records at their ordinary boundaries.
 
 This complete native example owns bootstrap once, opens only admitted handles,
 checkpoints all four families and reopens the same map. It proves storage/codec
@@ -61,7 +68,8 @@ use ic_memory::{
     MemoryRuntime, RuntimeOpenError, SealedDeclarationSnapshot, VectorMemory,
 };
 use ic_metrics::{MeasurementAggregate, MeasurementCounter, MeasurementHistogram, MeasurementSummary};
-use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsMap, MetricsStore};
+use ic_metrics_stable::{MetricIdentity, MetricKey, MetricsStore};
+use ic_storage::adapter::StableBTreeMap;
 
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
 const STORE_KEY: &str = "app.metrics.v1";
@@ -71,7 +79,7 @@ let pool = MemoryAllocationPool::new(
 let declarations = SealedDeclarationSnapshot::new(vec![MemoryRequest::new("app", STORE_KEY)?])?;
 let mut runtime = MemoryRuntime::new(VectorMemory::default())?;
 runtime.bootstrap(&declarations, &pool, &GenericAllocationPolicy)?;
-let mut store = MetricsStore::new(MetricsMap::init(runtime.open_memory(STORE_KEY)?));
+let mut store = MetricsStore::new(StableBTreeMap::new(runtime.open_memory(STORE_KEY)?));
 assert!(matches!(runtime.open_memory(STORE_KEY), Err(RuntimeOpenError::AlreadyOpen { .. })));
 let identity = MetricIdentity::new("instructions", 0)?;
 let key = MetricKey::new("canic", "endpoint.create")?;
@@ -95,9 +103,11 @@ let mut histogram = store.load_histogram(&histogram_key, &items, &bounds)?
     .unwrap_or(MeasurementHistogram::new(bounds)?);
 histogram.record(3);
 store.save_histogram(&histogram_key, &items, &histogram)?;
-drop(store);
+let map = store.into_map();
+assert!(matches!(runtime.open_memory(STORE_KEY), Err(RuntimeOpenError::AlreadyOpen { .. })));
+drop(map);
 
-let reopened = MetricsStore::new(MetricsMap::load(runtime.open_memory(STORE_KEY)?));
+let reopened = MetricsStore::new(StableBTreeMap::load(runtime.open_memory(STORE_KEY)?));
 assert_eq!(reopened.load_summary(&key, &identity)?, Some(summary));
 assert_eq!(reopened.load_counter(&bytes_key, &bytes_identity)?, Some(bytes));
 assert_eq!(reopened.load_aggregate(&aggregate_key, &items)?, Some(aggregate));
@@ -106,17 +116,19 @@ assert_eq!(reopened.load_histogram(&histogram_key, &items, &bounds)?, Some(histo
 # }
 ```
 
-Production hosts retain one bootstrapped runtime and inject the opened handle
-for the permanent metrics key. IC Storage requires `ic_memory::RuntimeMemory`
-when opening the collection; a raw backing or raw upstream map cannot enter
-`MetricsStore`. Memory 0.47 handles cannot be cloned, and another live open
+Production hosts retain one bootstrapped runtime and open the public IC Storage
+collection for the permanent metrics key. IC Storage requires
+`ic_memory::RuntimeMemory` when opening its map; raw backing cannot bypass
+allocation admission. Runtime handles cannot be cloned, and another live open
 through the same runtime returns `RuntimeOpenError::AlreadyOpen`. Hosts still
-prevent aliased backing access across runtimes. Drop each collection before
-reopening. `MetricsMap::init` can initialize unrecognized memory; never use it as
-an unknown/corrupt-store recovery fallback. Hosts own the new-versus-retained
-format decision. Allocation/collection corruption and capacity traps remain
-upstream contracts; typed adapter errors cover identifiers, values and numeric
-admission.
+prevent aliased backing access across runtimes. The store and a map returned by
+`into_map` retain that lease until dropped.
+
+Hosts own the new-versus-retained format decision. Never use IC Storage's fresh
+constructor as an unknown/corrupt-store recovery fallback; its retained `load`
+constructor does not fall back to initialization. Allocation/collection corruption
+and capacity traps remain upstream contracts; typed adapter errors cover
+identifiers, values and numeric admission.
 
 ## Durable contract
 

@@ -272,12 +272,7 @@ for scenario in standalone-missing explicit-pins-changed; do
             # target-directory symlink in a disposable source qualification.
             tool_root="$(cd -P "$tool_root" && printf '%s/.' "$PWD")"
             tool_root="${tool_root%/.}"
-            cp "$root/scripts/release/metadata.sh" "$tool_root/scripts/release/"
-            for helper in read-cargo-workspace-version.sh check-release-source.sh check-release-delivery.sh verify-file-checksum.sh cargo-release-preflight.sh check-release-changelog.sh finalize-release-changelog.awk; do
-                cp "$root/scripts/ci/$helper" "$tool_root/scripts/ci/"
-            done
-            cp "$root/ci/tool-versions.env" "$tool_root/ci/"
-            cp "$root/ci/release-delivery.txt" "$tool_root/ci/"
+            bash "$root/scripts/ci/prepare-script-fixture.sh" "$root" "$tool_root" scripts/release/metadata.sh
             export ADMISSION_TOOL_ROOT="$tool_root" ADMISSION_TOOL_CHANGE=yes
             export RUST_TOOL_VERSIONS="$fixture/selected Rust pins.env"
             cp "$root/ci/tool-versions.env" "$RUST_TOOL_VERSIONS"

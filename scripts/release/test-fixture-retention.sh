@@ -38,7 +38,7 @@ for kind in standard metadata hook; do
     case "$kind" in
         standard) script=scripts/release/test-standard-release.sh; prefix=standard-release-entry; child=bash ;;
         metadata) script=scripts/release/test-metadata.sh; prefix=metrics-metadata-test; child=cargo ;;
-        hook) script=scripts/dev/test-format-hook.sh; prefix=formatting-adoption; child='make' ;;
+        hook) script=scripts/dev/test-format-hook.sh; prefix=metrics-format-hook; child='make' ;;
     esac
     cp "$root/$script" "$evidence/$kind-source.sh"
     scenarios=(success child)
@@ -114,16 +114,19 @@ FAIL
             success) expected_status=0 ;;
             publication-child) expected_status=1 ;;
         esac
+        marker=FIXTURE_RETENTION_INJECTED_FAILURE
+        # The shared checker retains its nested log; replay is not required.
+        if [[ "$kind" == hook ]]; then marker="$prefix"; fi
         PATH="$run/bin:$PATH" \
             fixture_probe_effect "$root/$script" "$run" "$prefix" "$expected_status" "$real_bash" \
-                FIXTURE_RETENTION_INJECTED_FAILURE
+                "$marker"
         if [[ "$scenario" == success ]]; then
             echo "$kind fixture passed (full body; success cleanup checked)"
             continue
         fi
         retained="$fixture_effect_retained"
         if [[ "$kind" == hook ]]; then
-            grep -Fxq "Formatting adoption evidence retained: $retained" "$run/result.log"
+            grep -Fxq "Metrics formatting fixture retained: $retained" "$run/result.log"
         else
             grep -Fq "fixture retained: $retained" "$run/result.log"
         fi
@@ -143,7 +146,7 @@ FAIL
                 fi
                 ;;
             hook)
-                grep -Fq FIXTURE_RETENTION_INJECTED_FAILURE "$retained/baseline.log"
+                grep -Fq FIXTURE_RETENTION_INJECTED_FAILURE "$retained"/formatting-adoption.*/baseline.log
                 ;;
         esac
     done
@@ -173,6 +176,7 @@ echo 'Admission fixture preserves inherited parent logs and summary'
 # Probe actual initialization/cleanup prefixes through the shared owner.
 # Consumer rosters and successful diagnostic retention remain explicit here.
 for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \
+    scripts/dev/test-format-hook.sh \
     scripts/release/test-release-admission.sh \
     scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh; do
     name="${script##*/}"

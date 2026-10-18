@@ -1,5 +1,62 @@
 # Changelog
 
+## [0.14.0]
+
+### Breaking
+
+- Remove `summarize_samples`, `SampleStatistics` and `SampleStatisticsError`.
+  Complete floating-point sample projections now belong to Testkit's private
+  development reporter; other callers must move them to their owning report code.
+  Tracked integer APIs, Rust 1.91 support and stable V1 records are unchanged.
+  Integrate [Testkit PR #125](https://github.com/dragginzgame/ic-testkit/pull/125)
+  before selecting Metrics 0.14 there.
+
+### Added
+
+- Add `CheckedMeasurementAggregate` for exact `u128` observations, count, total
+  and extrema. Recording rejects count/total overflow without partial updates;
+  empty and measured zero remain distinct. Existing tracked accumulators and
+  stable V1 records are unchanged ([PR #92](https://github.com/dragginzgame/ic-metrics/pull/92)).
+
+### Changed
+
+- Adopt Shared Tooling 0.24.0 at `cab12cd3dfa4fdb34846b25397f0d72881bb9ae0`.
+  Label production packages/dependencies and the development-only Memory feature;
+  retain matching global manifest order in formatting and release checks.
+  Common Rust setup now selects only the two formatters. Verify diagnostic
+  sidecars through the checksum owner and keep workflow outcome policy local.
+  Production graph inspection is separate from automated exclusion enforcement
+  ([#94](https://github.com/dragginzgame/ic-metrics/issues/94)); the selected
+  snapshot's nested release-fixture refusal awaits
+  [Shared PR #276](https://github.com/dragginzgame/shared-tooling/pull/276).
+
+- Clarify report ownership with a compiled exact-wide-total example: preserve
+  source quality and distinguish accumulated observations from independent
+  latest-value diagnostics before deriving means. No arithmetic API changes.
+
+- Retain the existing `MetricsMap` alias for IC Storage's exact byte map type,
+  avoiding an unnecessary public API migration. Direct Storage map construction
+  and lease-preserving transfer remain supported.
+
+- Qualify staged formatting against the durable package and real workspace
+  dependencies, using Shared Tooling's fixture generator instead of the former
+  dependency-free hook selection. Remove the retired platform-reader pin exception
+  placeholder and keep old API migration instructions in release history. Include
+  both packages in structural review scope and classify the full MSRV gate
+  consistently in command help.
+- Read fixed-width codec fields through one checked slice operation, retaining
+  typed truncation errors. Link generic tooling qualification to its shared owner
+  while keeping Metrics' commands and recovery-evidence obligations local.
+- Prepare the release-admission fixture from the metadata adapter's declared
+  companion closure, replacing its duplicated helper list. Keep the minimal
+  tool-free bootstrap fixture and actual two-package release checks.
+- Correct the stable guide for already selected Memory 0.48: its allocation
+  format retires earlier images. Unchanged Metrics V1 rows do not establish
+  allocator compatibility or authorize an automatic reset.
+- Remove the direct stable-structures test dependency and raw collection import.
+  Frozen V1 rows still exercise all four metric kinds through IC Storage's
+  governed map; Storage owns its underlying collection-format qualification.
+
 ## [0.13.4] - 2026-10-17
 
 - Consolidate truncated-record checks across all four durable metric families,

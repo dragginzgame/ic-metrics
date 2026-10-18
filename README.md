@@ -13,14 +13,11 @@ exact counted batch fits its total. An exactly reached numeric cap remains exact
 reset boundaries before comparing observations; overflowed totals cannot supply
 exact interval arithmetic.
 
-`summarize_samples` sorts a caller-owned finite `f64` slice without allocation,
-returning count, minimum, maximum, approximate mean, median and a caller-selected
-observed nearest-rank quantile. Pass `95, 100` for p95; this differs from a
-histogram's bucket range. Invalid fractions/non-finite samples refuse before
-sorting; a non-finite rounded mean returns an error after sorting. Empty is
-`None`, while measured zero is a sample. Callers retain storage, collection,
-units, attribution and reports. Floating samples do not become exact integer
-aggregates or stable metric records.
+`CheckedMeasurementAggregate` accepts exact `u128` observations and retains count,
+total, minimum and maximum. `try_record` rejects count or total overflow before
+changing any state; empty extrema are `None`, and zero is a valid observation.
+Consumers that require exact reporting can handle that typed failure directly.
+This accumulator has no stable record or sticky overflow state.
 
 `MeasurementCounter` supports scalar event, item or byte totals.
 It holds a `u128` total and sticky actual-overflow flag, with `add`, `merge`,
@@ -185,12 +182,15 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both packages require Rust 1.91 on native and Wasm. Consumers select the 0.13
-contract in the root catalog and qualify their owning integration:
+Both packages require Rust 1.91 on native and Wasm. The prepared 0.14 hard cut
+moves complete floating-point sample statistics to Testkit's private reporting
+code. Consumers using that API must move their sample projections to their owning
+reporter; tracked integer arithmetic and stable V1 records retain their contracts.
+After publication, consumers select the 0.14 contract and qualify their integration:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.13"
+ic-metrics = "0.14"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

@@ -1,5 +1,8 @@
 //! Order-independent observations and exact interval arithmetic.
 
+mod checked;
+pub use checked::{CheckedMeasurementAggregate, MeasurementRecordError};
+
 use core::fmt;
 
 use crate::{MeasurementStateError, add_count, add_total};
