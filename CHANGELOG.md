@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.1]
+## [0.14.1] - 2026-10-18
 
 - Enforce native/Wasm production dependency boundaries in CI and release checks:
   arithmetic stays dependency-free, and the stable adapter excludes Host, Testkit
