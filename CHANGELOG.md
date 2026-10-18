@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.14.3]
+
+- Document lossless scalar reporting and exact-cap versus overflow behavior.
+  Forwarded readings with unknown clipping remain a consumer-owned lower bound
+  or unavailable value; restoration cannot reconstruct discarded quality.
+
 ## [0.14.2] - 2026-10-18
 
 - Correct Testkit adoption guidance for its integrated private statistics reporter.
