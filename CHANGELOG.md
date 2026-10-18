@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.2]
+## [0.14.2] - 2026-10-18
 
 - Correct Testkit adoption guidance for its integrated private statistics reporter.
   Metrics 0.14 adoption does not require merging the closed contribution or
