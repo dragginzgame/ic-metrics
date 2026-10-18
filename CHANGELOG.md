@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.2]
+
+- Correct Testkit adoption guidance for its integrated private statistics reporter.
+  Metrics 0.14 adoption does not require merging the closed contribution or
+  replacing Testkit's consumer-owned cohort builder. Arithmetic and stable V1
+  contracts are unchanged.
+
 ## [0.14.1] - 2026-10-18
 
 - Enforce native/Wasm production dependency boundaries in CI and release checks:
