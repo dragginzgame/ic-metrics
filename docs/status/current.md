@@ -7,20 +7,25 @@ and endpoints. [The extraction contract](../extraction.md),
 [stable guide](../../crates/ic-metrics-stable/README.md) and
 [host guide](../hosts.md) own those boundaries and local qualification commands.
 
-## Delivered 0.14.2
+## Delivered 0.14.3
 
-The finalized release is `c336a69e933b22334c7174ea290cb9ca2b3abcd4`; both workspace
-packages are 0.14.2. Both official registry archives match their index checksums
+The finalized release is `ba0aaf5b22237a92ddbb5a58ac33d22c70b8b929`; both workspace
+packages are 0.14.3. Both official registry archives match their index checksums
 and embed that exact Git identity.
-[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39135590545)
+[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39138337261)
 passed Linux x86_64, native macOS arm64/Intel and native/Wasm Rust 1.91.
-This release corrects Testkit adoption guidance; arithmetic, stable V1 records
-and selected dependencies are unchanged from 0.14.1.
-
-The pending 0.14.3 documentation clarifies exact-cap versus actual-overflow scalar
+The 0.14.2 release corrects Testkit adoption guidance. Released 0.14.3
+documentation clarifies exact-cap versus actual-overflow scalar
 reports and prevents restoring uncertain forwarded readings as known exact.
 All 13 arithmetic doctests, local documentation links and diff checks pass.
 This does not change the public API, storage format, dependency graph or Rust floor.
+
+The incoming local lock update selects Storage 0.5.4 with Memory 0.48.2.
+All 21 stable-adapter tests, the stable library Wasm check and native/Wasm
+production-dependency admission (including its exclusion fixtures) pass with
+that graph. Logs are `/tmp/metrics-storage054-{tests,wasm,boundaries}.log`.
+This is focused local qualification, separate from the released-source CI above;
+the incoming lock update is preserved without further dependency changes.
 
 The preceding 0.14.0 release removes floating-point sample statistics and supplies
 the checked wide accumulator. [PR #92](https://github.com/dragginzgame/ic-metrics/pull/92)
@@ -93,7 +98,7 @@ qualification. Publication is a separate observation.
   The earlier contribution's green CI retains its own source identity; it does
   not qualify this release or the separate pending Platform work.
 - [Canic PR #599](https://github.com/dragginzgame/canic/pull/599) remains open at
-  `039173ed18e57cb070ceb70c9d54c2404ba2210b`. Canic-owned scalar recorders use
+  `be16b9c3e58d426777f90757b925b53d381e0d04`. Canic-owned scalar recorders use
   the selected published Metrics 0.11.7 counter, removing 19 copied saturation
   sites while retaining attribution, keys, lifecycle/reset ownership and
   authoritative financial/policy arithmetic. Wide protected scalars preserve
@@ -110,8 +115,16 @@ qualification. Publication is a separate observation.
   all-target probe check pass. Counter value storage is 32 bytes on native/Wasm;
   this excludes table padding/allocations and supplies no old-recorder comparison
   or cycle/Wasm-size improvement claim.
-  [Fresh hosted CI](https://github.com/dragginzgame/canic/actions/runs/39137659353)
-  is running. [Canic #535](https://github.com/dragginzgame/canic/issues/535#issuecomment-6251298002)
+  Its latest repair includes the shared validator in release-flow sandboxes,
+  admits macOS Binaryen's verified bundle layout and regenerates the embedded
+  allocation peer through its canonical producer. All 17 release-flow tests,
+  eight installer tests, the build-toolchain warning test, four embedded-root
+  units and real-Wasm path/version reproduction pass; selected strict lint and
+  final read-only artifact verification also pass. These focused Linux receipts
+  do not qualify macOS or the complete PocketIC suite. The preceding hosted
+  PocketIC job refused preflight before executing its suites.
+  [Fresh hosted CI](https://github.com/dragginzgame/canic/actions/runs/39141120567)
+  is pending. [Canic #535](https://github.com/dragginzgame/canic/issues/535#issuecomment-6251298002)
   retains owner review of the storage/cost tradeoff and remaining whole-table
   acceptance. Complete installed-Fleet, held-HTTP and pending Platform/Auth release
   qualification remain Canic responsibilities. The normal dirty integration

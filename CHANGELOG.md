@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.14.4]
+
+- Refresh released-source and downstream qualification status; record focused
+  stable-adapter and production-dependency checks for Storage 0.5.4. Arithmetic
+  and stable V1 contracts are unchanged.
+
 ## [0.14.3] - 2026-10-18
 
 - Document lossless scalar reporting and exact-cap versus overflow behavior.
