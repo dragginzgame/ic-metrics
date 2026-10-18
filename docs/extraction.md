@@ -10,22 +10,26 @@ crate documentation and supplies compiled examples.
 
 | Primitive | Retained state and projection |
 | --- | --- |
+| `CheckedMeasurementAggregate` | Exact `u128` observations, count, total and extrema; recording rejects overflow without partial updates. No persistence or attribution. |
 | `MeasurementAggregate` | Mergeable sample count, wide total, maximum and actual-overflow flags; checked means and count/total intervals. |
 | `MeasurementSummary` | An aggregate plus the latest ordered observation; no merge that invents ordering. |
 | `MeasurementHistogram<N>` | Immutable finite bounds, disjoint counts, overflow and an aggregate; equal-bound merging and checked cumulative counts/nearest-rank ranges. |
-| `summarize_samples` | Sort a caller-owned finite floating-point slice without allocation; project mean, median and a selected observed nearest-rank value. No retained state, collection, attribution or serialization. |
 | `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics. Optional stable checkpoints retain only its scalar state. |
 
 Summaries and histograms project count, total,
 maximum, mean and scaled mean through `aggregate()`. The summary's latest
-observation remains summary-owned. Consumers updating from before 0.10 replace
-the removed summary forwarding methods with aggregate projections; 0.11 also
-requires Rust 1.91 on native and Wasm. Each consumer qualifies its own integration.
+observation remains summary-owned. Both packages require Rust 1.91 on native and
+Wasm. Each consumer qualifies its own integration.
 
 `validate_histogram_bounds` admits borrowed strictly increasing bounds without
 constructing temporary measurement state. Construction, restored-state admission
 and the stable adapter share this ordering rule. Stored bytes still receive
 independent arithmetic validation; the adapter owns its bound-count limit.
+
+The checked wide accumulator accepts `u128` observations and rejects count/total
+overflow without changing any field. Its count is `u64`; empty extrema are `None`.
+It supplies exact reporting arithmetic without platform reads, persistence or
+floating-point sample storage.
 
 The tracked integer APIs use `u64` observations, sample counts and bucket counts; accumulated
 quantities and means use `u128`. Zero is a valid observation. Empty aggregates
@@ -59,16 +63,15 @@ intervals or scalar deltas, establish matching units, counter/window identity
 and append-only continuity. Numeric success cannot detect a reset followed by
 larger readings. Maxima, latest observations and quantiles are not subtractable.
 
-Finite sample statistics are a separate approximate projection over actual
-caller-supplied observations. They do not reconstruct exact counts or histogram
-state from floating values. The caller supplies the quantile fraction, memory
-and units; Metrics sorts that memory in place and reports a midpoint median and
-an observed nearest-rank value. Invalid fraction/non-finite sample admission
-precedes mutation; rounded mean overflow is explicit after sorting. Existing
-integer arithmetic and stable records remain unchanged. Testkit's prepared
-consumer removes its private statistics only after a supplying release is
-published; its worker schema, process lifecycle and report presentation remain
-Testkit-owned. Other maintained consumers require no change for this additive API.
+The prepared 0.14 hard cut removes complete floating-point sample statistics
+from Metrics. Testkit's private development reporter owns its finite-sample
+mean, midpoint median and observed nearest-rank quantile, including non-finite
+admission and typed failures. Its worker schema, sample storage, process lifecycle
+and report presentation remain Testkit-owned. Metrics retains checked and tracked integer
+arithmetic and the stable V1 records; histogram quantiles remain bucket ranges.
+Other callers of the removed sample API must move it to their owning reporter.
+Integrate [Testkit PR #125](https://github.com/dragginzgame/ic-testkit/pull/125)
+before selecting Metrics 0.14 in that repository.
 
 ## Platform and persistence boundaries
 
@@ -79,19 +82,24 @@ Inclusive overlapping IcyDB spans and exclusive Canic endpoint accounting remain
 separate contracts; there is no attribution-mode switch or product dependency.
 
 The optional [stable package](../crates/ic-metrics-stable/README.md) owns validated
-V1 snapshots for counters, aggregates, summaries and histograms in one host-supplied
-governed upstream B-tree map from `ic_storage::adapter`. Its opening requires an
-admitted `ic-memory::RuntimeMemory` handle. Memory 0.47 and Storage 0.4 share
-that exact handle identity; each handle is a non-cloneable allocation lease.
-Drop the store or transferred map before reopening through the same runtime.
-Hosts still exclude aliased backing access across runtimes. The prepared 0.13 collection API takes
-the runtime's backing type as its generic argument, rather than an opened virtual
-handle. IC Storage's upstream facade preserves existing map bytes; its custom
+V1 snapshots for counters, aggregates, summaries and histograms in one governed
+upstream B-tree map from `ic_storage::adapter`. Hosts open that public collection
+with an admitted `ic-memory::RuntimeMemory` handle, then supply it to
+`MetricsStore::new`. Selected Memory 0.48 and Storage 0.5 share that exact handle
+identity; each handle is a non-cloneable allocation lease. `into_map` returns the
+public Storage collection with its lease intact. `MetricsMap<M>` is an exact
+alias for its byte key/value shape, with no separate collection implementation
+or lifecycle policy. Drop the store or returned map before reopening through the
+same runtime.
+Hosts still exclude aliased backing access across runtimes. The store's generic
+argument is the runtime's backing type. IC Storage's upstream facade preserves existing map bytes; its custom
 tree format is not used. One permanent store allocation resolves to one memory ID;
 namespace/name keys distinguish rows. Hosts own bootstrap, map initialization,
 update-message synchronization, write cadence, authorization and resets. Queries
 cannot make stable writes durable, and adapter errors never silently reset data.
-The 0.12 API uses concrete load/save operations for each metric family;
+Memory's allocation-format disposition remains separate from Metrics V1 and
+B-tree compatibility; hosts follow the version-bound stable guide before reuse.
+The stable API uses concrete load/save operations for each metric family;
 histogram loads take bounds directly. Codec/kind and continuity dispatch remain
 private, without a public generic trait or capability-token surface. The core has no
 serialization or stable-memory dependency. Scalar checkpoints use
@@ -111,7 +119,7 @@ No IC Host package is required to compile or use either published Metrics librar
 | Consumer | Owning contracts to preserve | Adoption owner |
 | --- | --- | --- |
 | IcyDB | Inclusive overlapping spans, zero, overflow/report fields, CLI means, reset identity and journal-debt separation. | [#356](https://github.com/dragginzgame/icydb/issues/356) |
-| Canic | Exclusive nesting, async call-context identity, invocation checkpoints, zero, report ordering and quality propagation. | [#523](https://github.com/dragginzgame/canic/issues/523) |
+| Canic | Exclusive nesting, async call-context identity, invocation checkpoints, zero, report ordering and quality propagation. | [#523](https://github.com/dragginzgame/canic/issues/523); [#600 — Protected report semantics](https://github.com/dragginzgame/canic/issues/600) |
 | IC Timers | Scheduler/work roles, registration/epoch identity, completion/trap admission and empty/zero/overflow projections. | [0.9 qualification](https://github.com/dragginzgame/ic-timers/issues/51); [#59 — Adopt Metrics 0.10 summary projections](https://github.com/dragginzgame/ic-timers/issues/59) |
 | IC Backup | Nanosecond/byte separation, success/rejection samples, zero/repeated chunks, clamped durations, copied views, `Send + Sync` and empty create/open state. | [Earlier qualification](https://github.com/dragginzgame/ic-backup/issues/41); [#47 — Adopt Metrics 0.10 summary projections](https://github.com/dragginzgame/ic-backup/issues/47) |
 | Blob restoration test probe | Restoration-operation attribution, call-context identity, zero, bounded reports and reset behavior; not production storage instrumentation. | [#65](https://github.com/dragginzgame/ic-blob-storage/issues/65) |
@@ -141,12 +149,10 @@ are separate contracts. Histogram investigations remain with
 
 ## Compatibility and evidence
 
-The published 0.8 contract requires tracked recording instead of `record_sample`
-or raw-field `checked_mean`; reports must preserve actual overflow quality.
-[The changelog](../CHANGELOG.md) owns released API cuts and required caller
-changes. The stable V1 contract was preserved through that cut, with no Metrics
-owned durable-data reset. Consumer wire changes and retained-data disposition
-stay at their owner.
+Reports preserve the tracked accumulator's actual overflow quality.
+[The changelog](../CHANGELOG.md) owns released API changes and required caller
+actions. Metrics never automatically resets retained data. Consumer wire changes
+and retained-data disposition stay at their owner.
 
 [The current handoff](status/current.md) separates local preparation, package
 publication and hosted qualification. [Published 0.8.2](evidence/release-082.md)

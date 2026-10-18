@@ -123,6 +123,39 @@ work in several aggregates requires an explicit attribution reason.
 
 ### Reporting and resets
 
+Only derive a mean when the total accumulates the same admitted observations
+represented by the sample count. A timer's latest armed delay and its work-start
+count are independent diagnostics: report them separately, rather than dividing
+the latest delay by that count. A latest value is not an accumulated total.
+
+Consumer report payloads must preserve the total's `u128` width and carry the
+source's actual-overflow flags alongside count and total. A generic pair of
+numbers cannot establish their units, observation cohort or quality. For example,
+this instruction total remains exact both at and above the narrow numeric cap:
+
+```rust
+use ic_metrics::MeasurementAggregate;
+
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+let mut instructions = MeasurementAggregate::EMPTY;
+instructions.record(u64::MAX);
+assert_eq!(instructions.total(), u128::from(u64::MAX));
+assert!(!instructions.total_overflowed());
+
+instructions.record(1);
+assert_eq!(instructions.samples(), 2);
+assert_eq!(instructions.total(), u128::from(u64::MAX) + 1);
+assert!(!instructions.samples_overflowed());
+assert!(!instructions.total_overflowed());
+assert_eq!(instructions.mean()?, Some((u128::from(u64::MAX) + 1) / 2));
+# Ok(())
+# }
+```
+
+Transport encoding, decimal presentation and authorization remain consumer-owned.
+Preserve a row with its quality or an explicit unavailable projection when a
+narrow consumer cannot represent it; silently dropping the row loses its identity.
+
 Use checked histogram projections when reporting a distribution. A cumulative
 count applies to a configured upper bound; a nearest-rank quantile locates a
 bucket range rather than interpolating an exact observed value. For example:

@@ -1,14 +1,14 @@
 //! Optional durable snapshots in one host-owned stable B-tree map.
 //!
-//! The host bootstraps `ic-memory`, opens exactly one map for its metrics store,
-//! and supplies it here. This crate owns no global registry, lifecycle hook,
+//! The host bootstraps `ic-memory` and supplies one governed IC Storage map,
+//! selecting fresh creation or retained reopening. This crate owns no global registry, lifecycle hook,
 //! platform read or endpoint. Keys are namespaced, not authentication boundaries.
 //! Stable writes must run in update execution; queries cannot make them durable.
 //!
 //! Stored values have an explicit V1 encoding, independent of Rust layout. The
 //! adapter rejects incompatible identities/configuration and malformed values.
 //! Underlying collection geometry, allocation failures and IC execution traps
-//! retain the upstream stable-structures contract, not recoverable codec errors.
+//! retain IC Storage's collection contract, not recoverable codec errors.
 
 #![doc = include_str!("../README.md")]
 
@@ -151,31 +151,31 @@ impl MetricIdentity {
     }
 }
 
-/// The one stable collection supplied by the host after allocation admission.
+/// Exact IC Storage collection used for Metrics snapshot rows.
 ///
-/// Byte values make decoding fallible outside `Storable::from_bytes`; both keys
-/// and record writes are bounded by this adapter. The underlying map owns its
-/// structural allocation/decoding contract and may allocate while reading bytes.
-/// `M` is the runtime's backing memory; opening this collection requires an
-/// admitted `ic_memory::RuntimeMemory<M>` handle through IC Storage's facade.
-///
-/// ```compile_fail
-/// use ic_memory::VectorMemory;
-/// use ic_metrics_stable::MetricsMap;
-/// let _ = MetricsMap::<VectorMemory>::init(VectorMemory::default());
-/// ```
+/// This alias fixes the byte key/value shape without wrapping the collection or
+/// changing its allocation, initialization or retained-format contract. Hosts may
+/// use the equivalent `ic_storage::adapter::StableBTreeMap` type directly.
 pub type MetricsMap<M> = StableBTreeMap<Vec<u8>, Vec<u8>, M>;
 
 /// Shared durable metric snapshots in one application memory region.
 ///
-/// The governed collection is required even when a memory handle has already
-/// passed allocation admission:
+/// Hosts supply IC Storage's public governed map and own its allocation, bootstrap
+/// and fresh-versus-retained decision. Opening that map requires an admitted
+/// `ic-memory` handle; a raw backing cannot bypass allocation admission:
 ///
 /// ```compile_fail
-/// use ic_memory::{RuntimeMemory, VectorMemory};
+/// use ic_memory::VectorMemory;
 /// use ic_metrics_stable::MetricsStore;
-/// fn admitted_handle(memory: RuntimeMemory<VectorMemory>) {
-///     let _ = MetricsStore::new(memory);
+/// use ic_storage::adapter::StableBTreeMap;
+/// let _ = MetricsStore::new(StableBTreeMap::<Vec<u8>, Vec<u8>, _>::new(VectorMemory::default()));
+/// ```
+///
+/// ```compile_fail
+/// use ic_memory::{Memory, RuntimeMemory};
+/// use ic_metrics_stable::MetricsStore;
+/// fn store<M: Memory>(memory: RuntimeMemory<M>) -> MetricsStore<M> {
+///     MetricsStore::new(memory)
 /// }
 /// ```
 pub struct MetricsStore<M: Memory> {
@@ -183,13 +183,22 @@ pub struct MetricsStore<M: Memory> {
 }
 
 impl<M: Memory> MetricsStore<M> {
-    /// Take ownership of an already opened metrics-only map.
+    /// Wrap a host-opened IC Storage map without initializing or reopening it.
     ///
-    /// Hosts own collection initialization/reopening and `ic-memory` bootstrap.
-    /// Never independently open another collection on this same memory region.
+    /// The map retains its allocation lease. Hosts choose fresh creation or
+    /// retained reopening through IC Storage before transferring it here.
     #[must_use]
     pub const fn new(map: MetricsMap<M>) -> Self {
         Self { map }
+    }
+
+    /// Return the public IC Storage map for host-owned collection administration.
+    ///
+    /// Consuming the store transfers its allocation lease with the map; the
+    /// allocation remains open until the returned map is dropped.
+    #[must_use]
+    pub fn into_map(self) -> MetricsMap<M> {
+        self.map
     }
 
     /// Load a counter, checking its stored kind, unit and reset epoch.
@@ -382,11 +391,5 @@ impl<M: Memory> MetricsStore<M> {
         codec::envelope(&bytes, identity)?;
         self.map.remove(&key.0);
         Ok(true)
-    }
-
-    /// Return the collection for host-owned administration or lifecycle handling.
-    #[must_use]
-    pub fn into_map(self) -> MetricsMap<M> {
-        self.map
     }
 }

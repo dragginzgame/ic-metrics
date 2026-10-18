@@ -17,7 +17,7 @@ for scenario in success occupied checksum-occupied output-link inventory-link in
     cd "$fixture/$scenario"
     mkdir -p 'evidence tree/scratch/release/.git/release-state' bin
     printf 'readable diagnostics\n' > diagnostics.tar.gz
-    shasum -a 256 diagnostics.tar.gz > diagnostics.tar.gz.sha256
+    bash "$root/scripts/ci/verify-file-checksum.sh" --print sha256 diagnostics.tar.gz > diagnostics.tar.gz.sha256
     cp diagnostics.tar.gz.sha256 expected-diagnostics.sha256
     printf 'source identity\n' > 'evidence tree/source.txt'
     printf 'index\n' > 'evidence tree/scratch/release/.git/index'
@@ -56,7 +56,8 @@ HASH
     [[ "$status" == "$expected" ]] || exit 1
     [[ "$(cat diagnostics.tar.gz)" == 'readable diagnostics' ]] || exit 1
     cmp expected-diagnostics.sha256 diagnostics.tar.gz.sha256
-    shasum -a 256 -c diagnostics.tar.gz.sha256 > diagnostic-check.log
+    bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
+        "$(cat diagnostics.tar.gz.sha256)" diagnostics.tar.gz > diagnostic-check.log
     [[ "$(cat 'evidence tree/scratch/release/.git/release-state/attempt.plan')" == intent ]] || exit 1
     [[ "$(cat 'evidence tree/scratch/release/.git/index')" == index ]] || exit 1
     case "$scenario" in

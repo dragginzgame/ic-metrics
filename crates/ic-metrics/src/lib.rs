@@ -12,12 +12,12 @@ mod aggregate;
 mod counter;
 mod histogram;
 mod ratio;
-mod sample_statistics;
 mod state;
 mod summary;
 
 pub use aggregate::{
-    MeasurementAggregate, MeasurementInterval, MeasurementIntervalError, MeasurementMeanError,
+    CheckedMeasurementAggregate, MeasurementAggregate, MeasurementInterval,
+    MeasurementIntervalError, MeasurementMeanError, MeasurementRecordError,
 };
 pub use counter::{MeasurementCounter, MeasurementCounterError};
 pub use histogram::{
@@ -25,7 +25,6 @@ pub use histogram::{
     MeasurementHistogram, validate_histogram_bounds,
 };
 pub use ratio::{MeasurementRatioError, checked_scaled_ratio, checked_scaled_ratio_nearest};
-pub use sample_statistics::{SampleStatistics, SampleStatisticsError, summarize_samples};
 pub use state::MeasurementStateError;
 pub use summary::MeasurementSummary;
 

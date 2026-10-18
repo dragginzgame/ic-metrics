@@ -23,8 +23,6 @@ cleanup() {
     exit "$status"
 }
 trap cleanup EXIT
-# shellcheck source=scripts/ci/fixture-workflow-steps.sh
-source "$root/scripts/ci/fixture-workflow-steps.sh"
 mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
 "$yq" -o=json '.jobs.native.steps' "$root/.github/workflows/ci.yml" > "$fixture/steps.json"
 # These are live workflow effect boundaries, not checks of display prose.
@@ -271,10 +269,19 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         printf 'unrelated log\n' > "$RUNNER_TEMP/tools-check.log"
         : > commands.log
     else
-        fixture_run_steps "$real_bash" "$fixture/commands" "$PWD" \
-            host_tools HOST_TOOLS_OUTCOME tools TOOLS_OUTCOME \
-            tool_inputs TOOL_INPUT_OUTCOME application_sources APPLICATION_OUTCOME \
-            native_ci NATIVE_OUTCOME || status=$?
+        # This fixture models this workflow's step order and outcome projection.
+        for step in host_tools:HOST_TOOLS_OUTCOME tools:TOOLS_OUTCOME \
+            tool_inputs:TOOL_INPUT_OUTCOME application_sources:APPLICATION_OUTCOME \
+            native_ci:NATIVE_OUTCOME; do
+            if "$real_bash" --noprofile --norc -e -o pipefail \
+                "$fixture/commands/${step%%:*}.sh" > "$PWD/${step%%:*}.log" 2>&1; then
+                export "${step#*:}=success"
+            else
+                status=$?
+                export "${step#*:}=failure"
+                break
+            fi
+        done
     fi
     printf '%s\n' "$status" > status.txt
     case "$scenario" in
@@ -303,7 +310,9 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         archive_status=0
         "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || archive_status=$?
         [[ "$archive_status" == 2 && ! -e target/evidence/native-ci.tar.gz ]] || exit 1
-        shasum -a 256 -c target/evidence/native-diagnostics.tar.gz.sha256 > diagnostic-check.log
+        bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
+            "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
+            target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
         [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
         [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]] || exit 1
         grep -Fx 'tools=failure' target/evidence/native-ci/outcome.txt > /dev/null
@@ -313,7 +322,9 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         archive_status=0
         "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || archive_status=$?
         [[ "$archive_status" == 23 ]] || exit 1
-        shasum -a 256 -c target/evidence/native-diagnostics.tar.gz.sha256 > diagnostic-check.log
+        bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
+            "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
+            target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
         [[ ! -e target/evidence/native-ci.tar.gz && ! -e target/evidence/native-ci.tar.gz.sha256 ]] || exit 1
         grep -Fx 'outer archive stdout' archive.log > /dev/null
         grep -Fx 'outer archive stderr' archive.log > /dev/null
@@ -324,7 +335,9 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     collection_status=0
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || collection_status=$?
     [[ "$collection_status" == "$FIXTURE_COLLECTION_STATUS" ]] || exit 1
-    shasum -a 256 -c target/evidence/native-diagnostics.tar.gz.sha256 > diagnostic-check.log
+    bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
+        "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
+        target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
     mkdir diagnostic-readback
     tar -xzf target/evidence/native-diagnostics.tar.gz -C diagnostic-readback
     for file in diagnostic-readback/*; do

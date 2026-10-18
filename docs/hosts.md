@@ -117,6 +117,44 @@ packages; select direct Cargo commands when only one package or test is affected
 | Release/evidence adapters | `make release-tools-check ci-evidence-check` |
 | Maintained docs | `make check-doc-links`, consistency review and `git diff --check` |
 
+### Dependency roles and production graphs
+
+Both workspace members are production libraries. All root catalog entries are
+`Production dependencies`: Memory also supplies the stable package's native
+`Tests and tooling only` development feature, `test-support`. There are no
+separate test/tooling packages or test-only catalog entries. These roles describe
+workspace use, not registry publication. Keep the single catalog and inherited
+selections; `ic-metrics` itself remains dependency-free.
+
+Role comments use the default global sort order. `make fmt`, `make fmt-check`
+and hooks use the shared global policy; every release adapter ordering check
+uses `--manifest-order` against its current or selected committed source. No
+blank-separated dependency groups or grouped-mode override is needed here.
+
+Inspect each production package with its actual build target/features. Current
+packages define no optional product features; their native and Wasm library
+builds use defaults. For each of `ic-metrics` and `ic-metrics-stable`, use:
+
+```bash
+cargo tree --locked -p PACKAGE --target TARGET --edges normal,build
+cargo build --locked --lib -p PACKAGE --target TARGET
+```
+
+Replace `TARGET` with `x86_64-unknown-linux-gnu` for the qualified native host or
+`wasm32-unknown-unknown` for Wasm; other hosts need their own target qualification.
+Inspect transitive edges and feature activation as well as direct dependencies.
+The core must have no production dependency. The stable graph must exclude
+Testkit, Host and Memory's `test-support` feature. Its transitive stable-structures
+substrate through Memory/Storage is expected; Metrics must not depend on it
+directly. A downstream application's graph can unify additional features.
+
+This repository has no deployment entrypoint or final canister artifact.
+Role labels, formatting and `make check-pins` do not enforce transitive production
+exclusions. [#94](https://github.com/dragginzgame/ic-metrics/issues/94) owns that
+missing library CI check. Consumer deployment checks must use their own actual
+target/features, successful locked build and source/lock/artifact identities;
+these library observations do not establish deployment admission.
+
 Keep compilation checks sequential when they share `target/`; check for active
 builds before source mutation or compilation. Bare Cargo commands select the
 arithmetic package. Builds use locked dependencies. The arithmetic graph has no
@@ -127,7 +165,11 @@ The inspector's CLI checks stay at IC Host; existing smoke artifacts under
 
 Formatting fixtures use Shared Tooling's current-source selector for maintained
 Rust sources and Cargo manifests, including pending additions and deletions.
-Metrics supplies the primary perturbation paths and explicit non-Rust overlays.
+Metrics selects the stable package's Rust entrypoint and the workspace manifest's
+actual Metrics/Storage dependency pair. Shared Tooling generates the unsorted input
+and qualifies staged formatting, including restoration of dependency ordering.
+Metrics retains that generated input with nested checker evidence on failure;
+explicit non-Rust overlays remain local.
 The shared locked release-preflight helper owns fetch/tool sequencing and pin
 rechecks; Metrics admits source/recovery first and selects preparation authority,
 tool targets and pin files. Checks remain offline and never install tools.
@@ -175,114 +217,52 @@ payload, source tree, scratch directory or nested archive is selected. It is
 collected before the complete archive so full collection failures still leave
 readable diagnostics; neither archive silently truncates selected logs.
 
-Exhaustive installer, formatting, archive, Cargo metadata and release-engine
-regressions run at Shared Tooling's producer. Metrics verifies its reviewed
-snapshot, actual common tools and pins, then its own Make/hook/metadata/source
-admission and evidence integration. Removed upstream test payloads are retired
-through the distribution helper; directly used helpers remain explicit roots. The Metrics metadata fixture checks the real two-package adapter and stale stable
-member refusal. Tool candidate selection/archive orchestration is shared; the
-consumer keeps source/outcome selection, Git custody and uploads. Formatter
-log discovery uses the shared selector. Local cleanup probes delegate actual
-initialization/EXIT prefixes to the shared helper; Metrics retains its fixture
-roster, consumer-log forwarding and intentional successful retention. Shared
-Tooling owns assertions about its checkers' nested fixture payloads. Its validation
-logger fixture owns unusable-destination fallback and preservation of earlier
-failure logs. Metrics retains the actual release adapter's environment, gate
-order, selected release identities and chosen evidence destination.
+Shared Tooling owns generic installer, formatting, metadata, release-engine and
+fixture mechanics. Its [producer/consumer boundaries](verification-helpers.md#producer-and-consumer-fixture-boundaries),
+[flow qualification](verification-helpers.md#consumer-flow-qualification),
+[retention probes](verification-helpers.md#consumer-fixture-retention-probes) and
+[hook checker](verification-helpers.md#consumer-formatting-hook-adoption) describe
+those contracts and producer tests. Metrics verifies its reviewed snapshot and
+actual callers; it does not replay those generic matrices in its own gates.
 
-Per-target Make admission and parallel dispatch use shared probes against the
-actual consumer Makefile. Each target refuses ignore-errors, dry-run, touch and
-question modes before effects. Shared Tooling owns exhaustive flag aliases and
-inherited/replaced/hidden-flag permutations; Metrics owns target lists and stubs.
-The shared `prepare-script-fixture.sh` copies the declared companion closure
-rooted at `make/consumer.mk`; release fixtures add their local validation
-logger/checksum inputs.
-The exhaustive release-root isolation matrix stays with Shared Tooling; Metrics
-keeps one actual include-admission check. Workflow run bodies use the shared
-unique-step extractor, while ordering, conditions and execution remain local.
-The shared effectful-fixture driver requires exact status, a failure marker and
-one retained directory, or successful cleanup; Metrics checks retained payloads.
-Native diagnostic collection uses the explicit local filename roster, publishes
-the small archive first and returns fatal admission/archive errors before outer
-collection. Metrics' complete-tree packager then inventories top-level files
-and retains Git recovery state verbatim. Occupied destinations refuse; inventory,
-archive or checksum failure retains inputs and partial output with its command
-status. Metrics keeps incomplete-collection status and artifact upload policy.
+| Local entrypoint | Metrics-owned qualification |
+| --- | --- |
+| `make release-tools-check` | Complete standard-release, two-package metadata, hook and source-admission fixtures, followed by injected failure/custody cases. Actual Make dispatch, parallel jobserver access, catalog overrides, selected commits, index admission, gate ordering and retained logs stay checked. |
+| `make hook-check` | Standalone hook adoption; the actual baseline formatter failure must retain and replay its diagnostic log. |
+| `make ci-evidence-check` | Source selection/hash inputs, actual workflow setup/archive bodies and the complete native recovery packager with substituted external effects. |
 
-The producer's [native diagnostic regression contribution](https://github.com/dragginzgame/shared-tooling/pull/222)
-owns the six generic referenced-store and candidate-archive cases. Metrics keeps
-the actual workflow's fatal/nonfatal collector handling: fatal status stops the
-outer archive; partial collection retains it and remains nonzero. Its remaining
-fixture also checks action outcomes, selected diagnostics, formatting logs,
-and hidden Git recovery state. Producer tests remain upstream rather than being
-added to this consumer's snapshot or CI.
+Retention is the single CI entry for release and hook bodies; they are not run
+again as separate gates. The admission fixture isolates inherited parent
+validation/failure logs and summaries. Successful cleanup affects only owned
+scratch; failed inputs remain under caller-selected `TMPDIR`, defaulting to
+native CI evidence in the retention fixture. These substitutes perform no real
+Metrics release or registry publication and do not qualify hosted execution.
 
-Both native artifact uploads disable ZIP compression because their payloads are
-already gzip-compressed archives; archive/checksum pairing and retention stay
-unchanged.
+The metadata fixture keeps the actual two-package names and stale stable-member
+refusal. `scripts/release/metadata.sh files` owns the NUL-delimited release-file
+roster projected by `make release-files`; listing works without Cargo, Git or
+prepared parsers. Its bootstrap fixture is deliberately minimal. Other release
+fixtures select the declared closure of `make/consumer.mk` or the metadata
+adapter, adding only their local inputs. Consumer checks retain unsafe Make-mode
+refusal before effects, explicit tool-catalog routing and selected-source checks.
 
-Release, hook and evidence fixtures substitute only their declared effects;
-actual Git index, Make dispatch, receipt admission and failure retention retain
-independent checks. These fixtures perform no real Metrics release or registry
-publication. The admission fixture isolates parent validation/failure/summary
-paths. Successful cleanup affects only invocation-owned scratch, while failed
-inputs stay under caller-selected `TMPDIR`, defaulting to native CI evidence for
-the retention fixture. Its exit probes use shared setup/dispatch against the real
-read-only source checkout; no per-case Git repository or helper tree is built.
-Shared Tooling owns assertion-probe mechanics; Metrics exercises actual metadata
-bodies and retained inputs. Substitute execution does not
-prove live GitHub release recovery or canister measurement behavior.
+Native input selection includes pending maintained files, excludes generated and
+private evidence, and keeps missing tracked source selected so hashing refuses
+an incomplete checkout. The workflow-body fixture covers unusual filenames,
+OS/architecture/macOS admission, TOML-selected compiler/components/targets,
+failed setup and action-outcome/log projection. Substitute rustup/Make actions
+establish routing and failure propagation, not native macOS or live release proof.
 
-`make release-tools-check` runs the retention suite as the single CI entry for
-release and hook fixtures. Its success cases execute the complete standard,
-metadata and hook bodies, and its admission case runs the complete admission
-fixture with parent-owned evidence destinations. Failure/custody probes remain
-additional checks. CI does not run these bodies again as separate gates;
-`make hook-check` and the standalone scripts remain focused entrypoints.
-Unexpected child failures replay their active log before reporting retained
-evidence. The hook wrapper delegates directly to the shared checker, which
-replays baseline and per-checkout hook logs and owns its single scratch directory.
-
-`scripts/release/metadata.sh files` owns the NUL-delimited release-file roster
-projected by `make release-files`. The same roster feeds source admission,
-regular-file checks and the final diff guard. Listing requires no Cargo/Git or
-parser dispatch; the independent validation boundaries remain in place.
-
-The hook wrapper relies on the shared checker's baseline `fmt-check` for
-formatter prerequisites. Metrics injects a failure at that baseline to verify
-retained/replayed logs; Shared Tooling owns formatter-version admission cases.
-Unusual source filenames are qualified through the actual workflow hash body,
-while the focused selector fixture owns inclusion, exclusions and missing
-tracked-source selection.
-
-Metrics owns `scripts/ci/package-native-recovery-evidence.sh` and its full native
-recovery archive, including hidden Git state and the top-level checksum inventory.
-The workflow first publishes separately selected diagnostics through Shared
-Tooling's sanitized exporter. Keep both custody contracts distinct.
-`bash scripts/ci/test-native-recovery-evidence.sh` qualifies packaging, replay,
-containment, existing-output refusal and retained partial failures; it also runs
-under `make ci-evidence-check` alongside the actual workflow-body fixture.
-
-The actual development/MSRV workflow setup bodies execute the shared Rust
-installer against a substitute rustup in the native evidence fixture. Metrics
-checks its TOML-selected compilers, components, Wasm targets and failed setup status; Shared
-Tooling owns generic installer argument admission. Simulated cold/warm cache and
-tool-availability matrices live with Shared's preflight fixture
-([PR #228](https://github.com/dragginzgame/shared-tooling/pull/228)). Metrics retains
-actual committed-graph Cargo metadata, internal preparation selection, runner
-ordering, explicit catalog overrides and Git-state custody. Real Cargo offline
-policy is qualified at Shared on a frozen minimal graph
-([PR #235](https://github.com/dragginzgame/shared-tooling/pull/235)).
-Shared's common-tool fixture executes the action body and shared Make aggregate,
-covering installation/check order, logs, PATH publication and leaf failures.
-Metrics supplies action outcomes and logs to its own collector, retaining failed
-and skipped setup, formatting, candidate custody and complete recovery evidence.
-
-Shared Tooling also owns generic selected-commit identity, missing-release-field
-and failed-Git retention cases, plus the validation runner's Make-flag matrix
-([PR #232](https://github.com/dragginzgame/shared-tooling/pull/232)). Metrics retains
-the actual two-package committed source, one rejected-version receipt, index
-admission and release-verify gate ordering, log retention and input-drift checks.
+Metrics owns `scripts/ci/package-native-recovery-evidence.sh`, including the full
+scratch tree, hidden Git recovery state and top-level checksum inventory. Its
+round-trip fixture checks payloads, containment, occupied destinations and retained
+inputs/partial output after inventory, tar or checksum failure. The workflow
+publishes sanitized diagnostics first; fatal collector status stops the outer
+archive, while partial collection keeps that archive and remains nonzero.
+Readable diagnostics must survive an outer-archive failure. Formatter logs outside
+scratch and failed/skipped tool setup remain covered. Both uploads disable ZIP
+compression for their gzip payloads; archive/checksum pairing and 30-day retention
+remain unchanged.
 
 [Released 0.8.1 acceptance](evidence/release-081.md) verifies all three native
 receipts and the complete Rust-floor run on its exact published source.

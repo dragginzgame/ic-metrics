@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`88d398f01c9be74bd71d1ad67c27bf0ede87cc9b` and file digests are recorded in
+`cab12cd3dfa4fdb34846b25397f0d72881bb9ae0` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -16,6 +16,10 @@ and [the extraction contract](docs/extraction.md) before implementation.
   Its native/Wasm Rust floor is 1.91. Hosts own the allocation key, bootstrap,
   collection lifecycle, identities, synchronization, write cadence and resets.
   Never add stable-memory dependencies to the arithmetic package.
+  Do not depend on `ic-stable-structures` directly, including in tests;
+  collection access goes through IC Storage's governed facade.
+  Hosts open the public IC Storage map using admitted handles and supply it to
+  the store; map transfer retains the allocation lease. Collection lifecycle stays local.
 - IC Host owns the published `ic-host-wasm-inspect` CLI, its installation guide
   and Rust floor. Optional evidence experiments select their own qualified tool
   identity; Metrics owns no inspector wrapper, pin or workspace dependency.
@@ -90,7 +94,8 @@ and [the extraction contract](docs/extraction.md) before implementation.
   the shared managed installer; keep application compiler policy local.
 - Shared structural reviews use [the common methods](audits/README.md), with
   this overlay's allocation, units, counter identity and ownership constraints.
-  Source scope is `crates/ic-metrics`, owning tooling and the affected downstream
-  contracts in `docs/extraction.md`; focused commands remain in `docs/hosts.md`.
+  Source scope includes `crates/ic-metrics`, `crates/ic-metrics-stable`, owning
+  tooling and the affected downstream contracts in `docs/extraction.md`; focused
+  commands remain in `docs/hosts.md`.
   Existing performance evidence under `docs/evidence` retains its domain scope
   and original identities. Audit adoption schedules no review or broad gate.
