@@ -88,9 +88,9 @@ dependencies = [
 
 [[package]]
 name = "ic-storage"
-version = "0.5.3"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c088cc603e89894ef0b03aec48c11df4b10a3025b6224c05539e5de4120abe42"
+checksum = "b20256db7b158944c090d2c58028401f61ce846cd885e1accef3fde44d78d3d7"
 dependencies = [
  "ic-memory",
  "ic-stable-structures",
