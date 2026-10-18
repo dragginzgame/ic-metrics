@@ -30,7 +30,7 @@ its action reference, outcome/log projection and complete recovery evidence.
 
 ## Prerequisites and focused checks
 
-Prepare the pinned Rust 1.99.0 development toolchain with rustfmt, Clippy and
+Prepare the pinned Rust 1.99.1 development toolchain with rustfmt, Clippy and
 `wasm32-unknown-unknown`. Prepare Rust 1.91.0, including its Wasm
 target, for the advertised package floors.
 
@@ -149,9 +149,15 @@ substrate through Memory/Storage is expected; Metrics must not depend on it
 directly. A downstream application's graph can unify additional features.
 
 This repository has no deployment entrypoint or final canister artifact.
-Role labels, formatting and `make check-pins` do not enforce transitive production
-exclusions. [#94](https://github.com/dragginzgame/ic-metrics/issues/94) owns that
-missing library CI check. Consumer deployment checks must use their own actual
+`make production-dependencies-check` enforces these library graph boundaries for
+the prepared compiler's native host and Wasm, and rejects direct substrate
+declarations even in tests. It observes each package separately through successful
+locked Cargo metadata/tree commands, includes normal/build edges and activated
+features, and excludes development edges. Its offline local-package fixtures cover
+renamed/transitive tooling, build dependencies, test-feature activation and failed
+observations. CI and release verification run the same check. Role labels,
+formatting and `make check-pins` remain separate declaration checks.
+Consumer deployment checks must use their own actual
 target/features, successful locked build and source/lock/artifact identities;
 these library observations do not establish deployment admission.
 

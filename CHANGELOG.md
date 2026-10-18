@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.14.1]
+
+- Enforce native/Wasm production dependency boundaries in CI and release checks:
+  arithmetic stays dependency-free, and the stable adapter excludes Host, Testkit
+  and Memory's test-support feature. Renamed and transitive dependencies are
+  checked without changing the selected graph
+  ([#94 — Enforce production dependency and test-support exclusions in library CI](https://github.com/dragginzgame/ic-metrics/issues/94)).
+- Select Rust 1.99.1 for development formatting, lint and builds. Both published
+  packages retain their Rust 1.91 minimum
+  ([#93 — Qualify Rust 1.99.1 as the development compiler](https://github.com/dragginzgame/ic-metrics/issues/93)).
+
 ## [0.14.0] - 2026-10-18
 
 ### Breaking
