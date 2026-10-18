@@ -138,7 +138,7 @@ Common contributor commands use the reviewed [Shared Tooling Make
 interface](docs/make-interface.md). Product builds, compiler floors, validation,
 publication and release metadata remain owned here.
 
-Use rustup with the pinned Rust 1.99.0 toolchain, Git, GNU Make and Bash 3.2 or
+Use rustup with the pinned Rust 1.99.1 toolchain, Git, GNU Make and Bash 3.2 or
 newer. Install `wasm32-unknown-unknown` for Wasm checks. The arithmetic library's
 minimum compiler is Rust 1.91.0.
 
@@ -182,8 +182,8 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both packages require Rust 1.91 on native and Wasm. The prepared 0.14 hard cut
-moves complete floating-point sample statistics to Testkit's private reporting
+Both packages require Rust 1.91 on native and Wasm. The 0.14 hard cut removes
+complete floating-point sample statistics in favor of Testkit's private reporting
 code. Consumers using that API must move their sample projections to their owning
 reporter; tracked integer arithmetic and stable V1 records retain their contracts.
 After publication, consumers select the 0.14 contract and qualify their integration:

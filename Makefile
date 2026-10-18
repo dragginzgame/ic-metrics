@@ -39,6 +39,7 @@ release-files:
 
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
 .PHONY: ci-evidence-check
+.PHONY: production-dependencies-check
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
@@ -49,6 +50,7 @@ help:
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, shared-tooling-check, check-pins"
+	@echo "Production dependency graphs and boundary fixtures: production-dependencies-check"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
@@ -100,6 +102,10 @@ msrv:
 check-pins:
 	bash scripts/ci/check-dependency-pins.sh --cargo-inheritance
 
+production-dependencies-check:
+	perl scripts/ci/check-production-dependencies.pl
+	bash scripts/ci/test-production-dependencies.sh
+
 # Retention runs the full release and hook fixtures, plus failure/custody cases.
 release-tools-check:
 	bash scripts/release/test-fixture-retention.sh
@@ -111,6 +117,7 @@ ci:
 	+$(MAKE) --no-print-directory check-doc-links
 	+$(MAKE) --no-print-directory tools-check
 	+$(MAKE) --no-print-directory check-pins
+	+$(MAKE) --no-print-directory production-dependencies-check
 	+$(MAKE) --no-print-directory ci-evidence-check
 	+$(MAKE) --no-print-directory release-tools-check
 	+$(MAKE) --no-print-directory fmt-check

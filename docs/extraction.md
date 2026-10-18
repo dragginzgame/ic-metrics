@@ -63,7 +63,7 @@ intervals or scalar deltas, establish matching units, counter/window identity
 and append-only continuity. Numeric success cannot detect a reset followed by
 larger readings. Maxima, latest observations and quantiles are not subtractable.
 
-The prepared 0.14 hard cut removes complete floating-point sample statistics
+The 0.14 hard cut removes complete floating-point sample statistics
 from Metrics. Testkit's private development reporter owns its finite-sample
 mean, midpoint median and observed nearest-rank quantile, including non-finite
 admission and typed failures. Its worker schema, sample storage, process lifecycle
