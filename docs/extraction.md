@@ -70,8 +70,14 @@ admission and typed failures. Its worker schema, sample storage, process lifecyc
 and report presentation remain Testkit-owned. Metrics retains checked and tracked integer
 arithmetic and the stable V1 records; histogram quantiles remain bucket ranges.
 Other callers of the removed sample API must move it to their owning reporter.
-Integrate [Testkit PR #125](https://github.com/dragginzgame/ic-testkit/pull/125)
-before selecting Metrics 0.14 in that repository.
+Testkit 0.54.0 source at
+[`ff88087`](https://github.com/dragginzgame/ic-testkit/tree/ff88087d6757121ac92e0dec4705ecaccfd8ebed)
+contains that private reporter and selects Metrics 0.14.
+[PR #125](https://github.com/dragginzgame/ic-testkit/pull/125) was closed without
+merging after those changes were integrated through the maintainer's release
+path. Its proposed checked-cohort rewrite was not integrated: Testkit retains
+one cohort count and atomic multi-counter admission. Adopting Metrics 0.14 does
+not require replacing that consumer-owned builder.
 
 ## Platform and persistence boundaries
 
