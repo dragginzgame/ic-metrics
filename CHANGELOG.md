@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.8]
+## [0.14.8] - 2026-10-19
 
 - Qualify Memory 0.49.1 with the existing Storage 0.5.7 selection. Its library
   source, normal dependencies, features and Rust floor match Memory 0.49.0;
