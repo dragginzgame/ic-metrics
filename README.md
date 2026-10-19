@@ -126,7 +126,10 @@ to each application, and native timing is not IC measurement evidence.
 The [tracked-recording comparison](docs/evidence/tracked-080.md),
 [quantile comparison](docs/evidence/quantile-cost-062.md) and
 [durable-store experiment](docs/evidence/stable-cost-072.md) retain reproducible
-sources, locked graphs, Wasms and raw IC readings. Their bounded workloads do
+sources, locked graphs, Wasms and raw IC readings. The separate
+[current-graph durability receipt](docs/evidence/stable-current-0146.md) qualifies
+the governed Memory/Storage integration without rewriting those historical inputs.
+Their bounded workloads do
 not establish whole-application or mainnet savings. Original reader, histogram
 and consumer-lookup evidence remains unchanged under `docs/evidence`; the
 [cleanup receipt](docs/evidence/cleanup-082.md) retains the previous guide text.

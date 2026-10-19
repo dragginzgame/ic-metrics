@@ -7,7 +7,33 @@ and endpoints. [The extraction contract](../extraction.md),
 [stable guide](../../crates/ic-metrics-stable/README.md) and
 [host guide](../hosts.md) own those boundaries and local qualification commands.
 
-## Delivered 0.14.4
+## Current finalized source — 0.14.5
+
+The checkout is finalized release `4968c61a0f8e292565874208ecc1b60163230321`;
+both workspace packages are 0.14.5. This local source observation does not assert
+registry publication or hosted CI for that release. Shared Tooling adoption
+below is included in that source.
+
+## Prepared 0.14.6
+
+The pending batch adds an independent bounded histogram-restoration oracle and
+separate release-editor availability/pin-drift rejection cases. Twelve arithmetic
+state tests, strict arithmetic all-target Clippy, the release-admission fixture
+and ShellCheck pass. No product API, V1 encoding or package version changes.
+
+The incoming lock selection of Storage 0.5.6 with Memory 0.48.2 is preserved.
+Four focused native V1/lease/cap/reset tests and the native/Wasm production-graph
+checks, including exclusion fixtures, pass against that product lock.
+The separate [governed-store IC receipt](../evidence/stable-current-0146.md)
+binds copied product source, its own lock, compiler, server and workload.
+It checks mixed-kind upgrade retention, query discard, trap rollback, typed
+refusals, map lease transfer, explicit epochs and matched checkpoint costs.
+Two independent runs and a clean-target rebuild agree byte-for-byte. Testkit's
+`thiserror` pin differs from the product graph; the receipt states that limit.
+Historical archives remain unchanged. No full release CI, Rust-floor gate,
+consumer qualification, release or publication is claimed for this pending batch.
+
+## Earlier delivered 0.14.4
 
 The finalized release is `19a07804875ff880b1f0f9f0c59d0fd22c49a759`; both workspace
 packages are 0.14.4 and both official registry index rows are published, not yanked.
@@ -48,7 +74,7 @@ selection, synchronization, write cadence and reset. Unchanged Metrics V1 bytes
 do not establish compatibility with a different Memory allocation format.
 Metrics never automatically resets retained backing.
 
-## Prepared Shared Tooling adoption — 0.14.5
+## Delivered Shared Tooling adoption — 0.14.5
 
 Shared Tooling is refreshed from clean reviewed main at
 `2a79f5f93383f3d2a8a38d65406c7d52c2f77913`, labelled 0.25.0 (116 payloads).

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.14.6]
+
+- Check histogram restoration against an independent exhaustive oracle of small
+  raw observation sequences, including unreachable bucket/count/total states.
+- Qualify missing release-editor selection and editor-pin drift independently of
+  the formatter; refusal preserves metadata, the index and existing executables.
+- Refresh the separately frozen IC durability and checkpoint-cost qualification
+  for the governed Memory 0.48.2 / Storage 0.5.6 graph, with published Platform,
+  Wire and Testkit interfaces. Historical experiment identities remain unchanged.
+  See the [current-graph receipt](docs/evidence/stable-current-0146.md).
+
 ## [0.14.5] - 2026-10-19
 
 - Adopt reviewed Shared Tooling 0.25.0 at

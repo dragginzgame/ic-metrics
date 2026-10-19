@@ -183,7 +183,7 @@ The native example verifies codec/storage behavior, not IC checkpoint costs or
 upgrade execution. Hosts choose which completed work contributes and when to
 write; persistence does not establish attribution or reset continuity.
 Stable map reads/writes add allocation and IC costs. The repository's frozen
-[IC store qualification](https://github.com/dragginzgame/ic-metrics/issues/64)
+[current-graph IC store qualification](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/stable-current-0146.md)
 checks upgrades, query discard, trap rollback and reset, with actual checkpoint
 costs under a matched workload. Batch observations before checkpointing at the
 owning message boundary; measured costs depend on workload, map state and cadence.

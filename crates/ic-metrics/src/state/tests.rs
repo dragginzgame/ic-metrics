@@ -3,6 +3,8 @@ use crate::{
     MeasurementStateError as Error, MeasurementSummary as Summary,
 };
 
+extern crate std;
+
 #[test]
 fn overflow_bucket_flag_admission_preserves_typed_priority() {
     for overflow in [0, 1, u64::MAX - 1] {
@@ -297,4 +299,69 @@ fn every_small_observation_sequence_restores_including_wide_values() {
             }
         }
     }
+}
+
+fn check_histogram_restoration<const N: usize>(bounds: [u64; N]) {
+    // Build a reachable-state oracle from raw sequences, without using record()
+    // or reproducing the admission formulas for count/total ranges.
+    for samples in 0..=4_u32 {
+        let mut reachable = std::collections::BTreeSet::new();
+        for mut sequence in 0..4_u64.pow(samples) {
+            let mut counts = [0_u64; N];
+            let mut overflow = 0_u64;
+            let mut total = 0_u128;
+            let mut maximum = None;
+            for _ in 0..samples {
+                let value = sequence % 4;
+                sequence /= 4;
+                total += u128::from(value);
+                maximum = Some(maximum.map_or(value, |previous: u64| previous.max(value)));
+                if let Some(index) = bounds.iter().position(|bound| value <= *bound) {
+                    counts[index] += 1;
+                } else {
+                    overflow += 1;
+                }
+            }
+            reachable.insert((counts, overflow, total, maximum));
+        }
+        // Also enumerate unreachable distributions, including incorrect count
+        // sums, impossible totals and a maximum in an unoccupied bucket.
+        for mut distribution in 0..5_usize.pow(u32::try_from(N + 1).unwrap()) {
+            let counts = core::array::from_fn(|_| {
+                let count = u64::try_from(distribution % 5).unwrap();
+                distribution /= 5;
+                count
+            });
+            let overflow = u64::try_from(distribution).unwrap();
+            for total in 0..=u128::from(samples) * 3 {
+                for maximum in core::iter::once(None).chain((0..=3).map(Some)) {
+                    let Ok(aggregate) =
+                        Aggregate::from_parts(u64::from(samples), total, maximum, false, false)
+                    else {
+                        continue;
+                    };
+                    let restored = Histogram::from_parts(
+                        bounds, counts, overflow, [false; N], false, aggregate,
+                    );
+                    assert_eq!(
+                        restored.is_ok(),
+                        reachable.contains(&(counts, overflow, total, maximum)),
+                        "bounds={bounds:?}, counts={counts:?}, overflow={overflow}, \
+                         samples={samples}, total={total}, maximum={maximum:?}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn histogram_restoration_matches_independent_bounded_sequences() {
+    check_histogram_restoration([]);
+    check_histogram_restoration([0]);
+    check_histogram_restoration([u64::MAX]);
+    check_histogram_restoration([0, 1]);
+    check_histogram_restoration([1, 2]);
+    check_histogram_restoration([0, 3]);
+    check_histogram_restoration([0, u64::MAX]);
 }
