@@ -22,11 +22,11 @@ dependencies = [
 
 [[package]]
 name = "ic-metrics"
-version = "0.14.6"
+version = "0.14.7"
 
 [[package]]
 name = "ic-metrics-stable"
-version = "0.14.6"
+version = "0.14.7"
 dependencies = [
  "ic-memory",
  "ic-metrics",

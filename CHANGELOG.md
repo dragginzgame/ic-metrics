@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.7]
+## [0.14.7] - 2026-10-19
 
 - Adopt Memory 0.49 with Storage 0.5.7; require at least Storage 0.5.7 so the
   declared dependencies admit the matching governed runtime-handle API.
