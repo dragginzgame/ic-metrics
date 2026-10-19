@@ -171,6 +171,11 @@ workloads and acceptance scope. Raw Wasm bytes, IC instructions and actual cycle
 charges are separate measurements; native execution supplies none of those IC
 costs. No frozen experiment proves a later consumer's performance.
 
+The separate [current-graph durability receipt](evidence/stable-current-0146.md)
+uses published Platform/Wire/Testkit interfaces and the governed Memory/Storage
+map. Its source, graph, compiler and workload identities bound the result;
+earlier durability archives retain their original identities.
+
 Older release-by-release extraction prose is preserved verbatim in
 [the cleanup receipt](evidence/cleanup-082.md), rather than mixed into this current
 contract. The [pre-0.2 extraction record](evidence/extraction-through-019.md)

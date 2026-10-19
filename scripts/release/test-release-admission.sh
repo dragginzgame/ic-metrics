@@ -85,11 +85,19 @@ if [[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$3" == "$ADMISSI
     case "$4" in
         install-rust-tools|rust-tools-check|install-release-editor|release-editor-check)
             printf '%s\n' "$4" >> "$ADMISSION_CARGO_EVENTS"
+            case "$4" in
+                *rust-tools*) tool=rust-tool ;;
+                *) tool=editor-tool ;;
+            esac
             if [[ "$4" == install-rust-tools || "$4" == install-release-editor ]]; then
-                [[ "${ADMISSION_TOOL_CHANGE:-no}" != yes ]] || printf '\n# changed selection\n' >> "${RUST_TOOL_VERSIONS:-$ADMISSION_TOOL_ROOT/ci/tool-versions.env}"
-                printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
+                if [[ "${ADMISSION_TOOL_CHANGE:-no}:$4" == rust:install-rust-tools ]]; then
+                    printf '\n# changed selection\n' >> "${RUST_TOOL_VERSIONS:-$ADMISSION_TOOL_ROOT/ci/tool-versions.env}"
+                elif [[ "${ADMISSION_TOOL_CHANGE:-no}:$4" == editor:install-release-editor ]]; then
+                    printf '\n# changed editor selection\n' >> "$ADMISSION_TOOL_ROOT/ci/release-tools.env"
+                fi
+                printf 'selected executable\n' > "$ADMISSION_CACHE/$tool"
             else
-                [[ -f "$ADMISSION_CACHE/tool" ]] || exit 53
+                [[ -f "$ADMISSION_CACHE/$tool" ]] || exit 53
             fi
             exit 0 ;;
     esac
@@ -142,7 +150,8 @@ setup() {
     mkdir -p "$ADMISSION_CACHE"
     # Existing admission scenarios have prepared inputs; new cache cases start cold.
     printf 'prepared selected locked input\n' > "$ADMISSION_CACHE/input"
-    printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
+    printf 'selected formatter\n' > "$ADMISSION_CACHE/rust-tool"
+    printf 'selected editor\n' > "$ADMISSION_CACHE/editor-tool"
     export TMPDIR="$fixture/attempts/$name"
     export RELEASE_PREVIOUS=0.1.1 RELEASE_VERSION=0.1.2 RELEASE_DATE=2026-10-06
 }
@@ -248,7 +257,8 @@ done
 # Shared owns generic tool availability/failure and pin-drift cases. Retain
 # Metrics' standalone target selection and its explicit catalog override routing.
 # The actual runner's setup/check refusal-before-validation cases stay above.
-for scenario in standalone-missing explicit-pins-changed; do
+for scenario in standalone-rust-missing standalone-editor-missing \
+    explicit-rust-pins-changed explicit-editor-pins-changed; do
     setup "tool-$scenario"
     originals="$fixture/tool-originals-$scenario"
     mkdir "$originals"
@@ -259,11 +269,15 @@ for scenario in standalone-missing explicit-pins-changed; do
     expected_status=0
     expected_targets=(install-rust-tools rust-tools-check install-release-editor release-editor-check)
     case "$scenario" in
-        standalone-missing)
+        standalone-rust-missing)
             unset IC_METRICS_RELEASE_CACHE_PREPARE
-            rm "$ADMISSION_CACHE/tool"
+            rm "$ADMISSION_CACHE/rust-tool"
             expected_status=53; expected_targets=(rust-tools-check) ;;
-        explicit-pins-changed)
+        standalone-editor-missing)
+            unset IC_METRICS_RELEASE_CACHE_PREPARE
+            rm "$ADMISSION_CACHE/editor-tool"
+            expected_status=53; expected_targets=(rust-tools-check release-editor-check) ;;
+        explicit-*-pins-changed)
             # Copy the script owners, so the controlled mutation cannot touch
             # the real repository's reviewed tool pins.
             tool_root="$fixture/changed-tool-root-$scenario"
@@ -273,23 +287,33 @@ for scenario in standalone-missing explicit-pins-changed; do
             tool_root="$(cd -P "$tool_root" && printf '%s/.' "$PWD")"
             tool_root="${tool_root%/.}"
             bash "$root/scripts/ci/prepare-script-fixture.sh" "$root" "$tool_root" scripts/release/metadata.sh
-            export ADMISSION_TOOL_ROOT="$tool_root" ADMISSION_TOOL_CHANGE=yes
+            export ADMISSION_TOOL_ROOT="$tool_root"
+            case "$scenario" in
+                explicit-rust-pins-changed) export ADMISSION_TOOL_CHANGE=rust ;;
+                explicit-editor-pins-changed) export ADMISSION_TOOL_CHANGE=editor ;;
+            esac
             export RUST_TOOL_VERSIONS="$fixture/selected Rust pins.env"
             cp "$root/ci/tool-versions.env" "$RUST_TOOL_VERSIONS"
-            expected_status=1; expected_targets=(install-rust-tools) ;;
+            expected_status=1; expected_targets=(install-rust-tools)
+            if [[ "$ADMISSION_TOOL_CHANGE" == editor ]]; then
+                expected_targets+=(rust-tools-check install-release-editor)
+            fi ;;
     esac
     status=0
     bash "$ADMISSION_TOOL_ROOT/scripts/release/metadata.sh" preflight > "$fixture/result.log" 2>&1 || status=$?
     [[ "$status" == "$expected_status" ]] || exit 1
     expected_fetch='fetch --locked'
-    if [[ "$scenario" == standalone-missing ]]; then expected_fetch='fetch --locked --offline'; fi
+    if [[ "$scenario" == standalone-* ]]; then expected_fetch='fetch --locked --offline'; fi
     printf '%s\n' "$expected_fetch" "${expected_targets[@]}" > "$fixture/expected-tool-events"
     cmp "$fixture/expected-tool-events" "$ADMISSION_CARGO_EVENTS"
     for path in Cargo.toml Cargo.lock CHANGELOG.md; do cmp "$path" "$originals/$path"; done
     cmp .git/index "$originals/index"
     [[ "$(cat "$ADMISSION_CACHE/old-tool")" == 'old installed executable' ]] || exit 1
-    if [[ "$scenario" == explicit-pins-changed ]]; then
+    if [[ "$scenario" == explicit-*-pins-changed ]]; then
         cmp "$root/ci/tool-versions.env" "$ADMISSION_TOOL_ROOT/ci/tool-versions.env"
+        if [[ "$ADMISSION_TOOL_CHANGE" == rust ]]; then
+            cmp "$root/ci/release-tools.env" "$ADMISSION_TOOL_ROOT/ci/release-tools.env"
+        fi
     fi
     [[ ! -e .git/release-state ]] || exit 1
 done
