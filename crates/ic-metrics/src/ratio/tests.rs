@@ -1,5 +1,7 @@
 use super::{MeasurementRatioError, checked_scaled_ratio, checked_scaled_ratio_nearest};
 
+use num_bigint::BigUint;
+
 #[test]
 fn projects_fractional_means_proportions_and_measured_zero() {
     for (numerator, denominator, scale, expected) in [
@@ -107,4 +109,63 @@ fn nearest_preserves_zero_precedence_and_exact_caps() {
         checked_scaled_ratio_nearest(rounded_overflow, 6, 7),
         Err(MeasurementRatioError::Overflow)
     );
+}
+
+fn check_wide_ratio_reference(numerator: u128, denominator: u64, scale: u64) {
+    let results = [
+        checked_scaled_ratio(numerator, denominator, scale),
+        checked_scaled_ratio_nearest(numerator, denominator, scale),
+    ];
+    if denominator == 0 {
+        assert_eq!(results, [Err(MeasurementRatioError::ZeroDenominator); 2]);
+        return;
+    }
+    // Multiply first in an independent arbitrary-precision implementation.
+    // The product may need 192 bits; no production quotient decomposition is used.
+    let product = BigUint::from(numerator) * BigUint::from(scale);
+    let divisor = BigUint::from(denominator);
+    let expected = [
+        &product / &divisor,
+        (&product + BigUint::from(denominator / 2)) / &divisor,
+    ];
+    for (actual, exact) in results.into_iter().zip(expected) {
+        assert_eq!(
+            actual,
+            u128::try_from(exact).map_err(|_| MeasurementRatioError::Overflow),
+            "numerator={numerator}, denominator={denominator}, scale={scale}"
+        );
+    }
+}
+
+#[test]
+fn ratios_match_independent_full_width_integer_reference() {
+    let factors = [0, 1, 2, 3, 6, 7, 10, 1 << 32, u64::MAX - 1, u64::MAX];
+    for bit in 0..128 {
+        let pivot = 1_u128 << bit;
+        for numerator in [pivot - 1, pivot, pivot + 1, u128::MAX] {
+            for denominator in factors {
+                for scale in factors {
+                    check_wide_ratio_reference(numerator, denominator, scale);
+                }
+            }
+        }
+    }
+    // A fixed deterministic sequence supplements the power-of-two boundaries
+    // with mixed full-width bit patterns. It is not a sampling/performance API.
+    let mut state = 0x243f_6a88_85a3_08d3_1319_8a2e_0370_7344_u128;
+    let mut next = || {
+        state ^= state << 23;
+        state ^= state >> 17;
+        state ^= state << 26;
+        state
+    };
+    for _ in 0..4096 {
+        let numerator = next();
+        let denominator = u64::try_from(next() & u128::from(u64::MAX)).unwrap();
+        let scale = u64::try_from(next() & u128::from(u64::MAX)).unwrap();
+        check_wide_ratio_reference(numerator, denominator, scale);
+    }
+    // Rounding alone overflows after a representable floor; exact caps, ties
+    // and zero-denominator precedence are also present in the boundary matrix.
+    check_wide_ratio_reference((u128::MAX / 7) * 6 + 3, 6, 7);
 }

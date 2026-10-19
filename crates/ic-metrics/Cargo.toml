@@ -10,5 +10,8 @@ description.workspace = true
 readme = "../../README.md"
 publish = ["crates-io"]
 
+[dev-dependencies]
+num-bigint.workspace = true
+
 [lints]
 workspace = true

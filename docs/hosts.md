@@ -119,12 +119,15 @@ packages; select direct Cargo commands when only one package or test is affected
 
 ### Dependency roles and production graphs
 
-Both workspace members are production libraries. All root catalog entries are
-`Production dependencies`: Memory also supplies the stable package's native
-`Tests and tooling only` development feature, `test-support`. There are no
-separate test/tooling packages or test-only catalog entries. These roles describe
-workspace use, not registry publication. Keep the single catalog and inherited
-selections; `ic-metrics` itself remains dependency-free.
+Both workspace members are production libraries. Memory, Metrics and Storage
+occupy the root catalog's `Production dependencies` group. Memory also supplies
+the stable package's native development feature, `test-support`. The separate
+`Tests and tooling only` group selects `num-bigint` for the arithmetic ratio
+oracle, with default features disabled. It is inherited only by arithmetic
+development dependencies; neither production graph includes it. There are no
+separate test/tooling packages. These roles describe workspace use, not registry
+publication. Keep the single catalog and inherited selections; `ic-metrics`
+remains dependency-free in production.
 
 The root catalog's production section uses Shared Tooling's grouped sort order.
 `make fmt`, `make fmt-check` and hooks use that shared default; every release
