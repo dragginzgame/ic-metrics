@@ -956,3 +956,103 @@ fn public_histogram_load_admits_expected_bounds_before_reading_a_row() {
         assert_eq!(writes.get(), 0);
     }
 }
+
+// Mutate persisted bytes independently of the decoder's field/range formulas.
+// A changed byte can be another valid state; admission is not corruption detection.
+fn check_v1_mutations<T: crate::metric::StoredMetric + std::fmt::Debug>(
+    value: &T,
+) -> (usize, usize) {
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
+    let mut store = MetricsStore::new(StableBTreeMap::new(admitted_memory(memory)));
+    let key = key("mutation");
+    let identity = identity();
+    let original = encode(&identity, value);
+    let mut admitted = 0;
+    let mut refused = 0;
+    for offset in 0..original.len() {
+        for bit in 0..8 {
+            for paired in [false, true] {
+                let mut bytes = original.clone();
+                bytes[offset] ^= 1 << bit;
+                if paired {
+                    let adjacent = (offset + 1) % bytes.len();
+                    bytes[adjacent] ^= 1 << bit;
+                }
+                store.map.insert(key.0.clone(), bytes.clone());
+                writes.set(0);
+                let loaded = store.load::<T>(&key, &identity, value.configuration());
+                assert_eq!(writes.get(), 0);
+                match loaded {
+                    Err(error) => {
+                        refused += 1;
+                        assert_rejected_record(
+                            &mut store,
+                            &writes,
+                            &key,
+                            &identity,
+                            value,
+                            (bytes, error),
+                        );
+                    }
+                    Ok(Some(restored)) => {
+                        admitted += 1;
+                        // Every admitted record must retain its exact canonical bytes.
+                        assert_eq!(encode(&identity, &restored), bytes);
+                        store.save(&key, &identity, &restored).unwrap();
+                        assert_eq!(writes.get(), 0);
+                        assert_eq!(store.map.get(&key.0), Some(bytes.clone()));
+                        match store.save(&key, &identity, value) {
+                            Ok(()) => {
+                                assert_eq!(store.map.get(&key.0), Some(original.clone()));
+                                assert_eq!(
+                                    store
+                                        .load::<T>(&key, &identity, value.configuration())
+                                        .unwrap()
+                                        .as_ref(),
+                                    Some(value)
+                                );
+                            }
+                            Err(error) => {
+                                assert_eq!(error, StoreError::StateRegression);
+                                assert_eq!(writes.get(), 0);
+                                assert_eq!(store.map.get(&key.0), Some(bytes));
+                            }
+                        }
+                    }
+                    Ok(None) => panic!("installed mutation became an absent row"),
+                }
+            }
+        }
+    }
+    (admitted, refused)
+}
+
+#[test]
+fn v1_byte_mutations_preserve_canonical_admission_and_rejected_checkpoints() {
+    let mut aggregate = Aggregate::EMPTY;
+    let mut summary = Summary::EMPTY;
+    let mut histogram = Histogram::new([0, 10, u64::MAX]).unwrap();
+    for sample in [0, 5, 11] {
+        aggregate.record(sample);
+        summary.record(sample);
+        histogram.record(sample);
+    }
+    let overflowed =
+        Aggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, true).unwrap();
+    let outcomes = [
+        check_v1_mutations(&Counter::ZERO),
+        check_v1_mutations(&Counter::from_parts(u128::MAX, false).unwrap()),
+        check_v1_mutations(&Counter::from_parts(u128::MAX, true).unwrap()),
+        check_v1_mutations(&Aggregate::EMPTY),
+        check_v1_mutations(&aggregate),
+        check_v1_mutations(&overflowed),
+        check_v1_mutations(&Summary::EMPTY),
+        check_v1_mutations(&summary),
+        check_v1_mutations(&Summary::from_parts(overflowed, Some(u64::MAX)).unwrap()),
+        check_v1_mutations(&Histogram::new([]).unwrap()),
+        check_v1_mutations(&histogram),
+    ];
+    assert!(outcomes.iter().all(|(_, refused)| *refused > 0));
+    assert!(outcomes.iter().any(|(admitted, _)| *admitted > 0));
+}

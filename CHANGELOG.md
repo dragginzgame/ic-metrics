@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.14.7]
+
+- Adopt Memory 0.49 with Storage 0.5.7; require at least Storage 0.5.7 so the
+  declared dependencies admit the matching governed runtime-handle API.
+  Memory now uses serde_cbor in place of Ciborium. Metrics does not expose the
+  changed upstream decoder error; arithmetic APIs and Metrics V1 bytes are unchanged.
+- Update allocation-format guidance: Memory 0.49 retains current 0.48 ledger
+  bytes without a reset. Earlier retired images remain subject to Memory's
+  host-owned disposition. Frozen IC experiments retain their original graphs.
+- Require one Memory, Storage and stable-substrate identity in each production
+  graph, using Shared Tooling's existing observer and duplicate-version fixtures.
+- Exercise bit and adjacent-bit mutations of persisted V1 records across all
+  four metric families. Admitted records round-trip canonically; refused loads
+  and checkpoints preserve retained bytes and perform no stable writes.
+- Qualify the Memory 0.48.2 / Storage 0.5.6 to Memory 0.49.0 / Storage 0.5.7
+  transition with a matched IC fixture. Retained values, leases, rollback and
+  reset checks pass. The durable fixture grows by 85,907 raw Wasm bytes; bootstrap
+  instructions decrease slightly and checkpoint instructions increase slightly.
+  See the [version-bound comparison](docs/evidence/memory-0147.md).
+
 ## [0.14.6] - 2026-10-19
 
 - Check histogram restoration against an independent exhaustive oracle of small

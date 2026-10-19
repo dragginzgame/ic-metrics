@@ -7,19 +7,51 @@ and endpoints. [The extraction contract](../extraction.md),
 [stable guide](../../crates/ic-metrics-stable/README.md) and
 [host guide](../hosts.md) own those boundaries and local qualification commands.
 
-## Current finalized source — 0.14.5
+## Current finalized source — 0.14.6
 
-The checkout is finalized release `4968c61a0f8e292565874208ecc1b60163230321`;
-both workspace packages are 0.14.5. This local source observation does not assert
+The checkout is based on finalized release `69e086af4aaa7f07a4b6664b500a5a9c53eceb12`;
+both workspace packages are 0.14.6. This local source observation does not assert
 registry publication or hosted CI for that release. Shared Tooling adoption
 below is included in that source.
 
-## Prepared 0.14.6
+## Prepared 0.14.7
 
-The pending batch adds an independent bounded histogram-restoration oracle and
+The maintainer's incoming manifest/lock selects Memory 0.49.0 and Storage 0.5.7.
+The Storage requirement now starts at 0.5.7 to admit the aligned Memory 0.49
+governed-handle API. Memory's serde_cbor replacement preserves the current ledger
+format; Metrics neither names nor exposes the changed upstream decoder error.
+Both libraries retain their public APIs, Metrics V1 bytes and Rust 1.91 floor.
+
+All 22 stable units, three doctests, strict native/Wasm stable Clippy and the
+native/Wasm production-graph checks with exclusion fixtures pass locally against
+that selected graph. The arithmetic production graph remains dependency-free;
+Ciborium is absent from the selected library graph. Logs are
+`/tmp/metrics-0147-{clippy,wasm-clippy,stable-tests,graph}.log`.
+These focused receipts do not claim full release CI or Rust-floor qualification.
+Production admission now requires one Memory, Storage and substrate identity
+through Shared's canonical observer, with controlled duplicate-version refusals.
+The new mutation matrix exercises all four stored families without changing V1
+or the production implementation. Rejected checkpoints preserve retained bytes.
+
+The separate [Memory 0.49 IC comparison](../evidence/memory-0147.md) uses the same
+copied product source with before/after graphs and a separately locked host driver.
+The candidate canister lock matches every selected product registry row/checksum;
+Testkit's host pins do not constrain that graph. Same-graph and cross-graph
+upgrades, continuation, lease transfer, query discard, trap rollback and explicit
+epochs pass. The durable fixture grows by 85,907 raw bytes; bootstrap instructions
+fall slightly and checkpoint instructions rise slightly. Native substitutes are
+not used for those cost observations. The prior frozen receipt below is unchanged;
+neither experiment supplies application acceptance or a universal write price.
+The clean rebuild, independent run and replay from a fresh archive extraction
+reproduce all eight Wasms and ten raw result files byte-for-byte. Archive payloads
+and distribution checksums pass; the original evidence archives remain unchanged.
+
+## Delivered local qualification — 0.14.6
+
+The 0.14.6 batch adds an independent bounded histogram-restoration oracle and
 separate release-editor availability/pin-drift rejection cases. Twelve arithmetic
 state tests, strict arithmetic all-target Clippy, the release-admission fixture
-and ShellCheck pass. No product API, V1 encoding or package version changes.
+and ShellCheck pass. No product arithmetic API or V1 encoding changes.
 
 The incoming lock selection of Storage 0.5.6 with Memory 0.48.2 is preserved.
 Four focused native V1/lease/cap/reset tests and the native/Wasm production-graph
@@ -30,8 +62,8 @@ It checks mixed-kind upgrade retention, query discard, trap rollback, typed
 refusals, map lease transfer, explicit epochs and matched checkpoint costs.
 Two independent runs and a clean-target rebuild agree byte-for-byte. Testkit's
 `thiserror` pin differs from the product graph; the receipt states that limit.
-Historical archives remain unchanged. No full release CI, Rust-floor gate,
-consumer qualification, release or publication is claimed for this pending batch.
+Historical archives remain unchanged. Those focused receipts do not establish
+full release CI, Rust-floor gates, consumer qualification or publication.
 
 ## Earlier delivered 0.14.4
 
