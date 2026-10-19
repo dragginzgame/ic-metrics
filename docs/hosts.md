@@ -126,10 +126,10 @@ separate test/tooling packages or test-only catalog entries. These roles describ
 workspace use, not registry publication. Keep the single catalog and inherited
 selections; `ic-metrics` itself remains dependency-free.
 
-Role comments use the default global sort order. `make fmt`, `make fmt-check`
-and hooks use the shared global policy; every release adapter ordering check
-uses `--manifest-order` against its current or selected committed source. No
-blank-separated dependency groups or grouped-mode override is needed here.
+The root catalog's production section uses Shared Tooling's grouped sort order.
+`make fmt`, `make fmt-check` and hooks use that shared default; every release
+adapter ordering check uses `--manifest-order-grouped` against its current or
+selected committed source. No paired formatter override is needed here.
 
 Inspect each production package with its actual build target/features. Current
 packages define no optional product features; their native and Wasm library
@@ -152,8 +152,10 @@ This repository has no deployment entrypoint or final canister artifact.
 `make production-dependencies-check` enforces these library graph boundaries for
 the prepared compiler's native host and Wasm, and rejects direct substrate
 declarations even in tests. It observes each package separately through successful
-locked Cargo metadata/tree commands, includes normal/build edges and activated
-features, and excludes development edges. Its offline local-package fixtures cover
+locked Cargo metadata and Shared Tooling's `check-cargo-graph.pl`, includes
+normal/build edges and the forbidden dependency-feature edge, and excludes
+development edges. Metrics retains declaration admission and its explicit
+package/target/exclusion policy. Its offline local-package fixtures cover
 renamed/transitive tooling, build dependencies, test-feature activation and failed
 observations. CI and release verification run the same check. Role labels,
 formatting and `make check-pins` remain separate declaration checks.
@@ -180,6 +182,27 @@ The shared locked release-preflight helper owns fetch/tool sequencing and pin
 rechecks; Metrics admits source/recovery first and selects preparation authority,
 tool targets and pin files. Checks remain offline and never install tools.
 
+`ci/release-tools.env` selects published IC Build 0.18.0's
+`ic-build-release-metadata` executable and a 1 MiB allowance for each input
+document. Current manifests, lock and context are below 64 KiB. The shared
+managed installer owns its package/compiler identity and executable admission;
+Metrics' small `release-editor.sh` adapter supplies only that selection.
+`make install-tools` runs `install-release-editor` after common setup, and
+`make tools-check` runs `release-editor-check`. Standalone targets are available
+after host parsers are prepared. Standard release preflight prepares/checks the
+editor before offline validation; standalone preflight only checks it. Metadata
+preparation resolves its absolute admitted path without installation, then Shared
+Tooling owns candidate preparation, validation and failure restoration. Missing
+selections refuse before metadata mutation. Neither library requires IC Build.
+
+Neither library declares or imports an external IC-specific package directly:
+Memory and Storage own the transitive substrate boundary. Metrics therefore adds
+no direct Platform dependency. There is no maintained Rust CLI, endpoint or messaging
+codec to migrate to Clap or Wire. Tracked sources and actual package file lists
+are reviewed for the no-symlink rule; managed tool-selection pointers and isolated
+rejection fixtures retain their narrow exceptions. Frozen evidence keeps its
+original source and dependency identities.
+
 ## Full release validation
 
 Focused checks for changed behavior and directly affected callers are sufficient
@@ -198,10 +221,10 @@ and publication authority.
 
 Release/publication are separate maintainer actions under
 [the release contract](releases.md). Standard release preflight prepares the
-locked dependency cache and common Cargo tools before offline validation;
+locked dependency cache, common Cargo tools and the selected release editor before offline validation;
 standalone preflight only fetches/checks offline. Preparation and late checks
 bind the selected release commit rather than newer working-tree metadata.
-Late metadata checks use Shared's `--manifest-order` option to check ordering
+Late metadata checks use Shared's `--manifest-order-grouped` option to check ordering
 in that same selected source; literal version preparation never sorts it.
 Neither validation nor release performs artifact cleanup.
 

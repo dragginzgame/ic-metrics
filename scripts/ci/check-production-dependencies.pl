@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Cwd qw(getcwd);
+use FindBin qw($Bin);
 use JSON::PP qw(decode_json);
 
 # Metrics owns this two-library policy. Cargo owns target/feature resolution;
@@ -51,29 +52,11 @@ my @hosts = observe(qw(rustc -vV)) =~ /^host: ([A-Za-z0-9_-]+)$/mg;
 my %targets = map { $_ => 1 } ($hosts[0], 'wasm32-unknown-unknown');
 for my $target (sort keys %targets) {
     for my $root (sort keys %packages) {
-        my $tree = observe('cargo', 'tree', '--locked', '--color', 'never',
-            '-p', $root, '--target', $target, '--edges', 'normal,build',
-            '--prefix', 'none', '--format', '{p}|{f}');
-        my @rows = split /\n/, $tree;
-        @rows or die "empty production graph for $root ($target)\n";
-        my $index = 0;
-        for my $row (@rows) {
-            # The final delimiter separates Cargo's explicitly requested feature
-            # field; a checkout path may itself contain spaces or vertical bars.
-            $row =~ /\A([A-Za-z0-9_-]+) v\S+[^\n]*\|([A-Za-z0-9_,+.-]*)(?: \(\*\))?\z/
-                or die "malformed Cargo tree row for $root ($target)\n";
-            my ($name, $features) = ($1, $2);
-            if ($index++ == 0) {
-                $name eq $root or die "production graph root differs: $root ($target)\n";
-            } elsif ($root eq 'ic-metrics') {
-                die "ic-metrics has a production dependency: $name ($target)\n";
-            }
-            $name !~ /\Aic-(?:host|testkit)(?:-|\z)/ && $name ne 'pocket-ic'
-                or die "$root reaches tooling package $name ($target)\n";
-            my %enabled = map { $_ => 1 } split /,/, $features;
-            !($name eq 'ic-memory' && $enabled{'test-support'})
-                or die "$root enables Memory test-support ($target)\n";
-        }
-        print "[OK] $root production graph ($target)\n";
+        my @policy = $root eq 'ic-metrics'
+            ? ('--forbid-pattern', '^(?!ic-metrics$)', '--require', 'ic-metrics=1')
+            : ('--forbid-pattern', '^ic-(?:host|testkit)(?:-|$)|^pocket-ic$',
+               '--forbid-feature', 'ic-memory/test-support');
+        print observe('perl', "$Bin/check-cargo-graph.pl", '--consumer', getcwd(),
+            '--package', $root, '--target', $target, @policy);
     }
 }

@@ -56,7 +56,7 @@ set -euo pipefail
 if [[ "${1:-}" == locate-project ]]; then exec "$ADMISSION_REAL_CARGO" "$@"; fi
 printf '%s\n' "$*" >> "$ADMISSION_CARGO_EVENTS"
 case "$*" in
-    'sort --workspace --check') exec "$ADMISSION_REAL_CARGO" "$@" ;;
+    'sort --workspace --check --grouped') exec "$ADMISSION_REAL_CARGO" "$@" ;;
     'metadata --locked --offline --format-version 1')
         if grep -q '^members = \[\]' Cargo.toml; then
             # Synthetic index-admission cases substitute graph facts. Selected
@@ -83,9 +83,9 @@ cat >> "$fixture/bin/make" <<'MAKE'
 set -euo pipefail
 if [[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$3" == "$ADMISSION_TOOL_ROOT" ]]; then
     case "$4" in
-        install-rust-tools|rust-tools-check)
+        install-rust-tools|rust-tools-check|install-release-editor|release-editor-check)
             printf '%s\n' "$4" >> "$ADMISSION_CARGO_EVENTS"
-            if [[ "$4" == install-rust-tools ]]; then
+            if [[ "$4" == install-rust-tools || "$4" == install-release-editor ]]; then
                 [[ "${ADMISSION_TOOL_CHANGE:-no}" != yes ]] || printf '\n# changed selection\n' >> "${RUST_TOOL_VERSIONS:-$ADMISSION_TOOL_ROOT/ci/tool-versions.env}"
                 printf 'selected executable\n' > "$ADMISSION_CACHE/tool"
             else
@@ -183,7 +183,7 @@ for scenario in cold standalone-offline; do
     [[ "$status" == "$expected_status" ]] || exit 1
     printf '%s\n' "$expected_fetch" > "$fixture/expected-cache-events"
     if [[ "$expected_status" == 0 ]]; then
-        printf '%s\n' install-rust-tools rust-tools-check >> "$fixture/expected-cache-events"
+        printf '%s\n' install-rust-tools rust-tools-check install-release-editor release-editor-check >> "$fixture/expected-cache-events"
     fi
     cmp "$fixture/expected-cache-events" "$ADMISSION_CARGO_EVENTS"
     if [[ "$expected_status" == 0 ]]; then [[ -f "$ADMISSION_CACHE/input" ]] || exit 1;
@@ -207,7 +207,7 @@ set -euo pipefail
 target=''
 for argument in "$@"; do
     case "$argument" in
-        install-rust-tools|rust-tools-check) exec "${BASH_SOURCE[0]%/*}/make" "$@" ;;
+        install-rust-tools|rust-tools-check|install-release-editor|release-editor-check) exec "${BASH_SOURCE[0]%/*}/make" "$@" ;;
         RELEASE_*=*) export "$argument" ;;
         release-*) target="$argument" ;;
     esac
@@ -238,7 +238,7 @@ for scenario in cold offline; do
     printf '%s\n' 'fetch --locked' > "$fixture/runner-cache-events"
     if [[ "$scenario" == cold ]]; then
         [[ "$status" == 83 && -e "$ADMISSION_CACHE/input" ]] || exit 1
-        printf '%s\n' install-rust-tools rust-tools-check validation >> "$fixture/runner-cache-events"
+        printf '%s\n' install-rust-tools rust-tools-check install-release-editor release-editor-check validation >> "$fixture/runner-cache-events"
     else [[ "$status" == 1 && ! -e "$ADMISSION_CACHE/input" ]] || exit 1; fi
     cmp "$fixture/runner-cache-events" "$ADMISSION_CARGO_EVENTS"
     cmp Cargo.lock "$fixture/runner-lock-before"
@@ -257,7 +257,7 @@ for scenario in standalone-missing explicit-pins-changed; do
     printf 'old installed executable\n' > "$ADMISSION_CACHE/old-tool"
     export IC_METRICS_RELEASE_CACHE_PREPARE=1
     expected_status=0
-    expected_targets=(install-rust-tools rust-tools-check)
+    expected_targets=(install-rust-tools rust-tools-check install-release-editor release-editor-check)
     case "$scenario" in
         standalone-missing)
             unset IC_METRICS_RELEASE_CACHE_PREPARE
@@ -355,7 +355,7 @@ awk '
 ' Cargo.lock > lock.fixture
 mv lock.fixture Cargo.lock
 reject commit-check
-printf 'sort --workspace --check\n' > "$fixture/expected-order-only"
+printf 'sort --workspace --check --grouped\n' > "$fixture/expected-order-only"
 cmp "$fixture/expected-order-only" "$ADMISSION_CARGO_EVENTS"
 
 # Older release checks use the selected commit, despite newer worktree metadata.
@@ -367,7 +367,7 @@ selected_date="$(awk -v heading="## [$selected_version] - " \
 export RELEASE_COMMIT="$selected_commit" RELEASE_VERSION="$selected_version" RELEASE_DATE="$selected_date"
 printf 'Newer unrelated worktree metadata.\n' > Cargo.toml
 bash "$root/scripts/release/metadata.sh" check > "$fixture/result.log" 2>&1
-printf 'sort --workspace --check\nmetadata --locked --offline --format-version 1\n' > "$fixture/expected-selected-events"
+printf 'sort --workspace --check --grouped\nmetadata --locked --offline --format-version 1\n' > "$fixture/expected-selected-events"
 cmp "$fixture/expected-selected-events" "$ADMISSION_CARGO_EVENTS"
 : > "$ADMISSION_CARGO_EVENTS"
 for remaining in "$TMPDIR"/*; do [[ ! -e "$remaining" ]] || exit 1; done

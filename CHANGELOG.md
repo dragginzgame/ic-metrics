@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.5]
+
+- Adopt reviewed Shared Tooling 0.25.0 at
+  `2a79f5f93383f3d2a8a38d65406c7d52c2f77913`. Match grouped manifest formatting
+  in hooks and release checks, and retire the old Perl metadata renderers.
+- Prepare the published IC Build 0.18.0 release editor through explicit managed
+  tool setup and release preflight. Metadata preparation admits that selection
+  read-only with a 1 MiB per-document limit; neither library depends on IC Build.
+- Delegate resolved production-graph checks to Shared Tooling while retaining
+  Metrics' package, target, dependency-free core and stable-adapter exclusions.
+  Arithmetic, stable V1 records, dependency selections and Rust floors are unchanged.
+
 ## [0.14.4] - 2026-10-18
 
 - Refresh released-source and downstream qualification status; record focused

@@ -4,6 +4,8 @@ PACKAGE := ic-metrics
 export MSRV
 export RELEASE_DELIVERY ?= direct
 export YQ := $(CURDIR)/.tools/host/bin/yq
+LOCAL_TOOL_INSTALL_TARGETS := install-release-editor
+LOCAL_TOOL_CHECK_TARGETS := release-editor-check
 
 # Common commands use this checkout's reviewed snapshot, including scratch exports.
 override SHARED_TOOLING_ROOT := $(CURDIR)
@@ -40,6 +42,13 @@ release-files:
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
 .PHONY: ci-evidence-check
 .PHONY: production-dependencies-check
+.PHONY: install-release-editor release-editor-check
+
+install-release-editor:
+	+@bash scripts/dev/release-editor.sh install
+
+release-editor-check:
+	+@bash scripts/dev/release-editor.sh check
 
 help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
@@ -48,6 +57,7 @@ help:
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
 	@echo "Registry: publish-check (dry run), publish (upload arithmetic and stable adapter to crates.io)"
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
+	@echo "Release editor (also in install-tools/tools-check): install-release-editor, release-editor-check"
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, shared-tooling-check, check-pins"
 	@echo "Production dependency graphs and boundary fixtures: production-dependencies-check"

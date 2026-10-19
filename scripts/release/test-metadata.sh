@@ -33,7 +33,8 @@ GIT
 chmod +x "$fixture/bin/git"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/make"
 cat >> "$fixture/bin/make" <<'MAKE'
-[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C && "$4" == rust-tools-check ]] || exit 1
+[[ $# == 4 && "$1" == --no-print-directory && "$2" == -C ]] || exit 1
+case "$4" in rust-tools-check|release-editor-check) ;; *) exit 1 ;; esac
 MAKE
 chmod +x "$fixture/bin/make"
 export PATH="$fixture/bin:$PATH" CARGO_NET_OFFLINE=true
@@ -88,7 +89,7 @@ done
 printf '\n[dependencies]\nic-metrics.workspace = true\n' >> crates/ic-metrics-stable/Cargo.toml
 printf '# Changelog\n\n## [0.2.0]\n\n- Consumer note.\n\n## [0.1.1] - 2026-10-05\n\n- Previous.\n' > CHANGELOG.md
 cargo generate-lockfile --offline > setup.log 2>&1
-cargo sort --workspace >> setup.log 2>&1
+cargo sort --workspace --grouped >> setup.log 2>&1
 cp Cargo.toml Cargo.lock CHANGELOG.md originals/
 printf 'retained fixture artifact\n' > target/evidence
 cp target/evidence originals/evidence

@@ -1,7 +1,7 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`8e90cbdad8b12c9c2f8cb507d60266b162c0dabf` and file digests are recorded in
+`2a79f5f93383f3d2a8a38d65406c7d52c2f77913` and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 and [the extraction contract](docs/extraction.md) before implementation.
@@ -89,6 +89,10 @@ and [the extraction contract](docs/extraction.md) before implementation.
   exception. [make/consumer.mk](make/consumer.mk) owns common setup/check,
   formatting, hook and release recipes. Local host qualification and commands
   remain in [docs/hosts.md](docs/hosts.md).
+- Metrics selects the released IC Build metadata editor in `ci/release-tools.env`.
+  Explicit setup installs it through the shared managed installer; checks and
+  metadata preparation only admit an already prepared selection. It is tooling,
+  never a dependency of either library.
 - `make check-pins` requires prepared Git, jq and Mike Farah yq. Checks never
   install tools or unlock dependency graphs. Select product CLI adapters through
   the shared managed installer; keep application compiler policy local.

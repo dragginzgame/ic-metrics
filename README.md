@@ -164,7 +164,7 @@ handling and PATH selection. [Git hook rules](https://github.com/dragginzgame/ic
 own staged formatting and hook installation. The reviewed shared tooling is
 vendored; normal commands need no Shared Tooling sibling checkout.
 
-`make fmt` sorts workspace manifests and formats Rust; `make fmt-check` checks
+`make fmt` sorts workspace manifests within dependency groups and formats Rust; `make fmt-check` checks
 without editing. `make help` lists focused commands. Select named tests during
 implementation. `make check`, `make check-wasm`, `make clippy`, `make docs-check`
 and `make test` cover both workspace packages; use `cargo ... -p PACKAGE --locked`
@@ -205,9 +205,13 @@ Contributions follow the [shared contribution rules](https://github.com/dragginz
 Maintainer releases use `make release-patch`, `make release-minor` or
 `make release-major` under the [shared release contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/releases.md).
 This repository supports `RELEASE_DELIVERY=direct` only, defaulting to remote
-`origin` and branch `main`. Standard preflight prepares locked sources and
-common Rust tools; metadata preparation uses the reviewed shared literal manifest
-renderer. The shared contract owns validation, commit/tag delivery and
+`origin` and branch `main`. Standard preflight prepares locked sources,
+common Rust tools and the explicitly selected published IC Build release editor.
+`ci/release-tools.env` owns the editor version and its 1 MiB per-document limit.
+`make install-tools`/`make tools-check` include it; `install-release-editor` and
+`release-editor-check` select it separately. Metadata preparation checks the
+prepared executable without installing tools. Neither library depends on IC Build.
+The shared contract owns validation, commit/tag delivery and
 interrupted-release recovery.
 
 Publication is separate from release delivery:
