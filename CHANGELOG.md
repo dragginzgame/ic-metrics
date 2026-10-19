@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.5]
+## [0.14.5] - 2026-10-19
 
 - Adopt reviewed Shared Tooling 0.25.0 at
   `2a79f5f93383f3d2a8a38d65406c7d52c2f77913`. Match grouped manifest formatting
