@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.6]
+## [0.14.6] - 2026-10-19
 
 - Check histogram restoration against an independent exhaustive oracle of small
   raw observation sequences, including unreachable bucket/count/total states.
