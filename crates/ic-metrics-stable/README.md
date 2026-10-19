@@ -9,7 +9,7 @@ allocates bounded records and supports native hosts and Wasm with Rust 1.91.
 The host owns one `ic-memory` allocation pool and bootstrap. It declares one
 permanent metrics-store key, such as `app.metrics.v1`, and admits that allocation
 before opening the map. Follow the
-[IC Memory 0.48 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/794cb1cf65acdd28d72685e1fbff80bba012a2bf/crates/ic-memory/README.md#quick-start-for-developers)
+[IC Memory 0.49 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/5a0a2326c02e5d8d7801cfec57e35fc8bc2f97a7/crates/ic-memory/README.md#quick-start-for-developers)
 for the selected dependency's declaration and lifecycle APIs.
 
 After bootstrap, the host opens `ic_storage::adapter::StableBTreeMap` with one
@@ -21,9 +21,11 @@ allocates memory IDs, registers keys, creates a global store or installs lifecyc
 hooks.
 
 Metrics' V1 record layout is separate from Memory's allocation-ledger format.
-The selected Memory 0.48 allocation format retires earlier ICMSNAP1/ICMREC01
-images and requires host-owned fresh/reset backing under its version-bound
-disposition. Metrics neither converts those images nor clears memory on failure.
+Memory 0.49 retains the current allocation format introduced in 0.48; its
+`serde_cbor` backend replacement preserves those ledger bytes and requires no reset.
+Earlier ICMSNAP1/ICMREC01 images remain retired and require host-owned fresh/reset
+backing under Memory's version-bound disposition. Metrics neither converts those
+images nor clears memory on failure.
 An unchanged Metrics record or B-tree format does not establish allocation-ledger
 compatibility or authorize clearing existing memory.
 
@@ -182,10 +184,14 @@ These diagnostics never replace authoritative balances, quotas or ledger debt.
 The native example verifies codec/storage behavior, not IC checkpoint costs or
 upgrade execution. Hosts choose which completed work contributes and when to
 write; persistence does not establish attribution or reset continuity.
-Stable map reads/writes add allocation and IC costs. The repository's frozen
-[current-graph IC store qualification](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/stable-current-0146.md)
-checks upgrades, query discard, trap rollback and reset, with actual checkpoint
-costs under a matched workload. Batch observations before checkpointing at the
+Stable map reads/writes add allocation and IC costs. The frozen
+[Memory 0.49 comparison](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/memory-0147.md)
+checks retained upgrades from Memory 0.48, query discard, trap rollback, leases
+and reset, with matched IC checkpoint and bootstrap measurements.
+Batch observations before checkpointing at the
 owning message boundary; measured costs depend on workload, map state and cadence.
+The prior [IC store receipt](https://github.com/dragginzgame/ic-metrics/blob/main/docs/evidence/stable-current-0146.md)
+retains its Memory 0.48.2 / Storage 0.5.6 identities. Neither fixture qualifies a
+later graph or an application's workload, lifecycle and deployment decisions.
 The arithmetic-only cost evidence and native reopen tests retain their separate
 scope and do not qualify live consumer execution.

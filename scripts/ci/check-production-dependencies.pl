@@ -55,7 +55,9 @@ for my $target (sort keys %targets) {
         my @policy = $root eq 'ic-metrics'
             ? ('--forbid-pattern', '^(?!ic-metrics$)', '--require', 'ic-metrics=1')
             : ('--forbid-pattern', '^ic-(?:host|testkit)(?:-|$)|^pocket-ic$',
-               '--forbid-feature', 'ic-memory/test-support');
+               '--forbid-feature', 'ic-memory/test-support',
+               '--require', 'ic-memory=1', '--require', 'ic-storage=1',
+               '--require', 'ic-stable-structures=1');
         print observe('perl', "$Bin/check-cargo-graph.pl", '--consumer', getcwd(),
             '--package', $root, '--target', $target, @policy);
     }

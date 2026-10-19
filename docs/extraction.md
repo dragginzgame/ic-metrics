@@ -91,7 +91,7 @@ The optional [stable package](../crates/ic-metrics-stable/README.md) owns valida
 V1 snapshots for counters, aggregates, summaries and histograms in one governed
 upstream B-tree map from `ic_storage::adapter`. Hosts open that public collection
 with an admitted `ic-memory::RuntimeMemory` handle, then supply it to
-`MetricsStore::new`. Selected Memory 0.48 and Storage 0.5 share that exact handle
+`MetricsStore::new`. Selected Memory 0.49 and Storage 0.5.7 share that exact handle
 identity; each handle is a non-cloneable allocation lease. `into_map` returns the
 public Storage collection with its lease intact. `MetricsMap<M>` is an exact
 alias for its byte key/value shape, with no separate collection implementation
@@ -171,10 +171,12 @@ workloads and acceptance scope. Raw Wasm bytes, IC instructions and actual cycle
 charges are separate measurements; native execution supplies none of those IC
 costs. No frozen experiment proves a later consumer's performance.
 
-The separate [current-graph durability receipt](evidence/stable-current-0146.md)
+The separate [frozen durability receipt](evidence/stable-current-0146.md)
 uses published Platform/Wire/Testkit interfaces and the governed Memory/Storage
 map. Its source, graph, compiler and workload identities bound the result;
 earlier durability archives retain their original identities.
+The separate [Memory 0.49 comparison](evidence/memory-0147.md) qualifies that
+version-bound retained upgrade with matched raw Wasm and IC cost observations.
 
 Older release-by-release extraction prose is preserved verbatim in
 [the cleanup receipt](evidence/cleanup-082.md), rather than mixed into this current

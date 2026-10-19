@@ -148,6 +148,14 @@ Testkit, Host and Memory's `test-support` feature. Its transitive stable-structu
 substrate through Memory/Storage is expected; Metrics must not depend on it
 directly. A downstream application's graph can unify additional features.
 
+The stable production graph must resolve exactly one package identity each for
+Memory, Storage and the stable-structures substrate. The local adapter selects
+Shared Tooling's existing identity-count checks for native and Wasm normal/build
+edges; duplicate versions are not admitted merely because Cargo can resolve them.
+Controlled fixtures qualify each duplicate-identity refusal alongside the existing
+tooling and test-feature exclusions. This does not constrain development-only
+graphs or independently qualify downstream applications.
+
 This repository has no deployment entrypoint or final canister artifact.
 `make production-dependencies-check` enforces these library graph boundaries for
 the prepared compiler's native host and Wasm, and rejects direct substrate

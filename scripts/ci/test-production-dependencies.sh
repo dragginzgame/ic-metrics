@@ -58,6 +58,26 @@ check_case development-feature-and-governed-substrate pass
 printf '\n[dev-dependencies]\nhelper = { package = "ic-testkit", path = "../../../vendor/ic-testkit" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case development-package pass
 
+# Two versions can resolve successfully while exposing incompatible governed
+# handles. Keep identity counting at Shared's observer; qualify our selections.
+for dependency in ic-memory ic-storage ic-stable-structures; do
+    reset_case
+    cp -R "$fixture/vendor/$dependency" "$fixture/vendor/other-$dependency"
+    sed 's/version = "0.1.0"/version = "0.2.0"/' \
+        "$fixture/vendor/other-$dependency/Cargo.toml" > "$fixture/second-manifest"
+    cp "$fixture/second-manifest" "$fixture/vendor/other-$dependency/Cargo.toml"
+    if [[ "$dependency" == ic-memory ]]; then
+        printf 'ic-memory = { path = "../other-ic-memory" }\n' >> "$fixture/vendor/ic-storage/Cargo.toml"
+    elif [[ "$dependency" == ic-stable-structures ]]; then
+        printf '[dependencies]\nic-stable-structures = { path = "../other-ic-stable-structures" }\n' >> "$fixture/vendor/ic-memory/Cargo.toml"
+    else
+        printf '\n[build-dependencies]\nother-storage = { package = "ic-storage", path = "../../../vendor/other-ic-storage" }\n' >> "$fixture/workspace/crates/ic-metrics-stable/Cargo.toml"
+    fi
+    check_case "multiple-$dependency-identities" fail
+    grep -F "$dependency: expected 1 rendered package identities, observed 2" \
+        "$fixture/multiple-$dependency-identities.log" > /dev/null
+done
+
 reset_case
 printf '\n[dependencies]\nordinary = { path = "../../../vendor/ordinary" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case arithmetic-production-edge fail
