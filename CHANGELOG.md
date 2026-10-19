@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.14.8]
+
+- Qualify Memory 0.49.1 with the existing Storage 0.5.7 selection. Its library
+  source, normal dependencies, features and Rust floor match Memory 0.49.0;
+  focused checks cover the new locked graph. Frozen IC measurements retain their
+  original 0.49.0 identity.
+- Check floor and nearest scaled ratios against an independent arbitrary-precision
+  reference across full-width boundaries and deterministic mixed-bit inputs.
+  `num-bigint` 0.5.1 is test-only; production arithmetic remains dependency-free and
+  `no_std`, with unchanged public APIs and Rust floors.
+- Shorten the handoff to qualification scope and owning issue/evidence links.
+  Package manifests and the changelog own versions and release state.
+
 ## [0.14.7] - 2026-10-19
 
 - Adopt Memory 0.49 with Storage 0.5.7; require at least Storage 0.5.7 so the
