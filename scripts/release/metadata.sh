@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared companions: scripts/ci/read-cargo-workspace-version.sh scripts/ci/check-release-source.sh scripts/ci/check-release-delivery.sh scripts/ci/check-release-changelog.sh scripts/ci/cargo-release-preflight.sh scripts/ci/cargo-release-metadata.sh ci/tool-versions.env ci/release-delivery.txt
+# Shared companions: scripts/ci/read-cargo-workspace-version.sh scripts/ci/check-release-source.sh scripts/ci/check-release-delivery.sh scripts/ci/check-release-changelog.sh scripts/ci/cargo-release-preflight.sh scripts/ci/cargo-release-metadata.sh scripts/dev/release-editor.sh ci/tool-versions.env ci/release-delivery.txt ci/release-tools.env
 set -euo pipefail
 
 # Consumer adapter. Dependencies: Cargo, jq, yq, Git, tar, awk, Perl and Unix utilities.
@@ -37,18 +37,25 @@ case "$operation" in
             "${RELEASE_VERSION:?}" "$RELEASE_PREVIOUS" "${RELEASE_DATE:?}" CHANGELOG.md
         tool_versions="${RUST_TOOL_VERSIONS:-$root/ci/tool-versions.env}"
         bash "$root/scripts/ci/cargo-release-preflight.sh" "$root" "$release_cache_prepare" \
-            --pin "$tool_versions" \
-            --check rust-tools-check \
-            --prepare install-rust-tools --prepare rust-tools-check
+            --pin "$tool_versions" --pin "$root/ci/release-tools.env" \
+            --check rust-tools-check --check release-editor-check \
+            --prepare install-rust-tools --prepare rust-tools-check \
+            --prepare install-release-editor --prepare release-editor-check
         ;;
     prepare)
+        # Selection is read-only here; only explicit setup/preflight installs tools.
+        CARGO_RELEASE_METADATA_EDITOR="$(bash "$root/scripts/dev/release-editor.sh" check)"
+        export CARGO_RELEASE_METADATA_EDITOR
+        # shellcheck source=ci/release-tools.env
+        source "$root/ci/release-tools.env"
+        export CARGO_RELEASE_METADATA_MAX_BYTES="$IC_METRICS_RELEASE_METADATA_MAX_BYTES"
         bash "$root/scripts/ci/cargo-release-metadata.sh" prepare ic-metrics
         ;;
     check|commit-check)
         if [[ "$operation" == commit-check ]]; then
             [[ -z "${RELEASE_COMMIT:-}" ]] || exit 1
         fi
-        bash "$root/scripts/ci/cargo-release-metadata.sh" check ic-metrics --manifest-order
+        bash "$root/scripts/ci/cargo-release-metadata.sh" check ic-metrics --manifest-order-grouped
         bash "$root/scripts/ci/check-release-source.sh" "${source_arguments[@]}"
         if [[ "$operation" == commit-check ]]; then
             git diff --quiet -- "${release_paths[@]}"

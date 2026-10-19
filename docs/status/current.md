@@ -7,10 +7,16 @@ and endpoints. [The extraction contract](../extraction.md),
 [stable guide](../../crates/ic-metrics-stable/README.md) and
 [host guide](../hosts.md) own those boundaries and local qualification commands.
 
-## Delivered 0.14.3
+## Delivered 0.14.4
 
-The finalized release is `ba0aaf5b22237a92ddbb5a58ac33d22c70b8b929`; both workspace
-packages are 0.14.3. Both official registry archives match their index checksums
+The finalized release is `19a07804875ff880b1f0f9f0c59d0fd22c49a759`; both workspace
+packages are 0.14.4 and both official registry index rows are published, not yanked.
+[Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39142551001)
+passes. The release incorporates the Storage 0.5.4 lock selection and prior
+qualification handoff; arithmetic and stable V1 contracts remain unchanged.
+
+The preceding 0.14.3 source is `ba0aaf5b22237a92ddbb5a58ac33d22c70b8b929`.
+Both of that release's official registry archives match their index checksums
 and embed that exact Git identity.
 [Exact-source CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39138337261)
 passed Linux x86_64, native macOS arm64/Intel and native/Wasm Rust 1.91.
@@ -20,12 +26,13 @@ reports and prevents restoring uncertain forwarded readings as known exact.
 All 13 arithmetic doctests, local documentation links and diff checks pass.
 This does not change the public API, storage format, dependency graph or Rust floor.
 
-The incoming local lock update selects Storage 0.5.4 with Memory 0.48.2.
+The 0.14.4 lock selects Storage 0.5.4 with Memory 0.48.2.
 All 21 stable-adapter tests, the stable library Wasm check and native/Wasm
 production-dependency admission (including its exclusion fixtures) pass with
 that graph. Logs are `/tmp/metrics-storage054-{tests,wasm,boundaries}.log`.
-This is focused local qualification, separate from the released-source CI above;
-the incoming lock update is preserved without further dependency changes.
+Those focused local receipts retain their original scope, separate from
+released-source CI. The current adoption preserves the lock without further
+dependency changes.
 
 The preceding 0.14.0 release removes floating-point sample statistics and supplies
 the checked wide accumulator. [PR #92](https://github.com/dragginzgame/ic-metrics/pull/92)
@@ -41,14 +48,38 @@ selection, synchronization, write cadence and reset. Unchanged Metrics V1 bytes
 do not establish compatibility with a different Memory allocation format.
 Metrics never automatically resets retained backing.
 
-Shared Tooling remains at reviewed revision
-`8e90cbdad8b12c9c2f8cb507d60266b162c0dabf`, labelled 0.24.0 with its committed
-fixture correction (115 payloads). [Shared PR #276](https://github.com/dragginzgame/shared-tooling/pull/276)
-remains open. Its newer head `6faecb79bb2ec8ab6eb64c3b2225deb938600c72` passes
-[upstream CI](https://github.com/dragginzgame/shared-tooling/actions/runs/39121036733)
-on Linux and both macOS architectures, but is not this snapshot's identity.
-The selected nested-fixture correction is not a claimed Shared 0.24.1 release.
-Neither run relabels earlier failed or cancelled attempts.
+## Prepared Shared Tooling adoption — 0.14.5
+
+Shared Tooling is refreshed from clean reviewed main at
+`2a79f5f93383f3d2a8a38d65406c7d52c2f77913`, labelled 0.25.0 (116 payloads).
+[Its upstream CI](https://github.com/dragginzgame/shared-tooling/actions/runs/39227583959)
+passes; this identifies the exact reviewed source, not a claim of a finalized
+Shared release/tag. The canonical exporter retires both old Perl metadata
+renderers and imports the preparation transaction and Cargo graph checker.
+
+Metrics explicitly selects published IC Build 0.18.0's release editor through
+`ci/release-tools.env`, with a 1 MiB per-document bound. Shared managed setup/check
+owns its source/compiler/executable qualification. Common setup/check invokes
+Metrics' local tool targets after the common tools; release preflight admits
+source first, then prepares/checks the editor and rechecks both pin files.
+Metadata preparation only resolves a prepared absolute path before delegating.
+Both libraries retain their dependency selections and Rust 1.91 floor.
+
+Formatting, hooks and selected-source release checks now use grouped ordering.
+Shared's graph observer replaces local Cargo tree parsing; Metrics retains its
+two-root classification, direct substrate prohibition, dependency-free arithmetic
+and native/Wasm Host/Testkit/PocketIC and Memory test-support exclusions.
+Tools, formatting, production boundary fixtures, actual two-package metadata and
+standard release/publication adapter fixtures pass locally. Logs are under
+`/tmp/metrics-shared025-*.log`. Release/hook success and failure-retention cases
+and native-evidence fixtures also pass in disposable committed source
+`dda85ff587e7e0987b91d7de41381defcb67b75e` at
+`/tmp/metrics-shared025-qualification.mkXKKG/repo`. That copy qualifies retired
+tracked files without changing the real index or refs. Snapshot/pin/link checks,
+source-aware ShellCheck and maintained/package-file symlink reviews pass.
+Full local CI/MSRV and native macOS acceptance
+are not claimed for this prepared source. No product API or stable byte change
+and no library dependency on Build, Platform or Wire is introduced.
 
 ## Delivered development and dependency qualification
 
