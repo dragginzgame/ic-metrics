@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.0]
+## [0.15.0] - 2026-10-20
 
 - **Breaking stable dependency identities:** adopt `ic-memory` 0.50 and
   `ic-storage` 0.50 from their consolidated IC Persistence repository. Hosts
