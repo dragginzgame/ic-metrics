@@ -5,6 +5,8 @@ use crate::{
 
 extern crate std;
 
+use num_bigint::BigUint;
+
 #[test]
 fn overflow_bucket_flag_admission_preserves_typed_priority() {
     for overflow in [0, 1, u64::MAX - 1] {
@@ -364,4 +366,102 @@ fn histogram_restoration_matches_independent_bounded_sequences() {
     check_histogram_restoration([1, 2]);
     check_histogram_restoration([0, 3]);
     check_histogram_restoration([0, u64::MAX]);
+}
+
+fn check_weighted_histogram_merges<const N: usize>(bounds: [u64; N]) {
+    let values = [0, 1, 2, u64::MAX - 1, u64::MAX];
+    let count_cap = BigUint::from(u64::MAX);
+    let total_cap = BigUint::from(u128::MAX);
+    let check = |histogram: &Histogram<N>, weights: &[BigUint; 5]| {
+        // The model retains exact multiplicities of actual observations. It
+        // neither saturates during accumulation nor repeats admission ranges.
+        let mut samples = BigUint::default();
+        let mut total = BigUint::default();
+        let mut buckets: [BigUint; N] = core::array::from_fn(|_| BigUint::default());
+        let mut overflow = BigUint::default();
+        let mut maximum = None;
+        for (value, weight) in values.into_iter().zip(weights) {
+            if weight.bits() == 0 {
+                continue;
+            }
+            samples += weight;
+            total += BigUint::from(value) * weight;
+            maximum = Some(maximum.map_or(value, |previous: u64| previous.max(value)));
+            if let Some(index) = bounds.iter().position(|bound| value <= *bound) {
+                buckets[index] += weight;
+            } else {
+                overflow += weight;
+            }
+        }
+        let aggregate = Aggregate::from_parts(
+            u64::try_from(&samples).unwrap_or(u64::MAX),
+            u128::try_from(&total).unwrap_or(u128::MAX),
+            maximum,
+            samples > count_cap,
+            total > total_cap,
+        )
+        .unwrap();
+        let counts = buckets
+            .each_ref()
+            .map(|count| u64::try_from(count).unwrap_or(u64::MAX));
+        let flags = buckets.each_ref().map(|count| count > &count_cap);
+        let restored = Histogram::from_parts(
+            bounds,
+            counts,
+            u64::try_from(&overflow).unwrap_or(u64::MAX),
+            flags,
+            overflow > count_cap,
+            aggregate,
+        )
+        .unwrap();
+        assert_eq!(
+            histogram, &restored,
+            "bounds={bounds:?}, weights={weights:?}"
+        );
+    };
+
+    let mut combined = Histogram::new(bounds).unwrap();
+    let mut combined_weights = core::array::from_fn(|_| BigUint::default());
+    check(&combined, &combined_weights);
+    for (index, value) in values.into_iter().enumerate() {
+        let mut batch = Histogram::new(bounds).unwrap();
+        batch.record(value);
+        let mut weight = BigUint::from(1_u8);
+        for bit in 0..=129 {
+            let mut weights = core::array::from_fn(|_| BigUint::default());
+            weights[index] = weight.clone();
+            check(&batch, &weights);
+            combined.merge(&batch).unwrap();
+            combined_weights[index] += &weight;
+            check(&combined, &combined_weights);
+
+            // A maximum-valued batch of 2^64 observations plus one reaches
+            // u128::MAX exactly; the next addition must mark actual loss.
+            if bit == 64 {
+                let mut continued = batch;
+                for _ in 0..2 {
+                    continued.record(value);
+                    weights[index] += 1_u8;
+                    check(&continued, &weights);
+                }
+            }
+            let previous = batch;
+            batch.merge(&previous).unwrap();
+            weight <<= 1_usize;
+        }
+        // Recording must still update a distribution after count/total loss.
+        combined.record(value);
+        combined_weights[index] += 1_u8;
+        check(&combined, &combined_weights);
+    }
+}
+
+#[test]
+fn histogram_merges_and_restoration_match_exact_weighted_observations() {
+    check_weighted_histogram_merges([]);
+    check_weighted_histogram_merges([0]);
+    check_weighted_histogram_merges([u64::MAX]);
+    check_weighted_histogram_merges([0, 1]);
+    check_weighted_histogram_merges([0, 2, u64::MAX - 1]);
+    check_weighted_histogram_merges([0, 1, 2, u64::MAX - 1, u64::MAX]);
 }

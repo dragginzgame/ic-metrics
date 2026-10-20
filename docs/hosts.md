@@ -30,6 +30,12 @@ its action reference, outcome/log projection and complete recovery evidence.
 
 ## Prerequisites and focused checks
 
+After adopting Shared Tooling 0.25.3, rerun `make install-tools`, then
+`make tools-check`: the build-helper policy participates in tool identity.
+Previous generations remain retained. Metrics' release editor selects no extra
+Cargo features; the shared installer also supports explicit feature sets for
+tools that need them, without adding a library dependency.
+
 Prepare the pinned Rust 1.99.1 development toolchain with rustfmt, Clippy and
 `wasm32-unknown-unknown`. Prepare Rust 1.91.0, including its Wasm
 target, for the advertised package floors.
@@ -115,7 +121,17 @@ packages; select direct Cargo commands when only one package or test is affected
 | Snapshot/pins | `make shared-tooling-check check-pins` |
 | Local tools/hooks | `make tools-check hook-check` |
 | Release/evidence adapters | `make release-tools-check ci-evidence-check` |
+| Frozen evidence integrity | `make evidence-check` (checksums only; no replay or payload-privacy qualification) |
 | Maintained docs | `make check-doc-links`, consistency review and `git diff --check` |
+
+The release MSRV gate checks all native targets, including tests and development
+dependencies, at Rust 1.91; its Wasm check covers libraries. The development
+compiler remains separate. `make evidence-check` is also included in CI and
+release validation. Five historical checksum manifests use archive-directory
+paths; the Makefile records those working directories without rewriting receipts.
+The gate checks distributed archives and retained inspection reports. Historical
+source-hash receipts describe their original checkout, not today's source tree,
+and are not compared with current files.
 
 ### Dependency roles and production graphs
 

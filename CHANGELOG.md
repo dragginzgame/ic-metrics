@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.14.9]
+
+- Adopt reviewed Shared Tooling 0.25.3, including feature-aware selected-tool
+  admission and more specific repair diagnostics. Rerun `make install-tools`
+  after adoption to prepare tools for the updated build policy; existing
+  installations and failed attempts remain retained. Library contracts, compiler
+  selections and dependency versions are unchanged.
+- Include native test targets and development dependencies in the Rust 1.91
+  gate, retaining the library-only Wasm floor check.
+- Check histogram recording, merging and restoration against exact weighted
+  observations across count/total overflow boundaries, using the existing
+  test-only arbitrary-precision dependency.
+- Add read-only `make evidence-check` to CI and release validation. It verifies
+  distributed evidence archives and retained inspection reports from their
+  recorded working directories, preserving frozen archive and manifest bytes.
+
 ## [0.14.8] - 2026-10-19
 
 - Qualify Memory 0.49.1 with the existing Storage 0.5.7 selection. Its library

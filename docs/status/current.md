@@ -19,9 +19,18 @@ checks for Memory 0.49.1 with Storage 0.5.7 and the independent full-width ratio
 oracle. The oracle is test-only; production arithmetic remains dependency-free.
 Neither package changes its API, V1 bytes or Rust 1.91 floor in this batch.
 
+The current validation additions compare histogram merges/restoration with exact
+weighted observations, include native test targets in the MSRV gate and verify
+frozen archive checksums through `make evidence-check`. None replays an IC
+experiment or extends the original performance qualifications below.
+
 Shared Tooling's reviewed source and payload digests belong to
-[the snapshot](../../.shared-tooling.snapshot). Dependency-role and production
-exclusion policy is documented in the host guide, with admission enforced by
+[the snapshot](../../.shared-tooling.snapshot). The 0.25.3 adoption changes Cargo
+tool build identity. Explicit offline setup and tool admission pass locally, as do
+the installer fixtures, formatting hooks, release-admission and production graph
+checks. No full CI/MSRV gate or native macOS execution is claimed. Compiler and
+library selections stay local. Dependency-role and production exclusion policy
+is documented in the host guide, with admission enforced by
 `make production-dependencies-check` for both native and Wasm graphs.
 
 ## Evidence scope
