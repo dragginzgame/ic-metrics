@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.12]
+## [0.14.12] - 2026-10-20
 
 - Adopt reviewed Shared Tooling 0.25.8, including automatic finalization of
   numbered `- Unreleased` changelog headings during release preparation.
