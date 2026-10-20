@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.0]
+
+- **Breaking stable dependency identities:** adopt `ic-memory` 0.50 and
+  `ic-storage` 0.50 from their consolidated IC Persistence repository. Hosts
+  supplying maps to `ic-metrics-stable` must select both 0.50 dependencies;
+  earlier Memory handles and Storage maps have different Rust type identities.
+- Library implementations, Metrics V1 records and upstream allocation/map formats
+  are unchanged by this dependency alignment; no data reset is required.
+  The arithmetic package remains dependency-free, with Rust 1.91 retained.
+
 ## [0.14.12] - 2026-10-20
 
 - Adopt reviewed Shared Tooling 0.25.8, including automatic finalization of

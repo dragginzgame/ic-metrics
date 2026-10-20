@@ -9,8 +9,14 @@ allocates bounded records and supports native hosts and Wasm with Rust 1.91.
 The host owns one `ic-memory` allocation pool and bootstrap. It declares one
 permanent metrics-store key, such as `app.metrics.v1`, and admits that allocation
 before opening the map. Follow the
-[IC Memory 0.49 allocation and bootstrap guide](https://github.com/dragginzgame/ic-memory/blob/5a0a2326c02e5d8d7801cfec57e35fc8bc2f97a7/crates/ic-memory/README.md#quick-start-for-developers)
+[IC Memory 0.50 allocation and bootstrap guide](https://github.com/dragginzgame/ic-persistence/blob/f452b5cf9b26a25ee2fb69f4941c079e9c85f4e7/crates/ic-memory/README.md#quick-start-for-developers)
 for the selected dependency's declaration and lifecycle APIs.
+
+Memory and Storage are published from IC Persistence with their existing crate
+names. Hosts must select both `ic-memory = "0.50"` and `ic-storage = "0.50"`
+when supplying a map to this adapter. Earlier dependency generations have
+different Rust handle/map type identities; update them together. The 0.50
+alignment preserves the preceding library implementations and stored formats.
 
 After bootstrap, the host opens `ic_storage::adapter::StableBTreeMap` with one
 admitted memory handle and passes that public collection to `MetricsStore::new`.
@@ -21,8 +27,8 @@ allocates memory IDs, registers keys, creates a global store or installs lifecyc
 hooks.
 
 Metrics' V1 record layout is separate from Memory's allocation-ledger format.
-Memory 0.49 retains the current allocation format introduced in 0.48; its
-`serde_cbor` backend replacement preserves those ledger bytes and requires no reset.
+Memory 0.50 retains the allocation format introduced in 0.48 and preserved by
+0.49's `serde_cbor` backend replacement. This alignment requires no data reset.
 Earlier ICMSNAP1/ICMREC01 images remain retired and require host-owned fresh/reset
 backing under Memory's version-bound disposition. Metrics neither converts those
 images nor clears memory on failure.

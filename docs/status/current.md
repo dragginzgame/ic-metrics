@@ -16,19 +16,23 @@ Those files do not prove registry publication, hosted CI or consumer acceptance.
 
 Shared Tooling's reviewed source and payload digests belong to
 [the snapshot](../../.shared-tooling.snapshot). The local batch starts at
-`6ad8ea6667e657d7e81c273a8265697c1d3a168f` and adopts Shared Tooling 0.25.8.
-CI runs the existing native/Wasm Clippy gate after tool/pin/format admission and
-before test suites and documentation builds. Publication and its dry run also
-run that gate before Cargo packaging; sequential recipes preserve refusal under
-parallel Make. Numbered `- Unreleased` headings now finalize automatically during
-release preparation. [The release guide](../releases.md) owns those contracts.
+`07c25710490c04fccebde7cfb8cf183a3754ea19`, preserving the incoming Memory 0.50.0
+and Storage 0.50.0 manifest/lock selections. Both published packages bind
+IC Persistence source `f452b5cf9b26a25ee2fb69f4941c079e9c85f4e7`. Their library
+source trees match Memory 0.49.3 and Storage 0.5.8 respectively. Storage aligns
+its Memory requirement and pins the already selected substrate at 0.7.2; no
+other resolved dependency changes. Rust floors, features, Metrics V1 rows and
+upstream stored formats remain unchanged.
 
-Qualification covers changelog/metadata finalization, Metrics' parallel Make
-ordering and lint-failure refusal, snapshot integrity, tool admission, formatting,
-pins and documentation links. This batch changes no Rust source, library API or
-storage bytes. The incoming Memory 0.49.3 lock update is preserved separately;
-this tooling adoption does not claim its complete qualification. Full CI/MSRV
-and native macOS checks remain release gates; no new IC measurement is claimed.
+The pending 0.15.0 notes reflect exposed Rust dependency identities, rather than
+a stored-format change: stable hosts must align their Memory and Storage 0.50
+dependencies before passing governed maps. The arithmetic package stays
+dependency-free. Package versions and release execution remain maintainer-owned.
+
+Qualification covers stable native/Wasm Clippy, package tests and doctests,
+native all-target/Wasm library Rust 1.91 checks, production dependency admission,
+pins, formatting and documentation links. Full CI/MSRV and native macOS checks
+remain release gates; no new IC measurement or downstream acceptance is claimed.
 Compiler and library selections stay local; the host guide owns setup and policy.
 
 ## Evidence scope
@@ -40,8 +44,8 @@ Memory 0.49.0/Storage 0.5.7 graph. The preceding
 Neither frozen experiment qualifies a new artifact's IC costs or a consumer's
 persistence policy. Original archives remain unchanged.
 
-The [0.14.11 handoff](https://github.com/dragginzgame/ic-metrics/blob/6ad8ea6667e657d7e81c273a8265697c1d3a168f/docs/status/current.md)
-retains completed metadata diagnostics qualification. Its linked
+The [0.14.12 handoff](https://github.com/dragginzgame/ic-metrics/blob/07c25710490c04fccebde7cfb8cf183a3754ea19/docs/status/current.md)
+retains completed tooling adoption and qualification. Its linked
 historical handoffs preserve earlier identities and evidence paths. Historical
 observations are not current issue/PR status. Follow the
 [archive distribution record](../evidence/archive-distribution-072.md) for public payloads.
