@@ -148,10 +148,16 @@ jobs:
             "$PWD/ci/tool-versions.env" "$PWD/ci/ic-tools.tsv" \
             inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
             prerequisites.log host-tools.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log || collection_status=$?
-          [[ "$collection_status" != 2 ]] || exit "$collection_status"
+          # Recovery packaging admits its own inputs and remains useful when
+          # tool collection fails. Preserve the first error after both attempts.
+          archive_status=0
           bash scripts/ci/package-native-recovery-evidence.sh \
-            target/evidence/native-ci target/evidence/native-ci.tar.gz
-          exit "$collection_status"
+            target/evidence/native-ci target/evidence/native-ci.tar.gz || archive_status=$?
+          if [[ "$archive_status" != 0 ]]; then
+            printf 'Native recovery archive failed (exit %s)\n' "$archive_status" >&2
+          fi
+          if [[ "$collection_status" != 0 ]]; then exit "$collection_status"; fi
+          exit "$archive_status"
       # actions/upload-artifact v7
       - name: Upload native diagnostics
         if: always() && steps.checkout.outcome == 'success'

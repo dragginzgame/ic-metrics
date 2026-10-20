@@ -14,38 +14,40 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The [Memory patch qualification](../evidence/memory-0491.md) records the focused
-checks for Memory 0.49.1 with Storage 0.5.7 and the independent full-width ratio
-oracle. The oracle is test-only; production arithmetic remains dependency-free.
-Neither package changes its API, V1 bytes or Rust 1.91 floor in this batch.
+The local batch starts at `e972af583cb9e6e669bbe0b46f6ab398cc08a7d9`
+and preserves the incoming Memory 0.49.2 lock update with selected Storage 0.5.8.
+Their 49 and five library source files, included READMEs, normal dependencies,
+features and Rust floors match the preceding patches. Both product APIs and
+Metrics V1 bytes remain unchanged; production arithmetic is dependency-free.
 
-The current validation additions compare histogram merges/restoration with exact
-weighted observations, include native test targets in the MSRV gate and verify
-frozen archive checksums through `make evidence-check`. None replays an IC
-experiment or extends the original performance qualifications below.
+All 22 stable units and three doctests, strict native/Wasm stable Clippy,
+native all-target/Wasm library Rust 1.91 checks and production dependency
+admission with exclusion fixtures pass locally. Logs remain under
+`/tmp/metrics-01410-*.log`. No full CI/MSRV gate, native macOS run or new IC
+measurement is claimed. Source equality does not assert identical artifacts.
 
 Shared Tooling's reviewed source and payload digests belong to
-[the snapshot](../../.shared-tooling.snapshot). The 0.25.3 adoption changes Cargo
-tool build identity. Explicit offline setup and tool admission pass locally, as do
-the installer fixtures, formatting hooks, release-admission and production graph
-checks. No full CI/MSRV gate or native macOS execution is claimed. Compiler and
-library selections stay local. Dependency-role and production exclusion policy
-is documented in the host guide, with admission enforced by
-`make production-dependencies-check` for both native and Wasm graphs.
+[the snapshot](../../.shared-tooling.snapshot). The 0.25.5 adoption clarifies
+failure-evidence collection; executable helpers and pins are unchanged.
+The pending workflow fix preserves independent native recovery packaging after
+collector failure and retains the first error. Its regression and combined-failure
+cases belong to [#95 — Native recovery after diagnostic collection failure](https://github.com/dragginzgame/ic-metrics/issues/95).
+Compiler and library selections stay local; the host guide owns setup and policy.
 
 ## Evidence scope
 
 The [Memory 0.49 IC comparison](../evidence/memory-0147.md) retains its exact
 Memory 0.49.0/Storage 0.5.7 graph. The preceding
-[governed-store receipt](../evidence/stable-current-0146.md) has its own older graph.
+[governed-store receipt](../evidence/stable-current-0146.md) and
+[Memory patch qualification](../evidence/memory-0491.md) retain their own graphs.
 Neither frozen experiment qualifies a new artifact's IC costs or a consumer's
 persistence policy. Original archives remain unchanged.
 
-The [source-bound historical handoff](https://github.com/dragginzgame/ic-metrics/blob/a9c7789910cf5040788d14b3c2206a559dba4af1/docs/status/current.md)
-retains earlier release, tooling and downstream narratives, exact source identities
-and local evidence paths. Those historical observations are not current issue or
-PR status. Follow the [archive distribution record](../evidence/archive-distribution-072.md)
-when selecting public evidence payloads.
+The [0.14.9 handoff](https://github.com/dragginzgame/ic-metrics/blob/e972af583cb9e6e669bbe0b46f6ab398cc08a7d9/docs/status/current.md)
+retains completed arithmetic, tooling and validation preparation. Its linked
+historical handoffs preserve earlier identities and evidence paths. Historical
+observations are not current issue/PR status. Follow the
+[archive distribution record](../evidence/archive-distribution-072.md) for public payloads.
 
 ## Owning follow-up links
 

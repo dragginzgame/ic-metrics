@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.14.10]
+
+- Preserve the native recovery archive when diagnostic collection fails, while
+  retaining the original failure status. Report a secondary packaging failure
+  without hiding the first error. Addresses
+  [#95 — Retain native recovery archives after diagnostic collection failure](https://github.com/dragginzgame/ic-metrics/issues/95).
+- Adopt reviewed Shared Tooling 0.25.5's clarified failure-evidence contract.
+  Selected executable helpers and tool pins are unchanged.
+- Qualify the selected Memory 0.49.2 / Storage 0.5.8 graph. Their library
+  sources, features, normal dependencies and Rust floors match the preceding
+  qualified patches; Metrics APIs and V1 storage bytes remain unchanged.
+- Refresh the current handoff after 0.14.9 and remove the stale Storage patch
+  selection from the extraction contract. Manifests and the lock own selections;
+  earlier IC receipts retain their original dependency identities.
+
 ## [0.14.9] - 2026-10-20
 
 - Adopt reviewed Shared Tooling 0.25.3, including feature-aware selected-tool

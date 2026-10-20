@@ -214,7 +214,7 @@ chmod +x "$fixture/bin/bash"
 FIXTURE_REAL_BASH="$real_bash"
 export FIXTURE_REAL_BASH
 # Keep this workflow's action-result projection and Git/evidence custody.
-for scenario in success skipped-setup host-tools tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-failure; do (
+for scenario in success skipped-setup host-tools tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-failure collection-archive-failure; do (
     worktree="$fixture/$scenario"
     mkdir -p "$worktree"
     cp -R "$fixture/source/." "$worktree/"
@@ -244,7 +244,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         host-tools) FIXTURE_FAILURE=host-tools; TOOLCHAIN_OUTCOME=skipped ;;
         tool-inputs) FIXTURE_FAILURE="tool-inputs" ;;
         application-sources) FIXTURE_FAILURE=application-sources ;;
-        tools-install|collection-partial|collection-failure) FIXTURE_FAILURE=tools-install ;;
+        tools-install|collection-partial|collection-failure|collection-archive-failure) FIXTURE_FAILURE=tools-install ;;
         tools-check) FIXTURE_FAILURE=tools-check ;;
         native) FIXTURE_FAILURE=ci ;;
         formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
@@ -253,6 +253,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         collection-partial) FIXTURE_COLLECTION_STATUS=1 ;;
         collection-failure) FIXTURE_COLLECTION_STATUS=2 ;;
         native-archive-failure) FIXTURE_ARCHIVE_STATUS=23 ;;
+        collection-archive-failure) FIXTURE_COLLECTION_STATUS=2; FIXTURE_ARCHIVE_STATUS=23 ;;
     esac
     "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
@@ -306,30 +307,24 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     printf 'retained index\n' > target/evidence/native-ci/scratch/release/.git/index
     printf 'retained intent\n' > target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan
     # Diagnostics remain readable even when complete evidence collection fails.
-    if [[ "$scenario" == collection-failure ]]; then
+    if [[ "$scenario" == native-archive-failure || "$scenario" == collection-archive-failure ]]; then
         archive_status=0
         "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || archive_status=$?
-        [[ "$archive_status" == 2 && ! -e target/evidence/native-ci.tar.gz ]] || exit 1
-        bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
-            "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
-            target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
-        [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
-        [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]] || exit 1
-        grep -Fx 'tools=failure' target/evidence/native-ci/outcome.txt > /dev/null
-        exit 0
-    fi
-    if [[ "$scenario" == native-archive-failure ]]; then
-        archive_status=0
-        "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || archive_status=$?
-        [[ "$archive_status" == 23 ]] || exit 1
+        expected_archive_status=23
+        [[ "$scenario" != collection-archive-failure ]] || expected_archive_status=2
+        [[ "$archive_status" == "$expected_archive_status" ]] || exit 1
         bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
             "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
             target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
         [[ ! -e target/evidence/native-ci.tar.gz && ! -e target/evidence/native-ci.tar.gz.sha256 ]] || exit 1
         grep -Fx 'outer archive stdout' archive.log > /dev/null
         grep -Fx 'outer archive stderr' archive.log > /dev/null
+        grep -Fx 'Native recovery archive failed (exit 23)' archive.log > /dev/null
         [[ "$(cat target/evidence/native-ci/scratch/release/.git/index)" == 'retained index' ]] || exit 1
         [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
+        if [[ "$scenario" == collection-archive-failure ]]; then
+            [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]] || exit 1
+        fi
         exit 0
     fi
     collection_status=0

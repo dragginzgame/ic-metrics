@@ -91,8 +91,8 @@ The optional [stable package](../crates/ic-metrics-stable/README.md) owns valida
 V1 snapshots for counters, aggregates, summaries and histograms in one governed
 upstream B-tree map from `ic_storage::adapter`. Hosts open that public collection
 with an admitted `ic-memory::RuntimeMemory` handle, then supply it to
-`MetricsStore::new`. Selected Memory 0.49 and Storage 0.5.7 share that exact handle
-identity; each handle is a non-cloneable allocation lease. `into_map` returns the
+`MetricsStore::new`. The selected Memory and Storage packages share that exact
+handle identity; each handle is a non-cloneable allocation lease. `into_map` returns the
 public Storage collection with its lease intact. `MetricsMap<M>` is an exact
 alias for its byte key/value shape, with no separate collection implementation
 or lifecycle policy. Drop the store or returned map before reopening through the
