@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.11]
+## [0.14.11] - 2026-10-20
 
 - Adopt reviewed Shared Tooling 0.25.6. Failed release metadata checks retain
   Cargo output, root manifest/lock inputs and separate Cargo/logger statuses;
