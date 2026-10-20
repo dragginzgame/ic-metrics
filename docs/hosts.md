@@ -28,6 +28,12 @@ their actual stdout/stderr; skipped setup does not select unrelated temp logs.
 Shared Tooling tests the action's installation and PATH mechanics; Metrics tests
 its action reference, outcome/log projection and complete recovery evidence.
 
+Diagnostic collection failure still allows the independently admitted native
+recovery archive to be packaged and uploaded. The artifact step retains the
+collection failure status; a secondary packaging failure is reported without
+replacing that first error. A recovery archive does not establish complete tool
+collection or turn a failed check into a successful one.
+
 ## Prerequisites and focused checks
 
 After adopting Shared Tooling 0.25.3, rerun `make install-tools`, then
