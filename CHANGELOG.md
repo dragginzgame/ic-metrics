@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.9]
+## [0.14.9] - 2026-10-20
 
 - Adopt reviewed Shared Tooling 0.25.3, including feature-aware selected-tool
   admission and more specific repair diagnostics. Rerun `make install-tools`
