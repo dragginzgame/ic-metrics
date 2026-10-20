@@ -81,9 +81,11 @@ help:
 	@echo "Full release validation (or explicit check request): ci, msrv"
 
 publish:
+	+$(MAKE) --no-print-directory clippy
 	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io
 
 publish-check:
+	+$(MAKE) --no-print-directory clippy
 	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io --dry-run
 
 hook-check:
@@ -144,10 +146,10 @@ ci:
 	+$(MAKE) --no-print-directory evidence-check
 	+$(MAKE) --no-print-directory tools-check
 	+$(MAKE) --no-print-directory check-pins
+	+$(MAKE) --no-print-directory fmt-check
+	+$(MAKE) --no-print-directory clippy
 	+$(MAKE) --no-print-directory production-dependencies-check
 	+$(MAKE) --no-print-directory ci-evidence-check
 	+$(MAKE) --no-print-directory release-tools-check
-	+$(MAKE) --no-print-directory fmt-check
-	+$(MAKE) --no-print-directory clippy
 	+$(MAKE) --no-print-directory docs-check
 	+$(MAKE) --no-print-directory test

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.14.12]
+
+- Adopt reviewed Shared Tooling 0.25.8, including automatic finalization of
+  numbered `- Unreleased` changelog headings during release preparation.
+- Run the existing native/Wasm Clippy gate before CI test suites and publication
+  packaging. Lint failure stops later stages, including under parallel Make;
+  library APIs and release/publication authority are unchanged.
+
 ## [0.14.11] - 2026-10-20
 
 - Adopt reviewed Shared Tooling 0.25.6. Failed release metadata checks retain
