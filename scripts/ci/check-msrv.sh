@@ -14,5 +14,6 @@ fi
 }
 rustc "+$minimum" --version
 cargo "+$minimum" --version
-cargo "+$minimum" check --workspace --locked
+# Include native test targets and their development dependencies at the same floor.
+cargo "+$minimum" check --workspace --all-targets --locked
 cargo "+$minimum" check --workspace --locked --target wasm32-unknown-unknown

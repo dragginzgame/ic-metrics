@@ -7,6 +7,17 @@ export YQ := $(CURDIR)/.tools/host/bin/yq
 LOCAL_TOOL_INSTALL_TARGETS := install-release-editor
 LOCAL_TOOL_CHECK_TARGETS := release-editor-check
 
+# These frozen manifests use archive-directory paths; retain their original bytes.
+# All other maintained checksum manifests use repository-root paths.
+# The inspection report receipt is current payload; its source receipt binds an
+# old checkout and must not be compared with today's source files.
+EVIDENCE_LOCAL_MANIFESTS := \
+	docs/evidence/arithmetic-convergence-0112.tar.gz.sha256 \
+	docs/evidence/checkpoint-cleanup-092.tar.gz.sha256 \
+	docs/evidence/equality-owner-0111.tar.gz.sha256 \
+	docs/evidence/identity-storage-0116.tar.gz.sha256 \
+	docs/evidence/owner-convergence-091.tar.gz.sha256
+
 # Common commands use this checkout's reviewed snapshot, including scratch exports.
 override SHARED_TOOLING_ROOT := $(CURDIR)
 export SHARED_TOOLING_ROOT
@@ -40,7 +51,7 @@ release-files:
 	@bash scripts/release/metadata.sh files
 
 .PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
-.PHONY: ci-evidence-check
+.PHONY: ci-evidence-check evidence-check
 .PHONY: production-dependencies-check
 .PHONY: install-release-editor release-editor-check
 
@@ -63,6 +74,7 @@ help:
 	@echo "Production dependency graphs and boundary fixtures: production-dependencies-check"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
+	@echo "Frozen evidence archive checksums (read-only): evidence-check"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
 	@echo "Workspace gates cover arithmetic and the durable adapter; native/Wasm minimum: msrv"
@@ -81,6 +93,10 @@ ci-evidence-check:
 	bash scripts/ci/test-native-source-files.sh
 	bash scripts/ci/test-native-evidence.sh
 	bash scripts/ci/test-native-recovery-evidence.sh
+
+evidence-check:
+	bash scripts/ci/verify-evidence-checksums.sh $(filter-out $(EVIDENCE_LOCAL_MANIFESTS),$(wildcard docs/evidence/*.sha256)) docs/evidence/wasm-inspection-0215/reports.sha256
+	cd docs/evidence && bash ../../scripts/ci/verify-evidence-checksums.sh $(notdir $(EVIDENCE_LOCAL_MANIFESTS))
 
 check:
 	+cargo check --workspace --all-targets --locked
@@ -125,6 +141,7 @@ release-tools-check:
 ci:
 	+$(MAKE) --no-print-directory shared-tooling-check
 	+$(MAKE) --no-print-directory check-doc-links
+	+$(MAKE) --no-print-directory evidence-check
 	+$(MAKE) --no-print-directory tools-check
 	+$(MAKE) --no-print-directory check-pins
 	+$(MAKE) --no-print-directory production-dependencies-check

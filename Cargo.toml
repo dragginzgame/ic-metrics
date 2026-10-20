@@ -17,7 +17,7 @@ description = "Allocation-free, dependency-free measurement arithmetic"
 # Keep Memory and Storage on the same published runtime-handle API.
 ic-memory = "0.49"
 ic-metrics = { version = "0.14", path = "crates/ic-metrics" }
-ic-storage = "0.5.7"
+ic-storage = "0.5.8"
 
 # Tests and tooling only
 num-bigint = { version = "0.5.1", default-features = false }
