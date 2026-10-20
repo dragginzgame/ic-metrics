@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.11]
+
+- Adopt reviewed Shared Tooling 0.25.6. Failed release metadata checks retain
+  Cargo output, root manifest/lock inputs and separate Cargo/logger statuses;
+  Cargo's original failure takes priority. Checks do not retry or repair inputs.
+  Library APIs, dependency selections and release policy are unchanged.
+
 ## [0.14.10] - 2026-10-20
 
 - Preserve the native recovery archive when diagnostic collection fails, while

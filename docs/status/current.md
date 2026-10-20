@@ -14,24 +14,21 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The local batch starts at `e972af583cb9e6e669bbe0b46f6ab398cc08a7d9`
-and preserves the incoming Memory 0.49.2 lock update with selected Storage 0.5.8.
-Their 49 and five library source files, included READMEs, normal dependencies,
-features and Rust floors match the preceding patches. Both product APIs and
-Metrics V1 bytes remain unchanged; production arithmetic is dependency-free.
-
-All 22 stable units and three doctests, strict native/Wasm stable Clippy,
-native all-target/Wasm library Rust 1.91 checks and production dependency
-admission with exclusion fixtures pass locally. Logs remain under
-`/tmp/metrics-01410-*.log`. No full CI/MSRV gate, native macOS run or new IC
-measurement is claimed. Source equality does not assert identical artifacts.
-
 Shared Tooling's reviewed source and payload digests belong to
-[the snapshot](../../.shared-tooling.snapshot). The 0.25.5 adoption clarifies
-failure-evidence collection; executable helpers and pins are unchanged.
-The pending workflow fix preserves independent native recovery packaging after
-collector failure and retains the first error. Its regression and combined-failure
-cases belong to [#95 — Native recovery after diagnostic collection failure](https://github.com/dragginzgame/ic-metrics/issues/95).
+[the snapshot](../../.shared-tooling.snapshot). The local batch starts at
+`f6e1f2444f4b301906776d53d9cb818283d82578` and adopts Shared Tooling 0.25.6.
+Release metadata checks now retain stdout, streamed stderr, root inputs and
+separate Cargo/logger statuses on failure. They preserve the original Cargo
+error and do not retry, install tools or repair the dependency graph. Root copies
+do not freeze live member manifests or Cargo configuration; committed-source
+checks additionally retain the exported tree. [The release guide](../releases.md)
+owns the diagnostic contract.
+
+Qualification covers the canonical metadata failure/recovery fixture, Metrics'
+metadata and source-admission integration, snapshot integrity, tool admission,
+formatting, pins and documentation links. This batch changes no Rust source,
+library API, dependency selection or storage bytes. Full CI/MSRV and native
+macOS checks remain release gates; no new IC measurement is claimed.
 Compiler and library selections stay local; the host guide owns setup and policy.
 
 ## Evidence scope
@@ -43,8 +40,8 @@ Memory 0.49.0/Storage 0.5.7 graph. The preceding
 Neither frozen experiment qualifies a new artifact's IC costs or a consumer's
 persistence policy. Original archives remain unchanged.
 
-The [0.14.9 handoff](https://github.com/dragginzgame/ic-metrics/blob/e972af583cb9e6e669bbe0b46f6ab398cc08a7d9/docs/status/current.md)
-retains completed arithmetic, tooling and validation preparation. Its linked
+The [0.14.10 handoff](https://github.com/dragginzgame/ic-metrics/blob/f6e1f2444f4b301906776d53d9cb818283d82578/docs/status/current.md)
+retains completed dependency and native recovery qualification. Its linked
 historical handoffs preserve earlier identities and evidence paths. Historical
 observations are not current issue/PR status. Follow the
 [archive distribution record](../evidence/archive-distribution-072.md) for public payloads.
