@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.14.13]
+
+- Adopt Shared Tooling 0.25.9: refuse a new release increment past an
+  undelivered committed preparation, preserving its saved plan and evidence.
+  Tool pins, package APIs and dependency selections are unchanged.
+
 ## [0.14.12] - 2026-10-20
 
 - Adopt reviewed Shared Tooling 0.25.8, including automatic finalization of
