@@ -23,6 +23,8 @@ trap cleanup EXIT
 source "$root/scripts/ci/make-adapter-probes.sh"
 mkdir -p "$fixture/bin"
 bash "$root/scripts/ci/prepare-script-fixture.sh" "$root" "$fixture" make/consumer.mk
+# Recursive consumer gates must resolve the same actual recipe in this checkout.
+cp "$root/Makefile" "$fixture/Makefile"
 mkdir -p "$fixture/ci"
 cp "$root/ci/release-delivery.txt" "$fixture/ci/"
 cp "$root/scripts/ci/check-msrv.sh" "$root/scripts/ci/read-cargo-workspace-rust-version.sh" "$fixture/scripts/ci/"
@@ -168,7 +170,11 @@ if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then
     perl "$JOBSERVER_PROBE"
 fi
 printf '%s\n' "$@" >> "$EVENTS"
-[[ "${FAIL_PUBLISH:-0}" == 0 ]] || exit 1
+case "$1:${CLIPPY_FAILURE:-}" in
+    clippy:native) exit 37 ;;
+    clippy:wasm) [[ "$*" != *' --target wasm32-unknown-unknown '* ]] || exit 37 ;;
+esac
+[[ "$1" != publish || "${FAIL_PUBLISH:-0}" == 0 ]] || exit 1
 CARGO
 chmod +x "$fixture/bin/cargo"
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
@@ -194,11 +200,34 @@ rm "$fixture/bin/bash"
 # A failure in a multi-command gate stops before any later Cargo command.
 : > "$EVENTS"
 status=0
-PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 FAIL_PUBLISH=1 "$real_make" "${parallel[@]}" --no-print-directory \
+PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 CLIPPY_FAILURE=native "$real_make" "${parallel[@]}" --no-print-directory \
     -f "$root/Makefile" clippy > "$fixture/output" 2>&1 || status=$?
 [[ "$status" == 2 ]] || exit 1
 printf '%s\n' clippy --workspace --all-targets --locked -- -D warnings > "$fixture/expected"
 cmp "$fixture/expected" "$EVENTS"
+
+# CI dispatch must stop at either Clippy failure before expensive suites. Only
+# recursive gates are substituted; the real sequential CI recipe runs under -j.
+cat > "$fixture/gate-make" <<'MAKE'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ $# == 2 && "$1" == --no-print-directory ]] || exit 91
+printf '%s\n' "$2" >> "$EVENTS"
+if [[ "$2" == clippy && "${FAIL_CI_CLIPPY:-0}" == 1 ]]; then exit 37; fi
+MAKE
+chmod +x "$fixture/gate-make"
+for fail in 0 1; do
+    : > "$EVENTS"
+    status=0
+    FAIL_CI_CLIPPY="$fail" "$real_make" "${parallel[@]}" --no-print-directory \
+        -f "$root/Makefile" ci "MAKE=$fixture/gate-make" > "$fixture/output" 2>&1 || status=$?
+    if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" == 2 ]] || exit 1; fi
+    printf '%s\n' shared-tooling-check check-doc-links evidence-check tools-check check-pins fmt-check clippy > "$fixture/expected"
+    if [[ "$fail" == 0 ]]; then
+        printf '%s\n' production-dependencies-check ci-evidence-check release-tools-check docs-check test >> "$fixture/expected"
+    fi
+    cmp "$fixture/expected" "$EVENTS"
+done
 
 # Safe replacement flags still reach the real consumer adapter with its selected
 # runner substituted, including parallel mode and a quoted ordinary selection.
@@ -218,8 +247,22 @@ for target in publish publish-check; do
         PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
             -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
         if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
-        printf '%s\n' publish -p ic-metrics -p ic-metrics-stable --locked --registry crates-io > "$fixture/expected"
+        printf '%s\n' clippy --workspace --all-targets --locked -- -D warnings > "$fixture/expected"
+        printf '%s\n' clippy --workspace --lib --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
+        printf '%s\n' publish -p ic-metrics -p ic-metrics-stable --locked --registry crates-io >> "$fixture/expected"
         if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
+        cmp "$fixture/expected" "$EVENTS"
+    done
+    for failure in native wasm; do
+        : > "$EVENTS"
+        status=0
+        PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 CLIPPY_FAILURE="$failure" "$real_make" "${parallel[@]}" --no-print-directory \
+            -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
+        [[ "$status" == 2 ]] || exit 1
+        printf '%s\n' clippy --workspace --all-targets --locked -- -D warnings > "$fixture/expected"
+        if [[ "$failure" == wasm ]]; then
+            printf '%s\n' clippy --workspace --lib --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
+        fi
         cmp "$fixture/expected" "$EVENTS"
     done
 done

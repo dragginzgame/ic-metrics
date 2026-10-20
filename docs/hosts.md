@@ -242,8 +242,10 @@ Focused checks for changed behavior and directly affected callers are sufficient
 for ordinary handoff under [the validation policy](../DRAGGINZGAME.md#validation-and-evidence).
 Run full local suites only for an explicitly authorized release or an explicit
 request for those checks. The full gate is `make ci`, then workspace-native/Wasm `make msrv`; reuse passing evidence only for unchanged inputs. Full CI
-admits tools and pins before compilation, denies Clippy warnings, and checks
-builds, docs and tests for both packages. Configured CI and required branch
+admits tools, pins and formatting before the native/Wasm Clippy gate. Clippy
+denies warnings and runs before test suites, documentation builds and dependency
+qualification fixtures. The complete gate checks both packages' builds,
+docs and tests. Configured CI and required branch
 checks remain unchanged. Strict native all-target and Wasm library Clippy supply
 CI type checking; `make check` and `make check-wasm` remain focused entrypoints.
 Both workspace packages currently contain only libraries. If other Wasm targets
@@ -260,6 +262,9 @@ bind the selected release commit rather than newer working-tree metadata.
 Late metadata checks use Shared's `--manifest-order-grouped` option to check ordering
 in that same selected source; literal version preparation never sorts it.
 Neither validation nor release performs artifact cleanup.
+Both `make publish` and `make publish-check` run the same native/Wasm Clippy
+gate before Cargo packaging or registry effects. Sequential recipes stop on lint
+failure even under parallel Make; publication remains separately authorized.
 
 ## Native evidence
 
