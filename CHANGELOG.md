@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.10]
+## [0.14.10] - 2026-10-20
 
 - Preserve the native recovery archive when diagnostic collection fails, while
   retaining the original failure status. Report a secondary packaging failure
