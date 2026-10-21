@@ -111,3 +111,44 @@ public distribution. A repository link or digest is not source-export authority,
 and a filename filter alone cannot qualify a mixed review record. Preserve each
 original identity when producing a sanitized distribution; never relabel old
 measurements or make new consumer/performance acceptance claims from omissions.
+
+## Approved published-history cleanup — 2026-10-21
+
+The sections above retain the original distribution review and its historical
+observations. The maintainer has now approved the archive-only history removal.
+The rewrite includes the subsequently released 0.15.2 and removes only the six
+recorded original archive paths and their paired checksums. One scoped atomic
+push replaced eight branch and 44 tag refs, using exact old-ID leases after a
+fresh remote comparison. Current source, sanitized receipts, Cargo package
+versions and separately published registry artifacts are unchanged.
+
+A fresh remote clone verifies the complete 109-ref head/tag roster, absence of
+the twelve withdrawn paths from those histories and unreachability of the six
+original archive blobs. Current main's source tree is byte-identical to the
+pre-rewrite 0.15.2 release. This local checkout's branch/tags have been synchronized
+without changing its working files or index. Verified private original-history
+backups and before/after mappings remain retained separately; the frozen identity
+ledger and historical measurement identities are unchanged.
+
+The rewrite does not complete remote erasure: seven closed PRs retain the original
+blobs through GitHub's read-only PR refs. No forks were returned by the public
+forks API at inspection. Neither observation accounts for cached views, downloaded
+archives or independent clones. A GitHub Support request is prepared but has not
+been submitted. Support must assess eligibility and the remaining server-side
+disposition under its [sensitive-data removal policy](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github).
+The maintainer subsequently closed #72 as not planned and elected not to pursue
+the remaining GitHub-held ref/cache cleanup. The Support draft was not submitted;
+no complete erasure is claimed.
+
+Other existing clones must adopt the rewritten history. Prefer a fresh clone;
+preserve unrelated work privately and reapply only reviewed changes. Do not merge
+or push old ancestry, which would restore the withdrawn history. Retained release
+plans and historical CI receipts keep their original identities and must not be
+silently rewritten or reused as validation of changed inputs.
+
+After verifying their work was delivered or intentionally retired, the maintainer
+also approved deleting the seven obsolete contribution branches. One atomic push
+with exact old-ID leases removed only those branches; main and all 101 release
+tags are unchanged. Their tips are retained in a verified private bundle, and
+stale local remote-tracking refs are pruned. Closed PR records and GitHub's
+read-only PR refs remain; branch deletion does not complete the Support cleanup.

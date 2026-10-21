@@ -14,18 +14,19 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-Release source `ff38c84cdbb73c01c08be3424d71aa34e35f740f` (0.15.1) passes
-[Linux, both macOS hosts and native/Wasm MSRV CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39567196567).
-The incoming Memory/Storage 0.50.5 lock update is preserved separately; the
-released source's CI does not qualify that newer selection.
-
-The pending 0.15.2 changelog covers the compatible lockfile update and the
-maintainer's durable-consumer disposition; package versions remain unchanged.
+The current 0.15.2 main is `ddb674d80a8bb46ca4d6bc0bd701e1093646b23e`, with a
+byte-identical source tree to its pre-cleanup release. The approved archive-only
+history rewrite is verified from a fresh remote clone. This checkout's local
+branch/tags are synchronized; its working files and index were preserved.
+Earlier CI retains its original source identity; this rewrite reruns no builds.
+The pending 0.15.3 notes document the compatible operational cleanup; package
+versions remain 0.15.2.
 
 Shared Tooling's reviewed source and payload digests belong to
 [the snapshot](../../.shared-tooling.snapshot). The delivered 0.25.9 release
 guard matches [PR #96](https://github.com/dragginzgame/ic-metrics/pull/96), now
-closed as superseded without merging or deleting its branch. Compiler and
+closed as superseded. Its obsolete branch and the six other delivered or retired
+contribution branches are deleted; verified private backups remain. Compiler and
 library selections stay local; the host guide owns setup and policy.
 
 The [capability contract](../extraction.md#capability-placement) places Metrics
@@ -33,29 +34,26 @@ alongside Timers, Jobs and Auth, with IC Tooling's Host/Build/Testkit packages
 outside production graphs. The dependency policy rejects IC Build too,
 including renamed transitive edges; development-only qualification remains allowed.
 
-The official `ic-testkit-native` 0.63.0 archive supplies heap allocation
-measurement, but no stable-memory IO observer. The existing write observer
-remains until a supplying registry release and qualified adoption.
-[Tooling #227](https://github.com/dragginzgame/ic-tooling/issues/227) now records
-the canonical local implementation at `14a04da0`; remote Tooling main remains
-`62ab46bf` and the registry still ends at native 0.63.0 at this check. The separate
-Metrics proposal at `/tmp/metrics-observer-tooling.K50gSP`, commit `535e5f5f`, is
-retained unpublished; do not submit a competing PR. Its passing focused Linux
-checks do not qualify the owner's differing implementation or a registry release.
-Metrics has no open PRs; no observer publication or adoption is claimed.
+The maintainer closed [#82](https://github.com/dragginzgame/ic-metrics/issues/82)
+as not planned. The existing local test write observer remains; no replacement
+or adoption is claimed. Supplying work remains owned by
+[Tooling #227](https://github.com/dragginzgame/ic-tooling/issues/227).
 
 The maintainer closed [#83](https://github.com/dragginzgame/ic-metrics/issues/83)
 as not planned until a real durable-consumer use case emerges. Volatile behavior
 and the available opt-in persistence API are unchanged.
 
-For [#72](https://github.com/dragginzgame/ic-metrics/issues/72), the unpublished
-history-cleanup review and verified private original bundle are retained in
-`/tmp/metrics-history072.pDE2nd/REVIEW.md`. Its draft removes only the twelve
-recorded original archive/checksum paths from public head/tag histories. Eight
-branches and 43 tags change IDs; current main's source tree is identical.
-Shared-history publication requires explicit approval and a fresh remote-ref
-comparison. GitHub caches/PR refs and existing clones need separate disposition;
-the dry run does not close the issue or change live refs.
+For [#72](https://github.com/dragginzgame/ic-metrics/issues/72), the approved
+rewrite removes only the twelve recorded archive/checksum paths from published
+head/tag histories. Eight branches and 44 tags changed IDs, including 0.15.2.
+All 109 remote refs matched the filtered result at publication; the fresh clone
+excludes all six original blobs. After retiring seven obsolete branches, the remote
+retains main and all 101 release tags unchanged. Private originals, backups and mappings
+remain retained. The maintainer closed the issue as not planned and elected not
+to pursue the remaining GitHub-held refs/caches. The private Support draft was
+not submitted; no complete erasure is claimed. Metrics has no open issues or PRs
+at this tracker check.
+Other clones must adopt the rewritten history without merging old ancestry.
 
 ## Evidence scope
 
@@ -66,7 +64,7 @@ Memory 0.49.0/Storage 0.5.7 graph. The preceding
 Neither frozen experiment qualifies a new artifact's IC costs or a consumer's
 persistence policy. Original archives remain unchanged.
 
-The [0.15.1 handoff](https://github.com/dragginzgame/ic-metrics/blob/ff38c84cdbb73c01c08be3424d71aa34e35f740f/docs/status/current.md)
+The [sanitized 0.15.1 handoff](https://github.com/dragginzgame/ic-metrics/blob/29249c713bf3f842dacfb7ee1f3ad874fc2c9866/docs/status/current.md)
 retains the completed capability boundary and release-guard qualification. Its linked
 historical handoffs preserve earlier identities and evidence paths. Historical
 observations are not current issue/PR status. Follow the
@@ -77,6 +75,4 @@ observations are not current issue/PR status. Follow the
 Read the owning issues for their current disposition; this handoff is not a
 second issue-status ledger:
 
-- [Published Testkit memory observations](https://github.com/dragginzgame/ic-metrics/issues/82).
 - [Storage discard-value mutations](https://github.com/dragginzgame/ic-storage/issues/12).
-- [Evidence archive distribution review](https://github.com/dragginzgame/ic-metrics/issues/72).

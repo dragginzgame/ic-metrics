@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.15.3] - Unreleased
+
+- Remove withdrawn evidence archives and paired checksums from published branch
+  and tag histories, preserving the current 0.15.2 source tree and sanitized
+  receipts. Other existing clones must adopt the rewritten history without
+  merging old ancestry. Close [#72 — Review private consumer source in existing evidence archives](https://github.com/dragginzgame/ic-metrics/issues/72)
+  as not planned at the maintainer's request; remaining GitHub-held ref/cache
+  cleanup will not be pursued.
+- Delete seven obsolete contribution branches whose work was delivered or
+  intentionally retired. Main, release tags and closed PR records are retained.
+- Close [#82 — Adopt published Testkit memory observations and retire the local observer](https://github.com/dragginzgame/ic-metrics/issues/82)
+  as not planned at the maintainer's request. The existing local test observer
+  remains in place; no replacement or adoption is claimed.
+
 ## [0.15.2] - 2026-10-21
 
 - Refresh the lockfile to Memory 0.50.5 and Storage 0.50.5 within the existing
