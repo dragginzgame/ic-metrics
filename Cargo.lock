@@ -28,14 +28,14 @@ dependencies = [
 
 [[package]]
 name = "ic-metrics"
-version = "0.15.2"
+version = "0.15.3"
 dependencies = [
  "num-bigint",
 ]
 
 [[package]]
 name = "ic-metrics-stable"
-version = "0.15.2"
+version = "0.15.3"
 dependencies = [
  "ic-memory",
  "ic-metrics",

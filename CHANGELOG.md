@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.3] - Unreleased
+## [0.15.3] - 2026-10-21
 
 - Remove withdrawn evidence archives and paired checksums from published branch
   and tag histories, preserving the current 0.15.2 source tree and sanitized
