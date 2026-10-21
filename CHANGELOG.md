@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.2] - Unreleased
+## [0.15.2] - 2026-10-21
 
 - Refresh the lockfile to Memory 0.50.5 and Storage 0.50.5 within the existing
   0.50 manifest requirements.
