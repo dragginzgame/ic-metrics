@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.4] - Unreleased
+
+- Reject stable aggregate, summary and histogram checkpoints whose exact-count
+  changes cannot be explained by appended observations. Return the existing
+  `StateRegression` error before writing, preserving retained rows. Valid appends,
+  clipped-count behavior, public signatures and V1 record bytes are unchanged.
+
 ## [0.15.3] - 2026-10-21
 
 - Remove withdrawn evidence archives and paired checksums from published branch

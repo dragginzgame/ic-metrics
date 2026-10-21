@@ -53,7 +53,8 @@ pub enum StoreError {
     TooManyBounds,
     /// Expected bounds or restored fields violate arithmetic invariants.
     InvalidState(MeasurementStateError),
-    /// A checkpoint decreases counts/totals/maxima or clears sticky overflow.
+    /// A checkpoint decreases counts/totals/maxima, clears sticky overflow, or its
+    /// exact-count changes cannot be explained by appended observations.
     StateRegression,
 }
 

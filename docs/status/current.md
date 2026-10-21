@@ -14,13 +14,19 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The current 0.15.2 main is `ddb674d80a8bb46ca4d6bc0bd701e1093646b23e`, with a
-byte-identical source tree to its pre-cleanup release. The approved archive-only
-history rewrite is verified from a fresh remote clone. This checkout's local
-branch/tags are synchronized; its working files and index were preserved.
-Earlier CI retains its original source identity; this rewrite reruns no builds.
-The pending 0.15.3 notes document the compatible operational cleanup; package
-versions remain 0.15.2.
+The released base is 0.15.3 at `3558710376f4cf19f2332f0059d7b81aa844513a`.
+The pending 0.15.4 patch tightens stable checkpoint admission: exact-count
+transitions must fit the added observations' total, required maximum, latest
+value and bucket ranges. Impossible transitions use the existing
+`StoreError::StateRegression` before writes. Valid appends, clipped-count
+behavior, public signatures and V1 bytes remain unchanged; package versions
+and dependency selections are untouched. Hosts still own identity/provenance.
+
+Focused Linux checks pass: 25 stable unit tests, three doctests, native/Wasm
+Clippy, Rust 1.91 native all-target/Wasm library checks and warning-denied
+Rustdoc. Rejection tests preserve rows without writes; 7,225 recorded extensions
+remain admitted. The six declared downstream consumer scans found no maintained
+stable-store callers. Full workspace CI, native macOS and new IC costs were not run.
 
 Shared Tooling's reviewed source and payload digests belong to
 [the snapshot](../../.shared-tooling.snapshot). The delivered 0.25.9 release

@@ -162,9 +162,14 @@ identifiers, values and numeric admission.
   and malformed state are errors; they never silently create an empty metric.
 - Save replaces a full snapshot rather than adding it again. Repeated identical
   saves validate the retained row and skip encoding/map writes when unchanged.
-  Numeric regressions and clearing overflow flags are
-  rejected before writing. Supply the latest retained state before recording;
-  numeric checks do not establish sample attribution, ordering or provenance.
+  Numeric regressions and clearing overflow flags are rejected before writing.
+  With exact sample counts, the added total must fit the added observations'
+  maximum, the summary's latest value and the histogram's added bucket ranges.
+  A new maximum must be attainable among those additions. Impossible transitions
+  return `StoreError::StateRegression` without writes. Overflowed sample counts
+  retain the conservative monotonic checks because exact additions are unknown.
+  Supply the latest retained state before recording; numeric checks do not
+  establish sample attribution, ordering or provenance.
 - Deliberate reset/retirement uses `remove` with the old identity. It verifies the
   envelope and discards the payload explicitly, including unreadable payloads.
   For a reset, save the replacement with a new epoch in the same update message,

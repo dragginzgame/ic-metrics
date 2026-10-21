@@ -27,14 +27,27 @@ pub trait StoredMetric: Sized + Eq {
 }
 
 fn continues(current: MeasurementAggregate, previous: MeasurementAggregate) -> bool {
-    current.samples() >= previous.samples()
+    if !(current.samples() >= previous.samples()
         && current.total() >= previous.total()
         && current.maximum() >= previous.maximum()
         && (!previous.samples_overflowed() || current.samples_overflowed())
         && (!previous.total_overflowed() || current.total_overflowed())
         && (current.samples_overflowed()
             || current.samples() != previous.samples()
-            || current == previous)
+            || current == previous))
+    {
+        return false;
+    }
+    if current.samples_overflowed() {
+        return true;
+    }
+    // Monotonic, exact counts admit these differences. Added observations are
+    // bounded by the current maximum and must attain it if that maximum grew.
+    let samples = current.samples() - previous.samples();
+    let total = current.total() - previous.total();
+    let maximum = u128::from(current.maximum().unwrap_or(0));
+    total <= u128::from(samples) * maximum
+        && (current.maximum() == previous.maximum() || total >= maximum)
 }
 
 impl StoredMetric for MeasurementCounter {
@@ -113,10 +126,29 @@ impl StoredMetric for MeasurementSummary {
     }
 
     fn continues(&self, previous: &Self) -> bool {
-        continues(self.aggregate(), previous.aggregate())
-            && (self.aggregate().samples_overflowed()
-                || self.aggregate().samples() != previous.aggregate().samples()
-                || self.latest() == previous.latest())
+        let current = self.aggregate();
+        let before = previous.aggregate();
+        if !continues(current, before) {
+            return false;
+        }
+        if current.samples_overflowed() {
+            return true;
+        }
+        let samples = current.samples() - before.samples();
+        if samples == 0 {
+            return self.latest() == previous.latest();
+        }
+        let total = current.total() - before.total();
+        let latest = u128::from(self.latest().unwrap_or(0));
+        let maximum = u128::from(current.maximum().unwrap_or(0));
+        let other_maximum = if current.maximum() != before.maximum() && latest < maximum {
+            maximum
+        } else {
+            0
+        };
+        // The last added observation is fixed. A distinct new maximum must
+        // occur among the other additions; every other value is at most it.
+        total >= latest + other_maximum && total <= u128::from(samples - 1) * maximum + latest
     }
 }
 
@@ -205,21 +237,61 @@ impl<const N: usize> StoredMetric for MeasurementHistogram<N> {
     }
 
     fn continues(&self, previous: &Self) -> bool {
-        continues(self.aggregate(), previous.aggregate())
-            && self.overflow() >= previous.overflow()
-            && (!previous.overflow_count_overflowed() || self.overflow_count_overflowed())
-            && self
-                .bucket_counts()
-                .iter()
-                .zip(self.bucket_overflowed())
-                .zip(
-                    previous
-                        .bucket_counts()
-                        .iter()
-                        .zip(previous.bucket_overflowed()),
+        let current = self.aggregate();
+        let before = previous.aggregate();
+        if !continues(current, before) {
+            return false;
+        }
+        let exact = !current.samples_overflowed();
+        let maximum = current.maximum().unwrap_or(0);
+        let maximum_changed = current.maximum() != before.maximum();
+        let mut maximum_added = !maximum_changed;
+        let mut minimum_total = 0_u128;
+        let mut maximum_total = 0_u128;
+        for index in 0..=N {
+            let (now, prior, overflowed, prior_overflowed) = if index < N {
+                (
+                    self.bucket_counts()[index],
+                    previous.bucket_counts()[index],
+                    self.bucket_overflowed()[index],
+                    previous.bucket_overflowed()[index],
                 )
-                .all(|((now, now_overflowed), (before, before_overflowed))| {
-                    now >= before && (!before_overflowed || *now_overflowed)
-                })
+            } else {
+                (
+                    self.overflow(),
+                    previous.overflow(),
+                    self.overflow_count_overflowed(),
+                    previous.overflow_count_overflowed(),
+                )
+            };
+            if now < prior || (prior_overflowed && !overflowed) {
+                return false;
+            }
+            if !exact || now == prior {
+                continue;
+            }
+            let lower = if index == 0 {
+                0
+            } else {
+                self.upper_bounds()[index - 1].saturating_add(1)
+            };
+            let upper = if index < N {
+                self.upper_bounds()[index].min(maximum)
+            } else {
+                maximum
+            };
+            let added = u128::from(now - prior);
+            // Exact aggregate counts bound the sum of additions by u64::MAX,
+            // so both range totals, including attainment, fit in u128.
+            minimum_total += added * u128::from(lower);
+            maximum_total += added * u128::from(upper);
+            if maximum_changed && upper == maximum {
+                minimum_total += u128::from(maximum - lower);
+                maximum_added = true;
+            }
+        }
+        !exact
+            || (maximum_added
+                && (minimum_total..=maximum_total).contains(&(current.total() - before.total())))
     }
 }

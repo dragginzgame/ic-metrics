@@ -745,6 +745,161 @@ impl Memory for WriteCountingMemory {
     }
 }
 
+fn assert_rejected_checkpoint<T: crate::metric::StoredMetric>(previous: &T, current: &T) {
+    let memory = WriteCountingMemory::default();
+    let writes = memory.writes.clone();
+    let mut store = MetricsStore::new(StableBTreeMap::new(admitted_memory(memory)));
+    let key = key("append");
+    store.save(&key, &identity(), previous).unwrap();
+    let retained = store.map.get(&key.0);
+    writes.set(0);
+    assert_eq!(
+        store.save(&key, &identity(), current),
+        Err(StoreError::StateRegression)
+    );
+    assert_eq!(writes.get(), 0);
+    assert_eq!(store.map.get(&key.0), retained);
+}
+
+#[test]
+fn checkpoints_reject_impossible_exact_appends_without_writes() {
+    // Only 1 was added to the total, which cannot introduce maximum 3.
+    assert_rejected_checkpoint(
+        &Aggregate::from_parts(2, 2, Some(1), false, false).unwrap(),
+        &Aggregate::from_parts(3, 3, Some(3), false, false).unwrap(),
+    );
+    // One added observation cannot exceed the new maximum of 1.
+    assert_rejected_checkpoint(
+        &Aggregate::from_parts(1, 0, Some(0), false, false).unwrap(),
+        &Aggregate::from_parts(2, 2, Some(1), false, false).unwrap(),
+    );
+    let summary = |samples: &[u64]| {
+        let mut value = Summary::EMPTY;
+        for sample in samples {
+            value.record(*sample);
+        }
+        value
+    };
+    for (previous, current) in [
+        // One addition must equal the latest, not just fall below the maximum.
+        (summary(&[2, 1]), summary(&[1, 1, 2])),
+        (summary(&[2, 0]), summary(&[1, 2, 1])),
+        // A distinct new maximum and latest must both fit in the added total.
+        (summary(&[1]), summary(&[0, 0, 3, 1])),
+    ] {
+        assert_rejected_checkpoint(&previous, &current);
+    }
+    let histogram = |samples: &[u64]| {
+        let mut value = Histogram::new([1, 10]).unwrap();
+        for sample in samples {
+            value.record(*sample);
+        }
+        value
+    };
+    for (previous, current) in [
+        // An addition in (1, 10] cannot add just 1 to the total.
+        (histogram(&[1, 1, 3]), histogram(&[0, 1, 2, 3])),
+        // An addition in [0, 1] cannot add 2 to the total.
+        (histogram(&[0, 3]), histogram(&[1, 1, 3])),
+        // The bucket containing a new maximum must have an added observation.
+        (histogram(&[0, 5]), histogram(&[1, 1, 1, 1, 1, 0, 0, 6])),
+        // Added bucket ranges must allow actually attaining the new maximum.
+        (histogram(&[0, 5]), histogram(&[0, 2, 3, 9])),
+    ] {
+        assert_rejected_checkpoint(&previous, &current);
+    }
+}
+
+#[test]
+fn checkpoint_continuity_admits_bounded_recorded_extensions() {
+    use crate::metric::StoredMetric;
+
+    let observations = [0, 1, 3, u64::MAX];
+    for prefix_length in 0..=3 {
+        for mut prefix in 0..4_usize.pow(prefix_length) {
+            let mut previous = Summary::EMPTY;
+            let mut previous_histogram = Histogram::new([1, 10]).unwrap();
+            for _ in 0..prefix_length {
+                let value = observations[prefix % 4];
+                previous.record(value);
+                previous_histogram.record(value);
+                prefix /= 4;
+            }
+            for added_length in 0..=3 {
+                for mut added in 0..4_usize.pow(added_length) {
+                    let mut current = previous;
+                    let mut histogram = previous_histogram;
+                    for _ in 0..added_length {
+                        let value = observations[added % 4];
+                        current.record(value);
+                        histogram.record(value);
+                        added /= 4;
+                    }
+                    assert!(current.aggregate().continues(&previous.aggregate()));
+                    assert!(current.continues(&previous));
+                    assert!(histogram.continues(&previous_histogram));
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn checkpoint_continuity_preserves_exact_caps_and_clipped_appends() {
+    use crate::metric::StoredMetric;
+
+    let maximum = u64::MAX;
+    let mut aggregate = Aggregate::from_parts(
+        maximum - 1,
+        u128::from(maximum - 1) * u128::from(maximum),
+        Some(maximum),
+        false,
+        false,
+    )
+    .unwrap();
+    let mut summary = Summary::from_parts(aggregate, Some(maximum)).unwrap();
+    let mut histogram = Histogram::from_parts(
+        [0, maximum],
+        [0, maximum - 1],
+        0,
+        [false; 2],
+        false,
+        aggregate,
+    )
+    .unwrap();
+    let mut store = store();
+    for value in [maximum, 0, maximum, maximum, 1] {
+        let previous = (aggregate, summary, histogram);
+        aggregate.record(value);
+        summary.record(value);
+        histogram.record(value);
+        assert!(aggregate.continues(&previous.0));
+        assert!(summary.continues(&previous.1));
+        assert!(histogram.continues(&previous.2));
+        store
+            .save_aggregate(&key("aggregate"), &identity(), &previous.0)
+            .unwrap();
+        store
+            .save_aggregate(&key("aggregate"), &identity(), &aggregate)
+            .unwrap();
+        store
+            .save_summary(&key("summary"), &identity(), &previous.1)
+            .unwrap();
+        store
+            .save_summary(&key("summary"), &identity(), &summary)
+            .unwrap();
+        store
+            .save_histogram(&key("histogram"), &identity(), &previous.2)
+            .unwrap();
+        store
+            .save_histogram(&key("histogram"), &identity(), &histogram)
+            .unwrap();
+    }
+    assert!(aggregate.samples_overflowed());
+    assert!(aggregate.total_overflowed());
+    assert!(histogram.bucket_overflowed()[1]);
+}
+
 #[test]
 fn identical_checkpoints_validate_without_stable_writes() {
     fn check<T: crate::metric::StoredMetric>(initial: &T, changed: &T) {

@@ -121,7 +121,10 @@ Memory's allocation-format disposition remains separate from Metrics V1 and
 B-tree compatibility; hosts follow the version-bound stable guide before reuse.
 The stable API uses concrete load/save operations for each metric family;
 histogram loads take bounds directly. Codec/kind and continuity dispatch remain
-private, without a public generic trait or capability-token surface. The core has no
+private, without a public generic trait or capability-token surface. Exact-count
+checkpoints must be explainable by added observations, including the new maximum,
+latest value and bucket ranges. Clipped counts retain conservative monotonic
+admission; hosts still establish identity and attribution. The core has no
 serialization or stable-memory dependency. Scalar checkpoints use
 distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
 The codec owns typed kind admission; stored numeric tags remain unchanged.
