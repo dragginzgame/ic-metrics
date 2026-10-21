@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.2] - Unreleased
+
+- Refresh the lockfile to Memory 0.50.5 and Storage 0.50.5 within the existing
+  0.50 manifest requirements.
+- Close [#83 — Qualify the first opt-in durable scalar counter consumer](https://github.com/dragginzgame/ic-metrics/issues/83)
+  as not planned until an owning application and retention policy are identified.
+  Existing volatile defaults and the optional persistence API are unchanged.
+
 ## [0.15.1] - 2026-10-21
 
 - Enforce Metrics' standalone application-capability boundary: production graphs

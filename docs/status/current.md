@@ -14,38 +14,48 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
+Release source `ff38c84cdbb73c01c08be3424d71aa34e35f740f` (0.15.1) passes
+[Linux, both macOS hosts and native/Wasm MSRV CI](https://github.com/dragginzgame/ic-metrics/actions/runs/39567196567).
+The incoming Memory/Storage 0.50.5 lock update is preserved separately; the
+released source's CI does not qualify that newer selection.
+
+The pending 0.15.2 changelog covers the compatible lockfile update and the
+maintainer's durable-consumer disposition; package versions remain unchanged.
+
 Shared Tooling's reviewed source and payload digests belong to
-[the snapshot](../../.shared-tooling.snapshot). The local batch starts at
-`a3b0c4a76145fddb0a36a4ce553435ae4ddb6b46`, preserving the incoming Memory 0.50.1
-and Storage 0.50.1 lock selection. Both published packages bind IC Persistence
-source `d61e5c014e11313313da167df3f24af2de6d96aa`. Their library source trees,
-features and Rust floors match 0.50.0. Storage raises its Memory requirement to
-0.50.1; no other resolved package changes. Upstream development-only tool updates
-do not enter Metrics' production graph. Metrics
-V1 rows and upstream stored formats remain unchanged.
-
-Shared Tooling 0.25.9 adds confirmed Git-delivery admission before restarting a
-committed preparation into another increment. The canonical snapshot carries
-the same release guard reviewed in [PR #96](https://github.com/dragginzgame/ic-metrics/pull/96);
-that PR's old pending heading conflicts with the released 0.15.0 base. No merge,
-branch rewrite or release is performed by this local adoption. Shared 0.26
-adoption waits for its [macOS selection fix](https://github.com/dragginzgame/shared-tooling/issues/294)
-to be committed and qualified; no uncommitted upstream fix is imported.
-
-Qualification covers stable native/Wasm Clippy, package tests and doctests,
-native all-target/Wasm library Rust 1.91 checks, production dependency admission,
-release retry/tracking and consumer adapters, snapshot integrity, tools, pins,
-formatting and documentation links. Full CI/MSRV and native macOS checks remain
-release gates; no new IC measurement or downstream acceptance is claimed.
-Compiler and library selections stay local; the host guide owns setup and policy.
+[the snapshot](../../.shared-tooling.snapshot). The delivered 0.25.9 release
+guard matches [PR #96](https://github.com/dragginzgame/ic-metrics/pull/96), now
+closed as superseded without merging or deleting its branch. Compiler and
+library selections stay local; the host guide owns setup and policy.
 
 The [capability contract](../extraction.md#capability-placement) places Metrics
 alongside Timers, Jobs and Auth, with IC Tooling's Host/Build/Testkit packages
-outside production graphs. The dependency policy now rejects IC Build too,
+outside production graphs. The dependency policy rejects IC Build too,
 including renamed transitive edges; development-only qualification remains allowed.
-The inspected Tooling working tree already removes Testkit's Metrics dependency
-and supplies its own benchmark-average error. That pending sibling work was
-reviewed read-only and remains outside this batch's edits and qualification.
+
+The official `ic-testkit-native` 0.63.0 archive supplies heap allocation
+measurement, but no stable-memory IO observer. The existing write observer
+remains until a supplying registry release and qualified adoption.
+[Tooling #227](https://github.com/dragginzgame/ic-tooling/issues/227) now records
+the canonical local implementation at `14a04da0`; remote Tooling main remains
+`62ab46bf` and the registry still ends at native 0.63.0 at this check. The separate
+Metrics proposal at `/tmp/metrics-observer-tooling.K50gSP`, commit `535e5f5f`, is
+retained unpublished; do not submit a competing PR. Its passing focused Linux
+checks do not qualify the owner's differing implementation or a registry release.
+Metrics has no open PRs; no observer publication or adoption is claimed.
+
+The maintainer closed [#83](https://github.com/dragginzgame/ic-metrics/issues/83)
+as not planned until a real durable-consumer use case emerges. Volatile behavior
+and the available opt-in persistence API are unchanged.
+
+For [#72](https://github.com/dragginzgame/ic-metrics/issues/72), the unpublished
+history-cleanup review and verified private original bundle are retained in
+`/tmp/metrics-history072.pDE2nd/REVIEW.md`. Its draft removes only the twelve
+recorded original archive/checksum paths from public head/tag histories. Eight
+branches and 43 tags change IDs; current main's source tree is identical.
+Shared-history publication requires explicit approval and a fresh remote-ref
+comparison. GitHub caches/PR refs and existing clones need separate disposition;
+the dry run does not close the issue or change live refs.
 
 ## Evidence scope
 
@@ -56,8 +66,8 @@ Memory 0.49.0/Storage 0.5.7 graph. The preceding
 Neither frozen experiment qualifies a new artifact's IC costs or a consumer's
 persistence policy. Original archives remain unchanged.
 
-The [0.15.0 handoff](https://github.com/dragginzgame/ic-metrics/blob/a3b0c4a76145fddb0a36a4ce553435ae4ddb6b46/docs/status/current.md)
-retains the completed dependency-identity cut and qualification. Its linked
+The [0.15.1 handoff](https://github.com/dragginzgame/ic-metrics/blob/ff38c84cdbb73c01c08be3424d71aa34e35f740f/docs/status/current.md)
+retains the completed capability boundary and release-guard qualification. Its linked
 historical handoffs preserve earlier identities and evidence paths. Historical
 observations are not current issue/PR status. Follow the
 [archive distribution record](../evidence/archive-distribution-072.md) for public payloads.
@@ -68,6 +78,5 @@ Read the owning issues for their current disposition; this handoff is not a
 second issue-status ledger:
 
 - [Published Testkit memory observations](https://github.com/dragginzgame/ic-metrics/issues/82).
-- [Durable scalar consumer acceptance](https://github.com/dragginzgame/ic-metrics/issues/83).
 - [Storage discard-value mutations](https://github.com/dragginzgame/ic-storage/issues/12).
 - [Evidence archive distribution review](https://github.com/dragginzgame/ic-metrics/issues/72).
