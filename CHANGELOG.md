@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.1]
+## [0.15.1] - 2026-10-21
 
 - Enforce Metrics' standalone application-capability boundary: production graphs
   reject IC Build as well as Host and Testkit, including renamed transitive edges.
