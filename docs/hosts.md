@@ -169,7 +169,10 @@ Replace `TARGET` with `x86_64-unknown-linux-gnu` for the qualified native host o
 `wasm32-unknown-unknown` for Wasm; other hosts need their own target qualification.
 Inspect transitive edges and feature activation as well as direct dependencies.
 The core must have no production dependency. The stable graph must exclude
-Testkit, Host and Memory's `test-support` feature. Its transitive stable-structures
+Build, Testkit, Host and Memory's `test-support` feature. These IC Tooling packages
+remain development/qualification dependencies when a consumer needs them;
+their exclusion covers renamed, transitive and build edges in production graphs.
+Its transitive stable-structures
 substrate through Memory/Storage is expected; Metrics must not depend on it
 directly. A downstream application's graph can unify additional features.
 

@@ -54,7 +54,7 @@ for my $target (sort keys %targets) {
     for my $root (sort keys %packages) {
         my @policy = $root eq 'ic-metrics'
             ? ('--forbid-pattern', '^(?!ic-metrics$)', '--require', 'ic-metrics=1')
-            : ('--forbid-pattern', '^ic-(?:host|testkit)(?:-|$)|^pocket-ic$',
+            : ('--forbid-pattern', '^ic-(?:build|host|testkit)(?:-|$)|^pocket-ic$',
                '--forbid-feature', 'ic-memory/test-support',
                '--require', 'ic-memory=1', '--require', 'ic-storage=1',
                '--require', 'ic-stable-structures=1');

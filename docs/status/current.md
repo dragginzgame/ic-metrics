@@ -16,24 +16,36 @@ Those files do not prove registry publication, hosted CI or consumer acceptance.
 
 Shared Tooling's reviewed source and payload digests belong to
 [the snapshot](../../.shared-tooling.snapshot). The local batch starts at
-`07c25710490c04fccebde7cfb8cf183a3754ea19`, preserving the incoming Memory 0.50.0
-and Storage 0.50.0 manifest/lock selections. Both published packages bind
-IC Persistence source `f452b5cf9b26a25ee2fb69f4941c079e9c85f4e7`. Their library
-source trees match Memory 0.49.3 and Storage 0.5.8 respectively. Storage aligns
-its Memory requirement and pins the already selected substrate at 0.7.2; no
-other resolved dependency changes. Rust floors, features, Metrics V1 rows and
-upstream stored formats remain unchanged.
+`a3b0c4a76145fddb0a36a4ce553435ae4ddb6b46`, preserving the incoming Memory 0.50.1
+and Storage 0.50.1 lock selection. Both published packages bind IC Persistence
+source `d61e5c014e11313313da167df3f24af2de6d96aa`. Their library source trees,
+features and Rust floors match 0.50.0. Storage raises its Memory requirement to
+0.50.1; no other resolved package changes. Upstream development-only tool updates
+do not enter Metrics' production graph. Metrics
+V1 rows and upstream stored formats remain unchanged.
 
-The pending 0.15.0 notes reflect exposed Rust dependency identities, rather than
-a stored-format change: stable hosts must align their Memory and Storage 0.50
-dependencies before passing governed maps. The arithmetic package stays
-dependency-free. Package versions and release execution remain maintainer-owned.
+Shared Tooling 0.25.9 adds confirmed Git-delivery admission before restarting a
+committed preparation into another increment. The canonical snapshot carries
+the same release guard reviewed in [PR #96](https://github.com/dragginzgame/ic-metrics/pull/96);
+that PR's old pending heading conflicts with the released 0.15.0 base. No merge,
+branch rewrite or release is performed by this local adoption. Shared 0.26
+adoption waits for its [macOS selection fix](https://github.com/dragginzgame/shared-tooling/issues/294)
+to be committed and qualified; no uncommitted upstream fix is imported.
 
 Qualification covers stable native/Wasm Clippy, package tests and doctests,
 native all-target/Wasm library Rust 1.91 checks, production dependency admission,
-pins, formatting and documentation links. Full CI/MSRV and native macOS checks
-remain release gates; no new IC measurement or downstream acceptance is claimed.
+release retry/tracking and consumer adapters, snapshot integrity, tools, pins,
+formatting and documentation links. Full CI/MSRV and native macOS checks remain
+release gates; no new IC measurement or downstream acceptance is claimed.
 Compiler and library selections stay local; the host guide owns setup and policy.
+
+The [capability contract](../extraction.md#capability-placement) places Metrics
+alongside Timers, Jobs and Auth, with IC Tooling's Host/Build/Testkit packages
+outside production graphs. The dependency policy now rejects IC Build too,
+including renamed transitive edges; development-only qualification remains allowed.
+The inspected Tooling working tree already removes Testkit's Metrics dependency
+and supplies its own benchmark-average error. That pending sibling work was
+reviewed read-only and remains outside this batch's edits and qualification.
 
 ## Evidence scope
 
@@ -44,8 +56,8 @@ Memory 0.49.0/Storage 0.5.7 graph. The preceding
 Neither frozen experiment qualifies a new artifact's IC costs or a consumer's
 persistence policy. Original archives remain unchanged.
 
-The [0.14.12 handoff](https://github.com/dragginzgame/ic-metrics/blob/07c25710490c04fccebde7cfb8cf183a3754ea19/docs/status/current.md)
-retains completed tooling adoption and qualification. Its linked
+The [0.15.0 handoff](https://github.com/dragginzgame/ic-metrics/blob/a3b0c4a76145fddb0a36a4ce553435ae4ddb6b46/docs/status/current.md)
+retains the completed dependency-identity cut and qualification. Its linked
 historical handoffs preserve earlier identities and evidence paths. Historical
 observations are not current issue/PR status. Follow the
 [archive distribution record](../evidence/archive-distribution-072.md) for public payloads.

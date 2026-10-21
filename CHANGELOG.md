@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.15.1]
+
+- Enforce Metrics' standalone application-capability boundary: production graphs
+  reject IC Build as well as Host and Testkit, including renamed transitive edges.
+  Update the adoption guide to the 0.15 contract and aligned Memory/Storage 0.50.
+- Qualify Memory 0.50.1 and Storage 0.50.1. Their library implementations,
+  production features and Rust floors match 0.50.0; Metrics APIs and
+  stored formats are unchanged.
+- Adopt reviewed Shared Tooling 0.25.9's release retry protection. A committed
+  preparation must have confirmed Git delivery before another version increment;
+  failed or uncertain delivery retains the saved plan and evidence.
+
 ## [0.15.0] - 2026-10-20
 
 - **Breaking stable dependency identities:** adopt `ic-memory` 0.50 and

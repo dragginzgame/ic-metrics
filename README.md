@@ -2,6 +2,15 @@
 
 Allocation-free, dependency-free measurement arithmetic.
 
+IC Metrics is a standalone application capability alongside IC Timers, IC Jobs
+and IC Auth. Applications and Canic compose these packages through explicit
+dependencies. Metrics owns measurement arithmetic and optional stable snapshots;
+the consuming application owns platform reads, attribution, lifecycle and endpoints.
+
+IC Tooling owns Host, Build and Testkit. Those packages support development and
+qualification outside Metrics' production graphs. Metrics needs no Platform or
+Canic dependency to occupy this capability layer.
+
 The `no_std` library exports `MeasurementAggregate` for mergeable
 count/total/maximum with sticky actual-overflow flags,
 and `MeasurementSummary` for ordered observations with a latest value.
@@ -187,15 +196,14 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both packages require Rust 1.91 on native and Wasm. The 0.14 hard cut removes
-complete floating-point sample statistics in favor of Testkit's private reporting
-code. Consumers using that API must move their sample projections to their owning
-reporter; tracked integer arithmetic and stable V1 records retain their contracts.
-After publication, consumers select the 0.14 contract and qualify their integration:
+Both packages require Rust 1.91 on native and Wasm. Consumers select the 0.15
+contract and qualify their integration. Stable hosts must also align Memory and
+Storage on 0.50 so their governed handles and maps share the adapter's Rust
+dependency identities. Metrics V1 records and stored formats are unchanged.
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.14"
+ic-metrics = "0.15"
 ```
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers

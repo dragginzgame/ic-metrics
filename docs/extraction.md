@@ -6,6 +6,20 @@ registries, labels, synchronization, lifecycle and endpoints. The
 [application guide](../crates/ic-metrics/src/application.md) is included in the
 crate documentation and supplies compiled examples.
 
+## Capability placement
+
+Metrics is an independently released application capability, at the same layer
+as Timers, Jobs and Auth. Applications and Canic compose those capabilities;
+Metrics does not depend on those consumers or own their orchestration policy.
+Its arithmetic package stays portable and dependency-free. The stable adapter
+opts into IC Persistence's Memory/Storage packages through their published APIs.
+
+IC Tooling owns the separate Host, Build and Testkit packages. Benchmark parsing,
+finite-sample reporting and tooling-specific arithmetic stay with that reporter;
+Metrics' general integer APIs remain here.
+Qualification tools do not enter either Metrics production graph. Existing frozen
+receipts preserve the supplying packages and repository identities they measured.
+
 ## Arithmetic ownership
 
 | Primitive | Retained state and projection |

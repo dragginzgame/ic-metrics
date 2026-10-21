@@ -26,7 +26,7 @@ reset_case() {
     done
     printf '[workspace]\nmembers = ["crates/ic-metrics", "crates/ic-metrics-stable"]\nresolver = "3"\n' > "$fixture/workspace/Cargo.toml"
     cp "$root/rust-toolchain.toml" "$fixture/workspace/"
-    for name in ic-memory ic-storage ic-stable-structures ic-host-fs ic-testkit ordinary; do package "$name"; done
+    for name in ic-memory ic-storage ic-stable-structures ic-build ic-host-fs ic-testkit ordinary; do package "$name"; done
     printf '[features]\ntest-support = []\n' >> "$fixture/vendor/ic-memory/Cargo.toml"
     cat >> "$fixture/workspace/crates/ic-metrics-stable/Cargo.toml" <<'EOF'
 [dependencies]
@@ -56,6 +56,7 @@ check_case() {
 reset_case
 check_case development-feature-and-governed-substrate pass
 printf '\n[dev-dependencies]\nhelper = { package = "ic-testkit", path = "../../../vendor/ic-testkit" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+printf 'builder = { package = "ic-build", path = "../../../vendor/ic-build" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case development-package pass
 
 # Two versions can resolve successfully while exposing incompatible governed
@@ -82,9 +83,11 @@ reset_case
 printf '\n[dependencies]\nordinary = { path = "../../../vendor/ordinary" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case arithmetic-production-edge fail
 
-reset_case
-printf 'renamed = { package = "ic-host-fs", path = "../ic-host-fs" }\n' >> "$fixture/vendor/ic-storage/Cargo.toml"
-check_case transitive-renamed-host fail
+for dependency in ic-build ic-host-fs ic-testkit; do
+    reset_case
+    printf 'renamed = { package = "%s", path = "../%s" }\n' "$dependency" "$dependency" >> "$fixture/vendor/ic-storage/Cargo.toml"
+    check_case "transitive-renamed-$dependency" fail
+done
 
 reset_case
 printf '\n[target.\x27cfg(target_arch = "wasm32")\x27.dependencies]\nrenamed = { package = "ic-host-fs", path = "../ic-host-fs" }\n' >> "$fixture/vendor/ic-storage/Cargo.toml"
