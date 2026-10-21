@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.4] - Unreleased
+## [0.15.4] - 2026-10-21
 
 - Reject stable aggregate, summary and histogram checkpoints whose exact-count
   changes cannot be explained by appended observations. Return the existing
