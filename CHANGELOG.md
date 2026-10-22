@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.5] - Unreleased
+## [0.15.5] - 2026-10-22
 
 - Adopt reviewed Shared Tooling 0.26.6 with explicit optional IC tool selection
   and hardened validation logs, checksums and failure evidence. Normal setup
