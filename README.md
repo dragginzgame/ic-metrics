@@ -159,7 +159,7 @@ newer. Install `wasm32-unknown-unknown` for Wasm checks. The arithmetic library'
 minimum compiler is Rust 1.91.0.
 
 Optional structural Wasm inspection uses the published
-[IC Host inspector and its installation guide](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect).
+[IC Host inspector and its installation guide](https://github.com/dragginzgame/ic-tooling/tree/main/apps/ic-host-wasm-inspect).
 Experiments select their own qualified tool identity and limits. Metrics has no
 inspector wrapper or pin; neither library requires IC Host to build or run.
 Bare Cargo commands select the arithmetic package.

@@ -133,7 +133,7 @@ serialization or stable-memory dependency. Scalar checkpoints use
 distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
 The codec owns typed kind admission; stored numeric tags remain unchanged.
 
-The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect)
+The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-tooling/tree/main/apps/ic-host-wasm-inspect)
 owns bounded structural inspection and its managed installation guide. Optional
 experiments retain their own qualified tool identity; Metrics maintains no CLI
 adapter or pin. Common setup, CI and release preflight require no inspector. It

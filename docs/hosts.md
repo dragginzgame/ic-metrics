@@ -107,7 +107,7 @@ so its graph must also be prepared when local manifest/lock edits differ from
 HEAD; a prepared working-tree graph alone cannot qualify that offline check.
 
 Optional structural Wasm inspection follows the
-[IC Host inspector guide](https://github.com/dragginzgame/ic-host-tooling/tree/main/apps/ic-host-wasm-inspect).
+[IC Host inspector guide](https://github.com/dragginzgame/ic-tooling/tree/main/apps/ic-host-wasm-inspect).
 Experiments select their qualified published version, managed installation and
 budgets directly. Metrics has no inspector wrapper, pin or Make targets; common
 setup/check, CI, release preflight and both libraries require no inspector.
@@ -224,10 +224,12 @@ The shared locked release-preflight helper owns fetch/tool sequencing and pin
 rechecks; Metrics admits source/recovery first and selects preparation authority,
 tool targets and pin files. Checks remain offline and never install tools.
 
-`ci/release-tools.env` selects published IC Build 0.18.0's
-`ic-build-release-metadata` executable and a 1 MiB allowance for each input
-document. Current manifests, lock and context are below 64 KiB. The shared
-managed installer owns its package/compiler identity and executable admission;
+`ci/release-tools.env` selects published IC Build 0.64.0's
+`ic-build-release-metadata` executable with its required `cli` feature and a
+1 MiB allowance for each input document. This selects the current Host artifact,
+filesystem and process implementations through Build's tool graph, without
+adding library dependencies. Current manifests, lock and context are below
+64 KiB. The shared managed installer owns its package/compiler identity and executable admission;
 Metrics' small `release-editor.sh` adapter supplies only that selection.
 `make install-tools` runs `install-release-editor` after common setup, and
 `make tools-check` runs `release-editor-check`. Standalone targets are available

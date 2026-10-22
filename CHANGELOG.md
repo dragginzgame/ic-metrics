@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.15.6] - Unreleased
+
+- Update the release metadata editor to IC Build 0.64.0 with its required `cli`
+  feature, adopting current IC Host tooling outside the library graphs. Run
+  `make install-release-editor` before offline checks, or let normal release
+  preflight prepare it. Existing tool generations remain retained.
+- Point optional Wasm inspection documentation at the consolidated IC Tooling
+  repository; frozen experiments retain their original tool identities.
+
 ## [0.15.5] - 2026-10-22
 
 - Adopt reviewed Shared Tooling 0.26.6 with explicit optional IC tool selection

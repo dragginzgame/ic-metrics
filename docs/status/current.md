@@ -14,24 +14,24 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The released base is 0.15.4 at `b6bd4e37b6e201ac8c4c5dc99ed40ac409f0c319`.
-The pending 0.15.5 patch qualifies the resolved Memory/Storage 0.50.10 graph,
-which obtains the same 0.7.2 stable substrate through IC Platform 0.6.7.
-Published-source comparison shows stable-substrate import/re-export changes,
-with no collection implementation changes. Metrics' public APIs, V1 bytes,
-package versions, dependency requirements and Rust 1.91 floor are unchanged;
-hosts still own identity/provenance and no data reset is required.
-The application guide also exercises exact totals above the narrow reporting
-cap and requires retaining rows with unavailable narrow fields and source quality.
+The released base is 0.15.5 at `e6682425f8badf5e9c14c461037276c56f3949e9`.
+The pending 0.15.6 patch selects IC Build 0.64.0's metadata CLI with its required
+`cli` feature through the shared managed installer. The admitted receipt and
+locked tool graph select Host Artifacts, FS and Process 0.64.0. The actual editor
+reports 0.64.0 and passes the coordinated two-package metadata fixture, including
+retained failure evidence. Existing tool generations remain available.
+Optional inspector links now point to IC Tooling; experiments retain their
+own qualified tool identities, and Metrics adds no inspector pin or wrapper.
 
-Focused Linux checks pass on this graph: 25 stable unit tests, three stable
-doctests, 13 arithmetic doctests, stable-package native/Wasm Clippy and Rust 1.91
-native all-target/Wasm library checks. Frozen V1 rows reopen, allocation leases
-remain enforced, and invalid checkpoints preserve rows without writes.
-Production-graph admission and its exclusion fixtures pass for native and Wasm;
-the arithmetic package remains dependency-free and Host/Build/Testkit remain
-excluded. Documentation links and diff checks pass. Full workspace CI, native
-macOS and new IC costs were not run.
+Focused Linux checks pass: offline tool admission, formatting, production-graph
+admission/exclusion fixtures, release and native-evidence fixtures, ShellCheck,
+snapshot integrity, documentation links and diff checks. Fixture Git/Make effects
+remain substituted; the selected metadata editor and offline Cargo are real.
+Metrics' library APIs, V1 bytes, package versions, dependency requirements and
+Cargo.lock are unchanged. No full CI, Rust-floor gates, native macOS or IC cost
+experiment ran for this tooling-only batch. The
+[0.15.5 handoff](https://github.com/dragginzgame/ic-metrics/blob/e6682425f8badf5e9c14c461037276c56f3949e9/docs/status/current.md)
+retains the preceding Memory/Storage graph and arithmetic/store qualification.
 
 Shared Tooling 0.26.6 at `4cb9bc907154225a3f7e4c33fd8d75fbeaa125c8` and
 its 117 payload digests belong to [the snapshot](../../.shared-tooling.snapshot).

@@ -16,4 +16,4 @@ root="${root%/.}"
 source "$root/ci/release-tools.env"
 exec "$BASH" "$root/scripts/dev/install-rust-tools.sh" --consumer "$root" \
     --package ic-build --version "$IC_METRICS_RELEASE_EDITOR_VERSION" \
-    --bin ic-build-release-metadata --profile debug ${arguments[@]+"${arguments[@]}"}
+    --bin ic-build-release-metadata --profile debug --features cli ${arguments[@]+"${arguments[@]}"}
