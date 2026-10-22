@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.6] - Unreleased
+## [0.15.6] - 2026-10-22
 
 - Update the release metadata editor to IC Build 0.64.0 with its required `cli`
   feature, adopting current IC Host tooling outside the library graphs. Run
