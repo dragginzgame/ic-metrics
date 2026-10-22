@@ -6,6 +6,8 @@ export RELEASE_DELIVERY ?= direct
 export YQ := $(CURDIR)/.tools/host/bin/yq
 LOCAL_TOOL_INSTALL_TARGETS := install-release-editor
 LOCAL_TOOL_CHECK_TARGETS := release-editor-check
+# Normal setup needs host/Cargo tools only; optional IC tools are selected explicitly.
+IC_TOOLS :=
 
 # These frozen manifests use archive-directory paths; retain their original bytes.
 # All other maintained checksum manifests use repository-root paths.

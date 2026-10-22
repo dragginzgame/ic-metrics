@@ -8,8 +8,10 @@ dependencies. Metrics owns measurement arithmetic and optional stable snapshots;
 the consuming application owns platform reads, attribution, lifecycle and endpoints.
 
 IC Tooling owns Host, Build and Testkit. Those packages support development and
-qualification outside Metrics' production graphs. Metrics needs no Platform or
-Canic dependency to occupy this capability layer.
+qualification outside Metrics' production graphs. The arithmetic package has
+no dependencies. The optional stable package consumes Memory and Storage;
+their stable-structures dependency is supplied through IC Platform. Metrics
+does not read platform counters or depend on Canic.
 
 The `no_std` library exports `MeasurementAggregate` for mergeable
 count/total/maximum with sticky actual-overflow flags,

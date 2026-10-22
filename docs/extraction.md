@@ -106,7 +106,11 @@ V1 snapshots for counters, aggregates, summaries and histograms in one governed
 upstream B-tree map from `ic_storage::adapter`. Hosts open that public collection
 with an admitted `ic-memory::RuntimeMemory` handle, then supply it to
 `MetricsStore::new`. The selected Memory and Storage packages share that exact
-handle identity; each handle is a non-cloneable allocation lease. `into_map` returns the
+handle identity; each handle is a non-cloneable allocation lease. Memory and
+Storage obtain the stable substrate through IC Platform's
+`stable-structures` feature. This transitive dependency adds no platform reads
+to Metrics and grants no allocation authority; hosts still use Memory handles
+and Storage's governed map. `into_map` returns the
 public Storage collection with its lease intact. `MetricsMap<M>` is an exact
 alias for its byte key/value shape, with no separate collection implementation
 or lifecycle policy. Drop the store or returned map before reopening through the

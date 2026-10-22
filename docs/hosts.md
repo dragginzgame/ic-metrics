@@ -91,6 +91,12 @@ make install-hooks
 ```
 
 Setup is explicit; checks never install tools or unlock the selected graph.
+Normal setup selects host and Cargo tools plus the release editor, with no IC
+executables. For optional IC tooling, pass the same explicit `IC_TOOLS` selection
+to `make install-ic-tools` and `make ic-tools-check`, such as `IC_TOOLS=wasm-opt`.
+The full reviewed catalog remains intact, and previous IC bundles are retained.
+The native version report uses its host/Cargo-only interface; failed setup still
+retains full tool evidence, including existing unselected IC bundles.
 Prepare the locked application sources before offline release-fixture checks;
 common tool setup prepares different Cargo graphs. Native CI fetches explicitly
 before `make ci`. A snapshot retirement leaves tracked deletions until committed;

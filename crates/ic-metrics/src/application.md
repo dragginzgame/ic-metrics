@@ -174,6 +174,8 @@ assert_eq!(instructions.total(), u128::from(u64::MAX) + 1);
 assert!(!instructions.samples_overflowed());
 assert!(!instructions.total_overflowed());
 assert_eq!(instructions.mean()?, Some((u128::from(u64::MAX) + 1) / 2));
+// This exact total is unavailable only in the narrower reporting field.
+assert_eq!(u64::try_from(instructions.total()).ok(), None);
 # Ok(())
 # }
 ```
@@ -181,6 +183,9 @@ assert_eq!(instructions.mean()?, Some((u128::from(u64::MAX) + 1) / 2));
 Transport encoding, decimal presentation and authorization remain consumer-owned.
 Preserve a row with its quality or an explicit unavailable projection when a
 narrow consumer cannot represent it; silently dropping the row loses its identity.
+A failed narrowing conversion is distinct from accumulator overflow. In the
+example above, the total is exact and both overflow flags remain false. Keep
+the row and mark the narrow field unavailable; do not filter out its row.
 
 Use checked histogram projections when reporting a distribution. A cumulative
 count applies to a configured upper bound; a nearest-rank quantile locates a

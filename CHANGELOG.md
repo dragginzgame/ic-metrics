@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.15.5] - Unreleased
+
+- Adopt reviewed Shared Tooling 0.26.6 with explicit optional IC tool selection
+  and hardened validation logs, checksums and failure evidence. Normal setup
+  remains host/Cargo-only; optional IC setup and checks require the same
+  `IC_TOOLS` list. Existing tool bundles and release evidence remain retained.
+- Qualify the resolved Memory/Storage 0.50.10 graph, which supplies the unchanged
+  stable substrate through IC Platform 0.6.7. Metrics APIs, V1 records and the
+  Rust 1.91 floor are unchanged; no data reset is required.
+- Clarify that narrow reports must retain metric rows when an exact wide total
+  cannot fit, preserving source overflow quality separately from narrowing failure.
+
 ## [0.15.4] - 2026-10-21
 
 - Reject stable aggregate, summary and histogram checkpoints whose exact-count

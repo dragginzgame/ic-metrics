@@ -14,23 +14,37 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The released base is 0.15.3 at `3558710376f4cf19f2332f0059d7b81aa844513a`.
-The pending 0.15.4 patch tightens stable checkpoint admission: exact-count
-transitions must fit the added observations' total, required maximum, latest
-value and bucket ranges. Impossible transitions use the existing
-`StoreError::StateRegression` before writes. Valid appends, clipped-count
-behavior, public signatures and V1 bytes remain unchanged; package versions
-and dependency selections are untouched. Hosts still own identity/provenance.
+The released base is 0.15.4 at `b6bd4e37b6e201ac8c4c5dc99ed40ac409f0c319`.
+The pending 0.15.5 patch qualifies the resolved Memory/Storage 0.50.10 graph,
+which obtains the same 0.7.2 stable substrate through IC Platform 0.6.7.
+Published-source comparison shows stable-substrate import/re-export changes,
+with no collection implementation changes. Metrics' public APIs, V1 bytes,
+package versions, dependency requirements and Rust 1.91 floor are unchanged;
+hosts still own identity/provenance and no data reset is required.
+The application guide also exercises exact totals above the narrow reporting
+cap and requires retaining rows with unavailable narrow fields and source quality.
 
-Focused Linux checks pass: 25 stable unit tests, three doctests, native/Wasm
-Clippy, Rust 1.91 native all-target/Wasm library checks and warning-denied
-Rustdoc. Rejection tests preserve rows without writes; 7,225 recorded extensions
-remain admitted. The six declared downstream consumer scans found no maintained
-stable-store callers. Full workspace CI, native macOS and new IC costs were not run.
+Focused Linux checks pass on this graph: 25 stable unit tests, three stable
+doctests, 13 arithmetic doctests, stable-package native/Wasm Clippy and Rust 1.91
+native all-target/Wasm library checks. Frozen V1 rows reopen, allocation leases
+remain enforced, and invalid checkpoints preserve rows without writes.
+Production-graph admission and its exclusion fixtures pass for native and Wasm;
+the arithmetic package remains dependency-free and Host/Build/Testkit remain
+excluded. Documentation links and diff checks pass. Full workspace CI, native
+macOS and new IC costs were not run.
 
-Shared Tooling's reviewed source and payload digests belong to
-[the snapshot](../../.shared-tooling.snapshot). The delivered 0.25.9 release
-guard matches [PR #96](https://github.com/dragginzgame/ic-metrics/pull/96), now
+Shared Tooling 0.26.6 at `4cb9bc907154225a3f7e4c33fd8d75fbeaa125c8` and
+its 117 payload digests belong to [the snapshot](../../.shared-tooling.snapshot).
+Normal setup explicitly selects no IC executables; optional IC setup and checks
+use the same `IC_TOOLS` list. Prior bundles and failure evidence stay retained.
+Focused Linux adoption checks pass: snapshot integrity, offline tools, formatting
+and hooks, production graphs/exclusion fixtures, local release and native-evidence
+fixtures, upstream validation-runner/digest/reporter/fixture-copy tests, ShellCheck,
+Perl syntax, documentation links and diff checks. Native evidence fixtures use
+substituted action/Make effects; no hosted run or native macOS result is claimed.
+Full CI and Rust-floor gates were not rerun for this tooling-only adoption.
+The previously delivered 0.25.9 release guard matches
+[PR #96](https://github.com/dragginzgame/ic-metrics/pull/96), now
 closed as superseded. Its obsolete branch and the six other delivered or retired
 contribution branches are deleted; verified private backups remain. Compiler and
 library selections stay local; the host guide owns setup and policy.
