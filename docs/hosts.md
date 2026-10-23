@@ -36,11 +36,13 @@ collection or turn a failed check into a successful one.
 
 ## Prerequisites and focused checks
 
-After adopting Shared Tooling 0.25.3, rerun `make install-tools`, then
-`make tools-check`: the build-helper policy participates in tool identity.
-Previous generations remain retained. Metrics' release editor selects no extra
-Cargo features; the shared installer also supports explicit feature sets for
-tools that need them, without adding a library dependency.
+After adopting Shared Tooling 0.26.8, rerun `make install-tools`, then
+`make tools-check`: the changed build-helper policy participates in tool identity.
+Explicit Cargo setup waits up to 60 seconds per occupied admitted slot, while
+offline checks remain immediate. The shared [setup guide](local-setup.md#standard-cargo-tool-build-environment)
+owns the wait-budget override and lock admission. Previous generations remain
+retained. Metrics' release editor selects the required `cli` feature through the
+managed installer, without adding a library dependency.
 
 Prepare the pinned Rust 1.99.1 development toolchain with rustfmt, Clippy and
 `wasm32-unknown-unknown`. Prepare Rust 1.91.0, including its Wasm

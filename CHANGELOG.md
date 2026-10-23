@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.7] - Unreleased
+
+- Adopt reviewed Shared Tooling 0.26.8: explicit Cargo-tool setup waits for an
+  admitted shared-slot owner and handles lock withdrawal during cleanup. Source
+  cache initialization no longer uses a global installation lock; offline checks
+  still refuse immediately. Run `make install-tools` once after adoption for the
+  changed build-policy identity. Previous generations and evidence remain retained.
+
 ## [0.15.6] - 2026-10-22
 
 - Update the release metadata editor to IC Build 0.64.0 with its required `cli`

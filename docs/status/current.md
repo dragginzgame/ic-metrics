@@ -14,35 +14,37 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The released base is 0.15.5 at `e6682425f8badf5e9c14c461037276c56f3949e9`.
-The pending 0.15.6 patch selects IC Build 0.64.0's metadata CLI with its required
-`cli` feature through the shared managed installer. The admitted receipt and
-locked tool graph select Host Artifacts, FS and Process 0.64.0. The actual editor
-reports 0.64.0 and passes the coordinated two-package metadata fixture, including
-retained failure evidence. Existing tool generations remain available.
-Optional inspector links now point to IC Tooling; experiments retain their
-own qualified tool identities, and Metrics adds no inspector pin or wrapper.
+The released base is 0.15.6 at `356a8c7f9defe136f20e7737e76891954c9c590f`.
+The pending 0.15.7 patch adopts Shared Tooling's bounded Cargo setup waiting,
+lock-withdrawal handling and source-cache initialization without a global lock.
+The build-policy digest changed; explicit `make install-tools` completed and
+offline checks admit the newly selected common tools and IC Build 0.64.0 editor
+with its required `cli` feature. Tool pins and previous generations are retained.
 
-Focused Linux checks pass: offline tool admission, formatting, production-graph
-admission/exclusion fixtures, release and native-evidence fixtures, ShellCheck,
-snapshot integrity, documentation links and diff checks. Fixture Git/Make effects
-remain substituted; the selected metadata editor and offline Cargo are real.
-Metrics' library APIs, V1 bytes, package versions, dependency requirements and
-Cargo.lock are unchanged. No full CI, Rust-floor gates, native macOS or IC cost
-experiment ran for this tooling-only batch. The
-[0.15.5 handoff](https://github.com/dragginzgame/ic-metrics/blob/e6682425f8badf5e9c14c461037276c56f3949e9/docs/status/current.md)
-retains the preceding Memory/Storage graph and arithmetic/store qualification.
+Focused Linux checks pass: upstream Cargo-installer and lock-wait fixtures,
+offline tool admission, formatting and hooks, production-graph/exclusion checks,
+release and native-evidence fixtures, ShellCheck, snapshot integrity,
+documentation links and diff checks. Fixture Git/Make effects remain substituted;
+the selected metadata editor and offline Cargo are real. Producer fixtures cover
+contention, owner withdrawal, timeout, interruption and immediate offline refusal.
+The GitHub description still matches this repository's measurement scope.
+No full CI, Rust-floor gates, native macOS or IC cost experiment ran.
 
-Shared Tooling 0.26.6 at `4cb9bc907154225a3f7e4c33fd8d75fbeaa125c8` and
+The incoming Cargo.lock update is preserved byte-for-byte. Graph-policy checks
+pass on that selection; this tooling adoption does not qualify its new
+Memory/Storage/Platform runtime behavior. Library source, APIs, V1 bytes,
+package versions and dependency requirements are unchanged by this batch. The
+[0.15.6 handoff](https://github.com/dragginzgame/ic-metrics/blob/356a8c7f9defe136f20e7737e76891954c9c590f/docs/status/current.md)
+retains the preceding tool and library qualification.
+
+Shared Tooling 0.26.8 at `0b07c2a3163a5a66328e100b553baf93afd8ed07` and
 its 117 payload digests belong to [the snapshot](../../.shared-tooling.snapshot).
 Normal setup explicitly selects no IC executables; optional IC setup and checks
 use the same `IC_TOOLS` list. Prior bundles and failure evidence stay retained.
-Focused Linux adoption checks pass: snapshot integrity, offline tools, formatting
-and hooks, production graphs/exclusion fixtures, local release and native-evidence
-fixtures, upstream validation-runner/digest/reporter/fixture-copy tests, ShellCheck,
-Perl syntax, documentation links and diff checks. Native evidence fixtures use
+Prior validation-runner/digest/reporter/fixture-copy evidence retains its original
+source identity in the preceding handoffs; those unchanged helpers were not
+requalified independently in this adoption. Native evidence fixtures use
 substituted action/Make effects; no hosted run or native macOS result is claimed.
-Full CI and Rust-floor gates were not rerun for this tooling-only adoption.
 The previously delivered 0.25.9 release guard matches
 [PR #96](https://github.com/dragginzgame/ic-metrics/pull/96), now
 closed as superseded. Its obsolete branch and the six other delivered or retired
