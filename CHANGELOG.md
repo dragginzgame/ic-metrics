@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.7] - Unreleased
+## [0.15.7] - 2026-10-23
 
 - Adopt reviewed Shared Tooling 0.26.8: explicit Cargo-tool setup waits for an
   admitted shared-slot owner and handles lock withdrawal during cleanup. Source
