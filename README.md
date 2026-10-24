@@ -4,12 +4,12 @@ Allocation-free, dependency-free measurement arithmetic.
 
 IC Metrics is a standalone application capability alongside IC Timers, IC Jobs
 and IC Auth. Applications and Canic compose these packages through explicit
-dependencies. Metrics owns measurement arithmetic and optional stable snapshots;
+dependencies. Metrics owns measurement arithmetic;
 the consuming application owns platform reads, attribution, lifecycle and endpoints.
 
 IC Tooling owns Host, Build and Testkit. Those packages support development and
 qualification outside Metrics' production graphs. The arithmetic package has
-no dependencies. The optional stable package consumes Memory and Storage;
+no dependencies. IC Persistence's optional stable package consumes Memory and Storage;
 their stable-structures dependency is supplied through IC Platform. Metrics
 does not read platform counters or depend on Canic.
 
@@ -67,7 +67,7 @@ differences and mean after the owner establishes common identity, units and
 append-only continuity. It rejects actual overflow and numeric discontinuity;
 maximum and latest values cannot be subtracted. Ordered summaries do not merge.
 
-The [optional stable adapter](crates/ic-metrics-stable/README.md) stores
+IC Persistence owns the [optional stable adapter](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable) which stores
 counters, aggregates, summaries and histograms in one host-owned stable B-tree map,
 using IC Storage's governed collection over admitted IC Memory handles.
 Namespaced records retain units, reset epochs,
@@ -183,7 +183,7 @@ vendored; normal commands need no Shared Tooling sibling checkout.
 `make fmt` sorts workspace manifests within dependency groups and formats Rust; `make fmt-check` checks
 without editing. `make help` lists focused commands. Select named tests during
 implementation. `make check`, `make check-wasm`, `make clippy`, `make docs-check`
-and `make test` cover both workspace packages; use `cargo ... -p PACKAGE --locked`
+and `make test` cover the arithmetic package; use `cargo ... -p PACKAGE --locked`
 for focused package checks.
 Full release validation uses `make ci` and workspace-native/Wasm `make msrv`;
 implementation, inspection and documentation use focused checks under the shared
@@ -237,8 +237,7 @@ make publish
 ```
 
 `publish-check` is Cargo's dry run; `publish` uploads only the existing
-`ic-metrics` and `ic-metrics-stable` package versions to crates.io in dependency
-order, using normal Cargo credentials and
+`ic-metrics` package version to crates.io, using normal Cargo credentials and
 locked dependencies. Both retain Cargo's package verification and dirty-tree
 rejection. Publication does not bump versions, create Git commits/tags or clean
 artifacts. See [Cargo's publication documentation](https://doc.rust-lang.org/cargo/commands/cargo-publish.html).

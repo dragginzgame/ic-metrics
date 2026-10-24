@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.16.0]
+
+- Move `ic-metrics-stable` to IC Persistence, retaining its crate name, public
+  API and V1 stored bytes. This repository now publishes only dependency-free
+  `ic-metrics`; its arithmetic API and Rust 1.91 floor are unchanged.
+- **Upgrade:** stable-adapter users select its published Persistence release
+  line together with Memory and Storage. See the
+  [migration guide](https://github.com/dragginzgame/ic-persistence/blob/main/docs/migration/ic-metrics-stable.md).
+  Existing published 0.15 adapter archives remain available; no data reset is needed.
+
 ## [0.15.8] - 2026-10-24
 
 - Adopt reviewed Shared Tooling 0.26.10, including literal formatting catalog
@@ -334,7 +344,7 @@
 - Require IC Storage's governed upstream-map facade for durable metrics. Open
   `MetricsMap` with the host's admitted `ic-memory` runtime handle; its generic
   parameter now names the runtime backing. Replace raw-map constructors and
-  update explicit store types under the [stable guide](crates/ic-metrics-stable/README.md#store-operations).
+  update explicit store types under the [stable guide](https://github.com/dragginzgame/ic-metrics/blob/92ff804125fb07370fad4cb24cc620f52122ac36/crates/ic-metrics-stable/README.md#store-operations).
   The upstream B-tree format, Metrics V1 records and permanent allocation keys
   are preserved; this cut requires no Metrics store reset.
 

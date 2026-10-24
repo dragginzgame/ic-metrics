@@ -75,7 +75,6 @@ Both packages use that minimum:
 | Package | Rust floor | Floor gate |
 | --- | --- | --- |
 | `ic-metrics` | 1.91, native and Wasm | `make msrv` |
-| `ic-metrics-stable` | 1.91, native and Wasm | `make msrv` |
 
 Use Git, GNU Make, Bash 3.2 or newer and standard Unix utilities. The
 [local setup guide](local-setup.md#bootstrap-prerequisites) owns system bootstrap,
@@ -112,7 +111,7 @@ Optional structural Wasm inspection follows the
 [IC Host inspector guide](https://github.com/dragginzgame/ic-tooling/tree/main/apps/ic-host-wasm-inspect).
 Experiments select their qualified published version, managed installation and
 budgets directly. Metrics has no inspector wrapper, pin or Make targets; common
-setup/check, CI, release preflight and both libraries require no inspector.
+setup/check, CI, release preflight and the arithmetic library require no inspector.
 Existing experiment sources, executable identities and artifacts remain frozen.
 The reviewed snapshot owns default pins in `ci/tool-versions.env` and
 `ci/ic-tools.tsv`; host, Rust and IC exceptions are independently selected
@@ -124,14 +123,14 @@ explicit Cargo-tool setup. Application flags and wrappers remain separate from
 [the standard tool-build environment](local-setup.md#standard-cargo-tool-build-environment).
 
 After Rust edits, run `make fmt`. It sorts workspace manifests and formats Rust;
-`make fmt-check` is read-only. The common product gates cover both workspace
-packages; select direct Cargo commands when only one package or test is affected:
+`make fmt-check` is read-only. The common product gates cover the arithmetic workspace
+package; select direct Cargo commands when only one package or test is affected:
 
 | Scope | Commands |
 | --- | --- |
 | Both packages | `make check check-wasm clippy docs-check test` |
 | One package | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
-| Named tests | `cargo test -p ic-metrics --locked <test-name>` or `cargo test -p ic-metrics-stable --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
+| Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
 | Snapshot/pins | `make shared-tooling-check check-pins` |
 | Local tools/hooks | `make tools-check hook-check` |
 | Release/evidence adapters | `make release-tools-check ci-evidence-check` |
@@ -149,24 +148,19 @@ and are not compared with current files.
 
 ### Dependency roles and production graphs
 
-Both workspace members are production libraries. Memory, Metrics and Storage
-occupy the root catalog's `Production dependencies` group. Memory also supplies
-the stable package's native development feature, `test-support`. The separate
-`Tests and tooling only` group selects `num-bigint` for the arithmetic ratio
-oracle, with default features disabled. It is inherited only by arithmetic
-development dependencies; neither production graph includes it. There are no
-separate test/tooling packages. These roles describe workspace use, not registry
-publication. Keep the single catalog and inherited selections; `ic-metrics`
-remains dependency-free in production.
+The sole workspace member is the dependency-free arithmetic library. The root
+catalog's `Tests and tooling only` group selects `num-bigint` for the ratio
+oracle, with default features disabled. It is inherited only by development
+dependencies. IC Persistence owns stable-adapter graph admission and tests.
 
-The root catalog's production section uses Shared Tooling's grouped sort order.
+The root catalog uses Shared Tooling's grouped sort order.
 `make fmt`, `make fmt-check` and hooks use that shared default; every release
 adapter ordering check uses `--manifest-order-grouped` against its current or
 selected committed source. No paired formatter override is needed here.
 
 Inspect each production package with its actual build target/features. Current
 packages define no optional product features; their native and Wasm library
-builds use defaults. For each of `ic-metrics` and `ic-metrics-stable`, use:
+builds use defaults. For `ic-metrics`, use:
 
 ```bash
 cargo tree --locked -p PACKAGE --target TARGET --edges normal,build
@@ -210,17 +204,17 @@ these library observations do not establish deployment admission.
 Keep compilation checks sequential when they share `target/`; check for active
 builds before source mutation or compilation. Bare Cargo commands select the
 arithmetic package. Builds use locked dependencies. The arithmetic graph has no
-third-party dependency, platform reader, IC feature or server harness. Native
-stable tests use `VectorMemory` for storage/codec reopening, not IC execution.
+third-party dependency, platform reader, IC feature or server harness. Stable storage qualification now belongs to IC Persistence.
 The inspector's CLI checks stay at IC Host; existing smoke artifacts under
 `target/evidence/wasm-inspector/` remain retained historical evidence.
 
 Formatting fixtures use Shared Tooling's current-source selector for maintained
 Rust sources and Cargo manifests, including pending additions and deletions.
-Metrics selects the stable package's Rust entrypoint and the workspace manifest's
-actual Metrics/Storage dependency pair. Shared Tooling generates the unsorted input
-and qualifies staged formatting, including restoration of dependency ordering.
-Metrics retains that generated input with nested checker evidence on failure;
+Metrics selects its arithmetic Rust entrypoint. Its single development dependency
+has no pair to reorder, so the hook fixture uses Shared's explicit mode without
+dependency-table perturbation. Generic manifest sorting remains qualified at
+Shared Tooling; the local fixture retains Rust formatting, preservation, failure
+diagnostics and installation checks. Failed nested checker evidence stays retained;
 explicit non-Rust overlays remain local.
 The shared locked release-preflight helper owns fetch/tool sequencing and pin
 rechecks; Metrics admits source/recovery first and selects preparation authority,
@@ -257,7 +251,7 @@ Run full local suites only for an explicitly authorized release or an explicit
 request for those checks. The full gate is `make ci`, then workspace-native/Wasm `make msrv`; reuse passing evidence only for unchanged inputs. Full CI
 admits tools, pins and formatting before the native/Wasm Clippy gate. Clippy
 denies warnings and runs before test suites, documentation builds and dependency
-qualification fixtures. The complete gate checks both packages' builds,
+qualification fixtures. The complete gate checks the arithmetic package's builds,
 docs and tests. Configured CI and required branch
 checks remain unchanged. Strict native all-target and Wasm library Clippy supply
 CI type checking; `make check` and `make check-wasm` remain focused entrypoints.
@@ -307,7 +301,7 @@ actual callers; it does not replay those generic matrices in its own gates.
 
 | Local entrypoint | Metrics-owned qualification |
 | --- | --- |
-| `make release-tools-check` | Complete standard-release, two-package metadata, hook and source-admission fixtures, followed by injected failure/custody cases. Actual Make dispatch, parallel jobserver access, catalog overrides, selected commits, index admission, gate ordering and retained logs stay checked. |
+| `make release-tools-check` | Complete standard-release, arithmetic metadata, hook and source-admission fixtures, followed by injected failure/custody cases. Actual Make dispatch, parallel jobserver access, catalog overrides, selected commits, index admission, gate ordering and retained logs stay checked. |
 | `make hook-check` | Standalone hook adoption; the actual baseline formatter failure must retain and replay its diagnostic log. |
 | `make ci-evidence-check` | Source selection/hash inputs, actual workflow setup/archive bodies and the complete native recovery packager with substituted external effects. |
 
@@ -318,8 +312,8 @@ scratch; failed inputs remain under caller-selected `TMPDIR`, defaulting to
 native CI evidence in the retention fixture. These substitutes perform no real
 Metrics release or registry publication and do not qualify hosted execution.
 
-The metadata fixture keeps the actual two-package names and stale stable-member
-refusal. `scripts/release/metadata.sh files` owns the NUL-delimited release-file
+The metadata fixture uses the arithmetic package name and rejects a stale
+local lock identity without repairing it. `scripts/release/metadata.sh files` owns the NUL-delimited release-file
 roster projected by `make release-files`; listing works without Cargo, Git or
 prepared parsers. Its bootstrap fixture is deliberately minimal. Other release
 fixtures select the declared closure of `make/consumer.mk` or the metadata
@@ -353,8 +347,8 @@ They are not current platform readers, validation commands or acceptance of a
 later dependency graph. Actual IC execution and callback attribution belong to
 the owning consumers under [the extraction contract](extraction.md#downstream-contract-checks).
 
-`make package-check` builds and verifies both real package archives offline,
-using Cargo's temporary registry to select the newly packaged arithmetic crate.
+`make package-check` builds and verifies the arithmetic archive offline.
+IC Persistence owns stable-adapter compilation, tests and archive qualification.
 It allows pending source changes for review, never uploads, and runs after
 Clippy in CI and again after release metadata preparation before staging.
 Prepared dependency sources are required; it does not install or update them.
