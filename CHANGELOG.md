@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.15.8] - Unreleased
+## [0.15.8] - 2026-10-24
 
 - Adopt reviewed Shared Tooling 0.26.10, including literal formatting catalog
   admission, dependency diagnostics and offline tool reporting.
