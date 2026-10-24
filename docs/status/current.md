@@ -1,10 +1,10 @@
 # Current handoff
 
 IC Metrics owns allocation-free, dependency-free `no_std` integer arithmetic.
-The optional stable package owns validated V1 snapshots in one governed Storage
-map. Consumers own sampling, attribution, units, identities, registries, lifecycle
+IC Persistence now owns the optional stable adapter and its governed-map tests.
+This checkout publishes only arithmetic; historical receipts retain their sources. Consumers own sampling, attribution, units, identities, registries, lifecycle
 and endpoints. [The extraction contract](../extraction.md),
-[stable guide](../../crates/ic-metrics-stable/README.md) and
+[stable guide](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable) and
 [host guide](../hosts.md) own those boundaries and local qualification commands.
 
 ## Selection and qualification
@@ -14,29 +14,24 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The released base is 0.15.7 at `69dcae8b52defbe834dc970cfb8f98cd3eeabcfc`.
-The pending 0.15.8 patch adopts Shared Tooling 0.26.10 at
-`a8141e775983c7fe504c4dd911e978152e657fdf` (119 snapshot payloads),
-verified against remote HEAD. Common tool and release-editor pins are unchanged.
+Source base is IC Metrics `92ff804125fb07370fad4cb24cc620f52122ac36` (0.15.8).
+Pending 0.16.0 retires adapter source, stable dependencies and coordinated
+publication here, after the separate Persistence addition is integrated and
+published. Crate name, API and V1 bytes are unchanged at the new owner. The
+arithmetic package remains at its existing version until a separately authorized
+release; no registry publication or release effect is part of this migration.
 
-Stable qualification now compares all 7,225 bounded state pairs against an
-independent reachable-state model for aggregates, summaries and histograms.
-Populated independently encoded V1 rows reopen with wide totals and counter
-loss flags intact; mutation checks include multi-bit masks. No production
-arithmetic, public API or persisted format changed. The stable guide clarifies
-that codec size admission follows Storage's allocation of the retrieved value.
+The source and tests were copied unchanged into Persistence. Its migration guide
+owns provenance, new version selection and validation boundaries. This checkout's
+package archive, dependency-free native/Wasm graphs, metadata and publication
+fixtures now select only arithmetic. Earlier stable tests, IC costs and package
+qualification in Git history retain their original source and lock selections;
+they are not fresh qualification of the new workspace.
 
-`make package-check` performs actual offline Cargo archive creation and build
-verification for both packages. Cargo's temporary registry selects the newly
-packaged arithmetic crate. CI runs it after Clippy and tests; release preparation
-runs it after metadata changes and before staging. No publication is performed.
-
-The incoming lock selection is preserved: Memory/Storage 0.50.13 and Platform
-0.6.12. Focused Linux stable tests (27 plus 3 doctests), native/Wasm strict Clippy
-and Rust 1.91 checks pass, as do actual package verification, snapshot integrity,
-formatting, production graph policy and upstream formatting/graph fixtures.
-No full CI, native macOS or fresh IC cost experiment is claimed. Earlier frozen
-performance receipts retain their original dependency identities.
+Focused Linux checks pass: arithmetic tests/doctests, native/Wasm strict Clippy
+and Rust 1.91 compilation, offline packaging, dependency policy, metadata and
+publication dispatch, formatting hooks, snapshot admission and document links.
+The full release gate, hosted CI and native macOS remain unrun in this migration.
 
 Normal setup explicitly selects no IC executables; optional IC setup and checks
 use the same `IC_TOOLS` list. Prior bundles and failure evidence stay retained.

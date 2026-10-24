@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/ic-metrics", "crates/ic-metrics-stable"]
+members = ["crates/ic-metrics"]
 default-members = ["crates/ic-metrics"]
 resolver = "3"
 
@@ -13,12 +13,6 @@ authors = ["borovan <84897664+borovan@users.noreply.github.com>"]
 description = "Allocation-free, dependency-free measurement arithmetic"
 
 [workspace.dependencies]
-# Production dependencies
-# Keep Memory and Storage on the same published runtime-handle API.
-ic-memory = "0.50"
-ic-metrics = { version = "0.15", path = "crates/ic-metrics" }
-ic-storage = "0.50"
-
 # Tests and tooling only
 num-bigint = { version = "0.5.1", default-features = false }
 
