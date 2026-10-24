@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.16.0]
+## [0.16.0] - 2026-10-24
 
 - Move `ic-metrics-stable` to IC Persistence, retaining its crate name, public
   API and V1 stored bytes. This repository now publishes only dependency-free
