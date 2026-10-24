@@ -69,7 +69,7 @@ help:
 	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
-	@echo "Registry: publish-check (dry run), publish (upload arithmetic and stable adapter to crates.io)"
+	@echo "Registry: publish-check (dry run), publish (upload arithmetic to crates.io)"
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Release editor (also in install-tools/tools-check): install-release-editor, release-editor-check"
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
@@ -80,23 +80,22 @@ help:
 	@echo "Frozen evidence archive checksums (read-only): evidence-check"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
-	@echo "Workspace gates cover arithmetic and the durable adapter; native/Wasm minimum: msrv"
+	@echo "Workspace gates cover the arithmetic library; native/Wasm minimum: msrv"
 	@echo "Full release validation (or explicit check request): ci, msrv"
 
 publish:
 	+$(MAKE) --no-print-directory clippy
-	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io
+	+cargo publish -p $(PACKAGE) --locked --registry crates-io
 
 .PHONY: package-check
 
-# Cargo verifies both archives through its temporary registry, including the
-# newly packaged arithmetic dependency. No registry upload or version mutation.
+# Verify the arithmetic archive offline. No registry upload or version mutation.
 package-check:
 	+cargo package --workspace --locked --offline --allow-dirty
 
 publish-check:
 	+$(MAKE) --no-print-directory clippy
-	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io --dry-run
+	+cargo publish -p $(PACKAGE) --locked --registry crates-io --dry-run
 
 hook-check:
 	bash scripts/dev/test-format-hook.sh
@@ -129,7 +128,7 @@ check-doc-links:
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md tasks/*.md
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
-		crates/ic-metrics/src/application.md crates/ic-metrics-stable/README.md
+		crates/ic-metrics/src/application.md
 
 test:
 	+cargo test --workspace --locked

@@ -63,30 +63,25 @@ for entry in scripts/release/metadata.sh "$bootstrap/scripts/release/metadata.sh
 done
 cmp original.toml "$bootstrap/Cargo.toml"
 worktree="$fixture/prepared"
-mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/crates/ic-metrics-stable/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
+mkdir -p "$worktree/crates/ic-metrics/src" "$worktree/target" "$worktree/originals" "$worktree/scripts/ci" "$worktree/attempts"
 cp "$root/scripts/ci/finalize-release-changelog.awk" "$worktree/scripts/ci/"
 cd "$worktree"
 export CARGO_TARGET_DIR="$worktree/target" TMPDIR="$worktree/attempts"
 cat > Cargo.toml <<'TOML'
 [workspace]
-members = ["crates/ic-metrics", "crates/ic-metrics-stable"]
+members = ["crates/ic-metrics"]
 resolver = "3"
 [workspace.package]
 version = "0.1.1"
 edition = "2024"
-[workspace.dependencies]
-ic-metrics = { version = "0.1", path = "crates/ic-metrics" }
 TOML
-for package in ic-metrics ic-metrics-stable; do
-    cat > "crates/$package/Cargo.toml" <<TOML
+    cat > crates/ic-metrics/Cargo.toml <<'TOML'
 [package]
-name = "$package"
+name = "ic-metrics"
 version.workspace = true
 edition.workspace = true
 TOML
-    printf '#![no_std]\n' > "crates/$package/src/lib.rs"
-done
-printf '\n[dependencies]\nic-metrics.workspace = true\n' >> crates/ic-metrics-stable/Cargo.toml
+printf '#![no_std]\n' > crates/ic-metrics/src/lib.rs
 printf '# Changelog\n\n## [0.2.0] - Unreleased\n\n- Consumer note.\n\n## [0.1.1] - 2026-10-05\n\n- Previous.\n' > CHANGELOG.md
 cargo generate-lockfile --offline > setup.log 2>&1
 cargo sort --workspace --grouped >> setup.log 2>&1
@@ -100,20 +95,19 @@ grep -Fxq "## [$RELEASE_VERSION] - $RELEASE_DATE" CHANGELOG.md
 if grep -q Unreleased CHANGELOG.md; then exit 1; fi
 cargo metadata --locked --offline --format-version 1 | jq -r \
     '.packages[] | select(.source == null) | [.name,.version] | @tsv' | LC_ALL=C sort > actual-packages
-printf 'ic-metrics\t0.2.0\nic-metrics-stable\t0.2.0\n' > expected-packages
+printf 'ic-metrics\t0.2.0\n' > expected-packages
 cmp expected-packages actual-packages
-# Keep the real two-package consumer boundary independent of upstream toy names.
+# A stale local arithmetic identity must be rejected without repairing the lock.
 cp Cargo.lock prepared.lock
-awk '/^\[\[package\]\]$/ { adapter=0 }
-     $0 == "name = \"ic-metrics-stable\"" { adapter=1 }
-     adapter && /^version = / { $0="version = \"0.1.1\"" } { print }' prepared.lock > Cargo.lock
+awk '$0 == "name = \"ic-metrics\"" { metric=1 }
+     metric && /^version = / { $0="version = \"0.1.1\""; metric=0 } { print }' prepared.lock > Cargo.lock
 cp Cargo.lock stale.lock
 if bash "$root/scripts/release/metadata.sh" check > stale-check.log 2>&1; then
-    echo 'stale stable adapter was admitted' >&2; exit 1
+    echo 'stale arithmetic identity was admitted' >&2; exit 1
 fi
 cmp stale.lock Cargo.lock
 cp prepared.lock Cargo.lock
 bash "$root/scripts/release/metadata.sh" check >> result.log 2>&1
 cmp originals/evidence target/evidence
-echo 'Metrics coordinated-package metadata delegation passed (Git/Make substituted; offline Cargo metadata real)'
+echo 'Metrics arithmetic metadata delegation passed (Git/Make substituted; offline Cargo metadata real)'
 fixture_complete=true

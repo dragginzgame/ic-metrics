@@ -132,7 +132,7 @@ refused the loopback download-test server, with the unchanged gate passing after
 granting local socket access. Hosted acceptance and release execution remain separate.
 
 The released 0.10.0 batch also adds optional durable scalar counters to the
-existing one-map store; [the stable README](../../crates/ic-metrics-stable/README.md) owns supported
+existing one-map store; [the stable README](https://github.com/dragginzgame/ic-metrics/blob/92ff804125fb07370fad4cb24cc620f52122ac36/crates/ic-metrics-stable/README.md) owns supported
 kinds, identity, reset and write policy. Existing V1 layouts require no reset.
 [The frozen counter qualification](../evidence/durable-counter-097.md) retains
 its exact source before this API cut, including the earlier passing CI/floors

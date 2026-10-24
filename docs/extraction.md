@@ -11,13 +11,13 @@ crate documentation and supplies compiled examples.
 Metrics is an independently released application capability, at the same layer
 as Timers, Jobs and Auth. Applications and Canic compose those capabilities;
 Metrics does not depend on those consumers or own their orchestration policy.
-Its arithmetic package stays portable and dependency-free. The stable adapter
-opts into IC Persistence's Memory/Storage packages through their published APIs.
+Its arithmetic package stays portable and dependency-free. IC Persistence owns
+the separately published stable adapter alongside its Memory/Storage packages.
 
 IC Tooling owns the separate Host, Build and Testkit packages. Benchmark parsing,
 finite-sample reporting and tooling-specific arithmetic stay with that reporter;
 Metrics' general integer APIs remain here.
-Qualification tools do not enter either Metrics production graph. Existing frozen
+Qualification tools do not enter the Metrics production graph. Existing frozen
 receipts preserve the supplying packages and repository identities they measured.
 
 ## Arithmetic ownership
@@ -32,7 +32,7 @@ receipts preserve the supplying packages and repository identities they measured
 
 Summaries and histograms project count, total,
 maximum, mean and scaled mean through `aggregate()`. The summary's latest
-observation remains summary-owned. Both packages require Rust 1.91 on native and
+observation remains summary-owned. The arithmetic package requires Rust 1.91 on native and
 Wasm. Each consumer qualifies its own integration.
 
 `validate_histogram_bounds` admits borrowed strictly increasing bounds without
@@ -101,7 +101,7 @@ Consumers read counter 1 through their own adapters: IcyDB and Canic use
 Inclusive overlapping IcyDB spans and exclusive Canic endpoint accounting remain
 separate contracts; there is no attribution-mode switch or product dependency.
 
-The optional [stable package](../crates/ic-metrics-stable/README.md) owns validated
+IC Persistence's optional [stable package](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable) owns validated
 V1 snapshots for counters, aggregates, summaries and histograms in one governed
 upstream B-tree map from `ic_storage::adapter`. Hosts open that public collection
 with an admitted `ic-memory::RuntimeMemory` handle, then supply it to
@@ -139,7 +139,7 @@ experiments retain their own qualified tool identity; Metrics maintains no CLI
 adapter or pin. Common setup, CI and release preflight require no inspector. It
 does not execute canisters or estimate instruction/cycle costs. PocketIC provisioning and lifecycle
 belong to IC Testkit; this workspace has no maintained server caller.
-No IC Host package is required to compile or use either published Metrics library.
+No IC Host package is required to compile or use the arithmetic library.
 
 ## Downstream contract checks
 

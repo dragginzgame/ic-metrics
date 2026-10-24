@@ -259,7 +259,7 @@ for selection in '' --no-print-directory; do
     cmp "$fixture/cache-entry-expected" "$EVENTS"
 done
 
-# Archive admission must build both packages and propagate Cargo failure.
+# Archive admission must build the arithmetic package and propagate Cargo failure.
 for fail in 0 1; do
     : > "$EVENTS"
     status=0
@@ -279,7 +279,7 @@ for target in publish publish-check; do
         if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
         printf '%s\n' clippy --workspace --all-targets --locked -- -D warnings > "$fixture/expected"
         printf '%s\n' clippy --workspace --lib --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
-        printf '%s\n' publish -p ic-metrics -p ic-metrics-stable --locked --registry crates-io >> "$fixture/expected"
+        printf '%s\n' publish -p ic-metrics --locked --registry crates-io >> "$fixture/expected"
         if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
         cmp "$fixture/expected" "$EVENTS"
     done

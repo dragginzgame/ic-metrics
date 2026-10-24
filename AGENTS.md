@@ -10,21 +10,15 @@ and [the extraction contract](docs/extraction.md) before implementation.
 
 - Own small, allocation-free measurement arithmetic. Keep the library
   dependency-free and `no_std`; consumers own platform counter reads.
-- The separately opted-in `ic-metrics-stable` package owns one-map snapshot
-  encoding and validated restoration, using IC Storage's governed upstream-map
-  facade over handles issued by `ic-memory`.
-  Its native/Wasm Rust floor is 1.91. Hosts own the allocation key, bootstrap,
-  collection lifecycle, identities, synchronization, write cadence and resets.
+- IC Persistence owns the separately opted-in `ic-metrics-stable` package, its
+  governed Memory/Storage integration, tests and release. This repository owns
+  only arithmetic. Hosts retain allocation, lifecycle, identities and write cadence.
   Never add stable-memory dependencies to the arithmetic package.
-  Do not depend on `ic-stable-structures` directly, including in tests;
-  collection access goes through IC Storage's governed facade.
-  Hosts open the public IC Storage map using admitted handles and supply it to
-  the store; map transfer retains the allocation lease. Collection lifecycle stays local.
 - IC Host owns the published `ic-host-wasm-inspect` CLI, its installation guide
   and Rust floor. Optional evidence experiments select their own qualified tool
   identity; Metrics owns no inspector wrapper, pin or workspace dependency.
   Source-less lock packages must be workspace-owned; external path dependencies
-  are not permitted. Release metadata advances both local workspace rows together.
+  are not permitted. Release metadata advances only the local arithmetic package.
 - Consumer code owns measurement attribution, registries, labels, replication
   policy, reset/restart identity, persistence, lifecycle hooks, and endpoints.
   Do not add dependencies on IcyDB, Canic, `ic-timers`, or `ic-backup`.
@@ -92,13 +86,13 @@ and [the extraction contract](docs/extraction.md) before implementation.
 - Metrics selects the released IC Build metadata editor in `ci/release-tools.env`.
   Explicit setup installs it through the shared managed installer; checks and
   metadata preparation only admit an already prepared selection. It is tooling,
-  never a dependency of either library.
+  never a dependency of the arithmetic library.
 - `make check-pins` requires prepared Git, jq and Mike Farah yq. Checks never
   install tools or unlock dependency graphs. Select product CLI adapters through
   the shared managed installer; keep application compiler policy local.
 - Shared structural reviews use [the common methods](audits/README.md), with
   this overlay's allocation, units, counter identity and ownership constraints.
-  Source scope includes `crates/ic-metrics`, `crates/ic-metrics-stable`, owning
+  Source scope includes `crates/ic-metrics`, owning
   tooling and the affected downstream contracts in `docs/extraction.md`; focused
   commands remain in `docs/hosts.md`.
   Existing performance evidence under `docs/evidence` retains its domain scope

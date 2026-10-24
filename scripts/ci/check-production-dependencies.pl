@@ -5,7 +5,7 @@ use Cwd qw(getcwd);
 use FindBin qw($Bin);
 use JSON::PP qw(decode_json);
 
-# Metrics owns this two-library policy. Cargo owns target/feature resolution;
+# Metrics owns this arithmetic-only policy. Cargo owns target/feature resolution;
 # this check never installs tools, builds artifacts or changes the locked graph.
 if (@ARGV) {
     @ARGV == 2 && shift(@ARGV) eq '--consumer'
@@ -36,7 +36,7 @@ my %packages;
 for my $package (@{$metadata->{packages}}) {
     next unless $members{$package->{id}};
     my $name = $package->{name};
-    ($name eq 'ic-metrics' || $name eq 'ic-metrics-stable') && !$packages{$name}++
+    ($name eq 'ic-metrics') && !$packages{$name}++
         or die "unclassified production workspace package: $name\n";
     ref($package->{dependencies}) eq 'ARRAY' or die "missing declared dependencies\n";
     for my $dependency (@{$package->{dependencies}}) {
@@ -45,19 +45,14 @@ for my $package (@{$metadata->{packages}}) {
             or die "$name directly depends on the stable substrate\n";
     }
 }
-keys(%members) == 2 && keys(%packages) == 2
-    or die "expected both Metrics production libraries\n";
+keys(%members) == 1 && keys(%packages) == 1
+    or die "expected only the Metrics arithmetic library\n";
 my @hosts = observe(qw(rustc -vV)) =~ /^host: ([A-Za-z0-9_-]+)$/mg;
 @hosts == 1 or die "cannot identify the prepared compiler host\n";
 my %targets = map { $_ => 1 } ($hosts[0], 'wasm32-unknown-unknown');
 for my $target (sort keys %targets) {
     for my $root (sort keys %packages) {
-        my @policy = $root eq 'ic-metrics'
-            ? ('--forbid-pattern', '^(?!ic-metrics$)', '--require', 'ic-metrics=1')
-            : ('--forbid-pattern', '^ic-(?:build|host|testkit)(?:-|$)|^pocket-ic$',
-               '--forbid-feature', 'ic-memory/test-support',
-               '--require', 'ic-memory=1', '--require', 'ic-storage=1',
-               '--require', 'ic-stable-structures=1');
+        my @policy = ('--forbid-pattern', '^(?!ic-metrics$)', '--require', 'ic-metrics=1');
         print observe('perl', "$Bin/check-cargo-graph.pl", '--consumer', getcwd(),
             '--package', $root, '--target', $target, @policy);
     }

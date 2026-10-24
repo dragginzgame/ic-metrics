@@ -127,7 +127,7 @@ and JSON parsers must retain the full integer width as well as that quality.
 For per-operation means, maxima or distributions, keep aggregates, summaries or
 histograms. Counting events with `MeasurementAggregate::record(1)` also preserves
 quality, but retains observation statistics that a scalar total does not need.
-The optional stable adapter's [store guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics-stable/README.md#store-operations)
+The optional stable adapter's [store guide](https://github.com/dragginzgame/ic-persistence/blob/main/crates/ic-metrics-stable/README.md#store-operations)
 owns supported durable operations and host integration. Do not reinterpret an
 existing stored kind or extract persistence and lifecycle policy into this arithmetic type.
 
