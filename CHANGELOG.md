@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.15.8] - Unreleased
+
+- Adopt reviewed Shared Tooling 0.26.10, including literal formatting catalog
+  admission, dependency diagnostics and offline tool reporting.
+- Verify both actual Cargo package archives in CI and after release metadata
+  preparation, before staging; publication remains a separate command.
+- Strengthen durable checkpoint qualification with an independent bounded
+  reachability model, populated frozen V1 reopening and multi-bit byte mutations.
+- Clarify that the record byte budget applies after Storage reads the value;
+  it does not bound allocation for host-inserted oversized rows.
+- Qualify the incoming Memory/Storage 0.50.13 and Platform 0.6.12 selection.
+
 ## [0.15.7] - 2026-10-23
 
 - Adopt reviewed Shared Tooling 0.26.8: explicit Cargo-tool setup waits for an

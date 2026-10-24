@@ -16,9 +16,9 @@ checksum = "1b43ede17f21864e81be2fa654110bf1e793774238d86ef8555c37e6519c0403"
 
 [[package]]
 name = "ic-memory"
-version = "0.50.12"
+version = "0.50.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f9b30a66b021ad250a8b8bdabb426ef1943fc19f23f57c25b2f4282cc0068dd"
+checksum = "e6f33433167466bae38f8995699fff65a8489612278db79ea1a55e5779486e92"
 dependencies = [
  "ic-platform",
  "serde",
@@ -44,9 +44,9 @@ dependencies = [
 
 [[package]]
 name = "ic-platform"
-version = "0.6.9"
+version = "0.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e369961ed6ac751925b11f302e85e380634e99598d7c233c69c01cc10cc3c5e4"
+checksum = "a1efa3bea22eed8dbca1e667936664a694a02bfdee29543ee533084f04ea5f6b"
 dependencies = [
  "ic-stable-structures",
 ]
@@ -62,9 +62,9 @@ dependencies = [
 
 [[package]]
 name = "ic-storage"
-version = "0.50.12"
+version = "0.50.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57ae2cd1f0198e08d21e36ca8694766670011badef2ec785aa3fbe254bc01125"
+checksum = "3187c8a8cb796b34120440d1d4f52c113e9d81339d58e48f4632084f89375149"
 dependencies = [
  "ic-memory",
  "ic-platform",

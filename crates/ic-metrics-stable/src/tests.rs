@@ -1126,13 +1126,13 @@ fn check_v1_mutations<T: crate::metric::StoredMetric + std::fmt::Debug>(
     let mut admitted = 0;
     let mut refused = 0;
     for offset in 0..original.len() {
-        for bit in 0..8 {
+        for mask in [1, 2, 4, 8, 16, 32, 64, 128, 0x55, 0xaa, 0xff] {
             for paired in [false, true] {
                 let mut bytes = original.clone();
-                bytes[offset] ^= 1 << bit;
+                bytes[offset] ^= mask;
                 if paired {
                     let adjacent = (offset + 1) % bytes.len();
-                    bytes[adjacent] ^= 1 << bit;
+                    bytes[adjacent] ^= mask;
                 }
                 store.map.insert(key.0.clone(), bytes.clone());
                 writes.set(0);
@@ -1210,4 +1210,130 @@ fn v1_byte_mutations_preserve_canonical_admission_and_rejected_checkpoints() {
     ];
     assert!(outcomes.iter().all(|(_, refused)| *refused > 0));
     assert!(outcomes.iter().any(|(admitted, _)| *admitted > 0));
+}
+
+#[test]
+fn checkpoint_continuity_matches_independent_reachable_states() {
+    use crate::metric::StoredMetric;
+
+    // Complete alphabet 0..=3: no omitted intermediate observation can explain
+    // a transition whose maximum is at most 3. Compare states, not histories.
+    let mut sequences = vec![Vec::<u64>::new()];
+    for length in 1..=3 {
+        for mut code in 0..4_usize.pow(length) {
+            let mut sequence = Vec::new();
+            for _ in 0..length {
+                sequence.push((code % 4) as u64);
+                code /= 4;
+            }
+            sequences.push(sequence);
+        }
+    }
+    let project = |sequence: &[u64]| {
+        let mut summary = Summary::EMPTY;
+        let mut histogram = Histogram::new([0, 2]).unwrap();
+        for &sample in sequence {
+            summary.record(sample);
+            histogram.record(sample);
+        }
+        (summary.aggregate(), summary, histogram)
+    };
+    for prefix in &sequences {
+        let previous = project(prefix);
+        let reachable: Vec<_> = sequences
+            .iter()
+            .filter(|suffix| prefix.len() + suffix.len() <= 3)
+            .map(|suffix| {
+                let mut joined = prefix.clone();
+                joined.extend_from_slice(suffix);
+                project(&joined)
+            })
+            .collect();
+        for candidate in &sequences {
+            let current = project(candidate);
+            assert_eq!(
+                current.0.continues(&previous.0),
+                reachable.iter().any(|state| state.0 == current.0),
+                "aggregate {prefix:?} -> {candidate:?}"
+            );
+            assert_eq!(
+                current.1.continues(&previous.1),
+                reachable.iter().any(|state| state.1 == current.1),
+                "summary {prefix:?} -> {candidate:?}"
+            );
+            assert_eq!(
+                current.2.continues(&previous.2),
+                reachable.iter().any(|state| state.2 == current.2),
+                "histogram {prefix:?} -> {candidate:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn populated_frozen_v1_rows_reopen_without_reencoding() {
+    // Independent field layout: deliberately do not use the production encoder.
+    let id = identity();
+    let backing = VectorMemory::default();
+    let mut map = StableBTreeMap::<Vec<u8>, Vec<u8>, _>::new(admitted_memory(backing.clone()));
+    let maximum = u64::MAX;
+    let total = u128::from(maximum) * 2;
+    let mut aggregate = Vec::new();
+    aggregate.extend_from_slice(&2_u64.to_le_bytes());
+    aggregate.extend_from_slice(&total.to_le_bytes());
+    aggregate.extend_from_slice(&maximum.to_le_bytes());
+    aggregate.push(0);
+    let mut summary = aggregate.clone();
+    summary.extend_from_slice(&maximum.to_le_bytes());
+    let mut histogram = aggregate.clone();
+    histogram.extend_from_slice(&1_u16.to_le_bytes());
+    histogram.extend_from_slice(&maximum.to_le_bytes());
+    histogram.extend_from_slice(&2_u64.to_le_bytes());
+    histogram.push(0);
+    histogram.extend_from_slice(&0_u64.to_le_bytes());
+    histogram.push(0);
+    let mut counter = u128::MAX.to_le_bytes().to_vec();
+    counter.push(1);
+    let mut originals = Vec::new();
+    for (name, kind, payload) in [
+        ("aggregate", 1, aggregate),
+        ("summary", 2, summary),
+        ("histogram", 3, histogram),
+        ("counter", 4, counter),
+    ] {
+        let mut bytes = b"ICM\x01".to_vec();
+        bytes.push(kind);
+        bytes.push(u8::try_from(id.unit.len()).unwrap());
+        bytes.extend_from_slice(id.unit.as_bytes());
+        bytes.extend_from_slice(&id.epoch.to_le_bytes());
+        bytes.extend_from_slice(&payload);
+        let key = key(name);
+        map.insert(key.0.clone(), bytes.clone());
+        originals.push((key, bytes));
+    }
+    drop(map);
+    let store = MetricsStore::new(StableBTreeMap::load(admitted_memory(backing)));
+    let expected = Aggregate::from_parts(2, total, Some(maximum), false, false).unwrap();
+    assert_eq!(
+        store.load_aggregate(&key("aggregate"), &id),
+        Ok(Some(expected))
+    );
+    assert_eq!(
+        store.load_summary(&key("summary"), &id),
+        Ok(Some(Summary::from_parts(expected, Some(maximum)).unwrap()))
+    );
+    assert_eq!(
+        store.load_histogram(&key("histogram"), &id, &[maximum]),
+        Ok(Some(
+            Histogram::from_parts([maximum], [2], 0, [false], false, expected).unwrap()
+        ))
+    );
+    assert_eq!(
+        store.load_counter(&key("counter"), &id),
+        Ok(Some(Counter::from_parts(u128::MAX, true).unwrap()))
+    );
+    let map = store.into_map();
+    for (key, bytes) in originals {
+        assert_eq!(map.get(&key.0), Some(bytes));
+    }
 }

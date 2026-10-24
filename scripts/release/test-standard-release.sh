@@ -73,7 +73,7 @@ case "${1:-}" in
         if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then
             perl "$JOBSERVER_PROBE" || exit $?
             printf 'metadata %s\n' "$2" >> "$EVENTS"
-            exit 0
+            exit "${FAIL_METADATA:-0}"
         fi ;;
 esac
 printf 'unexpected dispatch\n' >> "$EVENTS"
@@ -174,12 +174,13 @@ case "$1:${CLIPPY_FAILURE:-}" in
     clippy:native) exit 37 ;;
     clippy:wasm) [[ "$*" != *' --target wasm32-unknown-unknown '* ]] || exit 37 ;;
 esac
+[[ "$1" != package || "${FAIL_PACKAGE:-0}" == 0 ]] || exit 38
 [[ "$1" != publish || "${FAIL_PUBLISH:-0}" == 0 ]] || exit 1
 CARGO
 chmod +x "$fixture/bin/cargo"
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
 chmod +x "$fixture/bin/rustc"
-cargo_targets=(publish publish-check check check-wasm clippy docs-check test msrv)
+cargo_targets=(package-check publish publish-check check check-wasm clippy docs-check test msrv)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
 # Shared Tooling owns flag aliases and inheritance permutations. Keep all actual
@@ -196,6 +197,24 @@ PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 MSRV=prepared-fixture \
 # Metadata also dispatches Cargo, so its Bash entry must retain the descriptors.
 cp "$fixture/mode-bash" "$fixture/bin/bash"
 PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 make_probe_parallel_dispatch "$real_make" "$root/Makefile" "$fixture" "$EVENTS" "${metadata_targets[@]}"
+# Prepared metadata must precede archive verification; either failure stops release.
+for failure in none metadata package; do
+    : > "$EVENTS"
+    status=0
+    metadata_failure=0
+    package_failure=0
+    [[ "$failure" != metadata ]] || metadata_failure=39
+    [[ "$failure" != package ]] || package_failure=1
+    PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 FAIL_METADATA="$metadata_failure" \
+        FAIL_PACKAGE="$package_failure" "$real_make" "${parallel[@]}" --no-print-directory \
+        -f "$root/Makefile" release-prepare-version > "$fixture/output" 2>&1 || status=$?
+    if [[ "$failure" == none ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
+    printf 'metadata prepare\n' > "$fixture/expected"
+    if [[ "$failure" != metadata ]]; then
+        printf '%s\n' package --workspace --locked --offline --allow-dirty >> "$fixture/expected"
+    fi
+    cmp "$fixture/expected" "$EVENTS"
+done
 rm "$fixture/bin/bash"
 # A failure in a multi-command gate stops before any later Cargo command.
 : > "$EVENTS"
@@ -224,7 +243,7 @@ for fail in 0 1; do
     if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" == 2 ]] || exit 1; fi
     printf '%s\n' shared-tooling-check check-doc-links evidence-check tools-check check-pins fmt-check clippy > "$fixture/expected"
     if [[ "$fail" == 0 ]]; then
-        printf '%s\n' production-dependencies-check ci-evidence-check release-tools-check docs-check test >> "$fixture/expected"
+        printf '%s\n' production-dependencies-check ci-evidence-check release-tools-check docs-check test package-check >> "$fixture/expected"
     fi
     cmp "$fixture/expected" "$EVENTS"
 done
@@ -238,6 +257,17 @@ for selection in '' --no-print-directory; do
         "AUDIT_SELECTION=owner's selection" > "$fixture/output" 2>&1
     printf '%s\n' patch review main > "$fixture/cache-entry-expected"
     cmp "$fixture/cache-entry-expected" "$EVENTS"
+done
+
+# Archive admission must build both packages and propagate Cargo failure.
+for fail in 0 1; do
+    : > "$EVENTS"
+    status=0
+    PATH="$fixture/bin:$PATH" FAIL_PACKAGE="$fail" "$real_make" --no-print-directory \
+        -f "$root/Makefile" package-check > "$fixture/output" 2>&1 || status=$?
+    if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
+    printf '%s\n' package --workspace --locked --offline --allow-dirty > "$fixture/expected"
+    cmp "$fixture/expected" "$EVENTS"
 done
 
 for target in publish publish-check; do

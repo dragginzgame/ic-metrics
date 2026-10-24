@@ -206,3 +206,8 @@ retains its Memory 0.48.2 / Storage 0.5.6 identities. Neither fixture qualifies 
 later graph or an application's workload, lifecycle and deployment decisions.
 The arithmetic-only cost evidence and native reopen tests retain their separate
 scope and do not qualify live consumer execution.
+
+The record byte budget limits codec admission after IC Storage reads a row.
+It is not a bound on allocation while reading a host-supplied oversized value.
+Hosts administering the public byte map must preserve its Metrics-only row
+contract; underlying collection and allocation failures retain Storage semantics.

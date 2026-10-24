@@ -352,3 +352,9 @@ owners and the verbatim guides retained by [the cleanup receipt](evidence/cleanu
 They are not current platform readers, validation commands or acceptance of a
 later dependency graph. Actual IC execution and callback attribution belong to
 the owning consumers under [the extraction contract](extraction.md#downstream-contract-checks).
+
+`make package-check` builds and verifies both real package archives offline,
+using Cargo's temporary registry to select the newly packaged arithmetic crate.
+It allows pending source changes for review, never uploads, and runs after
+Clippy in CI and again after release metadata preparation before staging.
+Prepared dependency sources are required; it does not install or update them.

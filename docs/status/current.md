@@ -14,31 +14,30 @@ and endpoints. [The extraction contract](../extraction.md),
 [changelog](../../CHANGELOG.md) records released changes and the pending batch.
 Those files do not prove registry publication, hosted CI or consumer acceptance.
 
-The released base is 0.15.6 at `356a8c7f9defe136f20e7737e76891954c9c590f`.
-The pending 0.15.7 patch adopts Shared Tooling's bounded Cargo setup waiting,
-lock-withdrawal handling and source-cache initialization without a global lock.
-The build-policy digest changed; explicit `make install-tools` completed and
-offline checks admit the newly selected common tools and IC Build 0.64.0 editor
-with its required `cli` feature. Tool pins and previous generations are retained.
+The released base is 0.15.7 at `69dcae8b52defbe834dc970cfb8f98cd3eeabcfc`.
+The pending 0.15.8 patch adopts Shared Tooling 0.26.10 at
+`a8141e775983c7fe504c4dd911e978152e657fdf` (119 snapshot payloads),
+verified against remote HEAD. Common tool and release-editor pins are unchanged.
 
-Focused Linux checks pass: upstream Cargo-installer and lock-wait fixtures,
-offline tool admission, formatting and hooks, production-graph/exclusion checks,
-release and native-evidence fixtures, ShellCheck, snapshot integrity,
-documentation links and diff checks. Fixture Git/Make effects remain substituted;
-the selected metadata editor and offline Cargo are real. Producer fixtures cover
-contention, owner withdrawal, timeout, interruption and immediate offline refusal.
-The GitHub description still matches this repository's measurement scope.
-No full CI, Rust-floor gates, native macOS or IC cost experiment ran.
+Stable qualification now compares all 7,225 bounded state pairs against an
+independent reachable-state model for aggregates, summaries and histograms.
+Populated independently encoded V1 rows reopen with wide totals and counter
+loss flags intact; mutation checks include multi-bit masks. No production
+arithmetic, public API or persisted format changed. The stable guide clarifies
+that codec size admission follows Storage's allocation of the retrieved value.
 
-The incoming Cargo.lock update is preserved byte-for-byte. Graph-policy checks
-pass on that selection; this tooling adoption does not qualify its new
-Memory/Storage/Platform runtime behavior. Library source, APIs, V1 bytes,
-package versions and dependency requirements are unchanged by this batch. The
-[0.15.6 handoff](https://github.com/dragginzgame/ic-metrics/blob/356a8c7f9defe136f20e7737e76891954c9c590f/docs/status/current.md)
-retains the preceding tool and library qualification.
+`make package-check` performs actual offline Cargo archive creation and build
+verification for both packages. Cargo's temporary registry selects the newly
+packaged arithmetic crate. CI runs it after Clippy and tests; release preparation
+runs it after metadata changes and before staging. No publication is performed.
 
-Shared Tooling 0.26.8 at `0b07c2a3163a5a66328e100b553baf93afd8ed07` and
-its 117 payload digests belong to [the snapshot](../../.shared-tooling.snapshot).
+The incoming lock selection is preserved: Memory/Storage 0.50.13 and Platform
+0.6.12. Focused Linux stable tests (27 plus 3 doctests), native/Wasm strict Clippy
+and Rust 1.91 checks pass, as do actual package verification, snapshot integrity,
+formatting, production graph policy and upstream formatting/graph fixtures.
+No full CI, native macOS or fresh IC cost experiment is claimed. Earlier frozen
+performance receipts retain their original dependency identities.
+
 Normal setup explicitly selects no IC executables; optional IC setup and checks
 use the same `IC_TOOLS` list. Prior bundles and failure evidence stay retained.
 Prior validation-runner/digest/reporter/fixture-copy evidence retains its original

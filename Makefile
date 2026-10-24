@@ -42,6 +42,7 @@ release-verify:
 
 release-prepare-version:
 	+@bash scripts/release/metadata.sh prepare
+	+$(MAKE) --no-print-directory package-check
 
 release-commit-check:
 	+@bash scripts/release/metadata.sh commit-check
@@ -85,6 +86,13 @@ help:
 publish:
 	+$(MAKE) --no-print-directory clippy
 	+cargo publish -p $(PACKAGE) -p ic-metrics-stable --locked --registry crates-io
+
+.PHONY: package-check
+
+# Cargo verifies both archives through its temporary registry, including the
+# newly packaged arithmetic dependency. No registry upload or version mutation.
+package-check:
+	+cargo package --workspace --locked --offline --allow-dirty
 
 publish-check:
 	+$(MAKE) --no-print-directory clippy
@@ -155,3 +163,4 @@ ci:
 	+$(MAKE) --no-print-directory release-tools-check
 	+$(MAKE) --no-print-directory docs-check
 	+$(MAKE) --no-print-directory test
+	+$(MAKE) --no-print-directory package-check
