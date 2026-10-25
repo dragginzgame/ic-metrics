@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.16.2] - Unreleased
+## [0.16.2] - 2026-10-25
 
 - Simplify dependency-free admission to locked Cargo declarations across all
   targets and features, removing redundant native/Wasm graph observations.
