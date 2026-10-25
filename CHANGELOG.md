@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.16.1] - Unreleased
+## [0.16.1] - 2026-10-25
 
 - Enforce dependency-free arithmetic across optional and target-specific normal
   and build declarations; simplify fixtures and require the intended rejection.
