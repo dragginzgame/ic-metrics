@@ -2,11 +2,11 @@
 use strict;
 use warnings;
 use Cwd qw(getcwd);
-use FindBin qw($Bin);
 use JSON::PP qw(decode_json);
 
-# Metrics owns this arithmetic-only policy. Cargo owns target/feature resolution;
-# this check never installs tools, builds artifacts or changes the locked graph.
+# Metrics owns declaration admission. Rejecting all normal/build declarations
+# covers every target and feature without resolving the same empty graph again.
+# This check never installs tools, builds artifacts or changes the locked graph.
 if (@ARGV) {
     @ARGV == 2 && shift(@ARGV) eq '--consumer'
         or die "usage: check-production-dependencies.pl [--consumer ROOT]\n";
@@ -26,7 +26,9 @@ sub observe {
     return $bytes;
 }
 
-my $metadata = decode_json(observe(qw(cargo metadata --no-deps --locked --offline --format-version 1)));
+my $bytes = observe(qw(cargo metadata --no-deps --locked --offline --format-version 1));
+my $metadata = eval { decode_json($bytes) };
+$@ and die "invalid Cargo workspace metadata\n";
 ref($metadata) eq 'HASH' && ($metadata->{version} // 0) == 1
     && ref($metadata->{workspace_members}) eq 'ARRAY'
     && ref($metadata->{packages}) eq 'ARRAY'
@@ -50,13 +52,4 @@ for my $package (@{$metadata->{packages}}) {
 }
 keys(%members) == 1 && keys(%packages) == 1
     or die "expected only the Metrics arithmetic library\n";
-my @hosts = observe(qw(rustc -vV)) =~ /^host: ([A-Za-z0-9_-]+)$/mg;
-@hosts == 1 or die "cannot identify the prepared compiler host\n";
-my %targets = map { $_ => 1 } ($hosts[0], 'wasm32-unknown-unknown');
-for my $target (sort keys %targets) {
-    for my $root (sort keys %packages) {
-        my @policy = ('--forbid-pattern', '^(?!ic-metrics$)', '--require', 'ic-metrics=1');
-        print observe('perl', "$Bin/check-cargo-graph.pl", '--consumer', getcwd(),
-            '--package', $root, '--target', $target, @policy);
-    }
-}
+print "Arithmetic dependency declarations admitted (all targets and features).\n";

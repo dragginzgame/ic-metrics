@@ -70,7 +70,7 @@ already prepared toolchain; Rustup auto-install is disabled. Help and unrelated
 Make targets do not parse Cargo just to select the floor. Full `make msrv` retains
 its release/explicit-check authority; focused package commands remain below.
 
-Both packages use that minimum:
+The arithmetic package uses that minimum:
 
 | Package | Rust floor | Floor gate |
 | --- | --- | --- |
@@ -128,8 +128,8 @@ package; select direct Cargo commands when only one package or test is affected:
 
 | Scope | Commands |
 | --- | --- |
-| Both packages | `make check check-wasm clippy docs-check test` |
-| One package | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
+| Arithmetic workspace | `make check check-wasm clippy docs-check test` |
+| Focused library checks | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
 | Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
 | Snapshot/pins | `make shared-tooling-check check-pins` |
 | Local tools/hooks | `make tools-check hook-check` |
@@ -159,48 +159,22 @@ The root catalog uses Shared Tooling's grouped sort order.
 adapter ordering check uses `--manifest-order-grouped` against its current or
 selected committed source. No paired formatter override is needed here.
 
-Inspect each production package with its actual build target/features. Current
-packages define no optional product features; their native and Wasm library
-builds use defaults. For `ic-metrics`, use:
+`make production-dependencies-check` admits the sole arithmetic workspace member
+through successful locked, offline Cargo metadata. It rejects every normal/build
+dependency declaration, including inactive optional and target-specific entries.
+This establishes a dependency-free library for all targets and features without
+compiler-host discovery or repeated graph traversal. Development dependencies
+remain separate; the existing direct stable-substrate prohibition applies there
+too. Fixtures cover declaration axes, renamed dependencies, allowed development
+use, failed Cargo children and malformed/incomplete metadata. CI and release
+verification use the same check.
 
-```bash
-cargo tree --locked -p PACKAGE --target TARGET --edges normal,build
-cargo build --locked --lib -p PACKAGE --target TARGET
-```
-
-Replace `TARGET` with `x86_64-unknown-linux-gnu` for the qualified native host or
-`wasm32-unknown-unknown` for Wasm; other hosts need their own target qualification.
-Inspect transitive edges and feature activation as well as direct dependencies.
-The core must have no production dependency. The stable graph must exclude
-Build, Testkit, Host and Memory's `test-support` feature. These IC Tooling packages
-remain development/qualification dependencies when a consumer needs them;
-their exclusion covers renamed, transitive and build edges in production graphs.
-Its transitive stable-structures
-substrate through Memory/Storage is expected; Metrics must not depend on it
-directly. A downstream application's graph can unify additional features.
-
-The stable production graph must resolve exactly one package identity each for
-Memory, Storage and the stable-structures substrate. The local adapter selects
-Shared Tooling's existing identity-count checks for native and Wasm normal/build
-edges; duplicate versions are not admitted merely because Cargo can resolve them.
-Controlled fixtures qualify each duplicate-identity refusal alongside the existing
-tooling and test-feature exclusions. This does not constrain development-only
-graphs or independently qualify downstream applications.
-
-This repository has no deployment entrypoint or final canister artifact.
-`make production-dependencies-check` enforces these library graph boundaries for
-the prepared compiler's native host and Wasm, and rejects direct substrate
-declarations even in tests. It observes each package separately through successful
-locked Cargo metadata and Shared Tooling's `check-cargo-graph.pl`, includes
-normal/build edges and the forbidden dependency-feature edge, and excludes
-development edges. Metrics retains declaration admission and its explicit
-package/target/exclusion policy. Its offline local-package fixtures cover
-renamed/transitive tooling, build dependencies, test-feature activation and failed
-observations. CI and release verification run the same check. Role labels,
-formatting and `make check-pins` remain separate declaration checks.
-Consumer deployment checks must use their own actual
-target/features, successful locked build and source/lock/artifact identities;
-these library observations do not establish deployment admission.
+IC Persistence owns stable-adapter dependency policy and qualification. Follow
+[its guide](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable)
+for governed handles, collection identity and retained-data requirements.
+This repository has no deployment entrypoint or final canister artifact;
+applications qualify their own target, features and resolved dependency graph.
+Role labels, formatting and `make check-pins` remain separate checks.
 
 Keep compilation checks sequential when they share `target/`; check for active
 builds before source mutation or compilation. Bare Cargo commands select the
@@ -234,11 +208,10 @@ after host parsers are prepared. Standard release preflight prepares/checks the
 editor before offline validation; standalone preflight only checks it. Metadata
 preparation resolves its absolute admitted path without installation, then Shared
 Tooling owns candidate preparation, validation and failure restoration. Missing
-selections refuse before metadata mutation. Neither library requires IC Build.
+selections refuse before metadata mutation. The arithmetic library requires no IC Build.
 
-Neither library declares or imports an external IC-specific package directly:
-Memory and Storage own the transitive substrate boundary. Metrics therefore adds
-no direct Platform dependency. There is no maintained Rust CLI, endpoint or messaging
+The arithmetic library declares or imports no external IC-specific package and
+needs no Platform dependency. There is no maintained Rust CLI, endpoint or messaging
 codec to migrate to Clap or Wire. Tracked sources and actual package file lists
 are reviewed for the no-symlink rule; managed tool-selection pointers and isolated
 rejection fixtures retain their narrow exceptions. Frozen evidence keeps its
@@ -256,7 +229,7 @@ qualification fixtures. The complete gate checks the arithmetic package's builds
 docs and tests. Configured CI and required branch
 checks remain unchanged. Strict native all-target and Wasm library Clippy supply
 CI type checking; `make check` and `make check-wasm` remain focused entrypoints.
-Both workspace packages currently contain only libraries. If other Wasm targets
+The workspace currently contains only a library. If other Wasm targets
 are added, extend the Clippy target selection to preserve their CI coverage.
 Inspection and documentation-only work use narrower
 checks. [AGENTS.md](../AGENTS.md) retains product constraints and separate release

@@ -161,7 +161,7 @@ minimum compiler is Rust 1.91.0.
 Optional structural Wasm inspection uses the published
 [IC Host inspector and its installation guide](https://github.com/dragginzgame/ic-tooling/tree/main/apps/ic-host-wasm-inspect).
 Experiments select their own qualified tool identity and limits. Metrics has no
-inspector wrapper or pin; neither library requires IC Host to build or run.
+inspector wrapper or pin; the arithmetic library builds and runs without IC Host.
 Bare Cargo commands select the arithmetic package.
 
 Prepare and check the reviewed tools, select their paths, then install the
@@ -198,15 +198,17 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-metrics
 
 ## Releases and adoption
 
-Both packages require Rust 1.91 on native and Wasm. Consumers select the 0.15
-contract and qualify their integration. Stable hosts must also align Memory and
-Storage on 0.50 so their governed handles and maps share the adapter's Rust
-dependency identities. Metrics V1 records and stored formats are unchanged.
+The arithmetic package requires Rust 1.91 on native and Wasm. Consumers select
+its 0.16 contract and qualify their integration:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.15"
+ic-metrics = "0.16"
 ```
+
+For optional durable metrics, follow
+[IC Persistence's migration guide](https://github.com/dragginzgame/ic-persistence/blob/main/docs/migration/ic-metrics-stable.md)
+for the adapter's separate release line and Memory/Storage compatibility.
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers
 resolve the registry package; consumers exposing shared types coordinate the
@@ -225,7 +227,7 @@ common Rust tools and the explicitly selected published IC Build release editor.
 `ci/release-tools.env` owns the editor version and its 1 MiB per-document limit.
 `make install-tools`/`make tools-check` include it; `install-release-editor` and
 `release-editor-check` select it separately. Metadata preparation checks the
-prepared executable without installing tools. Neither library depends on IC Build.
+prepared executable without installing tools. The arithmetic library has no IC Build dependency.
 The shared contract owns validation, commit/tag delivery and
 interrupted-release recovery.
 

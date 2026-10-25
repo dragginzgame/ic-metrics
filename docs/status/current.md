@@ -10,29 +10,32 @@ owns durable integration and retained-data contracts.
 
 ## Selection and qualification
 
-The released source base is 0.16.0 at `c0f033a`. The adapter retirement is complete
+The released source base is 0.16.1 at `b6193cb`. The adapter retirement is complete
 here; Persistence published the replacement as 0.50.17. The arithmetic API and
 Rust 1.91 floor are unchanged. Package and dependency identities belong to
 [Cargo.toml](../../Cargo.toml) and [Cargo.lock](../../Cargo.lock), not this summary.
 
-The pending 0.16.1 batch enforces zero production dependency declarations,
-including inactive optional and target-specific edges. Development dependencies
-remain allowed except for the existing direct stable-substrate prohibition.
-Native/Wasm graph observation remains an independent check. Fixtures distinguish
-policy refusal from observation failure and no longer repeat tooling-name cases.
+The pending 0.16.2 batch simplifies dependency-free admission to one locked,
+offline Cargo metadata observation. All normal/build declarations are forbidden,
+including inactive optional and target-specific edges. This already establishes
+an empty production graph, so compiler-host discovery and repeated native/Wasm
+graph traversal are retired. Development dependencies remain allowed except for
+the existing direct stable-substrate prohibition. Fixtures retain declaration
+coverage and distinguish failed, malformed and incomplete metadata observations.
 
-Native source evidence now includes the packaged root README. Local graph/source
-fixtures resolve their roots independently of inherited `CDPATH`. The Rust-floor
-adapter additionally runs public doctests on the selected minimum compiler.
-These are contributor validation changes, not arithmetic API or runtime changes.
+The unused graph helper is retired by canonical snapshot refresh (117 payloads) at
+the same Shared Tooling revision, 0.26.10 `a8141e775983c7fe504c4dd911e978152e657fdf`.
+The README now selects the current 0.16 arithmetic contract. The host guide links
+Persistence's stable-adapter qualification instead of maintaining its graph rules.
+Library source, API, package versions and dependency selections are unchanged.
 
-Focused checks pass for declaration policy, native/Wasm production graphs,
-source selection with inherited `CDPATH`, all 13 Rust 1.91 doctests, formatting,
-ShellCheck, snapshot integrity and documentation links. Native-evidence recovery
-and release-command fixtures also pass with substituted effects; they are not
-hosted CI. Full release gates and native macOS qualification remain separate. The reviewed Shared
-Tooling snapshot remains 0.26.10 at `a8141e775983c7fe504c4dd911e978152e657fdf`.
-No shared payload or dependency selection changes in this batch.
+The [0.16.1 handoff](https://github.com/dragginzgame/ic-metrics/blob/b6193cb/docs/status/current.md)
+retains preceding validation identities, including the Rust-floor doctests and
+native evidence fixtures. Focused checks for this batch pass: real declaration admission, refusal fixtures
+with inherited `CDPATH`, Perl syntax, ShellCheck, snapshot verification, formatting,
+release-command fixtures, actual offline package verification and local doc links.
+Release-command effects are substituted. No new full release gate or native
+macOS result is claimed.
 
 ## Historical dispositions
 

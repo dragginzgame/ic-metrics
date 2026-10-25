@@ -70,20 +70,38 @@ reset_case
 printf '\n[dev-dependencies]\nraw = { package = "ic-stable-structures", path = "../../../vendor/ic-stable-structures" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case direct-development-substrate 'ic-metrics directly depends on the stable substrate'
 
-# A successful-looking partial observation is not accepted after child failure.
+# Metadata is the trust boundary: no partial output from a failed Cargo child
+# or a successful malformed/incomplete observation may admit dependencies.
 reset_case
 mkdir -p "$fixture/bin"
 cat > "$fixture/bin/cargo" <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ "$1" == tree ]]; then
-    printf 'ic-metrics v0.1.0\n'
-    exit 7
+if [[ "$1" == metadata ]]; then
+    case "$METRICS_METADATA_CASE" in
+        failed)
+            printf '%s\n' '{"version":1,"workspace_members":["fixture"],"packages":[{"id":"fixture","name":"ic-metrics","dependencies":[]}]}'
+            exit 7 ;;
+        malformed) printf 'not JSON\n' ;;
+        incomplete) printf '{}\n' ;;
+        missing-dependencies)
+            printf '%s\n' '{"version":1,"workspace_members":["fixture"],"packages":[{"id":"fixture","name":"ic-metrics"}]}' ;;
+        *) exit 99 ;;
+    esac
+    exit 0
 fi
 exec "$REAL_CARGO" "$@"
 STUB
 chmod +x "$fixture/bin/cargo"
 export REAL_CARGO="$real_cargo"
-PATH="$fixture/bin:$PATH" check_case partial-failed-observation 'Cargo graph observation failed; no graph was admitted'
+for observation in failed malformed incomplete missing-dependencies; do
+    expected='invalid Cargo workspace metadata'
+    case "$observation" in
+        failed) expected='failed observation: cargo metadata' ;;
+        missing-dependencies) expected='missing declared dependencies' ;;
+    esac
+    PATH="$fixture/bin:$PATH" METRICS_METADATA_CASE="$observation" \
+        check_case "metadata-$observation" "$expected"
+done
 fixture_complete=true
-echo 'Arithmetic-only graph admission, development isolation and failed observations passed'
+echo 'Arithmetic declaration admission, development isolation and metadata refusals passed'

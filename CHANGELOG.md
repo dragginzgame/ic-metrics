@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.2] - Unreleased
+
+- Simplify dependency-free admission to locked Cargo declarations across all
+  targets and features, removing redundant native/Wasm graph observations.
+  Failed, malformed and incomplete metadata still refuse admission.
+- Update the arithmetic adoption example to 0.16 and remove obsolete local
+  stable-adapter qualification guidance in favour of IC Persistence's owner docs.
+
 ## [0.16.1] - 2026-10-25
 
 - Enforce dependency-free arithmetic across optional and target-specific normal
