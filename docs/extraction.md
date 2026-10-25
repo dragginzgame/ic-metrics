@@ -82,7 +82,7 @@ from Metrics. Testkit's private development reporter owns its finite-sample
 mean, midpoint median and observed nearest-rank quantile, including non-finite
 admission and typed failures. Its worker schema, sample storage, process lifecycle
 and report presentation remain Testkit-owned. Metrics retains checked and tracked integer
-arithmetic and the stable V1 records; histogram quantiles remain bucket ranges.
+arithmetic; histogram quantiles remain bucket ranges.
 Other callers of the removed sample API must move it to their owning reporter.
 Testkit 0.54.0 source at
 [`ff88087`](https://github.com/dragginzgame/ic-testkit/tree/ff88087d6757121ac92e0dec4705ecaccfd8ebed)
@@ -101,37 +101,16 @@ Consumers read counter 1 through their own adapters: IcyDB and Canic use
 Inclusive overlapping IcyDB spans and exclusive Canic endpoint accounting remain
 separate contracts; there is no attribution-mode switch or product dependency.
 
-IC Persistence's optional [stable package](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable) owns validated
-V1 snapshots for counters, aggregates, summaries and histograms in one governed
-upstream B-tree map from `ic_storage::adapter`. Hosts open that public collection
-with an admitted `ic-memory::RuntimeMemory` handle, then supply it to
-`MetricsStore::new`. The selected Memory and Storage packages share that exact
-handle identity; each handle is a non-cloneable allocation lease. Memory and
-Storage obtain the stable substrate through IC Platform's
-`stable-structures` feature. This transitive dependency adds no platform reads
-to Metrics and grants no allocation authority; hosts still use Memory handles
-and Storage's governed map. `into_map` returns the
-public Storage collection with its lease intact. `MetricsMap<M>` is an exact
-alias for its byte key/value shape, with no separate collection implementation
-or lifecycle policy. Drop the store or returned map before reopening through the
-same runtime.
-Hosts still exclude aliased backing access across runtimes. The store's generic
-argument is the runtime's backing type. IC Storage's upstream facade preserves existing map bytes; its custom
-tree format is not used. One permanent store allocation resolves to one memory ID;
-namespace/name keys distinguish rows. Hosts own bootstrap, map initialization,
-update-message synchronization, write cadence, authorization and resets. Queries
-cannot make stable writes durable, and adapter errors never silently reset data.
-Memory's allocation-format disposition remains separate from Metrics V1 and
-B-tree compatibility; hosts follow the version-bound stable guide before reuse.
-The stable API uses concrete load/save operations for each metric family;
-histogram loads take bounds directly. Codec/kind and continuity dispatch remain
-private, without a public generic trait or capability-token surface. Exact-count
-checkpoints must be explainable by added observations, including the new maximum,
-latest value and bucket ranges. Clipped counts retain conservative monotonic
-admission; hosts still establish identity and attribution. The core has no
-serialization or stable-memory dependency. Scalar checkpoints use
-distinct V1 kind 4; aggregate/summary/histogram kinds 1/2/3 are never repurposed.
-The codec owns typed kind admission; stored numeric tags remain unchanged.
+IC Persistence owns the optional
+[stable adapter](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable),
+including persisted records, governed collection integration, restoration and
+checkpoint validation. Its canonical guide and
+[migration guide](https://github.com/dragginzgame/ic-persistence/blob/main/docs/migration/ic-metrics-stable.md)
+own version selection and retained-data compatibility. Hosts retain allocation,
+identities, lifecycle, write cadence and reset policy. Metrics supplies validated
+arithmetic state through its public API; it has no serialization, stable-memory
+allocation or storage dependency. Historical storage receipts below retain their
+original source and graph identities.
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-tooling/tree/main/apps/ic-host-wasm-inspect)
 owns bounded structural inspection and its managed installation guide. Optional

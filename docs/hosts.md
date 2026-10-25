@@ -138,7 +138,8 @@ package; select direct Cargo commands when only one package or test is affected:
 | Maintained docs | `make check-doc-links`, consistency review and `git diff --check` |
 
 The release MSRV gate checks all native targets, including tests and development
-dependencies, at Rust 1.91; its Wasm check covers libraries. The development
+dependencies, at Rust 1.91; its Wasm check covers libraries. Public doctests
+also execute on the selected minimum compiler. The development
 compiler remains separate. `make evidence-check` is also included in CI and
 release validation. Five historical checksum manifests use archive-directory
 paths; the Makefile records those working directories without rewriting receipts.

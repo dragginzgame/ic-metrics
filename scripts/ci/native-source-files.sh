@@ -8,7 +8,7 @@ root="${BASH_SOURCE[0]}"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
 git -C "$root" ls-files --cached --others --exclude-standard -z -- \
-    Cargo.toml Cargo.lock Makefile rust-toolchain.toml .shared-tooling.snapshot \
+    README.md Cargo.toml Cargo.lock Makefile rust-toolchain.toml .shared-tooling.snapshot \
     make crates ci scripts .githooks .github \
     ':(glob,exclude)**/target/**' ':(glob,exclude)**/.tools/**' \
     ':(glob,exclude)**/.private-evidence/**'

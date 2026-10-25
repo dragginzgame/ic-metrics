@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 unset GIT_DIR GIT_WORK_TREE
-root="$(cd "${BASH_SOURCE[0]%/*}/../.." && pwd -P)"
+root="${BASH_SOURCE[0]}"
+[[ "$root" == /* ]] || root="$PWD/$root"
+root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
+root="${root%/.}"
 # shellcheck source=scripts/ci/fixture-lifecycle.sh
 source "$root/scripts/ci/fixture-lifecycle.sh"
 fixture="$(fixture_create "${TMPDIR:-/tmp}/metrics-native-source.XXXXXX")"
@@ -13,15 +16,16 @@ git -C "$fixture" init -q
 printf '/target/\n/.tools/\n' > "$fixture/.gitignore"
 printf 'tracked\n' > "$fixture/Cargo.toml"
 git -C "$fixture" add Cargo.toml
+printf 'packaged pending README\n' > "$fixture/README.md"
 printf 'pending\n' > "$fixture/crates/example/pending.rs"
 for directory in docs/evidence .tools .private-evidence target crates/example/target crates/example/.tools crates/example/.private-evidence; do mkdir -p "$fixture/$directory"; printf 'excluded\n' > "$fixture/$directory/payload"; done
 bash "$fixture/scripts/ci/native-source-files.sh" > "$fixture/selected.nul"
 count=0
 while IFS= read -r -d '' file; do
-    case "$file" in Cargo.toml|scripts/ci/native-source-files.sh|crates/example/*) ;; *) exit 1 ;; esac
+    case "$file" in README.md|Cargo.toml|scripts/ci/native-source-files.sh|crates/example/*) ;; *) exit 1 ;; esac
     count=$((count + 1))
 done < "$fixture/selected.nul"
-[[ "$count" == 3 ]]
+[[ "$count" == 4 ]]
 # Missing tracked source stays selected so the hash boundary cannot silently omit it.
 rm "$fixture/Cargo.toml"
 bash "$fixture/scripts/ci/native-source-files.sh" > "$fixture/missing.nul"

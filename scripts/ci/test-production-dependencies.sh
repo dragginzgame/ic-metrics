@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-root="$(cd "${BASH_SOURCE[0]%/*}/../.." && pwd -P)"
+root="${BASH_SOURCE[0]}"
+[[ "$root" == /* ]] || root="$PWD/$root"
+root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
+root="${root%/.}"
 # shellcheck source=scripts/ci/fixture-lifecycle.sh
 source "$root/scripts/ci/fixture-lifecycle.sh"
 fixture="$(fixture_create "${TMPDIR:-/tmp}/metrics-production-graph.XXXXXX")"
@@ -24,7 +27,7 @@ reset_case() {
     : > "$fixture/workspace/crates/ic-metrics/src/lib.rs"
     printf '[workspace]\nmembers = ["crates/ic-metrics"]\nresolver = "3"\n' > "$fixture/workspace/Cargo.toml"
     cp "$root/rust-toolchain.toml" "$fixture/workspace/"
-    for name in ic-build ic-host-fs ic-testkit ic-stable-structures ordinary; do package "$name"; done
+    for name in ic-testkit ic-stable-structures ordinary; do package "$name"; done
 }
 check_case() {
     local label="$1" expected="$2" status=0
@@ -34,38 +37,38 @@ check_case() {
     perl "$checker" --consumer "$fixture/workspace" > "$fixture/$label.log" 2>&1 || status=$?
     if [[ "$expected" == pass ]]; then
         if [[ "$status" != 0 ]]; then cat "$fixture/$label.log" >&2; return 1; fi
-    elif [[ "$status" == 0 ]]; then
-        echo "production graph unexpectedly admitted $label" >&2; return 1
+    else
+        if [[ "$status" == 0 ]] || ! grep -Fq -- "$expected" "$fixture/$label.log"; then
+            echo "missing expected rejection for $label: $expected" >&2
+            cat "$fixture/$label.log" >&2
+            return 1
+        fi
     fi
 }
 
 reset_case
 check_case dependency-free pass
-printf '\n[dev-dependencies]\nhelper = { package = "ic-testkit", path = "../../../vendor/ic-testkit" }\nbuilder = { package = "ic-build", path = "../../../vendor/ic-build" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+printf '\n[dev-dependencies]\nhelper = { package = "ic-testkit", path = "../../../vendor/ic-testkit" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case development-package pass
 
-reset_case
-printf '\n[dependencies]\nordinary = { path = "../../../vendor/ordinary" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case arithmetic-production-edge fail
-
-for dependency in ic-build ic-host-fs ic-testkit; do
+# Each declaration axis is independent of the active host and feature graph.
+for selection in normal optional target build; do
     reset_case
-    printf '\n[dependencies]\nordinary = { path = "../../../vendor/ordinary" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-    printf '[dependencies]\nrenamed = { package = "%s", path = "../%s" }\n' "$dependency" "$dependency" >> "$fixture/vendor/ordinary/Cargo.toml"
-    check_case "transitive-renamed-$dependency" fail
+    table=dependencies
+    extra=''
+    case "$selection" in
+        optional) extra=', optional = true' ;;
+        target) table="target.'cfg(target_os = \"none\")'.dependencies" ;;
+        build) table=build-dependencies ;;
+    esac
+    printf '\n[%s]\nrenamed = { package = "ordinary", path = "../../../vendor/ordinary"%s }\n' \
+        "$table" "$extra" >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+    check_case "$selection-declaration" 'ic-metrics declares a production dependency: ordinary'
 done
 
 reset_case
-printf '\n[target.\x27cfg(target_arch = "wasm32")\x27.dependencies]\nrenamed = { package = "ic-host-fs", path = "../../../vendor/ic-host-fs" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case wasm-only-tooling fail
-
-reset_case
-printf '\n[build-dependencies]\nhelper = { package = "ic-testkit", path = "../../../vendor/ic-testkit" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case tooling-build-edge fail
-
-reset_case
 printf '\n[dev-dependencies]\nraw = { package = "ic-stable-structures", path = "../../../vendor/ic-stable-structures" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case direct-development-substrate fail
+check_case direct-development-substrate 'ic-metrics directly depends on the stable substrate'
 
 # A successful-looking partial observation is not accepted after child failure.
 reset_case
@@ -74,13 +77,13 @@ cat > "$fixture/bin/cargo" <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
 if [[ "$1" == tree ]]; then
-    printf 'ic-metrics v0.1.0|\n'
+    printf 'ic-metrics v0.1.0\n'
     exit 7
 fi
 exec "$REAL_CARGO" "$@"
 STUB
 chmod +x "$fixture/bin/cargo"
 export REAL_CARGO="$real_cargo"
-PATH="$fixture/bin:$PATH" check_case partial-failed-observation fail
+PATH="$fixture/bin:$PATH" check_case partial-failed-observation 'Cargo graph observation failed; no graph was admitted'
 fixture_complete=true
 echo 'Arithmetic-only graph admission, development isolation and failed observations passed'

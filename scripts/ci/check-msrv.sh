@@ -17,3 +17,6 @@ cargo "+$minimum" --version
 # Include native test targets and their development dependencies at the same floor.
 cargo "+$minimum" check --workspace --all-targets --locked
 cargo "+$minimum" check --workspace --locked --target wasm32-unknown-unknown
+
+# Public examples are part of the compiler-floor contract too.
+cargo "+$minimum" test -p ic-metrics --doc --locked

@@ -1,75 +1,53 @@
 # Current handoff
 
 IC Metrics owns allocation-free, dependency-free `no_std` integer arithmetic.
-IC Persistence now owns the optional stable adapter and its governed-map tests.
-This checkout publishes only arithmetic; historical receipts retain their sources. Consumers own sampling, attribution, units, identities, registries, lifecycle
-and endpoints. [The extraction contract](../extraction.md),
-[stable guide](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable) and
-[host guide](../hosts.md) own those boundaries and local qualification commands.
+IC Persistence owns the optional stable adapter and its governed-map tests.
+This checkout publishes only arithmetic. Consumers own sampling, attribution,
+units, identities, lifecycle and endpoints. The [extraction contract](../extraction.md)
+and [host guide](../hosts.md) define local boundaries and qualification;
+[Persistence's guide](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-metrics-stable)
+owns durable integration and retained-data contracts.
 
 ## Selection and qualification
 
-[Cargo.toml](../../Cargo.toml) owns workspace versions and dependency requirements;
-[Cargo.lock](../../Cargo.lock) owns resolved dependency identities. The
-[changelog](../../CHANGELOG.md) records released changes and the pending batch.
-Those files do not prove registry publication, hosted CI or consumer acceptance.
+The released source base is 0.16.0 at `c0f033a`. The adapter retirement is complete
+here; Persistence published the replacement as 0.50.17. The arithmetic API and
+Rust 1.91 floor are unchanged. Package and dependency identities belong to
+[Cargo.toml](../../Cargo.toml) and [Cargo.lock](../../Cargo.lock), not this summary.
 
-Source base is IC Metrics `92ff804125fb07370fad4cb24cc620f52122ac36` (0.15.8).
-Pending 0.16.0 retires adapter source, stable dependencies and coordinated
-publication here, after the separate Persistence addition is integrated and
-published. Crate name, API and V1 bytes are unchanged at the new owner. The
-arithmetic package remains at its existing version until a separately authorized
-release; no registry publication or release effect is part of this migration.
+The pending 0.16.1 batch enforces zero production dependency declarations,
+including inactive optional and target-specific edges. Development dependencies
+remain allowed except for the existing direct stable-substrate prohibition.
+Native/Wasm graph observation remains an independent check. Fixtures distinguish
+policy refusal from observation failure and no longer repeat tooling-name cases.
 
-The source and tests were copied unchanged into Persistence. Its migration guide
-owns provenance, new version selection and validation boundaries. This checkout's
-package archive, dependency-free native/Wasm graphs, metadata and publication
-fixtures now select only arithmetic. Earlier stable tests, IC costs and package
-qualification in Git history retain their original source and lock selections;
-they are not fresh qualification of the new workspace.
+Native source evidence now includes the packaged root README. Local graph/source
+fixtures resolve their roots independently of inherited `CDPATH`. The Rust-floor
+adapter additionally runs public doctests on the selected minimum compiler.
+These are contributor validation changes, not arithmetic API or runtime changes.
 
-Focused Linux checks pass: arithmetic tests/doctests, native/Wasm strict Clippy
-and Rust 1.91 compilation, offline packaging, dependency policy, metadata and
-publication dispatch, formatting hooks, snapshot admission and document links.
-The full release gate, hosted CI and native macOS remain unrun in this migration.
+Focused checks pass for declaration policy, native/Wasm production graphs,
+source selection with inherited `CDPATH`, all 13 Rust 1.91 doctests, formatting,
+ShellCheck, snapshot integrity and documentation links. Native-evidence recovery
+and release-command fixtures also pass with substituted effects; they are not
+hosted CI. Full release gates and native macOS qualification remain separate. The reviewed Shared
+Tooling snapshot remains 0.26.10 at `a8141e775983c7fe504c4dd911e978152e657fdf`.
+No shared payload or dependency selection changes in this batch.
 
-Normal setup explicitly selects no IC executables; optional IC setup and checks
-use the same `IC_TOOLS` list. Prior bundles and failure evidence stay retained.
-Prior validation-runner/digest/reporter/fixture-copy evidence retains its original
-source identity in the preceding handoffs; those unchanged helpers were not
-requalified independently in this adoption. Native evidence fixtures use
-substituted action/Make effects; no hosted run or native macOS result is claimed.
-The previously delivered 0.25.9 release guard matches
-[PR #96](https://github.com/dragginzgame/ic-metrics/pull/96), now
-closed as superseded. Its obsolete branch and the six other delivered or retired
-contribution branches are deleted; verified private backups remain. Compiler and
-library selections stay local; the host guide owns setup and policy.
+## Historical dispositions
 
-The [capability contract](../extraction.md#capability-placement) places Metrics
-alongside Timers, Jobs and Auth, with IC Tooling's Host/Build/Testkit packages
-outside production graphs. The dependency policy rejects IC Build too,
-including renamed transitive edges; development-only qualification remains allowed.
+The [0.16.0 handoff](https://github.com/dragginzgame/ic-metrics/blob/c0f033a/docs/status/current.md)
+retains the migration's original validation and closed investigation history.
+Its statements about pending migration and local stable tests are historical,
+not current ownership or live issue status. The stable write observer moved
+with the adapter; no local adoption work remains for that observer.
 
-The maintainer closed [#82](https://github.com/dragginzgame/ic-metrics/issues/82)
-as not planned. The existing local test write observer remains; no replacement
-or adoption is claimed. Supplying work remains owned by
-[Tooling #227](https://github.com/dragginzgame/ic-tooling/issues/227).
-
-The maintainer closed [#83](https://github.com/dragginzgame/ic-metrics/issues/83)
-as not planned until a real durable-consumer use case emerges. Volatile behavior
-and the available opt-in persistence API are unchanged.
-
-For [#72](https://github.com/dragginzgame/ic-metrics/issues/72), the approved
-rewrite removes only the twelve recorded archive/checksum paths from published
-head/tag histories. Eight branches and 44 tags changed IDs, including 0.15.2.
-All 109 remote refs matched the filtered result at publication; the fresh clone
-excludes all six original blobs. After retiring seven obsolete branches, the remote
-retains main and all 101 release tags unchanged. Private originals, backups and mappings
-remain retained. The maintainer closed the issue as not planned and elected not
-to pursue the remaining GitHub-held refs/caches. The private Support draft was
-not submitted; no complete erasure is claimed. Metrics has no open issues or PRs
-at this tracker check.
-Other clones must adopt the rewritten history without merging old ancestry.
+For archive issue #72, the maintainer elected not to pursue remaining
+GitHub-held refs/caches. Private originals and rewrite backups remain retained;
+no complete erasure is claimed. Other clones must adopt the rewritten history
+without merging old ancestry. Follow the
+[archive distribution record](../evidence/archive-distribution-072.md) before
+selecting any public evidence payload.
 
 ## Evidence scope
 
@@ -85,10 +63,3 @@ retains the completed capability boundary and release-guard qualification. Its l
 historical handoffs preserve earlier identities and evidence paths. Historical
 observations are not current issue/PR status. Follow the
 [archive distribution record](../evidence/archive-distribution-072.md) for public payloads.
-
-## Owning follow-up links
-
-Read the owning issues for their current disposition; this handoff is not a
-second issue-status ledger:
-
-- [Storage discard-value mutations](https://github.com/dragginzgame/ic-storage/issues/12).

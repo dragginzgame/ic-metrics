@@ -26,7 +26,7 @@ sub observe {
     return $bytes;
 }
 
-my $metadata = decode_json(observe(qw(cargo metadata --no-deps --locked --format-version 1)));
+my $metadata = decode_json(observe(qw(cargo metadata --no-deps --locked --offline --format-version 1)));
 ref($metadata) eq 'HASH' && ($metadata->{version} // 0) == 1
     && ref($metadata->{workspace_members}) eq 'ARRAY'
     && ref($metadata->{packages}) eq 'ARRAY'
@@ -40,6 +40,9 @@ for my $package (@{$metadata->{packages}}) {
         or die "unclassified production workspace package: $name\n";
     ref($package->{dependencies}) eq 'ARRAY' or die "missing declared dependencies\n";
     for my $dependency (@{$package->{dependencies}}) {
+        # Metadata includes inactive optional and target-specific declarations.
+        ($dependency->{kind} // 'normal') eq 'dev'
+            or die "$name declares a production dependency: $dependency->{name}\n";
         # Development dependencies must not bypass the governed Storage facade.
         $dependency->{name} ne 'ic-stable-structures'
             or die "$name directly depends on the stable substrate\n";

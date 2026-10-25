@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.1] - Unreleased
+
+- Enforce dependency-free arithmetic across optional and target-specific normal
+  and build declarations; simplify fixtures and require the intended rejection.
+- Make local dependency/source fixtures independent of inherited `CDPATH`, and
+  include the packaged README in native source evidence.
+- Qualify public doctests at Rust 1.91 and retire obsolete migration guidance in
+  favour of IC Persistence's canonical stable-adapter documentation.
+
 ## [0.16.0] - 2026-10-24
 
 - Move `ic-metrics-stable` to IC Persistence, retaining its crate name, public
