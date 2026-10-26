@@ -2,6 +2,8 @@
 
 ## [0.16.3] - 2026-10-26
 
+### 📝 Summary
+
 - Adopt reviewed Shared Tooling 0.26.20 with a compact agent baseline,
   Cargo-tool setup diagnostics and clearer fixture-retention failures.
 - Normal release commands start fresh from committed metadata; use
