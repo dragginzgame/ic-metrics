@@ -1,10 +1,11 @@
 # IC Metrics Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`a8141e775983c7fe504c4dd911e978152e657fdf` and file digests are recorded in
+`a7f85d45d4212d4c39225f58597580560a333550` (0.26.20) and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
-and [the extraction contract](docs/extraction.md) before implementation.
+at startup and [the extraction contract](docs/extraction.md) before arithmetic,
+consumer-contract or persistence-boundary changes.
 
 ## Ownership
 
@@ -38,43 +39,25 @@ and [the extraction contract](docs/extraction.md) before implementation.
 ## Work and validation
 
 - Mutate only this repository unless exact sibling targets are explicitly
-  authorized. Preserve unrelated dirty work. Follow the shared
-  [contribution rules](rules/contributions.md): an explicit PR request includes
-  its topic branch, scoped commits, branch push and PR creation/update. Ordinary
-  fixes and continuation authorize local work. Merges, direct integration-branch
-  pushes and shared-history rewrites require their own explicit authorization.
-- Cargo package/workspace version changes and releases require explicit authority.
-  Initial metadata is not a release selection; an ordinary PR does not authorize
-  a version bump, tag, release or publication. An explicitly requested standard
-  release includes its documented gate, commit, tag and atomic push; publication
-  remains a separate effect. Preserve branch protections and required checks.
+  authorized. The shared [contribution rules](rules/contributions.md) govern
+  authorized PRs and release effects.
 - This consumer supports `RELEASE_DELIVERY=direct` only. PR release delivery
   needs separately adopted merged-checkout adapters and qualification; ordinary
   contribution PRs retain the shared contribution rules.
-- Use Rust edition 2024 and ordinary directory modules. Public APIs need docs;
-  invalid input and recoverable failures need typed errors. No string matching
-  on errors, production panics, or committed Python tooling.
+- Use Rust edition 2024. No string matching on errors or production panics.
 - Check for active builds before source edits or compilation. Use this repo's
   `target/` and locked dependencies; do not upgrade dependencies as a side effect.
 - After Rust edits, run `make fmt`, then selected package checks or named tests.
   Focused commands and host qualification are in [docs/hosts.md](docs/hosts.md).
-  Focused checks for the changed behavior and directly affected callers suffice
-  for ordinary handoff under [the validation policy](DRAGGINZGAME.md#validation-and-evidence).
   Full `make ci` and `make msrv` are release gates or explicit
-  check requests. Reuse passing evidence only for unchanged inputs. Documentation-
-  only work needs link, consistency and diff checks. Releases remain separately
-  authorized.
+  check requests. Follow [the validation policy](DRAGGINZGAME.md#validation-and-evidence)
+  for batched focused checks and evidence reuse. Documentation-only work needs
+  link, consistency and diff checks.
 - Fix warnings in the selected Clippy gate before later validation.
 - When shared contracts change, review the IcyDB, Canic, `ic-timers`,
   `ic-backup`, IC Blob Storage test-probe and Toko Miner callers under
   [the downstream contract checks](docs/extraction.md#downstream-contract-checks).
   Each consumer owns its qualification; review does not authorize sibling edits.
-- Do not patch snapshot-owned files. Refresh through the upstream distribution
-  helper from a clean checkout of a reviewed revision, then verify the snapshot.
-- Maintain one numbered, undated pending changelog under the shared rules;
-  derive its version from the latest finalized release and the complete batch's
-  compatibility impact. This does not authorize package version changes or a
-  release. Track follow-up work exclusively in GitHub issues, not local task lists.
 
 ## Dependency qualification
 

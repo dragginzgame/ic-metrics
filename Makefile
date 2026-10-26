@@ -68,7 +68,7 @@ help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
 	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
-	@echo "Recovery: normal targets reconcile saved releases before validating a requested next increment"
+	@echo "Normal releases start fresh from committed metadata; exact recovery: release-resume VERSION=X.Y.Z"
 	@echo "Registry: publish-check (dry run), publish (upload arithmetic to crates.io)"
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Release editor (also in install-tools/tools-check): install-release-editor, release-editor-check"

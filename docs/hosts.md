@@ -236,7 +236,10 @@ checks. [AGENTS.md](../AGENTS.md) retains product constraints and separate relea
 and publication authority.
 
 Release/publication are separate maintainer actions under
-[the release contract](releases.md). Standard release preflight prepares the
+[the release contract](releases.md). Normal release commands start fresh from
+clean committed metadata without scanning or replaying historical plans.
+Use `make release-resume VERSION=X.Y.Z` for recovery of a specific saved attempt.
+Standard release preflight prepares the
 locked dependency cache, common Cargo tools and the selected release editor before offline validation;
 standalone preflight only fetches/checks offline. Preparation and late checks
 bind the selected release commit rather than newer working-tree metadata.

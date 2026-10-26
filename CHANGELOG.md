@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.3]
+
+- Adopt reviewed Shared Tooling 0.26.20 with a compact agent baseline,
+  Cargo-tool setup diagnostics and clearer fixture-retention failures.
+- Normal release commands start fresh from committed metadata; use
+  `make release-resume VERSION=X.Y.Z` to recover a specific saved attempt.
+  Offline tool admission distinguishes contention with exit status 75.
+
 ## [0.16.2] - 2026-10-25
 
 - Simplify dependency-free admission to locked Cargo declarations across all

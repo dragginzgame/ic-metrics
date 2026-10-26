@@ -10,32 +10,37 @@ owns durable integration and retained-data contracts.
 
 ## Selection and qualification
 
-The released source base is 0.16.1 at `b6193cb`. The adapter retirement is complete
+The released source base is 0.16.2 at `0d60020`. The adapter retirement is complete
 here; Persistence published the replacement as 0.50.17. The arithmetic API and
 Rust 1.91 floor are unchanged. Package and dependency identities belong to
 [Cargo.toml](../../Cargo.toml) and [Cargo.lock](../../Cargo.lock), not this summary.
 
-The pending 0.16.2 batch simplifies dependency-free admission to one locked,
-offline Cargo metadata observation. All normal/build declarations are forbidden,
-including inactive optional and target-specific edges. This already establishes
-an empty production graph, so compiler-host discovery and repeated native/Wasm
-graph traversal are retired. Development dependencies remain allowed except for
-the existing direct stable-substrate prohibition. Fixtures retain declaration
-coverage and distinguish failed, malformed and incomplete metadata observations.
+The pending 0.16.3 batch adopts Shared Tooling 0.26.20 at
+`a7f85d45d4212d4c39225f58597580560a333550` through its canonical exporter
+(120 payloads, including the linked Node/npm guide). The compact baseline delegates
+detailed rules to task-specific references; the local overlay retains Metrics
+ownership and validation choices.
+Detailed change accounting is opt-in. No npm SDK or RPC-budget caller exists here.
 
-The unused graph helper is retired by canonical snapshot refresh (117 payloads) at
-the same Shared Tooling revision, 0.26.10 `a8141e775983c7fe504c4dd911e978152e657fdf`.
-The README now selects the current 0.16 arithmetic contract. The host guide links
-Persistence's stable-adapter qualification instead of maintaining its graph rules.
-Library source, API, package versions and dependency selections are unchanged.
+Normal release commands now start fresh from clean committed metadata without
+scanning or replaying historical plans. Exact attempt recovery uses
+`make release-resume VERSION=X.Y.Z`. Build/validation evidence remains retained;
+the shared runner supersedes only the new candidate's old plan and receipts.
+Cargo-tool setup reports phase outcomes on stderr. Read-only admission reports
+admitted contention as exit status 75 and supports explicit bounded waits.
+Tool pins, library source/API, package versions and dependency selections are unchanged.
 
-The [0.16.1 handoff](https://github.com/dragginzgame/ic-metrics/blob/b6193cb/docs/status/current.md)
-retains preceding validation identities, including the Rust-floor doctests and
-native evidence fixtures. Focused checks for this batch pass: real declaration admission, refusal fixtures
-with inherited `CDPATH`, Perl syntax, ShellCheck, snapshot verification, formatting,
-release-command fixtures, actual offline package verification and local doc links.
-Release-command effects are substituted. No new full release gate or native
-macOS result is claimed.
+The [0.16.2 handoff](https://github.com/dragginzgame/ic-metrics/blob/0d60020987fe706e8182b6d4ab9c87a406876f16/docs/status/current.md)
+retains dependency-free declaration admission and preceding validation details.
+It calls that batch pending; the release tag and finalized changelog now identify
+it as released. Persistence owns stable-adapter qualification.
+
+Focused checks pass: snapshot integrity, pins, formatting, offline tool admission,
+release/hook retention and admission fixtures, native evidence/recovery fixtures,
+ShellCheck with sourced helpers, local documentation links and diff whitespace.
+`make install-tools` prepared the pinned selections after initial tool admission
+found a missing current selection. Release/action effects are substituted in
+fixtures. No full release gate or new native macOS execution is claimed.
 
 ## Historical dispositions
 
