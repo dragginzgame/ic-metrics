@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.16.5]
+
+### ➕ Added
+
+- Optional bounded same-unit measurement tables with explicit key/entry budgets,
+  borrowed snapshots and accounted omitted observations, without platform reads.
+- Generic heap-local measurement windows with nonwrapping reset sequences;
+  consumers retain units, instance identity, reset authorization and endpoints.
+  Default arithmetic stays allocation-free; recording uses `alloc` without
+  adding production dependencies.
+
+### 🧪 Testing
+
+- Include optional recording in package and lint gates, with release fixtures
+  covering the selected feature flags and failure propagation.
+
 ## [0.16.4] - 2026-10-28
 
 ### 📝 Summary

@@ -1,8 +1,9 @@
 # Measurement extraction contract
 
-IC Metrics owns small, allocation-free, dependency-free `no_std` arithmetic.
-Consumers own platform reads, sample admission, units, attribution, identities,
-registries, labels, synchronization, lifecycle and endpoints. The
+IC Metrics owns dependency-free `no_std` arithmetic and optional bounded heap
+recording. Default arithmetic remains allocation-free. Consumers own platform
+reads, sample admission, units, attribution, instance identities, limits, labels,
+synchronization, lifecycle and endpoints. The
 [application guide](../crates/ic-metrics/src/application.md) is included in the
 crate documentation and supplies compiled examples.
 
@@ -183,3 +184,24 @@ Older release-by-release extraction prose is preserved verbatim in
 contract. The [pre-0.2 extraction record](evidence/extraction-through-019.md)
 retains the retired reader's scope. Existing evidence and changelog history stay
 unchanged.
+
+## Bounded recording extension
+
+The maintainer selected this extension on 2026-10-28 for unconditional bounded
+consumer recording with independently selected endpoint exposure. `recording`
+adds no production dependency and uses Rust `alloc`, never `std` or platform APIs.
+`BoundedMeasurementTable` admits the first identities within explicit entry,
+per-key byte and total-key-byte limits. Existing identities continue at capacity.
+Each refused observation contributes exactly once to a same-unit omitted aggregate;
+its count is observations, not distinct omitted identities. Reports borrow keys
+and copy arithmetic state; no global top-cost or complete-identity claim is made.
+The key-byte budget excludes map-node and allocator overhead. Bounds are product
+choices; the shared crate chooses no application capacity or admission labels.
+
+`MeasurementWindow<T>` holds consumer-defined combinations of counters, aggregates,
+summaries or bounded tables. Replacing a window advances its nonwrapping sequence.
+Consumers supply clock fields, empty replacement state and reset authorization.
+Equal sequences from different instances never establish continuity. Restart and
+persistence remain at their existing owners; this is not a durable registry.
+Authoritative database debt, quotas and balances never move into this recorder.
+No change to inclusive versus exclusive attribution or public DTOs is implied.

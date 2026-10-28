@@ -9,19 +9,24 @@ consumer-contract or persistence-boundary changes.
 
 ## Ownership
 
-- Own small, allocation-free measurement arithmetic. Keep the library
+- Own allocation-free measurement arithmetic and optional bounded heap recording. Keep the library
   dependency-free and `no_std`; consumers own platform counter reads.
 - IC Persistence owns the separately opted-in `ic-metrics-stable` package, its
   governed Memory/Storage integration, tests and release. This repository owns
-  only arithmetic. Hosts retain allocation, lifecycle, identities and write cadence.
+  arithmetic and the explicitly selected `recording` store. Hosts retain allocator
+  selection, lifecycle, instance identity and write cadence.
   Never add stable-memory dependencies to the arithmetic package.
 - IC Host owns the published `ic-host-wasm-inspect` CLI, its installation guide
   and Rust floor. Optional evidence experiments select their own qualified tool
   identity; Metrics owns no inspector wrapper, pin or workspace dependency.
   Source-less lock packages must be workspace-owned; external path dependencies
   are not permitted. Release metadata advances only the local arithmetic package.
-- Consumer code owns measurement attribution, registries, labels, replication
-  policy, reset/restart identity, persistence, lifecycle hooks, and endpoints.
+- Consumer code owns measurement attribution, labels, registry limits, replication
+  policy, reset authorization, restart identity, persistence, lifecycle hooks, and endpoints.
+- The maintainer-selected bounded recording extension (2026-10-28) permits
+  `alloc` only behind the `recording` feature. The shared table owns retention
+  and omitted-observation accounting; generic windows own nonwrapping reset
+  sequences, never platform clocks or globally unique identity.
   Do not add dependencies on IcyDB, Canic, `ic-timers`, or `ic-backup`.
 - IcyDB's inclusive overlapping spans and Canic's exclusive endpoint accounting
   remain separate consumer contracts. Do not add an attribution-mode switch.

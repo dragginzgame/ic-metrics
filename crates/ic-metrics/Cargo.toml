@@ -10,6 +10,10 @@ description.workspace = true
 readme = "../../README.md"
 publish = ["crates-io"]
 
+[features]
+default = []
+recording = []
+
 [dev-dependencies]
 num-bigint.workspace = true
 

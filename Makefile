@@ -91,7 +91,7 @@ publish:
 
 # Verify the arithmetic archive offline. No registry upload or version mutation.
 package-check:
-	+cargo package --workspace --locked --offline --allow-dirty
+	+cargo package --workspace --all-features --locked --offline --allow-dirty
 
 publish-check:
 	+$(MAKE) --no-print-directory clippy
@@ -110,18 +110,20 @@ evidence-check:
 	cd docs/evidence && bash ../../scripts/ci/verify-evidence-checksums.sh $(notdir $(EVIDENCE_LOCAL_MANIFESTS))
 
 check:
-	+cargo check --workspace --all-targets --locked
+	+cargo check -p $(PACKAGE) --lib --no-default-features --locked
+	+cargo check --workspace --all-targets --all-features --locked
 
 check-wasm:
-	+cargo check --workspace --locked --target wasm32-unknown-unknown
+	+cargo check -p $(PACKAGE) --lib --no-default-features --locked --target wasm32-unknown-unknown
+	+cargo check --workspace --all-features --locked --target wasm32-unknown-unknown
 
 clippy:
-	+cargo clippy --workspace --all-targets --locked -- -D warnings
-	+cargo clippy --workspace --lib --locked --target wasm32-unknown-unknown -- -D warnings
+	+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+	+cargo clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings
 
 docs-check:
-	+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --locked --no-deps
-	+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --locked --no-deps --target wasm32-unknown-unknown
+	+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --locked --no-deps
+	+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --locked --no-deps --target wasm32-unknown-unknown
 
 check-doc-links:
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
@@ -131,7 +133,7 @@ check-doc-links:
 		crates/ic-metrics/src/application.md
 
 test:
-	+cargo test --workspace --locked
+	+cargo test --workspace --all-features --locked
 
 msrv:
 	+bash scripts/ci/check-msrv.sh

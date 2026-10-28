@@ -1,10 +1,10 @@
 # ic-metrics
 
-Allocation-free, dependency-free measurement arithmetic.
+Dependency-free measurement arithmetic with optional bounded heap recording.
 
 IC Metrics is a standalone application capability alongside IC Timers, IC Jobs
 and IC Auth. Applications and Canic compose these packages through explicit
-dependencies. Metrics owns measurement arithmetic;
+dependencies. Metrics owns measurement arithmetic and optional bounded retention;
 the consuming application owns platform reads, attribution, lifecycle and endpoints.
 
 IC Tooling owns Host, Build and Testkit. Those packages support development and
@@ -243,3 +243,34 @@ make publish
 locked dependencies. Both retain Cargo's package verification and dirty-tree
 rejection. Publication does not bump versions, create Git commits/tags or clean
 artifacts. See [Cargo's publication documentation](https://doc.rust-lang.org/cargo/commands/cargo-publish.html).
+
+## Optional bounded recording
+
+Enable `recording` for `BoundedMeasurementTable`: a same-unit keyed recorder with
+explicit entry and UTF-8 key budgets, borrowed snapshots, and a separate aggregate
+for observations whose identities were omitted. It uses `alloc` but no production
+dependencies. Default arithmetic remains allocation-free and all features remain
+`no_std`. Collection allocates on admitted new identities, not repeated keys;
+report construction and endpoint selection remain consumer-owned.
+
+`MeasurementWindow<T>` supplies heap-local nonwrapping reset bookkeeping for
+consumer-defined state. Reset sequences are not global identities. See the
+[bounded recording contract](docs/extraction.md#bounded-recording-extension).
+
+A consumer can compose the shared store with its own fixed counters in one reset
+window. The consumer chooses limits and supplies instruction/cycle values; the
+library does not read them or publish an endpoint:
+
+```rust
+use ic_metrics::{BoundedMeasurementTable, MeasurementTableLimits, MeasurementWindow};
+
+let limits = MeasurementTableLimits { entries: 64, key_bytes: 1024, total_key_bytes: 8192 };
+let mut window = MeasurementWindow::new(BoundedMeasurementTable::new(limits));
+window.state_mut().record("accepted.entity", 120);
+assert_eq!(window.state().entries().len(), 1);
+window.reset(BoundedMeasurementTable::new(limits));
+assert_eq!(window.sequence(), Some(1));
+```
+
+This example requires the `recording` feature. Other fixed measurement shapes can
+live alongside the table in a consumer-defined struct inside the same window.

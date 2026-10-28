@@ -1,12 +1,22 @@
-//! Allocation-free measurement arithmetic for Internet Computer consumers.
+//! Measurement arithmetic and optional bounded recording for Internet Computer consumers.
 //!
 //! Values use one consumer-selected unit per aggregate. Consumers own sampling,
-//! attribution, counter identity, reset windows and reporting. This crate does
+//! attribution, instance identity, reset policy and reporting. This crate does
 //! not read platform counters or manufacture measurements. The library is
-//! dependency-free and `no_std` on every target.
+//! dependency-free and `no_std` on every target. Default arithmetic needs no allocator;
+//! the opt-in `recording` feature uses `alloc` for bounded keyed retention.
 
 #![doc = include_str!("application.md")]
 #![no_std]
+
+#[cfg(feature = "recording")]
+extern crate alloc;
+#[cfg(feature = "recording")]
+mod recording;
+#[cfg(feature = "recording")]
+pub use recording::{
+    BoundedMeasurementTable, MeasurementAttribution, MeasurementOmission, MeasurementTableLimits,
+};
 
 mod aggregate;
 mod counter;
@@ -14,6 +24,8 @@ mod histogram;
 mod ratio;
 mod state;
 mod summary;
+mod window;
+pub use window::MeasurementWindow;
 
 pub use aggregate::{
     CheckedMeasurementAggregate, MeasurementAggregate, MeasurementInterval,

@@ -211,7 +211,7 @@ for failure in none metadata package; do
     if [[ "$failure" == none ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
     printf 'metadata prepare\n' > "$fixture/expected"
     if [[ "$failure" != metadata ]]; then
-        printf '%s\n' package --workspace --locked --offline --allow-dirty >> "$fixture/expected"
+        printf '%s\n' package --workspace --all-features --locked --offline --allow-dirty >> "$fixture/expected"
     fi
     cmp "$fixture/expected" "$EVENTS"
 done
@@ -222,7 +222,7 @@ status=0
 PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 CLIPPY_FAILURE=native "$real_make" "${parallel[@]}" --no-print-directory \
     -f "$root/Makefile" clippy > "$fixture/output" 2>&1 || status=$?
 [[ "$status" == 2 ]] || exit 1
-printf '%s\n' clippy --workspace --all-targets --locked -- -D warnings > "$fixture/expected"
+printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
 cmp "$fixture/expected" "$EVENTS"
 
 # CI dispatch must stop at either Clippy failure before expensive suites. Only
@@ -266,7 +266,7 @@ for fail in 0 1; do
     PATH="$fixture/bin:$PATH" FAIL_PACKAGE="$fail" "$real_make" --no-print-directory \
         -f "$root/Makefile" package-check > "$fixture/output" 2>&1 || status=$?
     if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
-    printf '%s\n' package --workspace --locked --offline --allow-dirty > "$fixture/expected"
+    printf '%s\n' package --workspace --all-features --locked --offline --allow-dirty > "$fixture/expected"
     cmp "$fixture/expected" "$EVENTS"
 done
 
@@ -277,8 +277,8 @@ for target in publish publish-check; do
         PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
             -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
         if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
-        printf '%s\n' clippy --workspace --all-targets --locked -- -D warnings > "$fixture/expected"
-        printf '%s\n' clippy --workspace --lib --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
+        printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
+        printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
         printf '%s\n' publish -p ic-metrics --locked --registry crates-io >> "$fixture/expected"
         if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
         cmp "$fixture/expected" "$EVENTS"
@@ -289,9 +289,9 @@ for target in publish publish-check; do
         PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 CLIPPY_FAILURE="$failure" "$real_make" "${parallel[@]}" --no-print-directory \
             -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
         [[ "$status" == 2 ]] || exit 1
-        printf '%s\n' clippy --workspace --all-targets --locked -- -D warnings > "$fixture/expected"
+        printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
         if [[ "$failure" == wasm ]]; then
-            printf '%s\n' clippy --workspace --lib --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
+            printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
         fi
         cmp "$fixture/expected" "$EVENTS"
     done

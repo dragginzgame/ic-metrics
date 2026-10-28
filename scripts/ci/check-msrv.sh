@@ -15,8 +15,10 @@ fi
 rustc "+$minimum" --version
 cargo "+$minimum" --version
 # Include native test targets and their development dependencies at the same floor.
-cargo "+$minimum" check --workspace --all-targets --locked
-cargo "+$minimum" check --workspace --locked --target wasm32-unknown-unknown
+cargo "+$minimum" check -p ic-metrics --lib --no-default-features --locked
+cargo "+$minimum" check -p ic-metrics --lib --no-default-features --locked --target wasm32-unknown-unknown
+cargo "+$minimum" check --workspace --all-targets --all-features --locked
+cargo "+$minimum" check --workspace --all-features --locked --target wasm32-unknown-unknown
 
 # Public examples are part of the compiler-floor contract too.
-cargo "+$minimum" test -p ic-metrics --doc --locked
+cargo "+$minimum" test -p ic-metrics --doc --all-features --locked
