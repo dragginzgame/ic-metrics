@@ -10,37 +10,38 @@ owns durable integration and retained-data contracts.
 
 ## Selection and qualification
 
-The released source base is 0.16.2 at `0d60020`. The adapter retirement is complete
+The latest finalized release is 0.16.3 at `27a46f1`; the current committed base
+is its changelog presentation merge `78a99d9`. The adapter retirement is complete
 here; Persistence published the replacement as 0.50.17. The arithmetic API and
 Rust 1.91 floor are unchanged. Package and dependency identities belong to
 [Cargo.toml](../../Cargo.toml) and [Cargo.lock](../../Cargo.lock), not this summary.
 
-The pending 0.16.3 batch adopts Shared Tooling 0.26.20 at
-`a7f85d45d4212d4c39225f58597580560a333550` through its canonical exporter
-(120 payloads, including the linked Node/npm guide). The compact baseline delegates
-detailed rules to task-specific references; the local overlay retains Metrics
-ownership and validation choices.
-Detailed change accounting is opt-in. No npm SDK or RPC-budget caller exists here.
+The pending 0.16.4 batch adopts Shared Tooling 0.27.4 at
+`83f87cca71a420a61e69b6bdd018be27d4455daf` through its canonical exporter
+(122 payloads). Trusted-source verification also compares every payload's bytes
+and mode with that independently selected commit. The formatting runner now
+reports pass timings and reuses exact successful inputs. The hook fixture selects
+actual consumer roots and lets Shared derive their complete companion closure.
+The catalog adds optional sccache without enabling it here. Library source/API,
+package versions, dependency selections and the Rust 1.91 floor are unchanged.
 
-Normal release commands now start fresh from clean committed metadata without
-scanning or replaying historical plans. Exact attempt recovery uses
-`make release-resume VERSION=X.Y.Z`. Build/validation evidence remains retained;
-the shared runner supersedes only the new candidate's old plan and receipts.
-Cargo-tool setup reports phase outcomes on stderr. Read-only admission reports
-admitted contention as exit status 75 and supports explicit bounded waits.
-Tool pins, library source/API, package versions and dependency selections are unchanged.
+The release gate remains host/Cargo/native/Wasm-only. Existing native bootstrap
+precedes common tools and the selected IC Build editor; no browser or IC tool
+caller is added. The release commands retain their fresh-start behavior and
+`make release-resume VERSION=X.Y.Z` retains exact-attempt recovery.
 
-The [0.16.2 handoff](https://github.com/dragginzgame/ic-metrics/blob/0d60020987fe706e8182b6d4ab9c87a406876f16/docs/status/current.md)
-retains dependency-free declaration admission and preceding validation details.
-It calls that batch pending; the release tag and finalized changelog now identify
-it as released. Persistence owns stable-adapter qualification.
+The [0.16.3 handoff](https://github.com/dragginzgame/ic-metrics/blob/27a46f1076ee757680b6e6b1974947e482f3158d/docs/status/current.md)
+retains the preceding adoption and dependency-free declaration qualification.
+Its pending label is historical; the tag and finalized changelog own release state.
 
-Focused checks pass: snapshot integrity, pins, formatting, offline tool admission,
-release/hook retention and admission fixtures, native evidence/recovery fixtures,
-ShellCheck with sourced helpers, local documentation links and diff whitespace.
-`make install-tools` prepared the pinned selections after initial tool admission
-found a missing current selection. Release/action effects are substituted in
-fixtures. No full release gate or new native macOS execution is claimed.
+Focused checks pass: trusted-source snapshot comparison, pins, formatting,
+offline tool admission, actual release/hook retention and admission fixtures,
+native evidence/recovery fixtures, sourced ShellCheck, local documentation links
+and diff whitespace. Initial metadata-fixture admission refused an unprepared
+editor selection; retained evidence is under `target/evidence/native-ci/`.
+`make install-tools` prepared current selections and the affected fixtures pass.
+Release/action effects are substituted. No full release gate or new native macOS
+execution is claimed.
 
 ## Historical dispositions
 

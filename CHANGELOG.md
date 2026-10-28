@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.4]
+
+### 📝 Summary
+
+- Adopt reviewed Shared Tooling 0.27.4, including timed Rust formatting with
+  exact-input reuse and snapshot comparison against the reviewed upstream commit.
+- Derive formatting-hook fixture inputs from the shared companion closure,
+  preserving actual consumer formatting and failure-retention checks.
+
 ## [0.16.3] - 2026-10-26
 
 ### 📝 Summary
