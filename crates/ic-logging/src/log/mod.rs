@@ -261,6 +261,19 @@ impl Log {
         }
     }
 
+    /// Consume the log into a checkpoint without cloning retained entries.
+    /// Fixed limits, row order and both append watermarks are preserved, including
+    /// empty histories and permanent sequence exhaustion.
+    #[must_use]
+    pub fn into_snapshot(self) -> LogSnapshot {
+        LogSnapshot {
+            limits: self.limits,
+            entries: self.entries.into(),
+            next_sequence: self.next_sequence,
+            last_created_at_secs: self.last_created_at_secs,
+        }
+    }
+
     /// Admit a complete checkpoint without replaying entries or reissuing identities.
     ///
     /// Empty retained history preserves its original append watermarks. Admission

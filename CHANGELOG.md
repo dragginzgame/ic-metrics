@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.5] - Unreleased
+
+### ➕ Added
+
+- Add `Log::into_snapshot` to move retained entries into a checkpoint without
+  cloning their owned text, preserving limits, ordering and append watermarks.
+  Borrowed snapshots and canonical restoration retain their existing behavior.
+  [Checkpoint guide](crates/ic-logging/README.md).
+
 ## [0.17.4] - 2026-10-29
 
 ### 🧹 Cleanup
