@@ -1,13 +1,13 @@
 # Current handoff — 2026-10-29
 
-Source base is `6ed52fa53a1b25f2aaef7ed744d18670a6c02a7d` (workspace 0.17.3).
+Source base is `72f1e4beaa5dcc31c3ed59033aed71f3a2207726` (workspace 0.17.3).
 Shared Tooling remains reviewed 0.27.4, revision
 `83f87cca71a420a61e69b6bdd018be27d4455daf`, with unchanged payloads.
 
 ## Accepted complexity cleanup
 
-The maintainer authorized all six candidates from the full code audit. The
-pending batch implements them with compatible 0.17.4 changelog notes:
+The maintainer authorized and committed all six candidates from the full code
+audit, with compatible pending 0.17.4 changelog notes:
 
 - Native CI calls an owned evidence collector. Fixtures directly exercise it
   and check the workflow's outcome mappings and invocation. Sanitized diagnostics,
@@ -27,7 +27,24 @@ pending batch implements them with compatible 0.17.4 changelog notes:
 
 Public APIs, valid checkpoint formats, dependencies, version metadata and package
 identities are unchanged. No sibling edits, staging, commit, merge, release or
-publication is selected. Review the pending diff before any delivery action.
+publication is selected. The maintainer committed the cleanup and separately
+updated the lock to Wire 0.7.22; the earlier code evidence below retains its
+original Wire 0.7.21 graph identity.
+
+## Release-heading correction
+
+The maintainer's fresh 0.17.4 release refused during preflight because the draft
+heading was dated before preparation. No validation, version preparation or saved
+0.17.4 release attempt started. The pending correction is `## [0.17.4]`; the
+release runner owns date finalization. Package versions remain at 0.17.3.
+
+Latest remote Shared Tooling was checked at 0.27.7,
+`11d519c604b1727a2bf6272557a97e770a63b29f`. Its changelog checker and finalizer
+are byte-identical to the adopted copies, so an update would retain this refusal.
+No snapshot refresh is selected. Evidence in `target/audits/release-heading.md1C2u/`
+reproduces the old refusal, admits the corrected draft and proves preparation
+recreates the original dated document without changing its notes or history.
+Commit the correction before retrying the fresh release; no release was run here.
 
 ## Current validation
 
