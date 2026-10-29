@@ -78,10 +78,10 @@ help:
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Frozen evidence archive checksums (read-only): evidence-check"
-	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
+	@echo "Named tests: cargo test -p PACKAGE --locked <test-name> (ic-metrics or ic-logging)"
 	@echo "Recording tests: cargo test -p $(PACKAGE) --features recording --locked <test-name>"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
-	@echo "Workspace gates cover the arithmetic library; native/Wasm minimum: msrv"
+	@echo "Workspace gates cover Metrics and Logging; native/Wasm minimum: msrv"
 	@echo "Full release validation (or explicit check request): ci, msrv"
 
 publish:
@@ -131,7 +131,7 @@ check-doc-links:
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md tasks/*.md
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
-		crates/ic-metrics/src/application.md
+		crates/ic-metrics/src/application.md crates/ic-metrics/README.md crates/ic-logging/README.md
 
 test:
 	+cargo test --workspace --all-features --locked

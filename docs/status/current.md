@@ -1,11 +1,12 @@
 # Current handoff — 2026-10-29
 
-The checkout starts at released 0.16.7 (`a404422`). The maintainer selected standard
-numeric transport so consumers can embed aggregates/counters directly in reports.
-The pending 0.17.0 removes the published `wire` feature rather than keeping an
-obsolete compatibility switch. Consumers must remove `wire` from feature lists.
-This is a pre-1.0 breaking feature-contract change; package versions and Cargo.lock
-remain unchanged. Work is uncommitted; no release or publication was performed.
+IC Metrics 0.17.0 is released at `c45bb5a` and reported live by the maintainer.
+Standard numeric transport lets consumers embed aggregates/counters directly in
+reports. The release removes the former `wire` feature; consumers must remove
+`wire` from feature lists. Heap recording still requires `recording`.
+
+The existing documentation touch-up corrects release status and the transport
+module description. It is preserved with the Observability consolidation below.
 
 Serde Serialize/Deserialize for MeasurementAggregate and MeasurementCounter is
 always available. Native IC Wire metadata is also standard. Private fixed-size
@@ -33,4 +34,45 @@ refusals, browser metadata generation, Rust 1.91 default doctests and default Wa
 compilation, dependency-admission fixtures, documentation links and diff checks.
 Evidence from released #99 remains in `target/evidence/transport-99/` under its
 original opt-in feature identity. No browser runtime execution or IC cost delta is
-claimed, and no full release gates were run for this batch.
+claimed by those focused receipts. The documentation touch-up uses formatting,
+link, consistency and diff checks; existing arithmetic evidence is reused.
+
+Downstream owners can now select 0.17.0, remove the obsolete feature selection,
+replace consumer numeric report mirrors and qualify their endpoint and browser
+contracts. IcyDB integration and any remaining Canic adapter selection are owned
+by those consumers; this repository does not establish their adoption status.
+
+## Observability consolidation
+
+The maintainer selected renaming this repository and local checkout to
+`ic-observability`, adding the independent `crates/ic-logging` package alongside
+`ic-metrics`. Both share the existing 0.17.0 workspace version and lockfile.
+No package version bump, source commit, tag or publication is selected.
+The existing two dirty documentation edits are preserved. Historical evidence
+and reviewed Shared Tooling snapshot 0.27.4 remain unchanged.
+
+Logging is dependency-free `no_std` + `alloc`, with fixed entry/label/message
+bounds, UTF-8 truncation, monotonic sequence/time watermarks, explicit age
+retention and scan-bounded cursor pages. It installs no endpoint, clock, timer
+or lifecycle. `ic-metrics` retains its name and dependency graph; the two
+libraries do not depend on one another. Stable adapters stay at IC Persistence.
+Logging remains `publish = false`; Canic's current logger is unchanged.
+
+The package guides are now beside each crate. The existing CI/Make aggregates
+include both libraries. Dependency admission classifies each package and refuses
+Logging dependencies, including inactive/build declarations and Metrics coupling.
+The compiler-floor runner additionally includes Logging's doctest. Existing
+release metadata already derives coordinated members; publication still selects
+Metrics only. Open 0.17.1 notes describe this compatible workspace batch.
+
+Focused checks pass in `/tmp/ic-observability-integration.wIEP78/ic-observability`:
+12 Logging unit regressions, default and Rust 1.91 doctests, native worker,
+strict library/test/example Clippy, Rust 1.91 native/Wasm compilation, the
+production-declaration checker and its refusal fixtures, both package inventories,
+real Make formatting, documentation links and snapshot integrity. The selected
+release/Make adapter fixture passes using command stubs with no Git/registry effects.
+No full workspace suite, native macOS or installed canister evidence is claimed.
+
+The next product slice is the Logging storage/adoption boundary, not publication
+of the initial heap engine. The prior standalone bootstrap remains preserved at
+`/tmp/ic-logging-bootstrap.aOgJT4/ic-logging` as historical preparation evidence.

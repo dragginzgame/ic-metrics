@@ -22,3 +22,4 @@ cargo "+$minimum" check --workspace --all-features --locked --target wasm32-unkn
 
 # Public examples are part of the compiler-floor contract too.
 cargo "+$minimum" test -p ic-metrics --doc --all-features --locked
+cargo "+$minimum" test -p ic-logging --doc --locked

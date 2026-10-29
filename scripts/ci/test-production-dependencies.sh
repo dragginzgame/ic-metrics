@@ -22,10 +22,12 @@ package() {
 reset_case() {
     local name
     rm -rf "$fixture/workspace/crates" "$fixture/vendor" "$fixture/workspace/Cargo.lock"
-    mkdir -p "$fixture/workspace/crates/ic-metrics/src"
+    mkdir -p "$fixture/workspace/crates/ic-metrics/src" "$fixture/workspace/crates/ic-logging/src"
     printf '[package]\nname = "ic-metrics"\nversion = "0.1.0"\nedition = "2024"\n' > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
     : > "$fixture/workspace/crates/ic-metrics/src/lib.rs"
-    printf '[workspace]\nmembers = ["crates/ic-metrics"]\nresolver = "3"\n' > "$fixture/workspace/Cargo.toml"
+    printf '[package]\nname = "ic-logging"\nversion = "0.1.0"\nedition = "2024"\n' > "$fixture/workspace/crates/ic-logging/Cargo.toml"
+    : > "$fixture/workspace/crates/ic-logging/src/lib.rs"
+    printf '[workspace]\nmembers = ["crates/ic-logging", "crates/ic-metrics"]\nresolver = "3"\n' > "$fixture/workspace/Cargo.toml"
     cp "$root/rust-toolchain.toml" "$fixture/workspace/"
     for name in ic-testkit ic-stable-structures ordinary serde ic-wire; do package "$name"; done
     cat >> "$fixture/workspace/crates/ic-metrics/Cargo.toml" <<'TRANSPORT'
@@ -84,6 +86,29 @@ for selection in normal optional target build; do
     check_case "$selection-declaration" 'ic-metrics declares a production dependency: ordinary'
 done
 
+# Logging stays independent, including inactive declarations and build scripts.
+for selection in normal optional target build; do
+    reset_case
+    table=dependencies
+    extra=''
+    case "$selection" in
+        optional) extra=', optional = true' ;;
+        target) table="target.'cfg(target_os = \"none\")'.dependencies" ;;
+        build) table=build-dependencies ;;
+    esac
+    printf '\n[%s]\nrenamed = { package = "ordinary", path = "../../../vendor/ordinary"%s }\n' \
+        "$table" "$extra" >> "$fixture/workspace/crates/ic-logging/Cargo.toml"
+    check_case "logging-$selection" 'ic-logging declares a production dependency: ordinary'
+done
+
+reset_case
+printf '\n[dependencies]\nic-metrics = { path = "../ic-metrics" }\n' >> "$fixture/workspace/crates/ic-logging/Cargo.toml"
+check_case logging-metrics-coupling 'ic-logging declares a production dependency: ic-metrics'
+
+reset_case
+printf '[workspace]\nmembers = ["crates/ic-metrics"]\nresolver = "3"\n' > "$fixture/workspace/Cargo.toml"
+check_case missing-logging 'missing registered workspace package: ic-logging'
+
 reset_case
 printf '\n[dev-dependencies]\nraw = { package = "ic-stable-structures", path = "../../../vendor/ic-stable-structures" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case direct-development-substrate 'ic-metrics directly depends on the stable substrate'
@@ -122,4 +147,4 @@ for observation in failed malformed incomplete missing-dependencies; do
         check_case "metadata-$observation" "$expected"
 done
 fixture_complete=true
-echo 'Arithmetic declaration admission, development isolation and metadata refusals passed'
+echo 'Metrics/Logging admission, dependency isolation and metadata refusals passed'

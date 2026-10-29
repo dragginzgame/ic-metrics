@@ -4,7 +4,7 @@ use warnings;
 use Cwd qw(getcwd);
 use JSON::PP qw(decode_json);
 
-# Metrics owns declaration admission, including the standard transport allowlist.
+# Observability owns per-package declaration admission and transport boundaries.
 # This check never installs tools, builds artifacts or changes the locked graph.
 if (@ARGV) {
     @ARGV == 2 && shift(@ARGV) eq '--consumer'
@@ -33,20 +33,24 @@ ref($metadata) eq 'HASH' && ($metadata->{version} // 0) == 1
     && ref($metadata->{packages}) eq 'ARRAY'
     or die "invalid Cargo workspace metadata\n";
 my %members = map { $_ => 1 } @{$metadata->{workspace_members}};
+my %owners = ('ic-metrics' => 'measurement', 'ic-logging' => 'logging');
 my %packages;
+my %observed_members;
 for my $package (@{$metadata->{packages}}) {
     next unless $members{$package->{id}};
     my $name = $package->{name};
-    ($name eq 'ic-metrics') && !$packages{$name}++
+    exists($owners{$name}) && !$packages{$name}++ && !$observed_members{$package->{id}}++
         or die "unclassified production workspace package: $name\n";
     ref($package->{dependencies}) eq 'ARRAY' or die "missing declared dependencies\n";
     my $features = $package->{features} // {};
-    !@{$features->{default} // []} or die "default arithmetic enables features\n";
+    !@{$features->{default} // []} or die "$name enables default features\n";
     my %transport;
     for my $dependency (@{$package->{dependencies}}) {
         # Metadata includes inactive optional and target-specific declarations.
         if (($dependency->{kind} // 'normal') ne 'dev') {
             my $dep = $dependency->{name};
+            $owners{$name} eq 'measurement'
+                or die "$name declares a production dependency: $dep\n";
             ($dep eq 'serde' || $dep eq 'ic-wire')
                 or die "$name declares a production dependency: $dep\n";
             !$dependency->{optional} && !$dependency->{uses_default_features}
@@ -58,8 +62,15 @@ for my $package (@{$metadata->{packages}}) {
         $dependency->{name} ne 'ic-stable-structures'
             or die "$name directly depends on the stable substrate\n";
     }
-    keys(%transport) == 2 or die "missing standard transport dependency\n";
+    if ($owners{$name} eq 'measurement') {
+        $transport{'serde'} && $transport{'ic-wire'}
+            or die "missing standard transport dependency\n";
+    }
 }
-keys(%members) == 1 && keys(%packages) == 1
-    or die "expected only the Metrics arithmetic library\n";
-print "Arithmetic and standard transport declarations admitted.\n";
+for my $name (keys %owners) {
+    $packages{$name} or die "missing registered workspace package: $name\n";
+}
+for my $member (keys %members) {
+    $observed_members{$member} or die "missing workspace member metadata\n";
+}
+print "Metrics transport and independent Logging declarations admitted.\n";

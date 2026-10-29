@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.17.1]
+
+### ➕ Added
+
+- Add an unpublished, independent Logging crate with bounded heap history,
+  UTF-8-safe messages, explicit age retention and scan-bounded cursor paging.
+
+### 🔧 Changed
+
+- Rename the repository to IC Observability and share one workspace between
+  Metrics and Logging. Keep the published Metrics crate identity, arithmetic
+  behavior and dependency boundaries; durable adapters remain with IC Persistence.
+- Give Metrics its own package guide and admit both libraries in workspace
+  dependency, compiler-floor and documentation checks.
+
 ## [0.17.0] - 2026-10-29
 
 ### ⚠️ Breaking

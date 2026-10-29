@@ -70,11 +70,12 @@ already prepared toolchain; Rustup auto-install is disabled. Help and unrelated
 Make targets do not parse Cargo just to select the floor. Full `make msrv` retains
 its release/explicit-check authority; focused package commands remain below.
 
-The arithmetic package uses that minimum:
+Both workspace libraries use that minimum:
 
 | Package | Rust floor | Floor gate |
 | --- | --- | --- |
 | `ic-metrics` | 1.91, native and Wasm | `make msrv` |
+| `ic-logging` | 1.91, native and Wasm | `make msrv` |
 
 Use Git, GNU Make, Bash 3.2 or newer and standard Unix utilities. The
 [local setup guide](local-setup.md#bootstrap-prerequisites) owns system bootstrap,
@@ -123,14 +124,15 @@ explicit Cargo-tool setup. Application flags and wrappers remain separate from
 [the standard tool-build environment](local-setup.md#standard-cargo-tool-build-environment).
 
 After Rust edits, run `make fmt`. It sorts workspace manifests and formats Rust;
-`make fmt-check` is read-only. The common product gates cover the arithmetic workspace
-package; select direct Cargo commands when only one package or test is affected:
+`make fmt-check` is read-only. The common product gates cover both workspace
+libraries; select direct Cargo commands when only one package or test is affected:
 
 | Scope | Commands |
 | --- | --- |
-| Arithmetic workspace | `make check check-wasm clippy docs-check test` |
+| Observability workspace | `make check check-wasm clippy docs-check test` |
 | Focused library checks | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
 | Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
+| Logging | `cargo test -p ic-logging --lib --locked`; `cargo test -p ic-logging --doc --locked`; `cargo clippy -p ic-logging --lib --tests --examples --locked -- -D warnings` |
 | Standard numeric transport | `cargo test -p ic-metrics --lib --no-default-features --locked wire::tests`; transport and metadata require no Metrics feature selection |
 | Recording library checks | `cargo check -p ic-metrics --lib --features recording --locked`; Wasm: `cargo check -p ic-metrics --lib --features recording --locked --target wasm32-unknown-unknown`; lint: `cargo clippy -p ic-metrics --lib --tests --features recording --locked -- -D warnings` |
 | Recording tests and examples | `cargo test -p ic-metrics --lib --features recording --locked <test-name>`; doctests: `cargo test -p ic-metrics --doc --features recording --locked` |
@@ -187,9 +189,11 @@ applications qualify their own target, features and resolved dependency graph.
 Role labels, formatting and `make check-pins` remain separate checks.
 
 Keep compilation checks sequential when they share `target/`; check for active
-builds before source mutation or compilation. Bare Cargo commands select the
-arithmetic package. Builds use locked dependencies. The arithmetic graph has no
-third-party dependency, platform reader, IC feature or server harness. Stable storage qualification now belongs to IC Persistence.
+builds before source mutation or compilation. Bare Cargo commands select both
+libraries; use `-p ic-metrics` or `-p ic-logging` for focused work. Builds use
+locked dependencies. Metrics requires Serde and native-only Wire metadata;
+Logging has no dependencies. Neither owns platform readers or a server harness.
+Stable storage qualification belongs to IC Persistence.
 The inspector's CLI checks stay at IC Host; existing smoke artifacts under
 `target/evidence/wasm-inspector/` remain retained historical evidence.
 
@@ -235,11 +239,11 @@ Run full local suites only for an explicitly authorized release or an explicit
 request for those checks. The full gate is `make ci`, then workspace-native/Wasm `make msrv`; reuse passing evidence only for unchanged inputs. Full CI
 admits tools, pins and formatting before the native/Wasm Clippy gate. Clippy
 denies warnings and runs before test suites, documentation builds and dependency
-qualification fixtures. The complete gate checks the arithmetic package's builds,
+qualification fixtures. The complete gate checks both workspace libraries' builds,
 docs and tests. Configured CI and required branch
 checks remain unchanged. Strict native all-target and Wasm library Clippy supply
 CI type checking; `make check` and `make check-wasm` remain focused entrypoints.
-The workspace currently contains only a library. If other Wasm targets
+The workspace currently contains two libraries. If other Wasm targets
 are added, extend the Clippy target selection to preserve their CI coverage.
 Inspection and documentation-only work use narrower
 checks. [AGENTS.md](../AGENTS.md) retains product constraints and separate release

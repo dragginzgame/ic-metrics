@@ -1,4 +1,4 @@
-//! Optional numeric transport. Consumers own report composition and codec limits.
+//! Standard numeric transport. Consumers own report composition and codec limits.
 
 use crate::{MeasurementAggregate, MeasurementCounter};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

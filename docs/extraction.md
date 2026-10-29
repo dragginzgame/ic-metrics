@@ -1,4 +1,17 @@
-# Measurement extraction contract
+# Observability ownership and extraction contract
+
+IC Observability combines the Metrics and Logging packages in one workspace.
+Their library APIs, dependencies and runtime state remain independent. The root
+workspace owns coordinated versions, dependency selection and validation tooling.
+Existing frozen Metrics evidence retains the original repository/source identities.
+
+| Package | Owner |
+| --- | --- |
+| `ic-metrics` | The arithmetic, numeric transport and optional bounded recorder contract below |
+| `ic-logging` | Heap admission, retention and paging; [logging contract](logging.md) |
+| `ic-metrics-stable` | IC Persistence; unchanged external stable adapter owner |
+
+## Measurement contract
 
 IC Metrics owns allocation-free `no_std` arithmetic and optional bounded heap
 recording. Default arithmetic remains allocation-free. Consumers own platform
@@ -140,7 +153,7 @@ update do not establish owning acceptance. GitHub issues retain current work;
 remaining original Canic qualification stays with
 [#447](https://github.com/dragginzgame/canic/issues/447) and
 [#99](https://github.com/dragginzgame/canic/issues/99).
-[Metrics #10](https://github.com/dragginzgame/ic-metrics/issues/10) retains the
+[Metrics #10](https://github.com/dragginzgame/ic-observability/issues/10) retains the
 retired root coordination history, and [Toko #49](https://github.com/dragginzgame/toko-miner/issues/49)
 owns the database quality bridge/UI. The
 [six-consumer review](evidence/consumer-review-082.md) retains its observed sources.

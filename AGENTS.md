@@ -1,4 +1,4 @@
-# IC Metrics Agent Rules
+# IC Observability Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
 `83f87cca71a420a61e69b6bdd018be27d4455daf` (0.27.4) and file digests are recorded in
@@ -9,7 +9,16 @@ consumer-contract or persistence-boundary changes.
 
 ## Ownership
 
-- Own allocation-free measurement arithmetic and optional bounded heap recording. Keep the library
+- This renamed workspace owns the independent `ic-metrics` and `ic-logging`
+  packages. They share the root catalog, lockfile and version, with no dependency
+  on one another. Existing Metrics package identities remain unchanged.
+- Logging owns a dependency-free `no_std` + `alloc` heap engine with explicit
+  input time, fixed text/count bounds, retention batches and cursor scans.
+  It owns no global recorder, endpoint, authorization, clock or timer.
+  It remains unpublished. Canic adoption and any governed stable adapter are
+  unfinished; see [the logging boundary](docs/logging.md).
+
+- Metrics owns allocation-free measurement arithmetic and optional bounded heap recording. Keep its library
   `no_std`, with allocation-free arithmetic; consumers own platform counter reads.
 - Serde transport for aggregates/counters and native IC Wire metadata are standard.
   Decode only through canonical arithmetic admission. Heap recording stays optional.
@@ -22,10 +31,11 @@ consumer-contract or persistence-boundary changes.
   and Rust floor. Optional evidence experiments select their own qualified tool
   identity; Metrics owns no inspector wrapper, pin or workspace dependency.
   Source-less lock packages must be workspace-owned; external path dependencies
-  are not permitted. Release metadata advances only the local arithmetic package.
+  are not permitted. Release metadata advances coordinated workspace members,
+  including unpublished Logging. Publication remains selected per package.
 - Consumer code owns measurement attribution, labels, registry limits, replication
   policy, reset authorization, restart identity, persistence, lifecycle hooks, and endpoints.
-- The maintainer-selected bounded recording extension (2026-10-28) permits
+- Metrics' maintainer-selected bounded recording extension (2026-10-28) permits
   `alloc` only behind the `recording` feature. The shared table owns retention
   and omitted-observation accounting; generic windows own nonwrapping reset
   sequences, never platform clocks or globally unique identity.
@@ -82,7 +92,7 @@ consumer-contract or persistence-boundary changes.
   the shared managed installer; keep application compiler policy local.
 - Shared structural reviews use [the common methods](audits/README.md), with
   this overlay's allocation, units, counter identity and ownership constraints.
-  Source scope includes `crates/ic-metrics`, owning
+  Source scope includes `crates/ic-metrics`, `crates/ic-logging`, owning
   tooling and the affected downstream contracts in `docs/extraction.md`; focused
   commands remain in `docs/hosts.md`.
   Existing performance evidence under `docs/evidence` retains its domain scope
