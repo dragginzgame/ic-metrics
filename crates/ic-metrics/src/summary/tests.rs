@@ -1,3 +1,5 @@
+mod restoration;
+
 use crate::MeasurementAggregate;
 
 use super::MeasurementSummary;

@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.16.6]
+
+### 🧹 Cleanup
+
+- Separate histogram bucket-limit calculation from restored-state validation and
+  share ratio decomposition between floor and nearest rounding, preserving public
+  APIs and numeric admission behavior.
+- Reuse tracked overflow arithmetic for histogram admission and store retained
+  table identities as immutable boxed strings.
+
+### 🧪 Testing
+
+- Keep shape-specific restoration coverage beside its arithmetic owner and cover
+  empty identities under zero byte budgets and reuse of cleared, populated tables.
+- Cover omission-reason precedence when recording limits overlap.
+
+### 📚 Documentation
+
+- Include optional recording APIs in docs.rs builds and compile the bounded-table
+  usage example from the application guide. Document recording admission order.
+- Show feature selection in focused recording validation instructions and make
+  recording README links usable outside the repository checkout.
+
 ## [0.16.5] - 2026-10-28
 
 ### ➕ Added

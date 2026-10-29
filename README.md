@@ -255,22 +255,7 @@ report construction and endpoint selection remain consumer-owned.
 
 `MeasurementWindow<T>` supplies heap-local nonwrapping reset bookkeeping for
 consumer-defined state. Reset sequences are not global identities. See the
-[bounded recording contract](docs/extraction.md#bounded-recording-extension).
+[bounded recording contract](https://github.com/dragginzgame/ic-metrics/blob/main/docs/extraction.md#bounded-recording-extension).
 
-A consumer can compose the shared store with its own fixed counters in one reset
-window. The consumer chooses limits and supplies instruction/cycle values; the
-library does not read them or publish an endpoint:
-
-```rust
-use ic_metrics::{BoundedMeasurementTable, MeasurementTableLimits, MeasurementWindow};
-
-let limits = MeasurementTableLimits { entries: 64, key_bytes: 1024, total_key_bytes: 8192 };
-let mut window = MeasurementWindow::new(BoundedMeasurementTable::new(limits));
-window.state_mut().record("accepted.entity", 120);
-assert_eq!(window.state().entries().len(), 1);
-window.reset(BoundedMeasurementTable::new(limits));
-assert_eq!(window.sequence(), Some(1));
-```
-
-This example requires the `recording` feature. Other fixed measurement shapes can
-live alongside the table in a consumer-defined struct inside the same window.
+See the [compiled application example](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md#bounded-heap-recording)
+for composing the table and fixed measurement shapes in a reset window.

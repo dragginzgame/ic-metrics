@@ -311,3 +311,26 @@ storage and raw Wasm bytes, IC instructions and actual cycle charges separately.
 Include the recording work itself; samples whose measurement ends before
 recording do not measure that overhead. Source-bound compiler checks and this
 arithmetic example do not qualify any application's IC cost or lifecycle.
+
+### Bounded heap recording
+
+A consumer can compose the shared store with its own fixed counters in one reset
+window. The consumer chooses limits and supplies instruction/cycle values; the
+library does not read them or publish an endpoint:
+
+```rust
+# #[cfg(feature = "recording")]
+# {
+use ic_metrics::{BoundedMeasurementTable, MeasurementTableLimits, MeasurementWindow};
+
+let limits = MeasurementTableLimits { entries: 64, key_bytes: 1024, total_key_bytes: 8192 };
+let mut window = MeasurementWindow::new(BoundedMeasurementTable::new(limits));
+window.state_mut().record("accepted.entity", 120);
+assert_eq!(window.state().entries().len(), 1);
+window.reset(BoundedMeasurementTable::new(limits));
+assert_eq!(window.sequence(), Some(1));
+# }
+```
+
+This example requires the `recording` feature. Other fixed measurement shapes can
+live alongside the table in a consumer-defined struct inside the same window.

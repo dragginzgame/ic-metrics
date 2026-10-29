@@ -1,6 +1,6 @@
 //! Bounded heap retention of same-unit measurements, without platform or report policy.
 
-use alloc::{collections::BTreeMap, string::String};
+use alloc::{boxed::Box, collections::BTreeMap};
 
 use crate::MeasurementAggregate;
 
@@ -55,7 +55,7 @@ pub enum MeasurementAttribution {
 #[derive(Clone, Debug)]
 pub struct BoundedMeasurementTable {
     limits: MeasurementTableLimits,
-    entries: BTreeMap<String, MeasurementAggregate>,
+    entries: BTreeMap<Box<str>, MeasurementAggregate>,
     retained_key_bytes: usize,
     omitted: MeasurementAggregate,
 }
@@ -74,6 +74,10 @@ impl BoundedMeasurementTable {
 
     /// Record once, either under an admitted identity or in the omitted aggregate.
     /// No key allocation occurs for repeated identities or rejected new identities.
+    ///
+    /// The per-key byte limit is checked first. An existing identity then records
+    /// even at capacity. For a new identity, entry capacity is checked before the
+    /// remaining total key-byte budget; the first failing check supplies the reason.
     pub fn record(&mut self, key: &str, observation: u64) -> MeasurementAttribution {
         if key.len() > self.limits.key_bytes {
             return self.omit(observation, MeasurementOmission::KeyBytes);
@@ -95,7 +99,7 @@ impl BoundedMeasurementTable {
         }
         let mut aggregate = MeasurementAggregate::EMPTY;
         aggregate.record(observation);
-        self.entries.insert(String::from(key), aggregate);
+        self.entries.insert(Box::from(key), aggregate);
         self.retained_key_bytes += key.len();
         MeasurementAttribution::Retained
     }
@@ -113,7 +117,7 @@ impl BoundedMeasurementTable {
     pub fn entries(&self) -> impl ExactSizeIterator<Item = (&str, MeasurementAggregate)> + '_ {
         self.entries
             .iter()
-            .map(|(key, value)| (key.as_str(), *value))
+            .map(|(key, value)| (key.as_ref(), *value))
     }
 
     /// All omitted observations, including measured zero and actual-overflow quality.

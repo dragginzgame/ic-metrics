@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use crate::{MeasurementAggregate, MeasurementStateError, add_count};
+use crate::{MeasurementAggregate, MeasurementStateError, add_count, add_total};
 
 #[cfg(test)]
 mod tests;
@@ -462,6 +462,23 @@ const fn quantile_rank(samples: u64, numerator: u64, denominator: u64) -> u128 {
     ((samples as u128) * (numerator as u128)).div_ceil(denominator as u128)
 }
 
+// Derive inclusive arithmetic limits for a finite or overflow bucket. The caller
+// admits bounds and visits indices 0..=len; maximum placement is checked separately,
+// so saturating the lower limit does not admit overflow beyond u64::MAX.
+const fn restoration_bucket_limits(upper_bounds: &[u64], index: usize, maximum: u64) -> (u64, u64) {
+    let lower = if index == 0 {
+        0
+    } else {
+        upper_bounds[index - 1].saturating_add(1)
+    };
+    let upper = if index < upper_bounds.len() && upper_bounds[index] < maximum {
+        upper_bounds[index]
+    } else {
+        maximum
+    };
+    (lower, upper)
+}
+
 // Canonical admission derives counts, highest bucket and total range together.
 const fn validate_distribution<const N: usize>(
     upper_bounds: &[u64; N],
@@ -491,30 +508,12 @@ const fn validate_distribution<const N: usize>(
     // also constrain totals; a clipped positive bucket has no upper
     // count bound. Keep all admission arithmetic checked or saturating.
     while index <= N {
-        let (count, lost, lower, upper) = if index < N {
-            let lower = if index == 0 {
-                0
-            } else {
-                upper_bounds[index - 1].saturating_add(1)
-            };
-            (
-                bucket_counts[index],
-                bucket_overflowed[index],
-                lower,
-                if upper_bounds[index] < maximum {
-                    upper_bounds[index]
-                } else {
-                    maximum
-                },
-            )
+        let (count, lost) = if index < N {
+            (bucket_counts[index], bucket_overflowed[index])
         } else {
-            let lower = if N == 0 {
-                0
-            } else {
-                upper_bounds[N - 1].saturating_add(1)
-            };
-            (overflow, overflow_count_overflowed, lower, maximum)
+            (overflow, overflow_count_overflowed)
         };
+        let (lower, upper) = restoration_bucket_limits(upper_bounds, index, maximum);
         if lost && count != u64::MAX {
             return Err(MeasurementStateError::InvalidOverflowFlag);
         }
@@ -529,20 +528,12 @@ const fn validate_distribution<const N: usize>(
             maximum_lower = lower;
             let minimum_count = count as u128 + lost as u128;
             let minimum = minimum_count * lower as u128;
-            if let Some(next) = minimum_total.checked_add(minimum) {
-                minimum_total = next;
-            } else {
-                minimum_overflow = true;
-            }
+            add_total(&mut minimum_total, &mut minimum_overflow, minimum);
             if lost && upper != 0 {
                 maximum_overflow = true;
             }
             let upper_total = count as u128 * upper as u128;
-            if let Some(next) = maximum_total.checked_add(upper_total) {
-                maximum_total = next;
-            } else {
-                maximum_overflow = true;
-            }
+            add_total(&mut maximum_total, &mut maximum_overflow, upper_total);
         }
         index += 1;
     }
@@ -556,11 +547,12 @@ const fn validate_distribution<const N: usize>(
         return Ok(());
     }
     // At least one observation actually attains the stored maximum.
-    if let Some(next) = minimum_total.checked_add(maximum.saturating_sub(maximum_lower) as u128) {
-        minimum_total = next;
-    } else {
-        minimum_overflow = true;
-    }
+    // Once a bound overflows, admission uses its sticky flag rather than its value.
+    add_total(
+        &mut minimum_total,
+        &mut minimum_overflow,
+        maximum.saturating_sub(maximum_lower) as u128,
+    );
     let valid_total = if aggregate.total_overflowed() {
         maximum_overflow
     } else {

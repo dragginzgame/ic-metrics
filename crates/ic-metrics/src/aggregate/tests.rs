@@ -1,3 +1,5 @@
+mod restoration;
+
 use super::*;
 
 fn aggregate(values: &[u64]) -> MeasurementAggregate {

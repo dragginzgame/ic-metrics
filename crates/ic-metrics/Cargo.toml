@@ -10,6 +10,9 @@ description.workspace = true
 readme = "../../README.md"
 publish = ["crates-io"]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 default = []
 recording = []

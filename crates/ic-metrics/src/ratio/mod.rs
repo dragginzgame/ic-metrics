@@ -57,19 +57,9 @@ pub const fn checked_scaled_ratio(
     denominator: u64,
     scale: u64,
 ) -> Result<u128, MeasurementRatioError> {
-    if denominator == 0 {
-        return Err(MeasurementRatioError::ZeroDenominator);
-    }
-    let denominator = denominator as u128;
-    let scale = scale as u128;
-    let Some(whole) = (numerator / denominator).checked_mul(scale) else {
-        return Err(MeasurementRatioError::Overflow);
-    };
-    // Remainder and scale are at most u64::MAX, so this product fits in u128.
-    let fraction = (numerator % denominator) * scale / denominator;
-    match whole.checked_add(fraction) {
-        Some(value) => Ok(value),
-        None => Err(MeasurementRatioError::Overflow),
+    match scaled_ratio_with_remainder(numerator, denominator, scale) {
+        Ok((floor, _)) => Ok(floor),
+        Err(error) => Err(error),
     }
 }
 
@@ -98,19 +88,40 @@ pub const fn checked_scaled_ratio_nearest(
     denominator: u64,
     scale: u64,
 ) -> Result<u128, MeasurementRatioError> {
-    let floor = match checked_scaled_ratio(numerator, denominator, scale) {
-        Ok(value) => value,
+    let (floor, remainder) = match scaled_ratio_with_remainder(numerator, denominator, scale) {
+        Ok(parts) => parts,
         Err(error) => return Err(error),
     };
     let denominator = denominator as u128;
-    // Both factors are bounded by u64::MAX, so this product fits u128.
-    let remainder = ((numerator % denominator) * scale as u128) % denominator;
     let half = denominator / 2 + denominator % 2;
     if remainder < half {
         return Ok(floor);
     }
     match floor.checked_add(1) {
         Some(value) => Ok(value),
+        None => Err(MeasurementRatioError::Overflow),
+    }
+}
+
+// Admit the common floor result once and carry the residual numerator for rounding.
+// Splitting before scaling avoids overflowing an otherwise representable ratio.
+const fn scaled_ratio_with_remainder(
+    numerator: u128,
+    denominator: u64,
+    scale: u64,
+) -> Result<(u128, u128), MeasurementRatioError> {
+    if denominator == 0 {
+        return Err(MeasurementRatioError::ZeroDenominator);
+    }
+    let denominator = denominator as u128;
+    let scale = scale as u128;
+    let Some(whole) = (numerator / denominator).checked_mul(scale) else {
+        return Err(MeasurementRatioError::Overflow);
+    };
+    // Remainder and scale are at most u64::MAX, so this product fits in u128.
+    let scaled_remainder = (numerator % denominator) * scale;
+    match whole.checked_add(scaled_remainder / denominator) {
+        Some(floor) => Ok((floor, scaled_remainder % denominator)),
         None => Err(MeasurementRatioError::Overflow),
     }
 }

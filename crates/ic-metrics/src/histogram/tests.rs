@@ -1,3 +1,5 @@
+mod restoration;
+
 use super::{
     HistogramBoundsError, HistogramQueryError, HistogramRange, MeasurementHistogram, quantile_rank,
     validate_histogram_bounds,

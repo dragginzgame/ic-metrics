@@ -77,6 +77,8 @@ fn bounded_recording_checks_utf8_bytes_and_total_budget() {
 #[test]
 fn bounded_recording_reset_preserves_policy_and_omitted_quality() {
     let mut table = table();
+    table.record("zz", 4);
+    table.record("bbb", 5);
     table.omitted =
         MeasurementAggregate::from_parts(u64::MAX, u128::MAX, Some(u64::MAX), true, true).unwrap();
     table.record("oversized", 0);
@@ -85,9 +87,48 @@ fn bounded_recording_reset_preserves_policy_and_omitted_quality() {
     let limits = table.limits();
     table.clear();
     assert_eq!(table.limits(), limits);
+    assert_eq!(table.entries().len(), 0);
     assert_eq!(table.retained_key_bytes(), 0);
     assert_eq!(table.omitted(), MeasurementAggregate::EMPTY);
     assert_eq!(table.record("new", 0), MeasurementAttribution::Retained);
+    assert_eq!(table.record("zz", 1), MeasurementAttribution::Retained);
+    assert_eq!(table.retained_key_bytes(), 5);
+    let retained: alloc::vec::Vec<_> = table.entries().collect();
+    assert_eq!(retained[0].0, "new");
+    assert_eq!(retained[0].1.samples(), 1);
+    assert_eq!(retained[0].1.maximum(), Some(0));
+    assert_eq!(retained[1].0, "zz");
+    assert_eq!(retained[1].1.samples(), 1);
+    assert_eq!(retained[1].1.total(), 1);
+}
+
+#[test]
+fn bounded_recording_zero_byte_budgets_admit_only_the_empty_identity() {
+    for (key_bytes, total_key_bytes, omission) in [
+        (0, 0, MeasurementOmission::KeyBytes),
+        (0, 4, MeasurementOmission::KeyBytes),
+        (4, 0, MeasurementOmission::TotalKeyBytes),
+    ] {
+        let mut table = BoundedMeasurementTable::new(MeasurementTableLimits {
+            entries: 2,
+            key_bytes,
+            total_key_bytes,
+        });
+        assert_eq!(table.record("", 0), MeasurementAttribution::Retained);
+        assert_eq!(table.record("", 3), MeasurementAttribution::Retained);
+        assert_eq!(
+            table.record("a", 7),
+            MeasurementAttribution::Omitted(omission)
+        );
+        assert_eq!(table.entries().len(), 1);
+        let (key, aggregate) = table.entries().next().unwrap();
+        assert_eq!(key, "");
+        assert_eq!(aggregate.samples(), 2);
+        assert_eq!(aggregate.total(), 3);
+        assert_eq!(table.retained_key_bytes(), 0);
+        assert_eq!(table.omitted().samples(), 1);
+        assert_eq!(table.omitted().total(), 7);
+    }
 }
 
 #[test]
@@ -104,6 +145,38 @@ fn bounded_recording_zero_capacity_is_explicit_omission() {
     assert_eq!(table.entries().len(), 0);
     assert_eq!(table.omitted().samples(), 1);
     assert_eq!(table.omitted().maximum(), Some(0));
+}
+
+#[test]
+fn bounded_recording_overlapping_limits_preserve_reason_precedence() {
+    for entries in [1, 2] {
+        let mut table = BoundedMeasurementTable::new(MeasurementTableLimits {
+            entries,
+            key_bytes: 3,
+            total_key_bytes: 1,
+        });
+        assert_eq!(table.record("a", 1), MeasurementAttribution::Retained);
+        // This key fails the per-key and total-byte limits, and may also fail entries.
+        assert_eq!(
+            table.record("long", 2),
+            MeasurementAttribution::Omitted(MeasurementOmission::KeyBytes)
+        );
+        let reason = if entries == 1 {
+            MeasurementOmission::Entries
+        } else {
+            MeasurementOmission::TotalKeyBytes
+        };
+        assert_eq!(
+            table.record("bb", 3),
+            MeasurementAttribution::Omitted(reason)
+        );
+        assert_eq!(table.record("a", 4), MeasurementAttribution::Retained);
+        assert_eq!(table.entries().len(), 1);
+        assert_eq!(table.entries().next().unwrap().1.total(), 5);
+        assert_eq!(table.retained_key_bytes(), 1);
+        assert_eq!(table.omitted().samples(), 2);
+        assert_eq!(table.omitted().total(), 5);
+    }
 }
 
 #[test]

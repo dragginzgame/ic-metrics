@@ -131,11 +131,18 @@ package; select direct Cargo commands when only one package or test is affected:
 | Arithmetic workspace | `make check check-wasm clippy docs-check test` |
 | Focused library checks | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
 | Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
+| Recording library checks | `cargo check -p ic-metrics --lib --features recording --locked`; Wasm: `cargo check -p ic-metrics --lib --features recording --locked --target wasm32-unknown-unknown`; lint: `cargo clippy -p ic-metrics --lib --tests --features recording --locked -- -D warnings` |
+| Recording tests and examples | `cargo test -p ic-metrics --lib --features recording --locked <test-name>`; doctests: `cargo test -p ic-metrics --doc --features recording --locked` |
 | Snapshot/pins | `make shared-tooling-check check-pins` |
 | Local tools/hooks | `make tools-check hook-check` |
 | Release/evidence adapters | `make release-tools-check ci-evidence-check` |
 | Frozen evidence integrity | `make evidence-check` (checksums only; no replay or payload-privacy qualification) |
 | Maintained docs | `make check-doc-links`, consistency review and `git diff --check` |
+
+Default-feature commands above cover allocation-free arithmetic. Recording is
+opt-in: include `--features recording` when selecting its tests, checks or examples.
+A recording test-name filter without that feature can succeed with zero selected
+tests; confirm that the intended cases actually ran.
 
 The release MSRV gate checks all native targets, including tests and development
 dependencies, at Rust 1.91; its Wasm check covers libraries. Public doctests

@@ -79,6 +79,7 @@ help:
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Frozen evidence archive checksums (read-only): evidence-check"
 	@echo "Named tests: cargo test -p $(PACKAGE) --locked <test-name>"
+	@echo "Recording tests: cargo test -p $(PACKAGE) --features recording --locked <test-name>"
 	@echo "Maintenance task definitions: tasks/README.md (adoption does not activate a schedule)"
 	@echo "Workspace gates cover the arithmetic library; native/Wasm minimum: msrv"
 	@echo "Full release validation (or explicit check request): ci, msrv"
