@@ -152,6 +152,48 @@ pub struct RetentionBatch {
     pub more_due: bool,
 }
 
+/// Complete passive checkpoint, with rows ordered oldest first.
+///
+/// This is not a byte format or an instance identity. Restore only through
+/// [`Log::restore`]; consumers own durable encoding, identity and allocation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LogSnapshot {
+    /// Fixed bounds of the original log.
+    pub limits: Limits,
+    /// Retained contiguous suffix of issued identities, oldest first.
+    pub entries: Vec<Entry>,
+    /// Next unissued identity; `None` means permanent sequence exhaustion.
+    pub next_sequence: Option<u64>,
+    /// Last admitted timestamp, retained even when no rows remain.
+    pub last_created_at_secs: Option<u64>,
+}
+
+/// Refusal of a checkpoint that the maintained engine cannot produce.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RestoreError {
+    /// Retained row count exceeds the fixed limit.
+    TooManyEntries,
+    /// Rows are not contiguous or the next identity contradicts the retained tail.
+    InvalidSequence,
+    /// Row times regress or the timestamp watermark contradicts the retained tail.
+    InvalidTimestamp,
+    /// A label/message exceeds its bound or truncated text is inconsistent.
+    InvalidEntry,
+}
+
+impl core::fmt::Display for RestoreError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        formatter.write_str(match self {
+            Self::TooManyEntries => "log checkpoint exceeds its entry limit",
+            Self::InvalidSequence => "invalid log checkpoint sequence",
+            Self::InvalidTimestamp => "invalid log checkpoint timestamp",
+            Self::InvalidEntry => "invalid bounded log checkpoint entry",
+        })
+    }
+}
+
+impl core::error::Error for RestoreError {}
+
 /// Caller-owned heap history with fixed limits and monotonic append watermarks.
 #[derive(Debug)]
 pub struct Log {
@@ -171,6 +213,83 @@ impl Log {
             next_sequence: Some(0),
             last_created_at_secs: None,
         }
+    }
+
+    /// Return the fixed bounds without copying retained messages.
+    #[must_use]
+    pub const fn limits(&self) -> Limits {
+        self.limits
+    }
+
+    /// Copy all retained rows and both append watermarks for explicit checkpointing.
+    /// Work and allocation scale with retained history, not a cursor-page limit.
+    #[must_use]
+    pub fn snapshot(&self) -> LogSnapshot {
+        LogSnapshot {
+            limits: self.limits,
+            entries: self.entries.iter().cloned().collect(),
+            next_sequence: self.next_sequence,
+            last_created_at_secs: self.last_created_at_secs,
+        }
+    }
+
+    /// Admit a complete checkpoint without replaying entries or reissuing identities.
+    ///
+    /// Empty retained history preserves its original append watermarks. Admission
+    /// proves internal consistency, not source authenticity or host continuity.
+    /// Byte decoders must bound allocation before constructing the checkpoint.
+    ///
+    /// # Errors
+    /// Rejects bounds, row ordering, watermarks and truncation states that cannot
+    /// result from this engine's append/retention operations.
+    pub fn restore(snapshot: LogSnapshot) -> Result<Self, RestoreError> {
+        let LogSnapshot {
+            limits,
+            entries,
+            next_sequence,
+            last_created_at_secs,
+        } = snapshot;
+        if entries.len() > limits.max_entries.get() {
+            return Err(RestoreError::TooManyEntries);
+        }
+        if (next_sequence == Some(0)) != last_created_at_secs.is_none() {
+            return Err(RestoreError::InvalidTimestamp);
+        }
+        let mut previous: Option<&Entry> = None;
+        for entry in &entries {
+            if entry.source.len() > limits.max_label_bytes
+                || entry
+                    .topic
+                    .as_ref()
+                    .is_some_and(|topic| topic.len() > limits.max_label_bytes)
+                || !valid_retained_message(entry, limits.max_message_bytes)
+            {
+                return Err(RestoreError::InvalidEntry);
+            }
+            if let Some(previous) = previous {
+                if previous.sequence.checked_add(1) != Some(entry.sequence) {
+                    return Err(RestoreError::InvalidSequence);
+                }
+                if entry.created_at_secs < previous.created_at_secs {
+                    return Err(RestoreError::InvalidTimestamp);
+                }
+            }
+            previous = Some(entry);
+        }
+        if let Some(last) = previous {
+            if last.sequence.checked_add(1) != next_sequence {
+                return Err(RestoreError::InvalidSequence);
+            }
+            if Some(last.created_at_secs) != last_created_at_secs {
+                return Err(RestoreError::InvalidTimestamp);
+            }
+        }
+        Ok(Self {
+            limits,
+            entries: entries.into(),
+            next_sequence,
+            last_created_at_secs,
+        })
     }
 
     /// Return the retained row count.
@@ -299,6 +418,29 @@ impl Log {
             .front()
             .is_some_and(|entry| entry.created_at_secs < cutoff)
     }
+}
+
+fn valid_retained_message(entry: &Entry, max_bytes: usize) -> bool {
+    if entry.message.len() > max_bytes {
+        return false;
+    }
+    if !entry.truncated {
+        return true;
+    }
+    let budget = if max_bytes > TRUNCATION_SUFFIX.len() {
+        if !entry.message.ends_with(TRUNCATION_SUFFIX) {
+            return false;
+        }
+        max_bytes - TRUNCATION_SUFFIX.len()
+    } else {
+        max_bytes
+    };
+    let prefix_len = if max_bytes > TRUNCATION_SUFFIX.len() {
+        entry.message.len() - TRUNCATION_SUFFIX.len()
+    } else {
+        entry.message.len()
+    };
+    budget.saturating_sub(prefix_len) < 4
 }
 
 fn bounded_message(message: &str, max_bytes: usize) -> String {

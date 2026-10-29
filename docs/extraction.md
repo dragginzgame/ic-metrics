@@ -10,6 +10,7 @@ Existing frozen Metrics evidence retains the original repository/source identiti
 | `ic-metrics` | The arithmetic, numeric transport and optional bounded recorder contract below |
 | `ic-logging` | Heap admission, retention and paging; [logging contract](logging.md) |
 | `ic-metrics-stable` | IC Persistence; unchanged external stable adapter owner |
+| `ic-logging-stable` | IC Persistence; separately selected durable checkpoints over Logging's validated restoration contract |
 
 ## Measurement contract
 

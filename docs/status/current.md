@@ -1,78 +1,76 @@
 # Current handoff — 2026-10-29
 
-IC Metrics 0.17.0 is released at `c45bb5a` and reported live by the maintainer.
-Standard numeric transport lets consumers embed aggregates/counters directly in
-reports. The release removes the former `wire` feature; consumers must remove
-`wire` from feature lists. Heap recording still requires `recording`.
+Source base is `06911b9ef7c3c8630602e52c05427b19725322bd` (workspace 0.17.1).
+The maintainer selected a separate stable Logging option, following Metrics'
+checkpoint model. Pending 0.17.2 notes describe compatible checkpoint APIs;
+package versions, refs, registry publication and the Metrics graph are unchanged.
+Core changes are local working-tree edits. Shared Tooling remains reviewed 0.27.4,
+revision `83f87cca71a420a61e69b6bdd018be27d4455daf`, with unchanged payloads.
 
-The existing documentation touch-up corrects release status and the transport
-module description. It is preserved with the Observability consolidation below.
+## Logging checkpoint contract
 
-Serde Serialize/Deserialize for MeasurementAggregate and MeasurementCounter is
-always available. Native IC Wire metadata is also standard. Private fixed-size
-Serde records define the serialized layout; metadata follows those same records.
-Decoding calls canonical from_parts admission. Empty/zero maxima, wide u128 totals
-and actual overflow quality remain explicit; exact means are derived after decode.
-There are no numeric representation, stored-byte or decoding-rule changes.
+Logging stays dependency-free `no_std` + `alloc`, independent of Metrics. It owns
+bounded append admission, UTF-8 truncation, explicit age retention, scan-bounded
+cursor pages and now canonical checkpoint restoration. Hosts retain clocks,
+identity, lifecycle, authorization and retention/checkpoint scheduling.
 
-The crate remains no_std on every target; measurement operations remain allocation-free.
-Serde is a required dependency on all targets. IC Wire with TypeScript metadata
-is a required dependency only on native targets. Wasm numeric transport needs
-Serde without the host metadata graph. The declaration checker admits this required
-pair without dependency defaults, rejects optional/missing transport and unrelated
-production/build dependencies, and retains the stable-substrate prohibition.
+`Log::snapshot()` copies oldest-first rows, fixed limits, next sequence and last
+admitted time. `Log::restore()` validates count/text bounds, contiguous sequence
+order, nondecreasing timestamps, tail watermarks and truncated-message consistency.
+An empty retained log preserves prior time and sequence/exhaustion. Restoration
+proves internal consistency, never authenticity or global continuity. Decoders
+must bound allocation before constructing a passive `LogSnapshot`.
 
-Only bounded heap recording requires a feature (`recording`). Applications retain
-units, labels, report grouping, replication policy, limits, clocks, identity,
-endpoints and controller reset. Table/window state remains heap-only. IC Persistence
-owns stable formats, durable adapters and governed integration. Transport support
-continues to cover aggregates and scalar counters; no storage framework is added.
+This is not a persisted format or a storage dependency. The
+[Logging guide](../../crates/ic-logging/README.md) and
+[ownership boundary](../logging.md) are canonical. Canic adoption remains separate;
+no Canic or Jobs checkout is modified by this stable-option batch. The earlier
+[Jobs contribution](https://github.com/dragginzgame/ic-jobs/pull/77) stays heap-only.
 
-Focused evidence is under `target/evidence/standard-transport/`: strict all-feature
-library/test Clippy, default-feature transport round-trips, invalid-state and resource
-refusals, browser metadata generation, Rust 1.91 default doctests and default Wasm
-compilation, dependency-admission fixtures, documentation links and diff checks.
-Evidence from released #99 remains in `target/evidence/transport-99/` under its
-original opt-in feature identity. No browser runtime execution or IC cost delta is
-claimed by those focused receipts. The documentation touch-up uses formatting,
-link, consistency and diff checks; existing arithmetic evidence is reused.
+## Persistence adapter handoff
 
-Downstream owners can now select 0.17.0, remove the obsolete feature selection,
-replace consumer numeric report mirrors and qualify their endpoint and browser
-contracts. IcyDB integration and any remaining Canic adapter selection are owned
-by those consumers; this repository does not establish their adoption status.
+IC Persistence owns separately selected `ic-logging-stable`, its bounded V1 codec,
+checked Memory/Storage map, corruption/continuity admission and qualification.
+The maintainer selected
+[#138 — Prepare governed stable checkpoints for IC Logging](https://github.com/dragginzgame/ic-persistence/pull/138)
+as a separate draft awaiting Logging 0.17.2. Candidate
+source is isolated in `/tmp/ic-logging-stable-20261029`; the normal Persistence
+checkout's uncommitted scaffold and release-roster work remains untouched.
 
-## Observability consolidation
+The candidate loads/saves complete engine checkpoints; it has no second append,
+retention or paging implementation. It retains empty-history watermarks, rejects
+rewritten/resurrected rows and regressed state, skips writes for identical saves,
+and exposes explicit old-identity-checked removal. Hosts choose stable generations
+and checkpoint cadence. Publication stays disabled in the adapter.
 
-The maintainer selected renaming this repository and local checkout to
-`ic-observability`, adding the independent `crates/ic-logging` package alongside
-`ic-metrics`. Both share the existing 0.17.0 workspace version and lockfile.
-No package version bump, source commit, tag or publication is selected.
-The existing two dirty documentation edits are preserved. Historical evidence
-and reviewed Shared Tooling snapshot 0.27.4 remain unchanged.
+`/tmp/ic-logging-stable-candidate` qualifies both candidate packages as workspace
+members, with published Memory/Storage 0.54.0. Their runtime source trees match
+the Persistence base. Only fixture manifests adapt the unpublished engine graph;
+no production sibling path dependency or registry override is introduced.
+Candidate source passes strict Clippy, seven native storage/codec regressions,
+a complete governed-host doctest, the raw-backing compile-fail proof and Rust
+1.91 Wasm compilation. This is source-candidate evidence, not a published Logging
+0.17.2 graph, installed upgrade/rollback acceptance or IC cost measurement.
 
-Logging is dependency-free `no_std` + `alloc`, with fixed entry/label/message
-bounds, UTF-8 truncation, monotonic sequence/time watermarks, explicit age
-retention and scan-bounded cursor pages. It installs no endpoint, clock, timer
-or lifecycle. `ic-metrics` retains its name and dependency graph; the two
-libraries do not depend on one another. Stable adapters stay at IC Persistence.
-Logging remains `publish = false`; Canic's current logger is unchanged.
+## Current validation and next boundary
 
-The package guides are now beside each crate. The existing CI/Make aggregates
-include both libraries. Dependency admission classifies each package and refuses
-Logging dependencies, including inactive/build declarations and Metrics coupling.
-The compiler-floor runner additionally includes Logging's doctest. Existing
-release metadata already derives coordinated members; publication still selects
-Metrics only. Open 0.17.1 notes describe this compatible workspace batch.
+Core evidence is `/tmp/ic-logging-checkpoints-*.log`: strict Logging
+library/test/example Clippy, Rust 1.91 unit tests (16) and doctests (2), Rust 1.91
+Wasm compilation, dependency-admission/refusal fixtures and documentation links
+pass. The Metrics arithmetic, transport, recorder and lock selections are unchanged;
+its earlier evidence remains applicable to those unchanged inputs. No full local
+CI/MSRV matrix or native macOS qualification ran.
 
-Focused checks pass in `/tmp/ic-observability-integration.wIEP78/ic-observability`:
-12 Logging unit regressions, default and Rust 1.91 doctests, native worker,
-strict library/test/example Clippy, Rust 1.91 native/Wasm compilation, the
-production-declaration checker and its refusal fixtures, both package inventories,
-real Make formatting, documentation links and snapshot integrity. The selected
-release/Make adapter fixture passes using command stubs with no Git/registry effects.
-No full workspace suite, native macOS or installed canister evidence is claimed.
+Persistence candidate evidence is `/tmp/ic-logging-stable-candidate-*.log`. Normal
+locked adapter qualification requires release/selection of Logging 0.17.2 and its
+root lock update. Existing Persistence release-roster preparation and publication
+remain with their owner. A draft does not qualify the default registry graph.
 
-The next product slice is the Logging storage/adoption boundary, not publication
-of the initial heap engine. The prior standalone bootstrap remains preserved at
-`/tmp/ic-logging-bootstrap.aOgJT4/ic-logging` as historical preparation evidence.
+Metrics 0.17 transport is standard Serde/native Wire; the former `wire` feature is
+removed and heap recording still requires `recording`. Stable Metrics remains at
+IC Persistence. Existing standard-transport receipts remain under
+`target/evidence/standard-transport/`; older #99 evidence preserves its opt-in
+feature identity in `target/evidence/transport-99/`. Existing consolidation checks
+remain at `/tmp/ic-observability-integration.wIEP78/ic-observability`, and the prior
+standalone bootstrap at `/tmp/ic-logging-bootstrap.aOgJT4/ic-logging`. Preserve
+those original inputs and evidence; no old receipt qualifies the new adapter.

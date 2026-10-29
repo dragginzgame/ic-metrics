@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.2]
+
+### ➕ Added
+
+- Add validated Logging checkpoints and restoration, preserving sequence/time
+  watermarks after full retention and exhaustion. IC Persistence can build an
+  independently selected stable adapter without introducing storage dependencies
+  into the heap engine.
+
 ## [0.17.1] - 2026-10-29
 
 ### ➕ Added

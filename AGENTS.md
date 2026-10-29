@@ -15,8 +15,8 @@ consumer-contract or persistence-boundary changes.
 - Logging owns a dependency-free `no_std` + `alloc` heap engine with explicit
   input time, fixed text/count bounds, retention batches and cursor scans.
   It owns no global recorder, endpoint, authorization, clock or timer.
-  It remains unpublished. Canic adoption and any governed stable adapter are
-  unfinished; see [the logging boundary](docs/logging.md).
+  Canic adoption and governed stable-adapter qualification remain separate work;
+  see [the logging boundary](docs/logging.md). Publication is selected per package.
 
 - Metrics owns allocation-free measurement arithmetic and optional bounded heap recording. Keep its library
   `no_std`, with allocation-free arithmetic; consumers own platform counter reads.
@@ -27,12 +27,17 @@ consumer-contract or persistence-boundary changes.
   arithmetic and the explicitly selected `recording` store. Hosts retain allocator
   selection, lifecycle, instance identity and write cadence.
   Never add stable-memory dependencies to the arithmetic package.
+- IC Persistence likewise owns the separately selected `ic-logging-stable`
+  adapter, durable codec and governed storage qualification. Logging owns passive
+  checkpoints and canonical restoration, including sequence/time watermarks after
+  complete retention. Keep its heap engine dependency-free; hosts select durable
+  identity, allocation, lifecycle and checkpoint cadence.
 - IC Host owns the published `ic-host-wasm-inspect` CLI, its installation guide
   and Rust floor. Optional evidence experiments select their own qualified tool
   identity; Metrics owns no inspector wrapper, pin or workspace dependency.
   Source-less lock packages must be workspace-owned; external path dependencies
   are not permitted. Release metadata advances coordinated workspace members,
-  including unpublished Logging. Publication remains selected per package.
+  including Logging. Publication remains selected per package.
 - Consumer code owns measurement attribution, labels, registry limits, replication
   policy, reset authorization, restart identity, persistence, lifecycle hooks, and endpoints.
 - Metrics' maintainer-selected bounded recording extension (2026-10-28) permits

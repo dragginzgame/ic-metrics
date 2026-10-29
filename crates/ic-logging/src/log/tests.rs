@@ -1,4 +1,5 @@
 use super::*;
+use alloc::format;
 
 fn positive(value: usize) -> NonZeroUsize {
     NonZeroUsize::new(value).expect("positive fixture value")
@@ -331,5 +332,148 @@ fn paged_filtering_matches_reference_after_count_eviction_and_deque_wraparound()
             }
             assert_eq!(observed, expected);
         }
+    }
+}
+
+#[test]
+fn checkpoints_round_trip_every_truncation_boundary_and_resume_sequences() {
+    let message = "é🦀界 a long diagnostic with 🦀 at the end";
+    for budget in 0..=message.len() + 1 {
+        let mut original = log(2, budget);
+        for time in [1, 2, 2] {
+            original.append(input(time, message)).unwrap();
+        }
+        let checkpoint = original.snapshot();
+        let mut restored = Log::restore(checkpoint.clone()).unwrap();
+        assert_eq!(restored.snapshot(), checkpoint);
+        assert_eq!(restored.limits(), original.limits());
+        assert_eq!(sequences(&restored), [2, 1]);
+        assert_eq!(restored.append(input(3, "next")), Ok(3));
+        assert_eq!(sequences(&restored), [3, 2]);
+    }
+}
+
+#[test]
+fn empty_checkpoints_preserve_time_and_exhaustion_without_replaying_rows() {
+    let mut original = log(2, 32);
+    original.append(input(20, "expired")).unwrap();
+    original.prune_expired(21, 0, 2);
+    let mut restored = Log::restore(original.snapshot()).unwrap();
+    assert!(restored.is_empty());
+    assert_eq!(
+        restored.append(input(19, "regressed")),
+        Err(AppendError::TimestampRegressed {
+            previous: 20,
+            current: 19,
+        })
+    );
+    assert_eq!(restored.append(input(20, "resumed")), Ok(1));
+    let exhausted = LogSnapshot {
+        limits: original.limits(),
+        entries: Vec::new(),
+        next_sequence: None,
+        last_created_at_secs: Some(20),
+    };
+    let mut restored = Log::restore(exhausted.clone()).unwrap();
+    assert_eq!(restored.snapshot(), exhausted);
+    assert_eq!(
+        restored.append(input(20, "rejected")),
+        Err(AppendError::SequenceExhausted)
+    );
+    let virgin = log(1, 0).snapshot();
+    assert_eq!(Log::restore(virgin.clone()).unwrap().snapshot(), virgin);
+}
+
+#[test]
+fn restoration_refuses_invalid_ordering_watermarks_and_bounds() {
+    let mut original = log(3, 32);
+    for time in [10, 20, 30] {
+        original.append(input(time, "entry")).unwrap();
+    }
+    let valid = original.snapshot();
+    let mut state = valid.clone();
+    state.limits.max_entries = positive(2);
+    assert_eq!(
+        Log::restore(state).unwrap_err(),
+        RestoreError::TooManyEntries
+    );
+    for sequence in [0, 2, u64::MAX] {
+        let mut state = valid.clone();
+        state.entries[1].sequence = sequence;
+        assert_eq!(
+            Log::restore(state).unwrap_err(),
+            RestoreError::InvalidSequence
+        );
+    }
+    for next_sequence in [Some(2), Some(4), None] {
+        let mut state = valid.clone();
+        state.next_sequence = next_sequence;
+        assert_eq!(
+            Log::restore(state).unwrap_err(),
+            RestoreError::InvalidSequence
+        );
+    }
+    let mut state = valid.clone();
+    state.entries[1].created_at_secs = 9;
+    assert_eq!(
+        Log::restore(state).unwrap_err(),
+        RestoreError::InvalidTimestamp
+    );
+    for timestamp in [None, Some(29), Some(31)] {
+        let mut state = valid.clone();
+        state.last_created_at_secs = timestamp;
+        assert_eq!(
+            Log::restore(state).unwrap_err(),
+            RestoreError::InvalidTimestamp
+        );
+    }
+    for (next_sequence, last_created_at_secs) in [(Some(0), Some(0)), (Some(1), None), (None, None)]
+    {
+        let mut state = log(1, 0).snapshot();
+        state.next_sequence = next_sequence;
+        state.last_created_at_secs = last_created_at_secs;
+        assert_eq!(
+            Log::restore(state).unwrap_err(),
+            RestoreError::InvalidTimestamp
+        );
+    }
+    for field in ["source", "topic", "message", "truncated"] {
+        let mut state = valid.clone();
+        match field {
+            "source" => state.entries[0].source = "x".repeat(17),
+            "topic" => state.entries[0].topic = Some("x".repeat(17)),
+            "message" => state.entries[0].message = "x".repeat(33),
+            _ => state.entries[0].truncated = true,
+        }
+        assert_eq!(Log::restore(state).unwrap_err(), RestoreError::InvalidEntry);
+    }
+    let mut truncated = log(1, 32);
+    truncated.append(input(1, &"x".repeat(40))).unwrap();
+    let mut state = truncated.snapshot();
+    state.entries[0].message = format!("x{TRUNCATION_SUFFIX}");
+    assert_eq!(Log::restore(state).unwrap_err(), RestoreError::InvalidEntry);
+}
+
+#[test]
+fn restored_checkpoints_follow_the_same_append_and_retention_trace() {
+    let mut direct = log(5, 20);
+    let mut restored = log(5, 20);
+    for time in 0..30 {
+        assert_eq!(
+            direct.append(input(time, "diagnostic")),
+            restored.append(input(time, "diagnostic"))
+        );
+        if time % 3 == 0 {
+            assert_eq!(
+                direct.prune_expired(time, 1, 2),
+                restored.prune_expired(time, 1, 2)
+            );
+        }
+        if time % 7 == 0 {
+            direct.prune_expired(time + 1, 0, 5);
+            restored.prune_expired(time + 1, 0, 5);
+        }
+        restored = Log::restore(restored.snapshot()).unwrap();
+        assert_eq!(direct.snapshot(), restored.snapshot());
     }
 }

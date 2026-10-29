@@ -54,6 +54,27 @@ when a page contains no matches. Filters should stay the same across pages.
 Retention may remove rows between calls; paging is not a frozen snapshot and
 `scanned` is not a total matching count. Borrowed rows cannot mutate the log.
 
+`Log::snapshot()` explicitly copies a complete checkpoint, including limits,
+oldest-first entries and sequence/time watermarks. `Log::restore()` admits that
+checkpoint without replaying entries. It rejects invalid bounds, noncontiguous
+identities, regressed timestamps, contradictory watermarks and inconsistent
+truncation state. Fully pruned and sequence-exhausted checkpoints retain their
+append restrictions. Restoration proves internal consistency, not authenticity,
+instance identity or continuity with another checkpoint. Byte decoders must bound
+allocation before constructing it; `LogSnapshot` is not a serialized format.
+
+```rust
+# use ic_logging::{Log, Limits};
+# use std::num::NonZeroUsize;
+# let log = Log::new(Limits { max_entries: NonZeroUsize::new(10).unwrap(), max_message_bytes: 128, max_label_bytes: 32 });
+let checkpoint = log.snapshot();
+let restored = Log::restore(checkpoint.clone()).unwrap();
+assert_eq!(restored.snapshot(), checkpoint);
+```
+
 The library performs no authorization, timer registration, IC calls, serialization
-or stable writes. Heap history is lost on replacement. Diagnostic logs must not
-be treated as evidence that a paid effect completed.
+or stable writes. IC Persistence owns the separately selected `ic-logging-stable`
+adapter, its durable format and governed Memory/Storage integration. Hosts own
+checkpoint cadence, lifecycle, retention scheduling and stable identity; linking
+the heap crate selects no persistence. Diagnostic logs must not be treated as
+evidence that a paid effect completed.
