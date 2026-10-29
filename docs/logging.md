@@ -34,10 +34,19 @@ explicitly load a log, use this engine's append/prune/page operations and save a
 checkpoint at their chosen boundary. Neither package installs a clock, timer,
 endpoint, lifecycle or global recorder. The Logging crate stays dependency-free.
 The separate Persistence candidate is
-[#138 — Prepare governed stable checkpoints for IC Logging](https://github.com/dragginzgame/ic-persistence/pull/138).
-It remains draft until Logging 0.17.2 is released/selected and its normal locked
-graph and owning integration are qualified. Candidate-source native/Wasm tests do
-not establish installed Canic or application acceptance.
+[#138 — Qualify stable Logging rollback and upgrade behavior](https://github.com/dragginzgame/ic-persistence/pull/138).
+It selects published Logging 0.17.2. Focused native/Wasm checks and an installed
+original-Wasm probe pass for query non-persistence, update/upgrade rollback and
+reopen with empty-history watermarks. The adapter remains unpublished pending
+Persistence review/release. The PR's hosted runtime jobs also pass original/O3/Os/Oz
+on Linux and both macOS architectures. These checks do not establish installed
+Canic or application acceptance or cost measurements.
+
+The maintainer subsequently selected publication preparation in
+[#139 — Enable coordinated publication of IC Logging Stable](https://github.com/dragginzgame/ic-persistence/pull/139),
+stacked on #138. It adds the fourth archive/receipt digest, extracted-package
+consumer qualification and dependency-ordered publication. It performs no release
+or registry upload; the heap Logging package gains no storage dependency.
 
 Before Canic adoption, qualify that storage boundary using IC Memory/Storage, define
 bounded serialization/Wire projections if required, and qualify actual Canic

@@ -140,6 +140,51 @@ fn messages_obey_byte_limits_at_every_utf8_boundary() {
 }
 
 #[test]
+fn truncation_reserves_only_the_retained_payload() {
+    let ascii = "x".repeat(4_096);
+    let unicode = "é🦀界".repeat(512);
+    for message in [ascii.as_str(), unicode.as_str()] {
+        for budget in [0, 1, 13, 14, 15, 32, 192, 1_024] {
+            let mut log = log(1, budget);
+            log.append(input(1, message)).unwrap();
+            let retained = &log.entries[0].message;
+            assert_eq!(retained.capacity(), retained.len());
+        }
+    }
+}
+
+#[test]
+fn append_errors_support_question_mark_and_preserve_typed_context() {
+    fn propagate(
+        result: Result<u64, AppendError>,
+    ) -> Result<u64, alloc::boxed::Box<dyn core::error::Error>> {
+        Ok(result?)
+    }
+
+    for expected in [
+        AppendError::LabelTooLong {
+            label: Label::Source,
+            actual_bytes: 17,
+            max_bytes: 16,
+        },
+        AppendError::LabelTooLong {
+            label: Label::Topic,
+            actual_bytes: 17,
+            max_bytes: 16,
+        },
+        AppendError::TimestampRegressed {
+            previous: 20,
+            current: 19,
+        },
+        AppendError::SequenceExhausted,
+    ] {
+        let error = propagate(Err(expected)).unwrap_err();
+        assert_eq!(error.downcast_ref::<AppendError>(), Some(&expected));
+        assert!(error.source().is_none());
+    }
+}
+
+#[test]
 fn label_limits_measure_bytes_and_accept_the_exact_boundary() {
     let mut log = Log::new(Limits {
         max_entries: positive(1),
@@ -382,6 +427,34 @@ fn empty_checkpoints_preserve_time_and_exhaustion_without_replaying_rows() {
     );
     let virgin = log(1, 0).snapshot();
     assert_eq!(Log::restore(virgin.clone()).unwrap().snapshot(), virgin);
+}
+
+#[test]
+fn restoration_rejects_unreachable_empty_history_at_the_last_timestamp() {
+    for sequence in [0, u64::MAX] {
+        for timestamp in [u64::MAX - 1, u64::MAX] {
+            let mut original = log(1, 32);
+            original.next_sequence = Some(sequence);
+            original.append(input(timestamp, "last row")).unwrap();
+            let checkpoint = original.snapshot();
+            let mut restored = Log::restore(checkpoint.clone()).unwrap();
+            assert_eq!(restored.snapshot(), checkpoint);
+            assert_eq!(
+                restored.prune_expired(u64::MAX, 0, 1).removed,
+                usize::from(timestamp < u64::MAX)
+            );
+            let mut empty = restored.snapshot();
+            empty.entries.clear();
+            if timestamp == u64::MAX {
+                assert_eq!(
+                    Log::restore(empty).unwrap_err(),
+                    RestoreError::InvalidTimestamp
+                );
+            } else {
+                assert_eq!(Log::restore(empty.clone()).unwrap().snapshot(), empty);
+            }
+        }
+    }
 }
 
 #[test]

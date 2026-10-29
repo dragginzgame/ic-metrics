@@ -35,6 +35,8 @@ individually; oversized labels refuse before mutation. Message limits apply to
 retained UTF-8 bytes, including any truncation suffix. A zero message limit keeps
 metadata and an empty message. The count is always positive; a caller disables
 logging by not appending or not constructing a log.
+Append refusals implement `core::error::Error` and preserve typed label/size/time
+context for callers using `?` or their own error wrappers.
 
 Sequence IDs start at zero and never repeat within one log, even after all rows
 expire. Timestamps cannot move backwards after retention. Sequence exhaustion
@@ -62,6 +64,8 @@ truncation state. Fully pruned and sequence-exhausted checkpoints retain their
 append restrictions. Restoration proves internal consistency, not authenticity,
 instance identity or continuity with another checkpoint. Byte decoders must bound
 allocation before constructing it; `LogSnapshot` is not a serialized format.
+An empty checkpoint cannot retain `u64::MAX` as its last timestamp: a row at that
+timestamp can never expire. Nonempty checkpoints at that timestamp remain valid.
 
 ```rust
 # use ic_logging::{Log, Limits};

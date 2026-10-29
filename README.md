@@ -23,8 +23,8 @@ logging without Canic.
 [IC Persistence](https://github.com/dragginzgame/ic-persistence) continues to own
 governed Memory/Storage integration, `ic-metrics-stable` and the separately selected
 `ic-logging-stable` adapter. Logging's passive checkpoints carry validated state;
-its heap engine acquires no storage dependency. The stable adapter candidate waits
-for the Logging 0.17.2 restoration contract; see [the boundary](docs/logging.md).
+its heap engine acquires no storage dependency. The separate stable adapter uses
+published Logging 0.17.2; see [the boundary](docs/logging.md).
 
 ## Development
 

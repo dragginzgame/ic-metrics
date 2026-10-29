@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.17.3]
+
+### 🩹 Fixed
+
+- Reject impossible empty Logging checkpoints at the final representable timestamp,
+  while preserving valid terminal rows and fully pruned histories.
+- Reserve the complete truncated Logging message buffer once, avoiding growth
+  when appending the truncation suffix.
+
+### ➕ Added
+
+- Implement `Display` and `core::error::Error` for Logging append refusals,
+  supporting standard error propagation without adding dependencies.
+
 ## [0.17.2] - 2026-10-29
 
 ### ➕ Added

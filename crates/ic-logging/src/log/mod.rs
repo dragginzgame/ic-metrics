@@ -99,6 +99,34 @@ pub enum AppendError {
     SequenceExhausted,
 }
 
+impl core::fmt::Display for AppendError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::LabelTooLong {
+                label,
+                actual_bytes,
+                max_bytes,
+            } => {
+                let label = match label {
+                    Label::Source => "source",
+                    Label::Topic => "topic",
+                };
+                write!(
+                    formatter,
+                    "log {label} label exceeds {max_bytes} bytes ({actual_bytes} supplied)"
+                )
+            }
+            Self::TimestampRegressed { previous, current } => write!(
+                formatter,
+                "log timestamp regressed from {previous} to {current} seconds"
+            ),
+            Self::SequenceExhausted => formatter.write_str("log sequence identities are exhausted"),
+        }
+    }
+}
+
+impl core::error::Error for AppendError {}
+
 /// Optional exact label filters and a minimum severity; all supplied filters apply.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Filter<'a> {
@@ -175,7 +203,7 @@ pub enum RestoreError {
     TooManyEntries,
     /// Rows are not contiguous or the next identity contradicts the retained tail.
     InvalidSequence,
-    /// Row times regress or the timestamp watermark contradicts the retained tail.
+    /// Row times regress or the timestamp watermark is inconsistent.
     InvalidTimestamp,
     /// A label/message exceeds its bound or truncated text is inconsistent.
     InvalidEntry,
@@ -253,6 +281,11 @@ impl Log {
             return Err(RestoreError::TooManyEntries);
         }
         if (next_sequence == Some(0)) != last_created_at_secs.is_none() {
+            return Err(RestoreError::InvalidTimestamp);
+        }
+        // The last row cannot expire at the final representable timestamp, and
+        // count eviction always leaves a newer row in this nonzero-capacity log.
+        if entries.is_empty() && last_created_at_secs == Some(u64::MAX) {
             return Err(RestoreError::InvalidTimestamp);
         }
         let mut previous: Option<&Entry> = None;
@@ -456,7 +489,9 @@ fn bounded_message(message: &str, max_bytes: usize) -> String {
     while !message.is_char_boundary(end) {
         end -= 1;
     }
-    let mut retained = String::from(&message[..end]);
+    // Reserve the final payload once, including the suffix, to avoid growth.
+    let mut retained = String::with_capacity(end + suffix.len());
+    retained.push_str(&message[..end]);
     retained.push_str(suffix);
     retained
 }
