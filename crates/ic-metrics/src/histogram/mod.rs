@@ -2,7 +2,10 @@
 
 use core::fmt;
 
-use crate::{MeasurementAggregate, MeasurementStateError, add_count, add_total};
+use crate::{MeasurementAggregate, MeasurementStateError, add_count};
+
+mod restoration;
+use restoration::validate_distribution;
 
 #[cfg(test)]
 mod tests;
@@ -460,109 +463,4 @@ const fn quantile_rank(samples: u64, numerator: u64, denominator: u64) -> u128 {
         return product.div_ceil(denominator) as u128;
     }
     ((samples as u128) * (numerator as u128)).div_ceil(denominator as u128)
-}
-
-// Derive inclusive arithmetic limits for a finite or overflow bucket. The caller
-// admits bounds and visits indices 0..=len; maximum placement is checked separately,
-// so saturating the lower limit does not admit overflow beyond u64::MAX.
-const fn restoration_bucket_limits(upper_bounds: &[u64], index: usize, maximum: u64) -> (u64, u64) {
-    let lower = if index == 0 {
-        0
-    } else {
-        upper_bounds[index - 1].saturating_add(1)
-    };
-    let upper = if index < upper_bounds.len() && upper_bounds[index] < maximum {
-        upper_bounds[index]
-    } else {
-        maximum
-    };
-    (lower, upper)
-}
-
-// Canonical admission derives counts, highest bucket and total range together.
-const fn validate_distribution<const N: usize>(
-    upper_bounds: &[u64; N],
-    bucket_counts: &[u64; N],
-    overflow: u64,
-    bucket_overflowed: &[bool; N],
-    overflow_count_overflowed: bool,
-    aggregate: MeasurementAggregate,
-) -> Result<(), MeasurementStateError> {
-    if overflow_count_overflowed && overflow != u64::MAX {
-        return Err(MeasurementStateError::InvalidOverflowFlag);
-    }
-    let maximum = match aggregate.maximum() {
-        Some(value) => value,
-        None => 0,
-    };
-    let mut samples = 0;
-    let mut samples_overflowed = false;
-    let mut maximum_matches = false;
-    let mut minimum_total = 0_u128;
-    let mut maximum_total = 0_u128;
-    let mut maximum_overflow = false;
-    let mut minimum_overflow = false;
-    let mut maximum_lower = 0_u64;
-    let mut index = 0;
-    // Counts retain a lower bound after clipping. Exact bucket counts
-    // also constrain totals; a clipped positive bucket has no upper
-    // count bound. Keep all admission arithmetic checked or saturating.
-    while index <= N {
-        let (count, lost) = if index < N {
-            (bucket_counts[index], bucket_overflowed[index])
-        } else {
-            (overflow, overflow_count_overflowed)
-        };
-        let (lower, upper) = restoration_bucket_limits(upper_bounds, index, maximum);
-        if lost && count != u64::MAX {
-            return Err(MeasurementStateError::InvalidOverflowFlag);
-        }
-        add_count(&mut samples, &mut samples_overflowed, count);
-        samples_overflowed |= lost;
-        if count != 0 {
-            maximum_matches = if index < N {
-                maximum <= upper_bounds[index] && (index == 0 || maximum > upper_bounds[index - 1])
-            } else {
-                N == 0 || maximum > upper_bounds[N - 1]
-            };
-            maximum_lower = lower;
-            let minimum_count = count as u128 + lost as u128;
-            let minimum = minimum_count * lower as u128;
-            add_total(&mut minimum_total, &mut minimum_overflow, minimum);
-            if lost && upper != 0 {
-                maximum_overflow = true;
-            }
-            let upper_total = count as u128 * upper as u128;
-            add_total(&mut maximum_total, &mut maximum_overflow, upper_total);
-        }
-        index += 1;
-    }
-    if samples != aggregate.samples()
-        || samples_overflowed != aggregate.samples_overflowed()
-        || (samples != 0 && !maximum_matches)
-    {
-        return Err(MeasurementStateError::InvalidDistribution);
-    }
-    if samples == 0 {
-        return Ok(());
-    }
-    // At least one observation actually attains the stored maximum.
-    // Once a bound overflows, admission uses its sticky flag rather than its value.
-    add_total(
-        &mut minimum_total,
-        &mut minimum_overflow,
-        maximum.saturating_sub(maximum_lower) as u128,
-    );
-    let valid_total = if aggregate.total_overflowed() {
-        maximum_overflow
-    } else {
-        !minimum_overflow
-            && aggregate.total() >= minimum_total
-            && (maximum_overflow || aggregate.total() <= maximum_total)
-    };
-    if valid_total {
-        Ok(())
-    } else {
-        Err(MeasurementStateError::InvalidDistribution)
-    }
 }

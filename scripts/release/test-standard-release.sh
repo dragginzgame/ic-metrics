@@ -19,6 +19,9 @@ cleanup() {
     fixture_finish "$status" "$fixture" "failed standard release fixture retained"
 }
 trap cleanup EXIT
+assertion_fault="${METRICS_FIXTURE_ASSERTION_FAILURE:-0}"
+unset METRICS_FIXTURE_ASSERTION_FAILURE
+[[ "$assertion_fault" == 0 || "$assertion_fault" == 1 ]] || exit 2
 # shellcheck source=scripts/ci/make-adapter-probes.sh
 source "$root/scripts/ci/make-adapter-probes.sh"
 mkdir -p "$fixture/bin"
@@ -281,6 +284,11 @@ for target in publish publish-check; do
         printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
         printf '%s\n' publish -p ic-metrics --locked --registry crates-io >> "$fixture/expected"
         if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
+        if [[ "$assertion_fault" == 1 ]]; then
+            echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
+            printf 'injected mismatched expectation\n' >> "$fixture/expected"
+            shasum -a 256 expected events output bin/cargo > retention-inputs.sha256
+        fi
         cmp "$fixture/expected" "$EVENTS"
     done
     for failure in native wasm; do

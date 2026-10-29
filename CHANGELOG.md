@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.17.4] - 2026-10-29
+
+### 🧹 Cleanup
+
+- Share Logging's truncation-suffix policy between message construction and
+  checkpoint admission, preserving independent retained-message validation.
+- Separate histogram restoration facts and total-range arithmetic from final
+  admission, preserving constant evaluation, overflow rules and typed refusals.
+- Move native CI evidence collection into an owned script and let release
+  fixtures own assertion-failure inputs, preserving diagnostic/recovery custody
+  and first-error propagation.
+- Share dependency-declaration fixture construction across both packages and
+  derive minimum-compiler doctest coverage from the workspace.
+
 ## [0.17.3] - 2026-10-29
 
 ### 🩹 Fixed

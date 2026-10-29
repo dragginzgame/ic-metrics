@@ -30,8 +30,7 @@ real_cargo="$(command -v cargo)"
 export FIXTURE_RETENTION_REAL_CARGO="$real_cargo"
 export FIXTURE_RETENTION_REAL_BASH="$real_bash"
 FIXTURE_RETENTION_REAL_MAKE="$(command -v make)"
-FIXTURE_RETENTION_REAL_CMP="$(command -v cmp)"
-export FIXTURE_RETENTION_REAL_MAKE FIXTURE_RETENTION_REAL_CMP
+export FIXTURE_RETENTION_REAL_MAKE
 git -C "$root" rev-parse HEAD > "$evidence/source-commit.txt"
 
 for kind in standard metadata hook; do
@@ -49,11 +48,12 @@ for kind in standard metadata hook; do
         run="$evidence/$kind-$scenario"
         active_log="$run/result.log"
         mkdir -p "$run/tmp" "$run/bin"
-        if [[ "$scenario" != success ]]; then
+        assertion_fault=0
+        if [[ "$scenario" == *assertion ]]; then assertion_fault=1; fi
+        if [[ "$scenario" != success && "$assertion_fault" == 0 ]]; then
             executable="$child"
             if [[ "$scenario" == publication-child ]]; then executable='make'; fi
             if [[ "$scenario" == baseline ]]; then executable='make'; fi
-            if [[ "$scenario" == *assertion ]]; then executable='cmp'; fi
             printf '#!%s\n' "$real_bash" > "$run/bin/$executable"
             if [[ "$executable" == cargo ]]; then
                 cat >> "$run/bin/$executable" <<'CARGO'
@@ -88,20 +88,6 @@ for argument in "$@"; do
 done
 if [[ "$publication" != true ]]; then exec "$FIXTURE_RETENTION_REAL_MAKE" "$@"; fi
 MAKE
-            elif [[ "$scenario" == publication-assertion ]]; then
-                cat >> "$run/bin/$executable" <<'CMP'
-case "$1" in
-    */standard-release-entry.*/expected) ;;
-    *) exec "$FIXTURE_RETENTION_REAL_CMP" "$@" ;;
-esac
-CMP
-            elif [[ "$kind" == metadata && "$scenario" == assertion ]]; then
-                cat >> "$run/bin/$executable" <<'CMP'
-case "$1" in
-    expected-packages) ;;
-    *) exec "$FIXTURE_RETENTION_REAL_CMP" "$@" ;;
-esac
-CMP
             fi
             cat >> "$run/bin/$executable" <<'FAIL'
 echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
@@ -112,12 +98,12 @@ FAIL
         expected_status=43
         case "$scenario" in
             success) expected_status=0 ;;
-            publication-child) expected_status=1 ;;
+            publication-child|*assertion) expected_status=1 ;;
         esac
         marker=FIXTURE_RETENTION_INJECTED_FAILURE
         # The shared checker retains its nested log; replay is not required.
         if [[ "$kind" == hook ]]; then marker="$prefix"; fi
-        PATH="$run/bin:$PATH" \
+        METRICS_FIXTURE_ASSERTION_FAILURE="$assertion_fault" PATH="$run/bin:$PATH" \
             fixture_probe_effect "$root/$script" "$run" "$prefix" "$expected_status" "$real_bash" \
                 "$marker"
         if [[ "$scenario" == success ]]; then
@@ -130,20 +116,21 @@ FAIL
         else
             grep -Fq "fixture retained: $retained" "$run/result.log"
         fi
+        if [[ "$assertion_fault" == 1 ]]; then
+            # The child owns its payload names; verify its retained-input contract.
+            [[ -s "$retained/retention-inputs.sha256" ]] || exit 1
+            (cd "$retained" && shasum -a 256 -c retention-inputs.sha256) > "$run/retained-inputs.log"
+            continue
+        fi
         case "$kind" in
             standard)
                 [[ -f "$retained/output" ]] || exit 1
                 if [[ "$scenario" == publication-* ]]; then
                     [[ -f "$retained/events" && -f "$retained/bin/cargo" ]] || exit 1
-                    if [[ "$scenario" == publication-assertion ]]; then [[ -f "$retained/expected" ]] || exit 1; fi
                 fi
                 ;;
             metadata)
                 [[ -f "$retained/prepared/Cargo.toml" && -f "$retained/prepared/setup.log" ]] || exit 1
-                if [[ "$scenario" == assertion ]]; then
-                    [[ -f "$retained/prepared/expected-packages" && -f "$retained/prepared/actual-packages" ]] || exit 1
-                    [[ -f "$retained/prepared/originals/Cargo.lock" && -f "$retained/prepared/result.log" ]] || exit 1
-                fi
                 ;;
             hook)
                 grep -Fq FIXTURE_RETENTION_INJECTED_FAILURE "$retained"/formatting-adoption.*/baseline.log

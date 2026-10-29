@@ -21,8 +21,9 @@ CI prepares pinned host parsers before reading Rust policy from TOML. The
 separate `host-tools.log` and outcome survive setup failure; Rust and subsequent
 common setup are skipped when parser preparation fails. The selected
 `prepare-common-tools` action reuses those host tools and owns complete common installation,
-offline checking and PATH publication after success. The always-run Metrics
-collector projects its `RUNNER_TEMP/tools-install.log` and `tools-check.log` into
+offline checking and PATH publication after success. The always-run
+[native evidence collector](../scripts/ci/collect-native-evidence.sh) projects
+its `RUNNER_TEMP/tools-install.log` and `tools-check.log` into
 the retained `tools-setup.log` and `tools-check.log` names. Setup failures keep
 their actual stdout/stderr; skipped setup does not select unrelated temp logs.
 Shared Tooling tests the action's installation and PATH mechanics; Metrics tests
@@ -149,7 +150,8 @@ tests; confirm that the intended cases actually ran.
 
 The release MSRV gate checks all native targets, including tests and development
 dependencies, at Rust 1.91; its Wasm check covers libraries. Public doctests
-also execute on the selected minimum compiler. The development
+also execute on the selected minimum compiler through `--workspace --all-features`,
+so package coverage follows workspace membership. The development
 compiler remains separate. `make evidence-check` is also included in CI and
 release validation. Five historical checksum manifests use archive-directory
 paths; the Makefile records those working directories without rewriting receipts.
@@ -159,8 +161,9 @@ and are not compared with current files.
 
 ### Dependency roles and production graphs
 
-The sole workspace member is the arithmetic library with standard numeric transport. The root
-catalog's `Tests and tooling only` group selects `num-bigint` for the ratio
+The workspace owns independent Metrics and Logging libraries. Metrics has standard
+numeric transport; Logging has no dependencies. The root catalog's
+`Tests and tooling only` group selects `num-bigint` for the ratio
 oracle, with default features disabled. It is inherited only by development
 dependencies. IC Persistence owns stable-adapter graph admission and tests.
 
@@ -169,11 +172,12 @@ The root catalog uses Shared Tooling's grouped sort order.
 adapter ordering check uses `--manifest-order-grouped` against its current or
 selected committed source. No paired formatter override is needed here.
 
-`make production-dependencies-check` admits the sole arithmetic workspace member
-through successful locked, offline Cargo metadata. Only required Serde and IC Wire
-transport declarations without dependency defaults are admitted; default features
-must remain empty. Other
-normal/build dependencies are rejected, including inactive target-specific entries.
+`make production-dependencies-check` admits both libraries through successful
+locked, offline Cargo metadata. Metrics admits only required Serde and IC Wire
+transport declarations without dependency defaults; its default features remain
+empty. Logging admits no production dependencies, including Metrics itself.
+Other normal/build dependencies are rejected, including optional and inactive
+target-specific entries.
 This constrains the production graph without
 compiler-host discovery or repeated graph traversal. Development dependencies
 remain separate; the existing direct stable-substrate prohibition applies there
@@ -294,13 +298,16 @@ actual callers; it does not replay those generic matrices in its own gates.
 | --- | --- |
 | `make release-tools-check` | Complete standard-release, arithmetic metadata, hook and source-admission fixtures, followed by injected failure/custody cases. Actual Make dispatch, parallel jobserver access, catalog overrides, selected commits, index admission, gate ordering and retained logs stay checked. |
 | `make hook-check` | Standalone hook adoption; the actual baseline formatter failure must retain and replay its diagnostic log. |
-| `make ci-evidence-check` | Source selection/hash inputs, actual workflow setup/archive bodies and the complete native recovery packager with substituted external effects. |
+| `make ci-evidence-check` | Source selection/hash inputs, actual workflow setup bodies, collector wiring and direct collector/recovery-packager execution with substituted external effects. |
 
 Retention is the single CI entry for release and hook bodies; they are not run
 again as separate gates. The admission fixture isolates inherited parent
 validation/failure logs and summaries. Successful cleanup affects only owned
 scratch; failed inputs remain under caller-selected `TMPDIR`, defaulting to
-native CI evidence in the retention fixture. These substitutes perform no real
+native CI evidence in the retention fixture. Standard-release and metadata fixtures
+own their assertion-failure cases and retained-input checksum manifests; the parent
+verifies the exit and manifest without matching private assertion filenames. External-command failures
+and nested hook logs remain separately checked. These substitutes perform no real
 Metrics release or registry publication and do not qualify hosted execution.
 
 The metadata fixture uses the arithmetic package name and rejects a stale
@@ -313,7 +320,8 @@ refusal before effects, explicit tool-catalog routing and selected-source checks
 
 Native input selection includes pending maintained files, excludes generated and
 private evidence, and keeps missing tracked source selected so hashing refuses
-an incomplete checkout. The workflow-body fixture covers unusual filenames,
+an incomplete checkout. The native-evidence fixture checks thin workflow wiring,
+then directly runs the owned collector. It covers unusual filenames,
 OS/architecture/macOS admission, TOML-selected compiler/components/targets,
 failed setup and action-outcome/log projection. Substitute rustup/Make actions
 establish routing and failure propagation, not native macOS or live release proof.

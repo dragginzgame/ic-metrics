@@ -121,43 +121,7 @@ jobs:
           HOST_TOOLS_OUTCOME: ${{ steps.host_tools.outcome }}
           TOOL_INPUT_OUTCOME: ${{ steps.tool_inputs.outcome }}
         run: |
-          mkdir -p target/evidence/native-ci
-          # Project the action's logs into Metrics' retained diagnostic names.
-          case "$TOOLS_OUTCOME" in
-            success|failure|cancelled)
-              if [[ -f "$RUNNER_TEMP/tools-install.log" ]]; then
-                cp "$RUNNER_TEMP/tools-install.log" target/evidence/native-ci/tools-setup.log
-              fi
-              if [[ -f "$RUNNER_TEMP/tools-check.log" ]]; then
-                cp "$RUNNER_TEMP/tools-check.log" target/evidence/native-ci/tools-check.log
-              fi ;;
-          esac
-          git rev-parse HEAD > target/evidence/native-ci/source-commit.txt
-          printf 'native=%s\ninputs=%s\ntools=%s\nhost=%s\ntoolchain=%s\nprerequisites=%s\nhost_tools=%s\ntool_inputs=%s\napplication_sources=%s\n' \
-            "$NATIVE_OUTCOME" "$INPUT_OUTCOME" "$TOOLS_OUTCOME" \
-            "$HOST_OUTCOME" "$TOOLCHAIN_OUTCOME" \
-            "$PREREQUISITES_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOL_INPUT_OUTCOME" "$APPLICATION_OUTCOME" \
-            > target/evidence/native-ci/outcome.txt
-          # Shared mechanics; Metrics owns this explicit roster and outer Git custody.
-          collection_status=0
-          collection_outcome="$TOOLS_OUTCOME"
-          if [[ "$HOST_TOOLS_OUTCOME" == failure ]]; then collection_outcome=failure; fi
-          bash scripts/ci/collect-native-diagnostics.sh \
-            "$PWD" "$PWD/target/evidence/native-ci" target/evidence/native-diagnostics.tar.gz \
-            "${RUNNER_TEMP:-${TMPDIR:-/tmp}}" "$collection_outcome" \
-            "$PWD/ci/tool-versions.env" "$PWD/ci/ic-tools.tsv" \
-            inputs.txt source-commit.txt source-files.nul source-sha256.txt outcome.txt \
-            prerequisites.log host-tools.log tools-setup.log tools-check.log tool-versions.txt application-sources.log native-ci.log || collection_status=$?
-          # Recovery packaging admits its own inputs and remains useful when
-          # tool collection fails. Preserve the first error after both attempts.
-          archive_status=0
-          bash scripts/ci/package-native-recovery-evidence.sh \
-            target/evidence/native-ci target/evidence/native-ci.tar.gz || archive_status=$?
-          if [[ "$archive_status" != 0 ]]; then
-            printf 'Native recovery archive failed (exit %s)\n' "$archive_status" >&2
-          fi
-          if [[ "$collection_status" != 0 ]]; then exit "$collection_status"; fi
-          exit "$archive_status"
+          bash scripts/ci/collect-native-evidence.sh
       # actions/upload-artifact v7
       - name: Upload native diagnostics
         if: always() && steps.checkout.outcome == 'success'

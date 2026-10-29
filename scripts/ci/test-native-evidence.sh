@@ -41,10 +41,23 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(select(.id == "tools"))[0].uses == "./.github/actions/prepare-common-tools") and
     (map(select(.id == "native_artifacts"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''") and
+    (map(select(.id == "native_artifacts"))[0].run ==
+        "bash scripts/ci/collect-native-evidence.sh\n") and
+    (map(select(.id == "native_artifacts"))[0].env == {
+        "APPLICATION_OUTCOME": "${{ steps.application_sources.outcome }}",
+        "NATIVE_OUTCOME": "${{ steps.native_ci.outcome }}",
+        "INPUT_OUTCOME": "${{ steps.native_inputs.outcome }}",
+        "TOOLS_OUTCOME": "${{ steps.tools.outcome }}",
+        "HOST_OUTCOME": "${{ steps.native_host.outcome }}",
+        "TOOLCHAIN_OUTCOME": "${{ steps.toolchain.outcome }}",
+        "PREREQUISITES_OUTCOME": "${{ steps.prerequisites.outcome }}",
+        "HOST_TOOLS_OUTCOME": "${{ steps.host_tools.outcome }}",
+        "TOOL_INPUT_OUTCOME": "${{ steps.tool_inputs.outcome }}"
+    }) and
     (map(select(.uses != null and .with.name == "native-${{ matrix.runner }}-${{ github.run_attempt }}"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
-for step in native_inputs native_host host_tools toolchain tool_inputs application_sources native_ci native_artifacts; do
+for step in native_inputs native_host host_tools toolchain tool_inputs application_sources native_ci; do
     PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
         "$fixture/steps.json" "$step" > "$fixture/commands/$step.sh"
 done
@@ -309,7 +322,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     # Diagnostics remain readable even when complete evidence collection fails.
     if [[ "$scenario" == native-archive-failure || "$scenario" == collection-archive-failure ]]; then
         archive_status=0
-        "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || archive_status=$?
+        "$real_bash" scripts/ci/collect-native-evidence.sh > archive.log 2>&1 || archive_status=$?
         expected_archive_status=23
         [[ "$scenario" != collection-archive-failure ]] || expected_archive_status=2
         [[ "$archive_status" == "$expected_archive_status" ]] || exit 1
@@ -328,7 +341,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         exit 0
     fi
     collection_status=0
-    "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_artifacts.sh" > archive.log 2>&1 || collection_status=$?
+    "$real_bash" scripts/ci/collect-native-evidence.sh > archive.log 2>&1 || collection_status=$?
     [[ "$collection_status" == "$FIXTURE_COLLECTION_STATUS" ]] || exit 1
     bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
         "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \

@@ -21,6 +21,9 @@ cleanup() {
     fixture_finish "$status" "$fixture" "failed metadata fixture retained"
 }
 trap cleanup EXIT
+assertion_fault="${METRICS_FIXTURE_ASSERTION_FAILURE:-0}"
+unset METRICS_FIXTURE_ASSERTION_FAILURE
+[[ "$assertion_fault" == 0 || "$assertion_fault" == 1 ]] || exit 2
 real_bash="$(command -v bash)"
 mkdir -p "$fixture/bin"
 printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
@@ -96,6 +99,13 @@ if grep -q Unreleased CHANGELOG.md; then exit 1; fi
 cargo metadata --locked --offline --format-version 1 | jq -r \
     '.packages[] | select(.source == null) | [.name,.version] | @tsv' | LC_ALL=C sort > actual-packages
 printf 'ic-metrics\t0.2.0\n' > expected-packages
+if [[ "$assertion_fault" == 1 ]]; then
+    echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
+    printf 'injected mismatched expectation\n' >> expected-packages
+    (cd "$fixture" && shasum -a 256 prepared/Cargo.toml prepared/setup.log \
+        prepared/expected-packages prepared/actual-packages \
+        prepared/originals/Cargo.lock prepared/result.log) > "$fixture/retention-inputs.sha256"
+fi
 cmp expected-packages actual-packages
 # A stale local arithmetic identity must be rejected without repairing the lock.
 cp Cargo.lock prepared.lock

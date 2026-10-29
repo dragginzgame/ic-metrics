@@ -453,6 +453,14 @@ impl Log {
     }
 }
 
+const fn truncation_suffix(max_bytes: usize) -> &'static str {
+    if max_bytes > TRUNCATION_SUFFIX.len() {
+        TRUNCATION_SUFFIX
+    } else {
+        ""
+    }
+}
+
 fn valid_retained_message(entry: &Entry, max_bytes: usize) -> bool {
     if entry.message.len() > max_bytes {
         return false;
@@ -460,31 +468,19 @@ fn valid_retained_message(entry: &Entry, max_bytes: usize) -> bool {
     if !entry.truncated {
         return true;
     }
-    let budget = if max_bytes > TRUNCATION_SUFFIX.len() {
-        if !entry.message.ends_with(TRUNCATION_SUFFIX) {
-            return false;
-        }
-        max_bytes - TRUNCATION_SUFFIX.len()
-    } else {
-        max_bytes
+    let suffix = truncation_suffix(max_bytes);
+    let Some(prefix) = entry.message.strip_suffix(suffix) else {
+        return false;
     };
-    let prefix_len = if max_bytes > TRUNCATION_SUFFIX.len() {
-        entry.message.len() - TRUNCATION_SUFFIX.len()
-    } else {
-        entry.message.len()
-    };
-    budget.saturating_sub(prefix_len) < 4
+    let budget = max_bytes - suffix.len();
+    budget.saturating_sub(prefix.len()) < 4
 }
 
 fn bounded_message(message: &str, max_bytes: usize) -> String {
     if message.len() <= max_bytes {
         return String::from(message);
     }
-    let suffix = if max_bytes > TRUNCATION_SUFFIX.len() {
-        TRUNCATION_SUFFIX
-    } else {
-        ""
-    };
+    let suffix = truncation_suffix(max_bytes);
     let mut end = max_bytes - suffix.len();
     while !message.is_char_boundary(end) {
         end -= 1;
