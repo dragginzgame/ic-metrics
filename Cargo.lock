@@ -37,7 +37,7 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "ic-metrics"
-version = "0.16.6"
+version = "0.16.7"
 dependencies = [
  "ic-wire",
  "num-bigint",
