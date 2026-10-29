@@ -1,44 +1,36 @@
 # Current handoff — 2026-10-29
 
-The checkout starts at released 0.16.6 (`6152804`). Earlier audit cleanup is
-committed in that release; its historical evidence remains retained. The current
-compatible pending 0.16.7 implements [#99](https://github.com/dragginzgame/ic-metrics/issues/99),
-opt-in transport for canonical numeric measurements. Package versions are unchanged.
-No commit, release or package publication has been performed for this work.
+The checkout starts at released 0.16.7 (`a404422`). The maintainer selected standard
+numeric transport so consumers can embed aggregates/counters directly in reports.
+The pending 0.17.0 removes the published `wire` feature rather than keeping an
+obsolete compatibility switch. Consumers must remove `wire` from feature lists.
+This is a pre-1.0 breaking feature-contract change; package versions and Cargo.lock
+remain unchanged. Work is uncommitted; no release or publication was performed.
 
-The selected smallest ownership model is one optional `wire` feature on the
-arithmetic package, avoiding a second public representation in a companion crate.
-It supplies Serde Serialize/Deserialize for MeasurementAggregate and
-MeasurementCounter, plus native IC Wire TypeScript metadata. Private fixed-size
-Serde records define the exact layout; metadata delegates to those same records.
-Deserialize calls existing from_parts admission and reports typed codec failure
-for inconsistent state. Empty maxima, u128 totals and actual overflow survive.
-Means remain derived checked projections, rather than duplicated report fields.
+Serde Serialize/Deserialize for MeasurementAggregate and MeasurementCounter is
+always available. Native IC Wire metadata is also standard. Private fixed-size
+Serde records define the serialized layout; metadata follows those same records.
+Decoding calls canonical from_parts admission. Empty/zero maxima, wide u128 totals
+and actual overflow quality remain explicit; exact means are derived after decode.
+There are no numeric representation, stored-byte or decoding-rule changes.
 
-Default arithmetic and recording alone remain dependency-free and no_std.
-Wire uses optional Serde on all targets; optional IC Wire with TypeScript metadata
-is selected only on native targets. Wasm transport uses Serde without Wire's host
-metadata dependency. The dependency checker admits this explicit optional pair,
-rejects default activation, and retains other production/substrate prohibitions.
-The locked graph adds only the new transport dependencies; earlier selections
-including num-bigint remain unchanged.
+The crate remains no_std on every target; measurement operations remain allocation-free.
+Serde is a required dependency on all targets. IC Wire with TypeScript metadata
+is a required dependency only on native targets. Wasm numeric transport needs
+Serde without the host metadata graph. The declaration checker admits this required
+pair without dependency defaults, rejects optional/missing transport and unrelated
+production/build dependencies, and retains the stable-substrate prohibition.
 
-Focused evidence is retained under `target/evidence/transport-99/`. Native
-round-trip, malformed numeric admission, resource refusal and browser contract
-metadata generation tests pass, including Rust 1.91 native execution. Rust 1.91
-Wasm compilation with wire passes. Strict all-feature library/test Clippy passes.
-Default production graph inspection is empty. Dependency fixtures, doctests and
-maintained documentation checks are included in the recorded validation.
-No full release gates or browser runtime execution are claimed.
+Only bounded heap recording requires a feature (`recording`). Applications retain
+units, labels, report grouping, replication policy, limits, clocks, identity,
+endpoints and controller reset. Table/window state remains heap-only. IC Persistence
+owns stable formats, durable adapters and governed integration. Transport support
+continues to cover aggregates and scalar counters; no storage framework is added.
 
-The application guide documents consumer mirror migration and supported types.
-Consumers own report composition, labels, units, grouping, limits, replicated
-admission, endpoints, restart identity and controller reset. Bounded tables and
-windows remain heap-only; no transport or durable registry is added for them.
-Other measurement shapes have no wire implementation in this scoped addition.
-IC Persistence retains stable formats, durable adapters and governed integration.
-
-Native browser metadata describes shape; Rust remains authoritative for numeric
-admission. Rebuild browser contracts when replacing consumer mirrors. There is
-no historical codec fallback and no IcyDB source change or qualification here.
-Publication and actual downstream adoption remain separate maintainer effects.
+Focused evidence is under `target/evidence/standard-transport/`: strict all-feature
+library/test Clippy, default-feature transport round-trips, invalid-state and resource
+refusals, browser metadata generation, Rust 1.91 default doctests and default Wasm
+compilation, dependency-admission fixtures, documentation links and diff checks.
+Evidence from released #99 remains in `target/evidence/transport-99/` under its
+original opt-in feature identity. No browser runtime execution or IC cost delta is
+claimed, and no full release gates were run for this batch.

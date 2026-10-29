@@ -335,15 +335,15 @@ assert_eq!(window.sequence(), Some(1));
 This example requires the `recording` feature. Other fixed measurement shapes can
 live alongside the table in a consumer-defined struct inside the same window.
 
-### Optional numeric transport
+### Numeric transport
 
-Enable `ic-metrics`'s `wire` feature to embed `MeasurementAggregate` and
-`MeasurementCounter` directly in Serde/IC Wire reports. This feature uses Serde
-on native and Wasm targets and enables Wire TypeScript metadata on native hosts.
-Default arithmetic and recording alone retain their dependency-free contracts.
+Embed `MeasurementAggregate` and `MeasurementCounter` directly in Serde/IC Wire
+reports. Transport is standard: no Metrics feature selection is needed. Serde
+is available on native and Wasm targets, with Wire TypeScript metadata on native
+hosts. Measurement arithmetic remains allocation-free; heap recording is opt-in.
 
 ```rust
-# #[cfg(all(feature = "wire", not(target_family = "wasm")))]
+# #[cfg(not(target_family = "wasm"))]
 # {
 #[derive(serde::Serialize, serde::Deserialize, ic_wire::Wire)]
 struct OwnerReport {
@@ -365,7 +365,7 @@ Use IC Wire's bounded native codecs with consumer-selected byte, allocation,
 node and depth limits. These fixed-size numeric records allocate no dynamic
 collections during Serde decoding. Generated browser metadata describes the
 serialized layout; Rust numeric admission remains authoritative on incoming
-reports. No historical consumer codec fallback is provided. This feature does
+reports. No historical consumer codec fallback is provided. This integration does
 not serialize windows, keyed tables, histograms, summaries or checked wide
 accumulators. Those shapes require separately scoped transport contracts.
 

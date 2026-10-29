@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.0]
+
+### ⚠️ Breaking
+
+- Make validated aggregate/counter transport and native IC Wire metadata standard.
+  Remove `wire` from consumer feature lists; Serde and native Wire dependencies
+  are now required. Heap recording remains opt-in, measurement operations remain
+  allocation-free, and Rust `no_std` support is retained.
+
 ## [0.16.7] - 2026-10-29
 
 ### ➕ Added

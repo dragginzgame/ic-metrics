@@ -131,6 +131,7 @@ package; select direct Cargo commands when only one package or test is affected:
 | Arithmetic workspace | `make check check-wasm clippy docs-check test` |
 | Focused library checks | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
 | Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
+| Standard numeric transport | `cargo test -p ic-metrics --lib --no-default-features --locked wire::tests`; transport and metadata require no Metrics feature selection |
 | Recording library checks | `cargo check -p ic-metrics --lib --features recording --locked`; Wasm: `cargo check -p ic-metrics --lib --features recording --locked --target wasm32-unknown-unknown`; lint: `cargo clippy -p ic-metrics --lib --tests --features recording --locked -- -D warnings` |
 | Recording tests and examples | `cargo test -p ic-metrics --lib --features recording --locked <test-name>`; doctests: `cargo test -p ic-metrics --doc --features recording --locked` |
 | Snapshot/pins | `make shared-tooling-check check-pins` |
@@ -156,7 +157,7 @@ and are not compared with current files.
 
 ### Dependency roles and production graphs
 
-The sole workspace member is the dependency-free arithmetic library. The root
+The sole workspace member is the arithmetic library with standard numeric transport. The root
 catalog's `Tests and tooling only` group selects `num-bigint` for the ratio
 oracle, with default features disabled. It is inherited only by development
 dependencies. IC Persistence owns stable-adapter graph admission and tests.
@@ -167,10 +168,11 @@ adapter ordering check uses `--manifest-order-grouped` against its current or
 selected committed source. No paired formatter override is needed here.
 
 `make production-dependencies-check` admits the sole arithmetic workspace member
-through successful locked, offline Cargo metadata. Only optional Serde and IC Wire
-transport declarations are admitted; default features must remain empty. Other
+through successful locked, offline Cargo metadata. Only required Serde and IC Wire
+transport declarations without dependency defaults are admitted; default features
+must remain empty. Other
 normal/build dependencies are rejected, including inactive target-specific entries.
-This establishes dependency-free default arithmetic without
+This constrains the production graph without
 compiler-host discovery or repeated graph traversal. Development dependencies
 remain separate; the existing direct stable-substrate prohibition applies there
 too. Fixtures cover declaration axes, renamed dependencies, allowed development

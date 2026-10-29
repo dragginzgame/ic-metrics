@@ -27,7 +27,12 @@ reset_case() {
     : > "$fixture/workspace/crates/ic-metrics/src/lib.rs"
     printf '[workspace]\nmembers = ["crates/ic-metrics"]\nresolver = "3"\n' > "$fixture/workspace/Cargo.toml"
     cp "$root/rust-toolchain.toml" "$fixture/workspace/"
-    for name in ic-testkit ic-stable-structures ordinary; do package "$name"; done
+    for name in ic-testkit ic-stable-structures ordinary serde ic-wire; do package "$name"; done
+    cat >> "$fixture/workspace/crates/ic-metrics/Cargo.toml" <<'TRANSPORT'
+[dependencies]
+serde = { path = "../../../vendor/serde", default-features = false }
+ic-wire = { path = "../../../vendor/ic-wire", default-features = false }
+TRANSPORT
 }
 check_case() {
     local label="$1" expected="$2" status=0
@@ -47,36 +52,19 @@ check_case() {
 }
 
 reset_case
-check_case dependency-free pass
+check_case standard-arithmetic pass
 printf '\n[dev-dependencies]\nhelper = { package = "ic-testkit", path = "../../../vendor/ic-testkit" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case development-package pass
 
 reset_case
-package serde
-package ic-wire
-cat >> "$fixture/workspace/crates/ic-metrics/Cargo.toml" <<'TRANSPORT'
-[features]
-default = []
-wire = ["dep:serde", "dep:ic-wire"]
-[dependencies]
-serde = { path = "../../../vendor/serde", optional = true, default-features = false }
-ic-wire = { path = "../../../vendor/ic-wire", optional = true, default-features = false }
-TRANSPORT
-check_case optional-transport pass
-sed '/default = \[\]/a\
-recording = ["wire"]
-' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/changed"
-cp "$fixture/workspace/crates/ic-metrics/Cargo.toml" "$fixture/optional-manifest"
-cp "$fixture/changed" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case recording-transport 'transport activation outside wire feature'
-cp "$fixture/optional-manifest" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-sed 's/default = \[\]/default = ["wire"]/' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/changed"
-cp "$fixture/changed" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case default-transport 'default arithmetic enables features'
-sed 's/default = \["wire"\]/default = []/; s/optional = true/optional = false/g' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/changed"
-# Required dependencies cannot use dep: feature syntax; remove that activation.
-sed 's/^wire = .*/wire = []/' "$fixture/changed" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case required-transport 'transport dependency must be optional without defaults'
+check_case standard-transport pass
+cp "$fixture/workspace/crates/ic-metrics/Cargo.toml" "$fixture/standard-manifest"
+sed 's/default-features = false/optional = true, default-features = false/g' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case optional-transport 'transport dependency must be required without defaults'
+sed 's/default-features = false/default-features = true/g' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case transport-default-features 'transport dependency must be required without defaults'
+sed '/^ic-wire = /d' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case missing-transport 'missing standard transport dependency'
 
 # Each declaration axis is independent of the active host and feature graph.
 for selection in normal optional target build; do
@@ -88,8 +76,11 @@ for selection in normal optional target build; do
         target) table="target.'cfg(target_os = \"none\")'.dependencies" ;;
         build) table=build-dependencies ;;
     esac
-    printf '\n[%s]\nrenamed = { package = "ordinary", path = "../../../vendor/ordinary"%s }\n' \
-        "$table" "$extra" >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+    if [[ "$table" != dependencies ]]; then
+        printf '\n[%s]\n' "$table" >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+    fi
+    printf '\nrenamed = { package = "ordinary", path = "../../../vendor/ordinary"%s }\n' \
+        "$extra" >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
     check_case "$selection-declaration" 'ic-metrics declares a production dependency: ordinary'
 done
 

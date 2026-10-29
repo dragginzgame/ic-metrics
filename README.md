@@ -1,6 +1,6 @@
 # ic-metrics
 
-Dependency-free measurement arithmetic with optional bounded heap recording.
+Measurement arithmetic with standard numeric transport and optional bounded heap recording.
 
 IC Metrics is a standalone application capability alongside IC Timers, IC Jobs
 and IC Auth. Applications and Canic compose these packages through explicit
@@ -74,7 +74,7 @@ Namespaced records retain units, reset epochs,
 wide totals and overflow flags. Adding `ic-metrics-stable` is the opt-in; existing
 arithmetic callers remain volatile. The adapter requires Rust 1.91 on host and
 Wasm. Hosts own allocation/bootstrap, synchronization, write cadence and resets;
-the arithmetic core remains dependency-free and `no_std` on Rust 1.91.
+measurement arithmetic remains allocation-free and `no_std` on Rust 1.91.
 
 The [application guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md) is included in
 packaged crate documentation, with a compiled example of fixed named histograms,
@@ -249,7 +249,7 @@ artifacts. See [Cargo's publication documentation](https://doc.rust-lang.org/car
 Enable `recording` for `BoundedMeasurementTable`: a same-unit keyed recorder with
 explicit entry and UTF-8 key budgets, borrowed snapshots, and a separate aggregate
 for observations whose identities were omitted. It uses `alloc` but no production
-dependencies. Default arithmetic remains allocation-free and all features remain
+dependencies beyond the standard transport stack. Measurement arithmetic remains allocation-free and all features remain
 `no_std`. Collection allocates on admitted new identities, not repeated keys;
 report construction and endpoint selection remain consumer-owned.
 
@@ -260,8 +260,8 @@ consumer-defined state. Reset sequences are not global identities. See the
 See the [compiled application example](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md#bounded-heap-recording)
 for composing the table and fixed measurement shapes in a reset window.
 
-## Optional numeric transport
+## Numeric transport
 
-Enable `wire` to embed `MeasurementAggregate` and `MeasurementCounter` in Serde
+Embed `MeasurementAggregate` and `MeasurementCounter` in Serde
 reports with native IC Wire browser metadata. Decoding uses canonical numeric
-admission. See the [transport and migration guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md#optional-numeric-transport).
+admission. See the [transport and migration guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md#numeric-transport).

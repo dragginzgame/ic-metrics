@@ -1,6 +1,6 @@
 # Measurement extraction contract
 
-IC Metrics owns dependency-free `no_std` arithmetic and optional bounded heap
+IC Metrics owns allocation-free `no_std` arithmetic and optional bounded heap
 recording. Default arithmetic remains allocation-free. Consumers own platform
 reads, sample admission, units, attribution, instance identities, limits, labels,
 synchronization, lifecycle and endpoints. The
@@ -12,7 +12,7 @@ crate documentation and supplies compiled examples.
 Metrics is an independently released application capability, at the same layer
 as Timers, Jobs and Auth. Applications and Canic compose those capabilities;
 Metrics does not depend on those consumers or own their orchestration policy.
-Its arithmetic package stays portable and dependency-free. IC Persistence owns
+Its arithmetic package stays portable, with standard numeric transport. IC Persistence owns
 the separately published stable adapter alongside its Memory/Storage packages.
 
 IC Tooling owns the separate Host, Build and Testkit packages. Benchmark parsing,
@@ -109,7 +109,7 @@ checkpoint validation. Its canonical guide and
 [migration guide](https://github.com/dragginzgame/ic-persistence/blob/main/docs/migration/ic-metrics-stable.md)
 own version selection and retained-data compatibility. Hosts retain allocation,
 identities, lifecycle, write cadence and reset policy. Metrics supplies validated
-arithmetic state through its public API; optional `wire` supplies validated numeric
+arithmetic state through its public API; standard transport supplies validated numeric
 transport, with no stable-memory allocation or storage dependency. Historical storage receipts below retain their
 original source and graph identities.
 
@@ -189,7 +189,7 @@ unchanged.
 
 The maintainer selected this extension on 2026-10-28 for unconditional bounded
 consumer recording with independently selected endpoint exposure. `recording`
-adds no production dependency and uses Rust `alloc`, never `std` or platform APIs.
+adds no further production dependency and uses Rust `alloc`, never `std` or platform APIs.
 `BoundedMeasurementTable` admits the first identities within explicit entry,
 per-key byte and total-key-byte limits. Existing identities continue at capacity.
 Each refused observation contributes exactly once to a same-unit omitted aggregate;

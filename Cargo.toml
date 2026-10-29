@@ -10,10 +10,10 @@ version = "0.16.7"
 license = "MIT"
 repository = "https://github.com/dragginzgame/ic-metrics"
 authors = ["borovan <84897664+borovan@users.noreply.github.com>"]
-description = "Allocation-free, dependency-free measurement arithmetic"
+description = "Allocation-free measurement arithmetic with validated numeric transport"
 
 [workspace.dependencies]
-# Production dependencies (opt-in transport only)
+# Production dependencies
 ic-wire = { version = "0.7.21", default-features = false, features = ["typescript"] }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 
