@@ -56,7 +56,9 @@ when a page contains no matches. Filters should stay the same across pages.
 Retention may remove rows between calls; paging is not a frozen snapshot and
 `scanned` is not a total matching count. Borrowed rows cannot mutate the log.
 
-`Log::snapshot()` explicitly copies a complete checkpoint, including limits,
+`Log::into_snapshot()` consumes a log and moves its retained entries into a
+checkpoint without cloning their owned text. Use `Log::snapshot()` to keep the
+original log available: it explicitly copies a complete checkpoint, including limits,
 oldest-first entries and sequence/time watermarks. `Log::restore()` admits that
 checkpoint without replaying entries. It rejects invalid bounds, noncontiguous
 identities, regressed timestamps, contradictory watermarks and inconsistent
@@ -73,7 +75,7 @@ timestamp can never expire. Nonempty checkpoints at that timestamp remain valid.
 # let log = Log::new(Limits { max_entries: NonZeroUsize::new(10).unwrap(), max_message_bytes: 128, max_label_bytes: 32 });
 let checkpoint = log.snapshot();
 let restored = Log::restore(checkpoint.clone()).unwrap();
-assert_eq!(restored.snapshot(), checkpoint);
+assert_eq!(restored.into_snapshot(), checkpoint);
 ```
 
 The library performs no authorization, timer registration, IC calls, serialization

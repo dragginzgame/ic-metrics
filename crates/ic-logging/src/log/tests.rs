@@ -550,3 +550,57 @@ fn restored_checkpoints_follow_the_same_append_and_retention_trace() {
         assert_eq!(direct.snapshot(), restored.snapshot());
     }
 }
+
+#[test]
+fn consuming_checkpoint_preserves_order_and_moves_owned_entry_buffers() {
+    let mut original = log(3, 32);
+    for time in 0..8 {
+        original.append(input(time, "retained message")).unwrap();
+    }
+    let expected = original.snapshot();
+    let buffers = original
+        .entries
+        .iter()
+        .map(|entry| {
+            (
+                entry.source.as_ptr(),
+                entry.topic.as_ref().unwrap().as_ptr(),
+                entry.message.as_ptr(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let checkpoint = original.into_snapshot();
+    assert_eq!(checkpoint, expected);
+    for (entry, (source, topic, message)) in checkpoint.entries.iter().zip(buffers) {
+        assert_eq!(entry.source.as_ptr(), source);
+        assert_eq!(entry.topic.as_ref().unwrap().as_ptr(), topic);
+        assert_eq!(entry.message.as_ptr(), message);
+    }
+    assert_eq!(
+        Log::restore(checkpoint.clone()).unwrap().into_snapshot(),
+        checkpoint
+    );
+}
+
+#[test]
+fn consuming_checkpoint_preserves_empty_pruned_and_exhausted_watermarks() {
+    let mut retained = log(2, 32);
+    retained.append(input(7, "pruned")).unwrap();
+    assert_eq!(retained.prune_expired(8, 0, 2).removed, 1);
+    let exhausted = Log::restore(LogSnapshot {
+        limits: retained.limits(),
+        entries: Vec::new(),
+        next_sequence: None,
+        last_created_at_secs: Some(7),
+    })
+    .unwrap();
+    for original in [log(2, 32), retained, exhausted] {
+        let expected = original.snapshot();
+        let checkpoint = original.into_snapshot();
+        assert_eq!(checkpoint, expected);
+        assert_eq!(
+            Log::restore(checkpoint.clone()).unwrap().into_snapshot(),
+            checkpoint
+        );
+    }
+}
