@@ -16,6 +16,13 @@ all-features = true
 [features]
 default = []
 recording = []
+wire = ["dep:serde", "dep:ic-wire"]
+
+[dependencies]
+serde = { workspace = true, optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ic-wire = { workspace = true, optional = true }
 
 [dev-dependencies]
 num-bigint.workspace = true

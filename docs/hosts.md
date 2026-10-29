@@ -167,9 +167,10 @@ adapter ordering check uses `--manifest-order-grouped` against its current or
 selected committed source. No paired formatter override is needed here.
 
 `make production-dependencies-check` admits the sole arithmetic workspace member
-through successful locked, offline Cargo metadata. It rejects every normal/build
-dependency declaration, including inactive optional and target-specific entries.
-This establishes a dependency-free library for all targets and features without
+through successful locked, offline Cargo metadata. Only optional Serde and IC Wire
+transport declarations are admitted; default features must remain empty. Other
+normal/build dependencies are rejected, including inactive target-specific entries.
+This establishes dependency-free default arithmetic without
 compiler-host discovery or repeated graph traversal. Development dependencies
 remain separate; the existing direct stable-substrate prohibition applies there
 too. Fixtures cover declaration axes, renamed dependencies, allowed development

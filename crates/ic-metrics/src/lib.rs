@@ -3,8 +3,9 @@
 //! Values use one consumer-selected unit per aggregate. Consumers own sampling,
 //! attribution, instance identity, reset policy and reporting. This crate does
 //! not read platform counters or manufacture measurements. The library is
-//! dependency-free and `no_std` on every target. Default arithmetic needs no allocator;
+//! `no_std` on every target. Default arithmetic is dependency-free and needs no allocator;
 //! the opt-in `recording` feature uses `alloc` for bounded keyed retention.
+//! Optional `wire` supplies validated aggregate/counter transport and native metadata.
 
 #![doc = include_str!("application.md")]
 #![no_std]
@@ -25,6 +26,8 @@ mod ratio;
 mod state;
 mod summary;
 mod window;
+#[cfg(feature = "wire")]
+mod wire;
 pub use window::MeasurementWindow;
 
 pub use aggregate::{

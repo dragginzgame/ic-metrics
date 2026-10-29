@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.7]
+
+### ➕ Added
+
+- Opt-in `wire` transport for measurement aggregates and scalar counters, with
+  Serde decoding through numeric admission and native IC Wire browser metadata
+  ([#99](https://github.com/dragginzgame/ic-metrics/issues/99)). Default arithmetic
+  remains dependency-free; consumers retain report composition and codec limits.
+
 ## [0.16.6] - 2026-10-29
 
 ### 🧹 Cleanup

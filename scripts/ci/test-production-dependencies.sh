@@ -51,6 +51,33 @@ check_case dependency-free pass
 printf '\n[dev-dependencies]\nhelper = { package = "ic-testkit", path = "../../../vendor/ic-testkit" }\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case development-package pass
 
+reset_case
+package serde
+package ic-wire
+cat >> "$fixture/workspace/crates/ic-metrics/Cargo.toml" <<'TRANSPORT'
+[features]
+default = []
+wire = ["dep:serde", "dep:ic-wire"]
+[dependencies]
+serde = { path = "../../../vendor/serde", optional = true, default-features = false }
+ic-wire = { path = "../../../vendor/ic-wire", optional = true, default-features = false }
+TRANSPORT
+check_case optional-transport pass
+sed '/default = \[\]/a\
+recording = ["wire"]
+' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/changed"
+cp "$fixture/workspace/crates/ic-metrics/Cargo.toml" "$fixture/optional-manifest"
+cp "$fixture/changed" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case recording-transport 'transport activation outside wire feature'
+cp "$fixture/optional-manifest" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+sed 's/default = \[\]/default = ["wire"]/' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/changed"
+cp "$fixture/changed" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case default-transport 'default arithmetic enables features'
+sed 's/default = \["wire"\]/default = []/; s/optional = true/optional = false/g' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/changed"
+# Required dependencies cannot use dep: feature syntax; remove that activation.
+sed 's/^wire = .*/wire = []/' "$fixture/changed" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case required-transport 'transport dependency must be optional without defaults'
+
 # Each declaration axis is independent of the active host and feature graph.
 for selection in normal optional target build; do
     reset_case

@@ -334,3 +334,41 @@ assert_eq!(window.sequence(), Some(1));
 
 This example requires the `recording` feature. Other fixed measurement shapes can
 live alongside the table in a consumer-defined struct inside the same window.
+
+### Optional numeric transport
+
+Enable `ic-metrics`'s `wire` feature to embed `MeasurementAggregate` and
+`MeasurementCounter` directly in Serde/IC Wire reports. This feature uses Serde
+on native and Wasm targets and enables Wire TypeScript metadata on native hosts.
+Default arithmetic and recording alone retain their dependency-free contracts.
+
+```rust
+# #[cfg(all(feature = "wire", not(target_family = "wasm")))]
+# {
+#[derive(serde::Serialize, serde::Deserialize, ic_wire::Wire)]
+struct OwnerReport {
+    instructions: ic_metrics::MeasurementAggregate,
+    movements: ic_metrics::MeasurementCounter,
+}
+# }
+```
+
+Migrate consumer numeric mirrors by replacing their fields with these canonical
+values, then regenerate browser contracts. The aggregate record carries `samples`,
+`total`, optional `maximum`, `samples_overflowed` and `total_overflowed`; the scalar
+record carries `total` and `total_overflowed`. Totals stay `u128` (browser `bigint`).
+An empty maximum is `None`, while a measured zero is `Some(0)`. Means are derived
+with `mean()` after decoding; count overflow remains an unavailable exact mean.
+Both decoders call `from_parts` and reject inconsistent numeric state.
+
+Use IC Wire's bounded native codecs with consumer-selected byte, allocation,
+node and depth limits. These fixed-size numeric records allocate no dynamic
+collections during Serde decoding. Generated browser metadata describes the
+serialized layout; Rust numeric admission remains authoritative on incoming
+reports. No historical consumer codec fallback is provided. This feature does
+not serialize windows, keyed tables, histograms, summaries or checked wide
+accumulators. Those shapes require separately scoped transport contracts.
+
+Applications still own labels, units, grouping, replicated admission, limits,
+endpoints and reset authorization. This is a numeric transport contract, not a
+stable-storage format. IC Persistence retains durable-adapter ownership.

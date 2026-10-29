@@ -109,8 +109,8 @@ checkpoint validation. Its canonical guide and
 [migration guide](https://github.com/dragginzgame/ic-persistence/blob/main/docs/migration/ic-metrics-stable.md)
 own version selection and retained-data compatibility. Hosts retain allocation,
 identities, lifecycle, write cadence and reset policy. Metrics supplies validated
-arithmetic state through its public API; it has no serialization, stable-memory
-allocation or storage dependency. Historical storage receipts below retain their
+arithmetic state through its public API; optional `wire` supplies validated numeric
+transport, with no stable-memory allocation or storage dependency. Historical storage receipts below retain their
 original source and graph identities.
 
 The published [IC Host Wasm inspector](https://github.com/dragginzgame/ic-tooling/tree/main/apps/ic-host-wasm-inspect)

@@ -13,6 +13,10 @@ authors = ["borovan <84897664+borovan@users.noreply.github.com>"]
 description = "Allocation-free, dependency-free measurement arithmetic"
 
 [workspace.dependencies]
+# Production dependencies (opt-in transport only)
+ic-wire = { version = "0.7.21", default-features = false, features = ["typescript"] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+
 # Tests and tooling only
 num-bigint = { version = "0.5.1", default-features = false }
 

@@ -259,3 +259,9 @@ consumer-defined state. Reset sequences are not global identities. See the
 
 See the [compiled application example](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md#bounded-heap-recording)
 for composing the table and fixed measurement shapes in a reset window.
+
+## Optional numeric transport
+
+Enable `wire` to embed `MeasurementAggregate` and `MeasurementCounter` in Serde
+reports with native IC Wire browser metadata. Decoding uses canonical numeric
+admission. See the [transport and migration guide](https://github.com/dragginzgame/ic-metrics/blob/main/crates/ic-metrics/src/application.md#optional-numeric-transport).

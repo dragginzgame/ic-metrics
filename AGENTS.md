@@ -10,7 +10,10 @@ consumer-contract or persistence-boundary changes.
 ## Ownership
 
 - Own allocation-free measurement arithmetic and optional bounded heap recording. Keep the library
-  dependency-free and `no_std`; consumers own platform counter reads.
+  `no_std`, with dependency-free default arithmetic; consumers own platform counter reads.
+- The maintainer-authorized #99 `wire` feature adds optional Serde transport for
+  aggregates/counters and IC Wire metadata on native hosts. Decode only through
+  canonical arithmetic admission. Recording alone remains dependency-free.
 - IC Persistence owns the separately opted-in `ic-metrics-stable` package, its
   governed Memory/Storage integration, tests and release. This repository owns
   arithmetic and the explicitly selected `recording` store. Hosts retain allocator

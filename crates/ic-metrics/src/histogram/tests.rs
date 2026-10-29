@@ -83,8 +83,8 @@ fn no_bounds_count_all_samples_in_overflow() {
     for value in [0, 7, u64::MAX] {
         histogram.record(value);
     }
-    assert_eq!(histogram.upper_bounds(), &[]);
-    assert_eq!(histogram.bucket_counts(), &[]);
+    assert_eq!(histogram.upper_bounds(), &[] as &[u64; 0]);
+    assert_eq!(histogram.bucket_counts(), &[] as &[u64; 0]);
     assert_eq!(histogram.overflow(), 3);
     assert_eq!(histogram.aggregate().samples(), 3);
     assert_eq!(histogram.aggregate().total(), u128::from(u64::MAX) + 7);
