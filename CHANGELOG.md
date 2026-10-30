@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.19.0]
+
+### ⚠️ Breaking
+
+- Adopt IC Wire 0.8.0 for Metrics' native metadata. Consumers composing Metrics
+  values in Wire reports must align their direct Wire dependency to 0.8; Wire
+  0.7's metadata trait is a different Rust dependency identity. Arithmetic,
+  Serde layouts and Logging behavior are unchanged. Endpoint users separately
+  coordinate Platform 0.9; this workspace enables no endpoint runtime.
+  See the [native metadata migration guide](docs/migration-019.md).
+
 ## [0.18.1] - 2026-10-30
 
 ### ⬆️ Dependencies

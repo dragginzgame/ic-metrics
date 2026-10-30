@@ -1,81 +1,74 @@
 # Current handoff — 2026-10-30
 
-Source base is release 0.18.0, `f8d5290`. The maintainer requested adoption of
-current Shared Tooling and IC Wire. The incoming checkout already had a scoped
-Cargo.lock update selecting Wire and Wire Derive 0.7.25. That exact lockfile was
-preserved; the workspace declaration now selects Wire 0.7.25 as its lower bound.
-Pending compatible notes select 0.18.1. Own package versions remain 0.18.0.
+Source base is release 0.18.1, `79fa3db`. The incoming checkout was clean. The
+maintainer requested the new IC Wire release. Workspace declaration and lock now
+select Wire and Wire Derive 0.8.0; no other locked package changes. Own workspace
+versions remain 0.18.1. Pending notes select 0.19.0 because native metadata exposes
+the changed Wire trait identity, not merely because the supplier used a minor bump.
 
-## Adopted identities and impact
+## Adoption and compatibility
 
-Shared Tooling 0.27.11 is adopted at independently reviewed commit
-`62edfbd43087a718bf0283e9040676a49211976d`, verified against GitHub main. Its clean
-isolated source is `/tmp/ic-observability-shared-adoption.5eCGOW/`. The canonical
-exporter refreshed all 127 selected payload hashes/modes. No snapshot-owned file
-was hand-patched. The previous reviewed source was
-`a245bb49312a5ccafbb71532cfa5346741e3ba28` (0.27.8 base plus publication adapter).
+Wire 0.8.0 is published, not yanked and declares Rust 1.91. Its registry checksum
+matches the selected lock. Prepared package VCS metadata records release commit
+`25a7212269ca4fe1257cf4d3d22efbbe040cb84b`, independently confirmed as upstream main.
+The supplier's production Wire/derive source is unchanged from 0.7.25; its minor
+release changes the optional endpoint integration's Platform selection to 0.9.1.
 
-Five payloads change: the core baseline, Rust hygiene guide, code-hygiene audit,
-Cargo graph observations documentation and publication adapter. Publication
-validation targets now dispatch sequentially before the attempt, preserving gate
-order under parallel Make. Current Rust source has no lint allowances or module
-path overrides requiring conversion. Ordinary module discovery and scoped lint
-expectations are adopted without a local exception or new audit schedule.
-Tool catalogs, compiler policy and executable pins are unchanged.
+This consumer retains native-only Wire, explicit `typescript` and disabled
+features by default. Actual resolved metadata confirms exactly the selected Wire
+pair, `typescript` only, no Platform package, and no Logging dependencies. No
+endpoint runtime is enabled here. Arithmetic, Serde layouts, metadata shapes and
+Logging behavior are unchanged.
 
-IC Wire 0.7.25's registry entry is not yanked, declares Rust 1.91, and its package
-checksum matches the selected lock. The prepared registry source records release
-commit `e026eb4c8a7a71d4e74b459d774a83490c351762`, matching current upstream main.
-The supplying endpoint/derive changes add pre-copy header admission and shared
-cold error formatting; this consumer uses native schema/numeric transport, not
-that endpoint adapter. Existing transport traits/layouts remain compatible.
-Native-only selection, explicit `typescript` and disabled defaults are preserved.
-Logging remains independent and dependency-free.
+Metrics' public native implementations now implement Wire 0.8's metadata trait.
+Wire 0.7's trait is a different Rust dependency identity. Consumers deriving Wire
+or requesting native schemas for reports embedding Metrics types must align the
+same Wire line and shared Metrics identity. Serde-only callers acquire no new
+Wire trait requirement. This is a real native consumer source break despite the
+unchanged bytes and method signatures.
 
-The 0.18 migration/product guides now describe the completed workspace contract
-without calling it pending. They continue to distinguish workspace release from
-registry availability; no Observability publication was performed or inferred.
+The [0.19 migration guide](../migration-019.md), package README, compiled transport
+guide and root notes describe that graph alignment. Consumers select an actually
+published matching Metrics release before adopting; own package metadata has not
+been advanced or published by this task. Existing durable layouts are unchanged.
+Applications using Wire endpoints coordinate Platform/runtime adoption themselves.
 
 ## Validation and evidence
 
-Evidence is `target/audits/upstream-adoption-20261030/`:
+Evidence is `target/audits/wire-080-20261030/`:
 
-- Snapshot impact review, integrity verification and independent comparison to
-  the exact committed source pass. Initial clone-origin mismatch was corrected
-  in the isolated clone's metadata before the successful preview/export; the
-  rejected preview changed no consumer payload.
-- Formatting, selected publication ShellCheck, declaration/lock inheritance pins
-  and real locked offline production dependency admission pass.
-- The actual consumer release/publication Make fixture passes with substituted
-  Git/registry effects. Generic producer fixtures were not replayed.
-- Strict Metrics library/test Clippy passes on the pinned compiler with Wire
-  0.7.25. Eight numeric/schema transport tests pass on Rust 1.91, including large
-  const arrays, malformed-state refusal and composed browser metadata generation.
-- All 15 Metrics doctests pass at Rust 1.91 with recording selected.
-  Documentation links and diff checks pass. Byte comparison confirms the incoming
-  lockfile is unchanged by this task.
+- Official Cargo sparse-index publication/checksum/floor and upstream Git identity
+  were observed. The selected registry package records the same release commit.
+- A targeted locked-graph update changed only Wire and Wire Derive. Resolved graph
+  assertions, declaration/lock pin checks and real offline production dependency
+  admission pass; endpoint/Platform remains absent.
+- Formatting and strict Metrics library/test Clippy pass on the pinned compiler.
+- Eight canonical numeric/schema transport tests pass at Rust 1.91, including
+  malformed-state refusal, 0/3/37 const bounds and composed native browser metadata.
+- All 15 Metrics doctests pass at Rust 1.91 with recording selected, including the
+  updated report derive. Documentation links and diff checks pass.
 
-The crates.io metadata API refused access; publication/checksum/floor were instead
-verified through the official Cargo sparse registry index. No source qualification
-was inferred from that failed request. Local evidence retains the registry record.
-No full CI/MSRV gate, native macOS acceptance, installed IC execution, performance
-experiment, tool installation, own-version change, commit, release or upload ran.
-Root edits remain uncommitted; the index and normal sibling checkouts are untouched.
+Shared Tooling stays at reviewed 0.27.11, commit
+`62edfbd43087a718bf0283e9040676a49211976d`; no snapshot-owned payload, tool catalog,
+compiler floor, library runtime source or unrelated dependency was edited. The
+only Rust source-file edit is explanatory prose in the included application guide.
+No full CI/MSRV matrix, native macOS acceptance, installed endpoint/IC runtime,
+performance experiment, own-version bump, release or publication ran. Root edits
+are uncommitted; its index and sibling working checkouts remain untouched.
 
-## Earlier work and owning follow-ups
+## Consumer and historical scope
 
-`f8d5290:docs/status/current.md` preserves the 0.18 hard-cut implementation,
-consumer review and runtime receipt locations. Those historical observations
-retain their original source/graph identities. The [0.18 migration guide](../migration-018.md)
-owns caller and durable-data adoption requirements.
+Required downstream source review covered IcyDB, Canic, Timers, Backup, Blob
+Storage and Toko Miner. Current native report consumers include Wire 0.7 graphs;
+these require owning graph alignment when selecting the future Metrics release.
+No consumer was upgraded or compiled by this task. Backup has no current direct
+Metrics dependency in the reviewed workspace. Persistence already selects Wire
+0.8 but retains its own Metrics/durable-codec adoption responsibility. Existing
+API/codec/lifecycle qualification is not inferred from a lock update.
 
-Logging adoption remains separately tracked by
-[Persistence #141](https://github.com/dragginzgame/ic-persistence/issues/141),
-[Canic #715](https://github.com/dragginzgame/canic/issues/715) and
-[Jobs #79](https://github.com/dragginzgame/ic-jobs/issues/79). Retained storage must
-receive an explicit owning transition/retirement decision; this task changes no
-adapter or data. Subsequent sibling Metrics audit findings were filed as
-[Tooling #268](https://github.com/dragginzgame/ic-tooling/issues/268),
-[Profiler #13](https://github.com/dragginzgame/ic-profiler/issues/13) and
-[Miner #67](https://github.com/dragginzgame/toko-miner/issues/67).
-Read current owning issue/release state before resuming any of that separate work.
+`79fa3db:docs/status/current.md` preserves the prior Shared 0.27.11/Wire 0.7.25
+adoption receipts. The earlier 0.18 contract and owning adoption issues remain
+in [the 0.18 migration guide](../migration-018.md). Existing Persistence #141,
+Canic #715, Jobs #79 and the subsequent Tooling #268, Profiler #13 and Miner #67
+issues are separate work; read their current state before resuming. Historical
+receipts retain their original source, dependency graph and acceptance scope.
