@@ -1,6 +1,7 @@
 use super::*;
 use alloc::format;
 
+mod contract;
 mod mixed;
 
 fn positive(value: usize) -> NonZeroUsize {
@@ -12,6 +13,7 @@ fn log(capacity: usize, message_bytes: usize) -> Log {
         max_entries: positive(capacity),
         max_message_bytes: message_bytes,
         max_label_bytes: 16,
+        max_text_bytes: usize::MAX,
     })
 }
 
@@ -45,13 +47,20 @@ fn sequences(log: &Log) -> Vec<u64> {
 fn count_eviction_keeps_newest_rows_and_never_reuses_sequence_ids() {
     let mut log = log(2, 32);
     for time in 0..5 {
-        assert_eq!(log.append(input(time, "message")), Ok(time));
+        assert_eq!(
+            log.append(input(time, "message"))
+                .map(|receipt| receipt.sequence),
+            Ok(time)
+        );
     }
     assert_eq!(log.len(), 2);
     assert_eq!(sequences(&log), [4, 3]);
     assert_eq!(log.prune_expired(10, 0, 2).removed, 2);
     assert!(log.is_empty());
-    assert_eq!(log.append(input(10, "new")), Ok(5));
+    assert_eq!(
+        log.append(input(10, "new")).map(|receipt| receipt.sequence),
+        Ok(5)
+    );
 }
 
 #[test]
@@ -76,7 +85,11 @@ fn oversized_source_and_topic_refuse_before_eviction_or_identity_consumption() {
         assert_eq!(sequences(&log), [0]);
         assert_eq!(log.entries[0].message, "retained");
     }
-    assert_eq!(log.append(input(11, "accepted")), Ok(1));
+    assert_eq!(
+        log.append(input(11, "accepted"))
+            .map(|receipt| receipt.sequence),
+        Ok(1)
+    );
 }
 
 #[test]
@@ -100,14 +113,22 @@ fn timestamp_regression_is_rejected_after_history_is_fully_pruned() {
             current: 19,
         })
     );
-    assert_eq!(log.append(input(20, "equal timestamp")), Ok(1));
+    assert_eq!(
+        log.append(input(20, "equal timestamp"))
+            .map(|receipt| receipt.sequence),
+        Ok(1)
+    );
 }
 
 #[test]
 fn sequence_exhaustion_does_not_evict_or_reissue_an_identity() {
     let mut log = log(1, 32);
     log.next_sequence = Some(u64::MAX);
-    assert_eq!(log.append(input(1, "last identity")), Ok(u64::MAX));
+    assert_eq!(
+        log.append(input(1, "last identity"))
+            .map(|receipt| receipt.sequence),
+        Ok(u64::MAX)
+    );
     assert_eq!(
         log.append(input(2, "rejected")),
         Err(AppendError::SequenceExhausted)
@@ -158,8 +179,8 @@ fn truncation_reserves_only_the_retained_payload() {
 #[test]
 fn append_errors_support_question_mark_and_preserve_typed_context() {
     fn propagate(
-        result: Result<u64, AppendError>,
-    ) -> Result<u64, alloc::boxed::Box<dyn core::error::Error>> {
+        result: Result<AppendReceipt, AppendError>,
+    ) -> Result<AppendReceipt, alloc::boxed::Box<dyn core::error::Error>> {
         Ok(result?)
     }
 
@@ -179,6 +200,10 @@ fn append_errors_support_question_mark_and_preserve_typed_context() {
             current: 19,
         },
         AppendError::SequenceExhausted,
+        AppendError::TextBudgetExceeded {
+            required_bytes: 21,
+            max_bytes: 20,
+        },
     ] {
         let error = propagate(Err(expected)).unwrap_err();
         assert_eq!(error.downcast_ref::<AppendError>(), Some(&expected));
@@ -192,6 +217,7 @@ fn label_limits_measure_bytes_and_accept_the_exact_boundary() {
         max_entries: positive(1),
         max_message_bytes: 0,
         max_label_bytes: 4,
+        max_text_bytes: usize::MAX,
     });
     let mut entry = input(1, "no message bytes");
     entry.source = "🦀";
@@ -361,7 +387,7 @@ fn paged_filtering_matches_reference_after_count_eviction_and_deque_wraparound()
         for scan_limit in 1..=4 {
             let filter = Filter {
                 source: Some("worker"),
-                topic: Some("delivery"),
+                topic: TopicMatch::Exact("delivery"),
                 min_level: Some(Level::Warn),
             };
             let mut observed = Vec::new();
@@ -395,7 +421,12 @@ fn checkpoints_round_trip_every_truncation_boundary_and_resume_sequences() {
         assert_eq!(restored.snapshot(), checkpoint);
         assert_eq!(restored.limits(), original.limits());
         assert_eq!(sequences(&restored), [2, 1]);
-        assert_eq!(restored.append(input(3, "next")), Ok(3));
+        assert_eq!(
+            restored
+                .append(input(3, "next"))
+                .map(|receipt| receipt.sequence),
+            Ok(3)
+        );
         assert_eq!(sequences(&restored), [3, 2]);
     }
 }
@@ -414,7 +445,12 @@ fn empty_checkpoints_preserve_time_and_exhaustion_without_replaying_rows() {
             current: 19,
         })
     );
-    assert_eq!(restored.append(input(20, "resumed")), Ok(1));
+    assert_eq!(
+        restored
+            .append(input(20, "resumed"))
+            .map(|receipt| receipt.sequence),
+        Ok(1)
+    );
     let exhausted = LogSnapshot {
         limits: original.limits(),
         entries: Vec::new(),

@@ -4,6 +4,8 @@ IC Observability combines the Metrics and Logging packages in one workspace.
 Their library APIs, dependencies and runtime state remain independent. The root
 workspace owns coordinated versions, dependency selection and validation tooling.
 Existing frozen Metrics evidence retains the original repository/source identities.
+The pending [0.18 migration guide](migration-018.md) owns the Logging source break,
+retained-data adoption boundary and new summary/histogram report contracts.
 
 | Package | Owner |
 | --- | --- |
@@ -44,6 +46,12 @@ receipts preserve the supplying packages and repository identities they measured
 | `MeasurementSummary` | An aggregate plus the latest ordered observation; no merge that invents ordering. |
 | `MeasurementHistogram<N>` | Immutable finite bounds, disjoint counts, overflow and an aggregate; equal-bound merging and checked cumulative counts/nearest-rank ranges. |
 | `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics. Optional stable checkpoints retain only its scalar state. |
+
+Aggregates, counters, summaries and fixed-bound histograms implement standard
+Serde transport with native IC Wire metadata. Decoding uses their canonical
+arithmetic admission; const histogram bounds fix array lengths without dynamic
+collections. Consumer codec limits and report schema adoption remain explicit.
+These report contracts are separate from Persistence's durable record layouts.
 
 Summaries and histograms project count, total,
 maximum, mean and scaled mean through `aggregate()`. The summary's latest

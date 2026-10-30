@@ -10,6 +10,14 @@ Logging owns bounded append admission, UTF-8 truncation, explicit age-retention
 batches and scan-bounded cursor pages. Callers supply time and choose limits,
 labels, authorization, scheduling and instance identity. Paging borrows retained
 rows rather than copying the complete history or computing an exact match total.
+The pending [0.18 contract](migration-018.md) adds a combined retained-text budget,
+append receipts and explicit topic presence matching. The budget counts text
+payload, not all heap costs; count and byte pressure evict oldest rows.
+`visit_page` provides the same bounded scan without a result collection.
+
+`Log::checkpoint()` borrows all rows, limits and append watermarks without copying
+text or consuming the log. Hosts can encode that immutable view directly within
+their own record/allocation budgets. It introduces no serialization dependency.
 
 `Log::snapshot()` copies a complete checkpoint while retaining the original log.
 `Log::into_snapshot()` consumes the log and moves its owned text into that same
@@ -19,7 +27,7 @@ and included in release 0.17.5. Consumers must select a published
 Logging version containing that API before adopting it in their registry graph.
 
 `Log::restore()` independently admits fixed bounds, contiguous sequence order,
-nondecreasing timestamps, watermarks and consistent truncated messages. Empty
+nondecreasing timestamps, watermarks, total text budget and consistent truncated messages. Empty
 retained history preserves sequence/time watermarks and permanent exhaustion.
 A checkpoint is passive state, not a byte format, authenticity proof or globally
 unique instance identity. Decoders must bound allocation before constructing it.

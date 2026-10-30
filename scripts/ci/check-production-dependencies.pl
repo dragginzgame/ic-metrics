@@ -34,6 +34,10 @@ ref($metadata) eq 'HASH' && ($metadata->{version} // 0) == 1
     or die "invalid Cargo workspace metadata\n";
 my %members = map { $_ => 1 } @{$metadata->{workspace_members}};
 my %owners = ('ic-metrics' => 'measurement', 'ic-logging' => 'logging');
+my %transport_policy = (
+    serde => { target => undef, features => ['derive'] },
+    'ic-wire' => { target => 'cfg(not(target_family = "wasm"))', features => ['typescript'] },
+);
 my %packages;
 my %observed_members;
 for my $package (@{$metadata->{packages}}) {
@@ -42,7 +46,8 @@ for my $package (@{$metadata->{packages}}) {
     exists($owners{$name}) && !$packages{$name}++ && !$observed_members{$package->{id}}++
         or die "unclassified production workspace package: $name\n";
     ref($package->{dependencies}) eq 'ARRAY' or die "missing declared dependencies\n";
-    my $features = $package->{features} // {};
+    my $features = $package->{features};
+    ref($features) eq 'HASH' or die "missing declared features\n";
     !@{$features->{default} // []} or die "$name enables default features\n";
     my %transport;
     for my $dependency (@{$package->{dependencies}}) {
@@ -57,10 +62,24 @@ for my $package (@{$metadata->{packages}}) {
                 && ($dependency->{kind} // 'normal') eq 'normal'
                 or die "transport dependency must be required without defaults\n";
             !$transport{$dep}++ or die "duplicate transport declaration\n";
+            my $policy = $transport_policy{$dep};
+            ($dependency->{target} // '') eq ($policy->{target} // '')
+                or die "$dep has an unapproved target placement\n";
+            ref($dependency->{features}) eq 'ARRAY'
+                && join("\0", sort @{$dependency->{features}}) eq join("\0", @{$policy->{features}})
+                or die "$dep has unapproved transport features\n";
         }
         # Development dependencies must not bypass the governed Storage facade.
         $dependency->{name} ne 'ic-stable-structures'
             or die "$name directly depends on the stable substrate\n";
+    }
+    # Local switches may compose one another, never widen dependency features.
+    for my $edges (values %$features) {
+        ref($edges) eq 'ARRAY' or die "invalid declared features\n";
+        for my $edge (@$edges) {
+            defined($edge) && !ref($edge) && exists($features->{$edge})
+                or die "$name forwards dependency features\n";
+        }
     }
     if ($owners{$name} eq 'measurement') {
         $transport{'serde'} && $transport{'ic-wire'}

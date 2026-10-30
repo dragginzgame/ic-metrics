@@ -11,6 +11,7 @@ extern crate alloc;
 mod log;
 
 pub use log::{
-    AppendError, Entry, EntryInput, Filter, Label, Level, Limits, Log, LogSnapshot, Page,
-    PageRequest, RestoreError, RetentionBatch,
+    AppendError, AppendReceipt, Entry, EntryInput, Filter, Label, Level, Limits, Log,
+    LogCheckpoint, LogSnapshot, Page, PageRequest, PageScan, RestoreError, RetentionBatch,
+    TopicMatch,
 };

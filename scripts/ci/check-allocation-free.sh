@@ -3,7 +3,7 @@ set -euo pipefail
 # Validation only. Cargo uses this repository's target directory and locked graph.
 [[ $# -le 1 ]] || { echo 'usage: check-allocation-free.sh [prepared-toolchain]' >&2; exit 2; }
 bash scripts/ci/check-make-execution.sh
-export RUSTUP_AUTO_INSTALL=0 CARGO_NET_OFFLINE=true
+export RUSTUP_AUTO_INSTALL=0 CARGO_NET_OFFLINE=true CARGO_TARGET_DIR="$PWD/target"
 toolchain=()
 if [[ $# == 1 ]]; then
     [[ -n "$1" && "$1" != -* && "$1" != *[[:space:]]* ]] || exit 2
@@ -14,3 +14,9 @@ fi
 cargo ${toolchain[@]+"${toolchain[@]}"} rustc -p ic-metrics --example arithmetic-no-allocator \
     --no-default-features --locked --offline --target wasm32-unknown-unknown \
     -- -C panic=abort -C link-dead-code=yes -C link-arg=--no-entry -C link-arg=--export-all
+# Capture only a successfully linked artifact, before any later MSRV gate fails.
+if [[ -n "${ALLOCATION_FREE_EVIDENCE_ROOT:-}" ]]; then
+    mkdir -p "$ALLOCATION_FREE_EVIDENCE_ROOT"
+    (set -C; cat target/wasm32-unknown-unknown/debug/examples/arithmetic-no-allocator.wasm \
+        > "$ALLOCATION_FREE_EVIDENCE_ROOT/arithmetic-no-allocator.wasm")
+fi

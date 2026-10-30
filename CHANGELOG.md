@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.18.0]
+
+### ⚠️ Breaking
+
+- Logging requires an explicit combined retained-text budget and returns append
+  receipts with identity, truncation and eviction count. Topic filters now choose
+  any, absent or exact topics. Update callers and coordinate durable checkpoint
+  adoption with IC Persistence; existing stored layouts are not reinterpreted.
+  See the [0.18 migration guide](docs/migration-018.md).
+
+### ➕ Added
+
+- Borrow complete Logging checkpoints without copying history, and visit bounded
+  cursor pages without allocating a result collection, including early-stop cursors.
+- Serialize summaries and fixed-bound histograms with standard Serde and native
+  Wire metadata. Decoding uses fixed arrays and canonical arithmetic admission,
+  retaining bounds, latest values and all overflow-quality flags.
+
+### 🧪 Testing
+
+- Enforce native-only Wire metadata and explicit transport features in dependency
+  admission, including attempts to enable dependency features through local switches.
+
+### 🔧 Changed
+
+- Retain MSRV source/compiler identities, setup and validation logs, outcomes and
+  checksummed artifacts on success or failure. Capture allocator-free Wasm as
+  soon as linking succeeds so a later check failure preserves that evidence.
+
 ## [0.17.7] - 2026-10-30
 
 ### 🧪 Testing

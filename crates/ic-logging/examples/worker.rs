@@ -1,13 +1,14 @@
 //! Native application-owned logging without Canic, timers or IC calls.
 
 use ic_logging::{EntryInput, Filter, Level, Limits, Log, PageRequest};
-use std::num::NonZeroUsize;
+use std::{num::NonZeroUsize, ops::ControlFlow};
 
 fn main() {
     let mut log = Log::new(Limits {
         max_entries: NonZeroUsize::new(8).expect("positive capacity"),
         max_message_bytes: 32,
         max_label_bytes: 16,
+        max_text_bytes: 512,
     });
     for (created_at_secs, level, message) in [
         (10, Level::Info, "delivery accepted"),
@@ -27,17 +28,20 @@ fn main() {
         })
         .expect("valid bounded entry");
     }
-    let page = log.page(
+    let scan = log.visit_page(
         Filter::default(),
         PageRequest {
             before: None,
             max_results: NonZeroUsize::new(8).expect("positive results"),
             max_scanned: NonZeroUsize::new(8).expect("positive scan"),
         },
+        |entry| {
+            println!("{} {:?}: {}", entry.sequence, entry.level, entry.message);
+            ControlFlow::Continue(())
+        },
     );
-    for entry in page.entries {
-        println!("{} {:?}: {}", entry.sequence, entry.level, entry.message);
-    }
+    assert_eq!(scan.matched, 3);
+    assert_eq!(log.checkpoint().next_sequence(), Some(3));
     let batch = log.prune_expired(16, 5, 1);
     assert_eq!(batch.removed, 1);
     assert_eq!(log.next_expiry_secs(5), Some(17));

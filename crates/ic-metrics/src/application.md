@@ -337,7 +337,7 @@ live alongside the table in a consumer-defined struct inside the same window.
 
 ### Numeric transport
 
-Embed `MeasurementAggregate` and `MeasurementCounter` directly in Serde/IC Wire
+Embed aggregates, counters, summaries and fixed-bound histograms directly in Serde/IC Wire
 reports. Transport is standard: no Metrics feature selection is needed. Serde
 is available on native and Wasm targets, with Wire TypeScript metadata on native
 hosts. Measurement arithmetic remains allocation-free; heap recording is opt-in.
@@ -349,6 +349,8 @@ hosts. Measurement arithmetic remains allocation-free; heap recording is opt-in.
 struct OwnerReport {
     instructions: ic_metrics::MeasurementAggregate,
     movements: ic_metrics::MeasurementCounter,
+    ordered: ic_metrics::MeasurementSummary,
+    distribution: ic_metrics::MeasurementHistogram<3>,
 }
 # }
 ```
@@ -359,14 +361,22 @@ values, then regenerate browser contracts. The aggregate record carries `samples
 record carries `total` and `total_overflowed`. Totals stay `u128` (browser `bigint`).
 An empty maximum is `None`, while a measured zero is `Some(0)`. Means are derived
 with `mean()` after decoding; count overflow remains an unavailable exact mean.
-Both decoders call `from_parts` and reject inconsistent numeric state.
+All decoders call their owning `from_parts` and reject inconsistent numeric state.
+Summaries carry an aggregate and optional latest value. Histograms carry fixed
+upper bounds, disjoint counts, overflow count, all overflow flags and an aggregate.
+The histogram's const bound count fixes all three array lengths; decoding uses
+stack arrays and does not allocate a dynamic collection, including for bounds
+beyond Serde's built-in array-trait lengths. Bounds, count/total consistency and
+maximum placement are independently admitted after field decoding. Browser
+metadata describes that same fixed layout; browser schema checks alone do not
+replace Rust arithmetic admission.
 
 Use IC Wire's bounded native codecs with consumer-selected byte, allocation,
 node and depth limits. These fixed-size numeric records allocate no dynamic
 collections during Serde decoding. Generated browser metadata describes the
 serialized layout; Rust numeric admission remains authoritative on incoming
 reports. No historical consumer codec fallback is provided. This integration does
-not serialize windows, keyed tables, histograms, summaries or checked wide
+not serialize windows, keyed tables or checked wide
 accumulators. Those shapes require separately scoped transport contracts.
 
 Applications still own labels, units, grouping, replicated admission, limits,

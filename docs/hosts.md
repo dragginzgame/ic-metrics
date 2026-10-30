@@ -155,6 +155,9 @@ exports and dead-code retention keep the exercised arithmetic in the executable.
 The check uses locked offline dependencies and this repository's `target/`;
 CI runs it on the pinned compiler, and the MSRV adapter repeats it on its selected
 minimum compiler. This is a link-contract check, not an IC cost measurement.
+The MSRV workflow selects `ALLOCATION_FREE_EVIDENCE_ROOT` to capture the linked
+Wasm immediately on success, before later checks. Standalone checks select no
+additional artifact copy; all builds use this repository's `target/`.
 
 The release MSRV gate checks all native targets, including tests and development
 dependencies, at Rust 1.91; its Wasm check covers libraries. Public doctests
@@ -183,14 +186,19 @@ selected committed source. No paired formatter override is needed here.
 `make production-dependencies-check` admits both libraries through successful
 locked, offline Cargo metadata. Metrics admits only required Serde and IC Wire
 transport declarations without dependency defaults; its default features remain
-empty. Logging admits no production dependencies, including Metrics itself.
+empty. Serde is unconditional with only `derive`; Wire is selected only under
+`cfg(not(target_family = "wasm"))` with only `typescript`. Package features may
+compose local switches but cannot forward dependency features. These declaration
+checks do not depend on which features or targets are active on the checking host.
+Logging admits no production dependencies, including Metrics itself.
 Other normal/build dependencies are rejected, including optional and inactive
 target-specific entries.
 This constrains the production graph without
 compiler-host discovery or repeated graph traversal. Development dependencies
 remain separate; the existing direct stable-substrate prohibition applies there
 too. Fixtures cover declaration axes, renamed dependencies, allowed development
-use, failed Cargo children and malformed/incomplete metadata. CI and release
+use, transport placement/features, forwarded dependency features, failed Cargo
+children and malformed/incomplete metadata. CI and release
 verification use the same check.
 
 IC Persistence owns stable-adapter dependency policy and qualification. Follow
@@ -360,6 +368,29 @@ scratch and failed/skipped tool setup remain covered. Both uploads disable ZIP
 compression for their gzip payloads; archive/checksum pairing and 30-day retention
 remain unchanged.
 
+### MSRV evidence
+
+The minimum-compiler job uses the same source-input recorder with its own
+`target/evidence/msrv-ci` root. It records inputs before setup, retains parser
+and toolchain setup logs, and invokes `make msrv` through Shared Tooling's
+validation runner with manifest/lock checkpoints. The retained validation log
+contains the selected Rust/Cargo versions and expanded checker commands.
+
+Collection and upload run after successful checkout even when input capture,
+setup or checks fail or are cancelled. Outcomes identify failed/skipped stages;
+no compiler or artifact receipt is inferred for a stage that did not run.
+The allocator-free checker copies only a successfully linked Wasm into this
+evidence root. A later check failure preserves it; a failed link never selects
+an earlier file from Cargo's target directory. Shared Tooling archives the
+dedicated root and computes its SHA-256 digest without replacing earlier output.
+The workflow uploads `msrv-ci.tar.gz` and `.sha256` for 30 days.
+
+The `test-msrv-evidence.sh` fixture, selected by `make ci-evidence-check`, executes
+the actual workflow bodies, MSRV checker, artifact copy and archive helpers with
+substituted setup/compiler effects. It covers input/setup failures, failures
+before/during/after linking, cancelled outcome projection and successful capture.
+This fixture establishes local wiring and custody, not a hosted MSRV pass.
+
 [Released 0.8.1 acceptance](evidence/release-081.md) verifies all three native
 receipts and the complete Rust-floor run on its exact published source.
 [The current handoff](status/current.md) binds pending work to separate local
@@ -369,7 +400,7 @@ They are not current platform readers, validation commands or acceptance of a
 later dependency graph. Actual IC execution and callback attribution belong to
 the owning consumers under [the extraction contract](extraction.md#downstream-contract-checks).
 
-`make package-check` builds and verifies the arithmetic archive offline.
+`make package-check` builds and verifies both workspace package archives offline.
 IC Persistence owns stable-adapter compilation, tests and archive qualification.
 It allows pending source changes for review, never uploads, and runs after
 Clippy in CI and again after release metadata preparation before staging.

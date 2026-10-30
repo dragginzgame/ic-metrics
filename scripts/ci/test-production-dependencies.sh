@@ -18,6 +18,7 @@ package() {
     mkdir -p "$fixture/vendor/$name/src"
     printf '[package]\nname = "%s"\nversion = "0.1.0"\nedition = "2024"\n[workspace]\n' "$name" > "$fixture/vendor/$name/Cargo.toml"
     : > "$fixture/vendor/$name/src/lib.rs"
+    printf '\n[features]\nderive = []\ntypescript = []\nstd = []\nalloc = []\n' >> "$fixture/vendor/$name/Cargo.toml"
 }
 reset_case() {
     local name
@@ -31,9 +32,10 @@ reset_case() {
     cp "$root/rust-toolchain.toml" "$fixture/workspace/"
     for name in ic-testkit ic-stable-structures ordinary serde ic-wire; do package "$name"; done
     cat >> "$fixture/workspace/crates/ic-metrics/Cargo.toml" <<'TRANSPORT'
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ic-wire = { path = "../../../vendor/ic-wire", default-features = false, features = ["typescript"] }
 [dependencies]
-serde = { path = "../../../vendor/serde", default-features = false }
-ic-wire = { path = "../../../vendor/ic-wire", default-features = false }
+serde = { path = "../../../vendor/serde", default-features = false, features = ["derive"] }
 TRANSPORT
 }
 check_case() {
@@ -67,6 +69,45 @@ sed 's/default-features = false/default-features = true/g' "$fixture/standard-ma
 check_case transport-default-features 'transport dependency must be required without defaults'
 sed '/^ic-wire = /d' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case missing-transport 'missing standard transport dependency'
+
+# Admit the actual target/feature contract, not merely dependency package names.
+for placement in unconditional wasm narrower serde-target; do
+    reset_case
+    case "$placement" in
+        unconditional)
+            sed '/^\[target\./d; /^ic-wire = /d' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate"
+            printf 'ic-wire = { path = "../../../vendor/ic-wire", default-features = false, features = ["typescript"] }\n' >> "$fixture/candidate" ;;
+        wasm)
+            sed 's/not(target_family = "wasm")/target_family = "wasm"/' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate" ;;
+        narrower)
+            sed 's/not(target_family = "wasm")/target_os = "linux"/' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate" ;;
+        serde-target)
+            sed "s/^\[dependencies\]/[target.'cfg(target_os = \"none\")'.dependencies]/" "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate" ;;
+    esac
+    mv "$fixture/candidate" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+    dep=ic-wire
+    [[ "$placement" != serde-target ]] || dep=serde
+    check_case "$placement" "$dep has an unapproved target placement"
+done
+for selection in serde:derive ic-wire:typescript; do
+    dep="${selection%:*}" feature="${selection#*:}"
+    for change in missing std alloc; do
+        reset_case
+        replacement='[]'
+        [[ "$change" == missing ]] || replacement="[\"$feature\", \"$change\"]"
+        sed "s/features = \[\"$feature\"\]/features = $replacement/" "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate"
+        mv "$fixture/candidate" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+        check_case "$dep-$change" "$dep has unapproved transport features"
+    done
+done
+for edge in serde/std ic-wire/alloc; do
+    reset_case
+    printf '\n[features]\nrecording = ["%s"]\n' "$edge" >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+    check_case "forward-${edge%/*}" 'ic-metrics forwards dependency features'
+done
+reset_case
+printf '\n[features]\nrecording = []\ncombined = ["recording"]\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case local-feature-composition pass
 
 add_declaration() {
     local owner="$1" selection="$2" table=dependencies extra=''

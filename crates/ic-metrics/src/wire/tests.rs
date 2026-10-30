@@ -2,6 +2,8 @@ extern crate std;
 use super::*;
 use ic_wire::{Limits, native};
 
+mod shapes;
+
 const fn limits() -> Limits {
     Limits {
         bytes: 1024,

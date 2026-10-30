@@ -198,12 +198,12 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-observa
 
 ## Releases and adoption
 
-The arithmetic package requires Rust 1.91 on native and Wasm. Consumers select
-its 0.17 contract and qualify their integration:
+The arithmetic package requires Rust 1.91 on native and Wasm. After the pending
+coordinated 0.18 contract is published, consumers select it and qualify their integration:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.17"
+ic-metrics = "0.18"
 ```
 
 For optional durable metrics, follow
@@ -264,5 +264,6 @@ for composing the table and fixed measurement shapes in a reset window.
 ## Numeric transport
 
 Embed `MeasurementAggregate` and `MeasurementCounter` in Serde
-reports with native IC Wire browser metadata. Decoding uses canonical numeric
+reports, alongside `MeasurementSummary` and `MeasurementHistogram<N>`, with
+native IC Wire browser metadata. Decoding uses canonical numeric
 admission. See the [transport and migration guide](https://github.com/dragginzgame/ic-observability/blob/main/crates/ic-metrics/src/application.md#numeric-transport).

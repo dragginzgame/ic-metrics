@@ -21,7 +21,8 @@ consumer-contract or persistence-boundary changes.
 
 - Metrics owns allocation-free measurement arithmetic and optional bounded heap recording. Keep its library
   `no_std`, with allocation-free arithmetic; consumers own platform counter reads.
-- Serde transport for aggregates/counters and native IC Wire metadata are standard.
+- Serde transport for aggregates, counters, summaries and fixed-bound histograms,
+  plus native IC Wire metadata, are standard.
   Decode only through canonical arithmetic admission. Heap recording stays optional.
 - IC Persistence owns the separately opted-in `ic-metrics-stable` package, its
   governed Memory/Storage integration, tests and release. This repository owns

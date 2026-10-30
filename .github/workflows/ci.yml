@@ -143,12 +143,51 @@ jobs:
     steps:
       # actions/checkout v6
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        id: checkout
+      - name: Record MSRV qualification inputs
+        id: inputs
+        run: bash scripts/ci/record-native-inputs.sh target/evidence/msrv-ci
       - name: Prepare host parsers
-        run: bash scripts/dev/install-host-tools.sh --consumer "$PWD"
+        id: host_tools
+        run: |
+          mkdir -p target/evidence/msrv-ci
+          bash scripts/dev/install-host-tools.sh --consumer "$PWD" \
+            2>&1 | tee target/evidence/msrv-ci/host-tools.log
       - name: Prepare minimum Rust
         id: toolchain
         run: |
+          mkdir -p target/evidence/msrv-ci
           PATH="$PWD/.tools/host/bin:$PATH" bash scripts/dev/prepare-rust-toolchain.sh \
-            --workspace-manifest Cargo.toml --target wasm32-unknown-unknown
+            --workspace-manifest Cargo.toml --target wasm32-unknown-unknown \
+            2>&1 | tee target/evidence/msrv-ci/toolchain.log
       - name: Check workspace native and Wasm MSRV
-        run: make msrv
+        id: check
+        env:
+          VALIDATION_LOG_DIR: ${{ github.workspace }}/target/evidence/msrv-ci
+          VALIDATION_FAILURE_LOG_DIR: ${{ github.workspace }}/target/evidence/msrv-ci/failures
+          ALLOCATION_FREE_EVIDENCE_ROOT: ${{ github.workspace }}/target/evidence/msrv-ci
+          TMPDIR: ${{ github.workspace }}/target/evidence/msrv-ci/scratch
+        run: |
+          mkdir -p "$TMPDIR"
+          bash scripts/ci/run-validation-targets.sh --fail-fast --input Cargo.toml --input Cargo.lock msrv
+      - name: Retain MSRV artifacts and outcome
+        id: artifacts
+        if: always() && steps.checkout.outcome == 'success'
+        env:
+          INPUT_OUTCOME: ${{ steps.inputs.outcome }}
+          HOST_TOOLS_OUTCOME: ${{ steps.host_tools.outcome }}
+          TOOLCHAIN_OUTCOME: ${{ steps.toolchain.outcome }}
+          MSRV_OUTCOME: ${{ steps.check.outcome }}
+        run: bash scripts/ci/collect-msrv-evidence.sh
+      # actions/upload-artifact v7
+      - name: Upload MSRV evidence
+        if: always() && steps.checkout.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: msrv-${{ github.run_attempt }}
+          compression-level: 0
+          path: |
+            target/evidence/msrv-ci.tar.gz
+            target/evidence/msrv-ci.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30

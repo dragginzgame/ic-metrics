@@ -2,7 +2,8 @@
 
 use super::{input, log, request};
 use crate::{
-    AppendError, Entry, EntryInput, Filter, Label, Level, Log, LogSnapshot, RetentionBatch,
+    AppendError, AppendReceipt, Entry, EntryInput, Filter, Label, Level, Log, LogSnapshot,
+    RetentionBatch, TopicMatch,
 };
 use Action::{
     Append, CopyRestore, MoveRestore, PruneAll, PruneNone, PruneOne, RegressedTime, SameTime,
@@ -73,24 +74,37 @@ impl History {
             }
             Action::RegressedTime => {
                 entry.created_at_secs = time - 1;
-                Err(AppendError::TimestampRegressed {
-                    previous: time,
-                    current: time - 1,
-                })
+                self.time.map_or_else(
+                    || self.next.ok_or(AppendError::SequenceExhausted),
+                    |previous| {
+                        Err(AppendError::TimestampRegressed {
+                            previous,
+                            current: time - 1,
+                        })
+                    },
+                )
             }
             _ => self.next.ok_or(AppendError::SequenceExhausted),
         };
-        assert_eq!(actual.append(entry), expected);
-        if expected.is_ok() {
-            self.append(
+        let expected = match expected {
+            Ok(_) => self.append(
                 entry,
                 actual.limits().max_entries.get(),
                 actual.limits().max_message_bytes,
-            );
-        }
+                actual.limits().max_text_bytes,
+            ),
+            Err(error) => Err(error),
+        };
+        assert_eq!(actual.append(entry), expected);
     }
 
-    fn append(&mut self, input: EntryInput<'_>, capacity: usize, budget: usize) {
+    fn append(
+        &mut self,
+        input: EntryInput<'_>,
+        capacity: usize,
+        budget: usize,
+        text_budget: usize,
+    ) -> Result<AppendReceipt, AppendError> {
         let sequence = self.next.unwrap();
         let truncated = input.message.len() > budget;
         let marker = "...[truncated]";
@@ -107,6 +121,14 @@ impl History {
             message.push(character);
         }
         message.push_str(suffix);
+        let required_bytes = input.source.len() + input.topic.map_or(0, str::len) + message.len();
+        if required_bytes > text_budget {
+            return Err(AppendError::TextBudgetExceeded {
+                required_bytes: required_bytes as u128,
+                max_bytes: text_budget,
+            });
+        }
+        let previous = self.retained().len();
         self.accepted.push(Entry {
             sequence,
             created_at_secs: input.created_at_secs,
@@ -116,15 +138,48 @@ impl History {
             message,
             truncated,
         });
-        self.removed = self
-            .removed
-            .max(self.accepted.len().saturating_sub(capacity));
+        // Derive the longest fitting suffix of the event journal, rather than
+        // updating the engine's cached total while popping a queue.
+        let keep = self
+            .retained()
+            .iter()
+            .rev()
+            .take(capacity)
+            .scan(0_usize, |bytes, entry| {
+                *bytes += entry.source.len()
+                    + entry.topic.as_ref().map_or(0, String::len)
+                    + entry.message.len();
+                (*bytes <= text_budget).then_some(())
+            })
+            .count();
+        self.removed = self.accepted.len() - keep;
         self.next = sequence.checked_add(1);
         self.time = Some(input.created_at_secs);
+        Ok(AppendReceipt {
+            sequence,
+            truncated,
+            evicted: previous + 1 - keep,
+        })
     }
 
     fn retained(&self) -> &[Entry] {
         &self.accepted[self.removed..]
+    }
+
+    fn check_state(&self, log: &Log) {
+        let checkpoint = log.snapshot();
+        assert_eq!(checkpoint.entries, self.retained());
+        assert_eq!(checkpoint.next_sequence, self.next);
+        assert_eq!(checkpoint.last_created_at_secs, self.time);
+        assert_eq!(
+            log.retained_text_bytes(),
+            self.retained()
+                .iter()
+                .map(|entry| entry.source.len()
+                    + entry.topic.as_ref().map_or(0, String::len)
+                    + entry.message.len())
+                .sum::<usize>()
+        );
     }
 
     fn prune(&mut self, now: u64, age: u64, limit: usize) -> RetentionBatch {
@@ -164,9 +219,11 @@ impl History {
             .enumerate()
             .filter(|(_, entry)| {
                 filter.source.is_none_or(|source| entry.source == source)
-                    && filter
-                        .topic
-                        .is_none_or(|topic| entry.topic.as_deref() == Some(topic))
+                    && match filter.topic {
+                        TopicMatch::Any => true,
+                        TopicMatch::Absent => entry.topic.is_none(),
+                        TopicMatch::Exact(topic) => entry.topic.as_deref() == Some(topic),
+                    }
                     && filter.min_level.is_none_or(|level| entry.level >= level)
             })
             .take(results)
@@ -193,8 +250,19 @@ fn mixed_operations_match_independent_event_history() {
     // Include exhausted identities, UTF-8/suffix boundaries and one-row capacity.
     for start in [0, u64::MAX - 2] {
         for capacity in [1, 2, 5] {
-            for budget in [0, 1, 13, 14, 15, 32] {
-                let mut actual = log(capacity, budget);
+            for (budget, text_budget) in [
+                (0, 0),
+                (0, 14),
+                (1, 29),
+                (13, 54),
+                (14, 80),
+                (15, 31),
+                (32, 48),
+                (32, usize::MAX),
+            ] {
+                let mut limits = log(capacity, budget).limits();
+                limits.max_text_bytes = text_budget;
+                let mut actual = Log::new(limits);
                 let mut model = History {
                     accepted: Vec::new(),
                     removed: 0,
@@ -252,15 +320,12 @@ fn mixed_operations_match_independent_event_history() {
                         MoveRestore => actual = Log::restore(actual.into_snapshot()).unwrap(),
                         CopyRestore => actual = Log::restore(actual.snapshot()).unwrap(),
                     }
-                    let checkpoint = actual.snapshot();
-                    assert_eq!(checkpoint.entries, model.retained());
-                    assert_eq!(checkpoint.next_sequence, model.next);
-                    assert_eq!(checkpoint.last_created_at_secs, model.time);
+                    model.check_state(&actual);
                     for (index, filter) in [
                         Filter::default(),
                         Filter {
                             source: Some("worker"),
-                            topic: Some("delivery"),
+                            topic: TopicMatch::Exact("delivery"),
                             min_level: Some(Level::Warn),
                         },
                     ]

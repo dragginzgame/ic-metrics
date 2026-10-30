@@ -3,7 +3,7 @@
 //! Callers own authorization, scheduling, time and any durable storage.
 
 use alloc::{collections::VecDeque, string::String, vec::Vec};
-use core::num::NonZeroUsize;
+use core::{num::NonZeroUsize, ops::ControlFlow};
 
 const TRUNCATION_SUFFIX: &str = "...[truncated]";
 
@@ -31,6 +31,9 @@ pub struct Limits {
     pub max_message_bytes: usize,
     /// Maximum UTF-8 bytes in each source or topic label.
     pub max_label_bytes: usize,
+    /// Maximum combined retained message/source/topic UTF-8 bytes.
+    /// Excludes row metadata, allocator overhead and transient checkpoint copies.
+    pub max_text_bytes: usize,
 }
 
 /// Borrowed append input; bounded retained strings are copied only after admission.
@@ -97,6 +100,13 @@ pub enum AppendError {
     },
     /// All sequence identities have been issued for this log instance.
     SequenceExhausted,
+    /// This row's retained text cannot fit even in an otherwise empty log.
+    TextBudgetExceeded {
+        /// Required message/source/topic bytes after message truncation.
+        required_bytes: u128,
+        /// Configured total retained-text ceiling.
+        max_bytes: usize,
+    },
 }
 
 impl core::fmt::Display for AppendError {
@@ -121,19 +131,49 @@ impl core::fmt::Display for AppendError {
                 "log timestamp regressed from {previous} to {current} seconds"
             ),
             Self::SequenceExhausted => formatter.write_str("log sequence identities are exhausted"),
+            Self::TextBudgetExceeded {
+                required_bytes,
+                max_bytes,
+            } => write!(
+                formatter,
+                "log row requires {required_bytes} text bytes (limit {max_bytes})"
+            ),
         }
     }
 }
 
 impl core::error::Error for AppendError {}
 
+/// Receipt for one admitted append; eviction is oldest-first across both ceilings.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct AppendReceipt {
+    /// Newly issued identity.
+    pub sequence: u64,
+    /// Whether the original message exceeded its individual byte ceiling.
+    pub truncated: bool,
+    /// Previously retained rows evicted to admit this row.
+    pub evicted: usize,
+}
+
+/// Match any topic, no topic, or one exact topic (including an empty label).
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum TopicMatch<'a> {
+    /// Do not filter on topic presence or value.
+    #[default]
+    Any,
+    /// Match only rows with no topic.
+    Absent,
+    /// Match a present topic exactly.
+    Exact(&'a str),
+}
+
 /// Optional exact label filters and a minimum severity; all supplied filters apply.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Filter<'a> {
     /// Match this exact source when present.
     pub source: Option<&'a str>,
-    /// Match this exact topic when present.
-    pub topic: Option<&'a str>,
+    /// Topic presence/value selection.
+    pub topic: TopicMatch<'a>,
     /// Include this severity and higher when present.
     pub min_level: Option<Level>,
 }
@@ -141,9 +181,11 @@ pub struct Filter<'a> {
 impl Filter<'_> {
     fn matches(self, entry: &Entry) -> bool {
         let source_matches = self.source.is_none_or(|source| source == entry.source);
-        let topic_matches = self
-            .topic
-            .is_none_or(|topic| Some(topic) == entry.topic.as_deref());
+        let topic_matches = match self.topic {
+            TopicMatch::Any => true,
+            TopicMatch::Absent => entry.topic.is_none(),
+            TopicMatch::Exact(topic) => entry.topic.as_deref() == Some(topic),
+        };
         let level_matches = self.min_level.is_none_or(|level| entry.level >= level);
         source_matches && topic_matches && level_matches
     }
@@ -169,6 +211,52 @@ pub struct Page<'a> {
     pub scanned: usize,
     /// Exclusive cursor for the next older scan, if retained candidates remain.
     pub next_before: Option<u64>,
+}
+
+/// Progress of one bounded visitor scan, including a caller-requested early stop.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PageScan {
+    /// Matching rows delivered to the visitor, including a row returning `Break`.
+    pub matched: usize,
+    /// Candidate rows examined after positioning.
+    pub scanned: usize,
+    /// Continue strictly before this identity when retained candidates remain.
+    pub next_before: Option<u64>,
+}
+
+/// Borrowed complete checkpoint view; obtaining/iterating it allocates nothing.
+/// Hosts own encoding budgets. The immutable borrow keeps rows and watermarks fixed.
+#[derive(Clone, Copy, Debug)]
+pub struct LogCheckpoint<'a> {
+    limits: Limits,
+    entries: &'a VecDeque<Entry>,
+    next_sequence: Option<u64>,
+    last_created_at_secs: Option<u64>,
+}
+
+impl<'a> LogCheckpoint<'a> {
+    /// Fixed retention limits.
+    #[must_use]
+    pub const fn limits(&self) -> Limits {
+        self.limits
+    }
+
+    /// All retained rows, oldest first, without cloning text.
+    pub fn entries(&self) -> impl ExactSizeIterator<Item = &'a Entry> + DoubleEndedIterator + 'a {
+        self.entries.iter()
+    }
+
+    /// Next identity, including permanent exhaustion after complete pruning.
+    #[must_use]
+    pub const fn next_sequence(&self) -> Option<u64> {
+        self.next_sequence
+    }
+
+    /// Last admitted time, including after complete pruning.
+    #[must_use]
+    pub const fn last_created_at_secs(&self) -> Option<u64> {
+        self.last_created_at_secs
+    }
 }
 
 /// Result of a bounded age-retention call.
@@ -207,6 +295,8 @@ pub enum RestoreError {
     InvalidTimestamp,
     /// A label/message exceeds its bound or truncated text is inconsistent.
     InvalidEntry,
+    /// Combined retained text exceeds the checkpoint's configured ceiling.
+    TextBudgetExceeded,
 }
 
 impl core::fmt::Display for RestoreError {
@@ -216,6 +306,7 @@ impl core::fmt::Display for RestoreError {
             Self::InvalidSequence => "invalid log checkpoint sequence",
             Self::InvalidTimestamp => "invalid log checkpoint timestamp",
             Self::InvalidEntry => "invalid bounded log checkpoint entry",
+            Self::TextBudgetExceeded => "log checkpoint exceeds its text budget",
         })
     }
 }
@@ -227,6 +318,7 @@ impl core::error::Error for RestoreError {}
 pub struct Log {
     limits: Limits,
     entries: VecDeque<Entry>,
+    retained_text_bytes: usize,
     next_sequence: Option<u64>,
     last_created_at_secs: Option<u64>,
 }
@@ -238,6 +330,7 @@ impl Log {
         Self {
             limits,
             entries: VecDeque::new(),
+            retained_text_bytes: 0,
             next_sequence: Some(0),
             last_created_at_secs: None,
         }
@@ -247,6 +340,23 @@ impl Log {
     #[must_use]
     pub const fn limits(&self) -> Limits {
         self.limits
+    }
+
+    /// Combined retained text bytes; excludes metadata, spare capacity and allocator overhead.
+    #[must_use]
+    pub const fn retained_text_bytes(&self) -> usize {
+        self.retained_text_bytes
+    }
+
+    /// Borrow rows and append watermarks together, without copying or consuming the log.
+    #[must_use]
+    pub const fn checkpoint(&self) -> LogCheckpoint<'_> {
+        LogCheckpoint {
+            limits: self.limits,
+            entries: &self.entries,
+            next_sequence: self.next_sequence,
+            last_created_at_secs: self.last_created_at_secs,
+        }
     }
 
     /// Copy all retained rows and both append watermarks for explicit checkpointing.
@@ -284,7 +394,7 @@ impl Log {
     /// Rejects bounds, row ordering, watermarks and truncation states that cannot
     /// result from this engine's append/retention operations.
     pub fn restore(snapshot: LogSnapshot) -> Result<Self, RestoreError> {
-        validate_snapshot(&snapshot)?;
+        let retained_text_bytes = validate_snapshot(&snapshot)?;
         let LogSnapshot {
             limits,
             entries,
@@ -294,6 +404,7 @@ impl Log {
         Ok(Self {
             limits,
             entries: entries.into(),
+            retained_text_bytes,
             next_sequence,
             last_created_at_secs,
         })
@@ -311,12 +422,14 @@ impl Log {
         self.entries.is_empty()
     }
 
-    /// Admit one row and evict the oldest if the count ceiling is reached.
+    /// Admit one row, evicting the oldest rows until both count and text ceilings fit.
     ///
     /// # Errors
     /// Returns a typed refusal for oversized labels, regressed time or exhausted
-    /// sequence identities. Validation completes before any eviction or mutation.
-    pub fn append(&mut self, input: EntryInput<'_>) -> Result<u64, AppendError> {
+    /// sequence identities, or a row that cannot fit the text budget by itself.
+    /// Validation completes before any eviction or mutation. Error priority is
+    /// source, topic, regressed time, sequence exhaustion, then total text budget.
+    pub fn append(&mut self, input: EntryInput<'_>) -> Result<AppendReceipt, AppendError> {
         self.validate_label(Label::Source, input.source)?;
         if let Some(topic) = input.topic {
             self.validate_label(Label::Topic, topic)?;
@@ -330,6 +443,19 @@ impl Log {
             });
         }
         let sequence = self.next_sequence.ok_or(AppendError::SequenceExhausted)?;
+        let (prefix, suffix) = message_parts(input.message, self.limits.max_message_bytes);
+        let required_bytes = input.source.len() as u128
+            + input.topic.map_or(0, str::len) as u128
+            + prefix.len() as u128
+            + suffix.len() as u128;
+        let text_bytes = usize::try_from(required_bytes)
+            .ok()
+            .filter(|bytes| *bytes <= self.limits.max_text_bytes)
+            .ok_or(AppendError::TextBudgetExceeded {
+                required_bytes,
+                max_bytes: self.limits.max_text_bytes,
+            })?;
+        let truncated = input.message.len() > self.limits.max_message_bytes;
         let entry = Entry {
             sequence,
             created_at_secs: input.created_at_secs,
@@ -337,15 +463,24 @@ impl Log {
             source: String::from(input.source),
             topic: input.topic.map(String::from),
             message: bounded_message(input.message, self.limits.max_message_bytes),
-            truncated: input.message.len() > self.limits.max_message_bytes,
+            truncated,
         };
-        if self.entries.len() == self.limits.max_entries.get() {
-            self.entries.pop_front();
+        let mut evicted = 0;
+        while (self.entries.len() >= self.limits.max_entries.get()
+            || self.retained_text_bytes > self.limits.max_text_bytes - text_bytes)
+            && self.remove_oldest()
+        {
+            evicted += 1;
         }
         self.entries.push_back(entry);
+        self.retained_text_bytes += text_bytes;
         self.next_sequence = sequence.checked_add(1);
         self.last_created_at_secs = Some(input.created_at_secs);
-        Ok(sequence)
+        Ok(AppendReceipt {
+            sequence,
+            truncated,
+            evicted,
+        })
     }
 
     /// Remove at most `max_remove` entries strictly older than the age cutoff.
@@ -359,7 +494,7 @@ impl Log {
         let cutoff = now_secs.saturating_sub(max_age_secs);
         let mut removed = 0;
         while removed < max_remove && self.expired_before(cutoff) {
-            self.entries.pop_front();
+            self.remove_oldest();
             removed += 1;
         }
         RetentionBatch {
@@ -382,28 +517,53 @@ impl Log {
     /// Follow `next_before` with the same filters, including after an empty page.
     #[must_use]
     pub fn page(&self, filter: Filter<'_>, request: PageRequest) -> Page<'_> {
+        let mut entries = Vec::new();
+        let scan = self.visit_page(filter, request, |entry| {
+            entries.push(entry);
+            ControlFlow::Continue(())
+        });
+        Page {
+            entries,
+            scanned: scan.scanned,
+            next_before: scan.next_before,
+        }
+    }
+
+    /// Visit matching rows without allocating a page collection or cloning text.
+    /// `Break` stops after consuming that matched row; the returned cursor resumes
+    /// at the next older candidate. Empty filtered scans can still have a cursor.
+    /// Callback work/allocation belongs to the caller; filter/limits match `page`.
+    pub fn visit_page<'a>(
+        &'a self,
+        filter: Filter<'_>,
+        request: PageRequest,
+        mut visit: impl FnMut(&'a Entry) -> ControlFlow<()>,
+    ) -> PageScan {
         let mut cursor = request.before.map_or(self.entries.len(), |sequence| {
             self.entries
                 .binary_search_by_key(&sequence, |entry| entry.sequence)
                 .unwrap_or_else(|index| index)
         });
-        let mut entries = Vec::new();
+        let mut matched = 0;
         let mut scanned = 0;
         let mut last_scanned = None;
         while cursor > 0
             && scanned < request.max_scanned.get()
-            && entries.len() < request.max_results.get()
+            && matched < request.max_results.get()
         {
             cursor -= 1;
             let entry = &self.entries[cursor];
             scanned += 1;
             last_scanned = Some(entry.sequence);
             if filter.matches(entry) {
-                entries.push(entry);
+                matched += 1;
+                if visit(entry).is_break() {
+                    break;
+                }
             }
         }
-        Page {
-            entries,
+        PageScan {
+            matched,
             scanned,
             next_before: if cursor > 0 { last_scanned } else { None },
         }
@@ -425,9 +585,20 @@ impl Log {
             .front()
             .is_some_and(|entry| entry.created_at_secs < cutoff)
     }
+
+    fn remove_oldest(&mut self) -> bool {
+        let Some(entry) = self.entries.pop_front() else {
+            return false;
+        };
+        // Each component was admitted into the cached sum before insertion.
+        self.retained_text_bytes -= entry.source.len();
+        self.retained_text_bytes -= entry.topic.as_ref().map_or(0, String::len);
+        self.retained_text_bytes -= entry.message.len();
+        true
+    }
 }
 
-fn validate_snapshot(snapshot: &LogSnapshot) -> Result<(), RestoreError> {
+fn validate_snapshot(snapshot: &LogSnapshot) -> Result<usize, RestoreError> {
     let LogSnapshot {
         limits,
         entries,
@@ -447,6 +618,7 @@ fn validate_snapshot(snapshot: &LogSnapshot) -> Result<(), RestoreError> {
         return Err(RestoreError::InvalidTimestamp);
     }
     let mut previous: Option<&Entry> = None;
+    let mut retained_text_bytes = 0_usize;
     for entry in entries {
         if entry.source.len() > limits.max_label_bytes
             || entry
@@ -456,6 +628,16 @@ fn validate_snapshot(snapshot: &LogSnapshot) -> Result<(), RestoreError> {
             || !valid_retained_message(entry, limits.max_message_bytes)
         {
             return Err(RestoreError::InvalidEntry);
+        }
+        for bytes in [
+            entry.source.len(),
+            entry.topic.as_ref().map_or(0, String::len),
+            entry.message.len(),
+        ] {
+            retained_text_bytes = retained_text_bytes
+                .checked_add(bytes)
+                .filter(|total| *total <= limits.max_text_bytes)
+                .ok_or(RestoreError::TextBudgetExceeded)?;
         }
         if let Some(previous) = previous {
             if previous.sequence.checked_add(1) != Some(entry.sequence) {
@@ -475,7 +657,7 @@ fn validate_snapshot(snapshot: &LogSnapshot) -> Result<(), RestoreError> {
             return Err(RestoreError::InvalidTimestamp);
         }
     }
-    Ok(())
+    Ok(retained_text_bytes)
 }
 
 const fn truncation_suffix(max_bytes: usize) -> &'static str {
@@ -502,19 +684,23 @@ fn valid_retained_message(entry: &Entry, max_bytes: usize) -> bool {
 }
 
 fn bounded_message(message: &str, max_bytes: usize) -> String {
+    let (prefix, suffix) = message_parts(message, max_bytes);
+    let mut retained = String::with_capacity(prefix.len() + suffix.len());
+    retained.push_str(prefix);
+    retained.push_str(suffix);
+    retained
+}
+
+fn message_parts(message: &str, max_bytes: usize) -> (&str, &'static str) {
     if message.len() <= max_bytes {
-        return String::from(message);
+        return (message, "");
     }
     let suffix = truncation_suffix(max_bytes);
     let mut end = max_bytes - suffix.len();
     while !message.is_char_boundary(end) {
         end -= 1;
     }
-    // Reserve the final payload once, including the suffix, to avoid growth.
-    let mut retained = String::with_capacity(end + suffix.len());
-    retained.push_str(&message[..end]);
-    retained.push_str(suffix);
-    retained
+    (&message[..end], suffix)
 }
 
 #[cfg(test)]
