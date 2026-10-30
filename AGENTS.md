@@ -1,7 +1,8 @@
 # IC Observability Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`83f87cca71a420a61e69b6bdd018be27d4455daf` (0.27.4) and file digests are recorded in
+`045d7bea69dfb09af721de0ba89a32d6b21a2429` (0.27.7 base plus reviewed cleanup)
+and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
 at startup and [the extraction contract](docs/extraction.md) before arithmetic,

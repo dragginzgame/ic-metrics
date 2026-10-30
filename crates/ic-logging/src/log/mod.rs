@@ -284,52 +284,13 @@ impl Log {
     /// Rejects bounds, row ordering, watermarks and truncation states that cannot
     /// result from this engine's append/retention operations.
     pub fn restore(snapshot: LogSnapshot) -> Result<Self, RestoreError> {
+        validate_snapshot(&snapshot)?;
         let LogSnapshot {
             limits,
             entries,
             next_sequence,
             last_created_at_secs,
         } = snapshot;
-        if entries.len() > limits.max_entries.get() {
-            return Err(RestoreError::TooManyEntries);
-        }
-        if (next_sequence == Some(0)) != last_created_at_secs.is_none() {
-            return Err(RestoreError::InvalidTimestamp);
-        }
-        // The last row cannot expire at the final representable timestamp, and
-        // count eviction always leaves a newer row in this nonzero-capacity log.
-        if entries.is_empty() && last_created_at_secs == Some(u64::MAX) {
-            return Err(RestoreError::InvalidTimestamp);
-        }
-        let mut previous: Option<&Entry> = None;
-        for entry in &entries {
-            if entry.source.len() > limits.max_label_bytes
-                || entry
-                    .topic
-                    .as_ref()
-                    .is_some_and(|topic| topic.len() > limits.max_label_bytes)
-                || !valid_retained_message(entry, limits.max_message_bytes)
-            {
-                return Err(RestoreError::InvalidEntry);
-            }
-            if let Some(previous) = previous {
-                if previous.sequence.checked_add(1) != Some(entry.sequence) {
-                    return Err(RestoreError::InvalidSequence);
-                }
-                if entry.created_at_secs < previous.created_at_secs {
-                    return Err(RestoreError::InvalidTimestamp);
-                }
-            }
-            previous = Some(entry);
-        }
-        if let Some(last) = previous {
-            if last.sequence.checked_add(1) != next_sequence {
-                return Err(RestoreError::InvalidSequence);
-            }
-            if Some(last.created_at_secs) != last_created_at_secs {
-                return Err(RestoreError::InvalidTimestamp);
-            }
-        }
         Ok(Self {
             limits,
             entries: entries.into(),
@@ -464,6 +425,57 @@ impl Log {
             .front()
             .is_some_and(|entry| entry.created_at_secs < cutoff)
     }
+}
+
+fn validate_snapshot(snapshot: &LogSnapshot) -> Result<(), RestoreError> {
+    let LogSnapshot {
+        limits,
+        entries,
+        next_sequence,
+        last_created_at_secs,
+    } = snapshot;
+    let (next_sequence, last_created_at_secs) = (*next_sequence, *last_created_at_secs);
+    if entries.len() > limits.max_entries.get() {
+        return Err(RestoreError::TooManyEntries);
+    }
+    if (next_sequence == Some(0)) != last_created_at_secs.is_none() {
+        return Err(RestoreError::InvalidTimestamp);
+    }
+    // The last row cannot expire at the final representable timestamp, and
+    // count eviction always leaves a newer row in this nonzero-capacity log.
+    if entries.is_empty() && last_created_at_secs == Some(u64::MAX) {
+        return Err(RestoreError::InvalidTimestamp);
+    }
+    let mut previous: Option<&Entry> = None;
+    for entry in entries {
+        if entry.source.len() > limits.max_label_bytes
+            || entry
+                .topic
+                .as_ref()
+                .is_some_and(|topic| topic.len() > limits.max_label_bytes)
+            || !valid_retained_message(entry, limits.max_message_bytes)
+        {
+            return Err(RestoreError::InvalidEntry);
+        }
+        if let Some(previous) = previous {
+            if previous.sequence.checked_add(1) != Some(entry.sequence) {
+                return Err(RestoreError::InvalidSequence);
+            }
+            if entry.created_at_secs < previous.created_at_secs {
+                return Err(RestoreError::InvalidTimestamp);
+            }
+        }
+        previous = Some(entry);
+    }
+    if let Some(last) = previous {
+        if last.sequence.checked_add(1) != next_sequence {
+            return Err(RestoreError::InvalidSequence);
+        }
+        if Some(last.created_at_secs) != last_created_at_secs {
+            return Err(RestoreError::InvalidTimestamp);
+        }
+    }
+    Ok(())
 }
 
 const fn truncation_suffix(max_bytes: usize) -> &'static str {

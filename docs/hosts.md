@@ -267,8 +267,9 @@ Neither validation nor release performs artifact cleanup.
 Both `make publish` and `make publish-check` run the same native/Wasm Clippy
 gate before Cargo packaging or registry effects. Sequential recipes stop on lint
 failure even under parallel Make; publication remains separately authorized.
-Select `PACKAGE=ic-metrics` or `PACKAGE=ic-logging` explicitly for both dry-run
-and upload commands. The default selects only Metrics. Workspace release tags
+Both commands select Metrics and Logging by default. Select `PACKAGE=ic-metrics`
+or `PACKAGE=ic-logging` for a single package, including completion of a partial
+publication after observing registry state. Workspace release tags
 coordinate versions without uploading either package. The standard-release
 fixture checks default and explicit selection for both packages, publication
 failure and both lint-failure boundaries using substituted Cargo effects.
@@ -307,7 +308,9 @@ actual callers; it does not replay those generic matrices in its own gates.
 
 Retention is the single CI entry for release and hook bodies; they are not run
 again as separate gates. The admission fixture isolates inherited parent
-validation/failure logs and summaries. Successful cleanup affects only owned
+validation/failure logs and summaries. Its private scenario groups separate cache
+and tool admission, source/index custody, and validation adapter behavior; one
+entrypoint still runs each group once. Successful cleanup affects only owned
 scratch; failed inputs remain under caller-selected `TMPDIR`, defaulting to
 native CI evidence in the retention fixture. Standard-release and metadata fixtures
 own their assertion-failure cases and retained-input checksum manifests; the parent
@@ -326,7 +329,9 @@ refusal before effects, explicit tool-catalog routing and selected-source checks
 Native input selection includes pending maintained files, excludes generated and
 private evidence, and keeps missing tracked source selected so hashing refuses
 an incomplete checkout. The native-evidence fixture checks thin workflow wiring,
-then directly runs the owned collector. It covers unusual filenames,
+then directly runs the owned source-input recorder and collector. Scenario inputs
+and expected boundary statuses stay together; archive assertions retain separate
+sanitized-diagnostic and full-recovery contracts. It covers unusual filenames,
 OS/architecture/macOS admission, TOML-selected compiler/components/targets,
 failed setup and action-outcome/log projection. Substitute rustup/Make actions
 establish routing and failure propagation, not native macOS or live release proof.

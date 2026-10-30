@@ -33,6 +33,52 @@ FIXTURE_RETENTION_REAL_MAKE="$(command -v make)"
 export FIXTURE_RETENTION_REAL_MAKE
 git -C "$root" rev-parse HEAD > "$evidence/source-commit.txt"
 
+write_cargo_fault() {
+    local destination="$1"
+    cat >> "$destination" <<'CARGO'
+if [[ "${1:-}" != generate-lockfile ]]; then
+    exec "$FIXTURE_RETENTION_REAL_CARGO" "$@"
+fi
+CARGO
+}
+
+write_bash_fault() {
+    local destination="$1"
+    cat >> "$destination" <<'BASH'
+case "${1:-}" in
+    */scripts/ci/check-release-commands.sh) ;;
+    *) exec "$FIXTURE_RETENTION_REAL_BASH" "$@" ;;
+esac
+BASH
+}
+
+write_make_fault() {
+    local destination="$1" scenario="$2"
+    case "$scenario" in
+        baseline)
+            cat >> "$destination" <<'MAKE'
+for argument in "$@"; do
+    if [[ "$argument" == fmt-check ]]; then
+        echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
+        exit 43
+    fi
+done
+exec "$FIXTURE_RETENTION_REAL_MAKE" "$@"
+MAKE
+            ;;
+        publication-child)
+            cat >> "$destination" <<'MAKE'
+publication=false
+for argument in "$@"; do
+    case "$argument" in publish|publish-check) publication=true ;; esac
+done
+if [[ "$publication" != true ]]; then exec "$FIXTURE_RETENTION_REAL_MAKE" "$@"; fi
+MAKE
+            ;;
+        *) return 2 ;;
+    esac
+}
+
 for kind in standard metadata hook; do
     case "$kind" in
         standard) script=scripts/release/test-standard-release.sh; prefix=standard-release-entry; child=bash ;;
@@ -52,43 +98,14 @@ for kind in standard metadata hook; do
         if [[ "$scenario" == *assertion ]]; then assertion_fault=1; fi
         if [[ "$scenario" != success && "$assertion_fault" == 0 ]]; then
             executable="$child"
-            if [[ "$scenario" == publication-child ]]; then executable='make'; fi
-            if [[ "$scenario" == baseline ]]; then executable='make'; fi
+            case "$scenario" in publication-child|baseline) executable='make' ;; esac
             printf '#!%s\n' "$real_bash" > "$run/bin/$executable"
-            if [[ "$executable" == cargo ]]; then
-                cat >> "$run/bin/$executable" <<'CARGO'
-if [[ "${1:-}" != generate-lockfile ]]; then
-    exec "$FIXTURE_RETENTION_REAL_CARGO" "$@"
-fi
-CARGO
-            fi
-            if [[ "$executable" == bash ]]; then
-                cat >> "$run/bin/$executable" <<'BASH'
-case "${1:-}" in
-    */scripts/ci/check-release-commands.sh) ;;
-    *) exec "$FIXTURE_RETENTION_REAL_BASH" "$@" ;;
-esac
-BASH
-            fi
-            if [[ "$scenario" == baseline ]]; then
-                cat >> "$run/bin/$executable" <<'MAKE'
-for argument in "$@"; do
-    if [[ "$argument" == fmt-check ]]; then
-        echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
-        exit 43
-    fi
-done
-exec "$FIXTURE_RETENTION_REAL_MAKE" "$@"
-MAKE
-            elif [[ "$scenario" == publication-child ]]; then
-                cat >> "$run/bin/$executable" <<'MAKE'
-publication=false
-for argument in "$@"; do
-    case "$argument" in publish|publish-check) publication=true ;; esac
-done
-if [[ "$publication" != true ]]; then exec "$FIXTURE_RETENTION_REAL_MAKE" "$@"; fi
-MAKE
-            fi
+            case "$executable" in
+                cargo) write_cargo_fault "$run/bin/$executable" ;;
+                bash) write_bash_fault "$run/bin/$executable" ;;
+                make) write_make_fault "$run/bin/$executable" "$scenario" ;;
+                *) exit 2 ;;
+            esac
             cat >> "$run/bin/$executable" <<'FAIL'
 echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
 exit 43

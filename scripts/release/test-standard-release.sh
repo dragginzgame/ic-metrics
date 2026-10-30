@@ -273,12 +273,23 @@ for fail in 0 1; do
     cmp "$fixture/expected" "$EVENTS"
 done
 
+# Independent expected Cargo trace; never derived from the Make recipe.
+write_expected_lints() {
+    local destination="$1" last_phase="$2"
+    printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$destination"
+    case "$last_phase" in
+        native) ;;
+        wasm) printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$destination" ;;
+        *) return 2 ;;
+    esac
+}
+
 for selection in default ic-metrics ic-logging; do
-    package=ic-metrics
+    cargo_packages=(-p ic-metrics -p ic-logging)
     package_args=()
     if [[ "$selection" != default ]]; then
-        package="$selection"
-        package_args=("PACKAGE=$package")
+        cargo_packages=(-p "$selection")
+        package_args=("PACKAGE=$selection")
     fi
     for target in publish publish-check; do
         for fail in 0 1; do
@@ -287,9 +298,8 @@ for selection in default ic-metrics ic-logging; do
             PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
                 -f "$root/Makefile" "$target" ${package_args[@]+"${package_args[@]}"} > "$fixture/output" 2>&1 || status=$?
             if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
-            printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
-            printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
-            printf '%s\n' publish -p "$package" --locked --registry crates-io >> "$fixture/expected"
+            write_expected_lints "$fixture/expected" wasm
+            printf '%s\n' publish "${cargo_packages[@]}" --locked --registry crates-io >> "$fixture/expected"
             if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
             if [[ "$assertion_fault" == 1 ]]; then
                 echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
@@ -304,10 +314,7 @@ for selection in default ic-metrics ic-logging; do
             PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 CLIPPY_FAILURE="$failure" "$real_make" "${parallel[@]}" --no-print-directory \
                 -f "$root/Makefile" "$target" ${package_args[@]+"${package_args[@]}"} > "$fixture/output" 2>&1 || status=$?
             [[ "$status" == 2 ]] || exit 1
-            printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
-            if [[ "$failure" == wasm ]]; then
-                printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
-            fi
+            write_expected_lints "$fixture/expected" "$failure"
             cmp "$fixture/expected" "$EVENTS"
         done
     done

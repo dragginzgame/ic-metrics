@@ -69,8 +69,8 @@ help:
 	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Normal releases start fresh from committed metadata; exact recovery: release-resume VERSION=X.Y.Z"
-	@echo "Registry: publish-check (dry run), publish (upload the selected package to crates.io)"
-	@echo "Select PACKAGE=ic-metrics or PACKAGE=ic-logging explicitly; the default remains ic-metrics."
+	@echo "Registry: publish-check (dry run), publish (upload both packages to crates.io)"
+	@echo "Select PACKAGE=ic-metrics or PACKAGE=ic-logging to publish only that package."
 	@echo "A workspace release does not publish either package."
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Release editor (also in install-tools/tools-check): install-release-editor, release-editor-check"
@@ -86,9 +86,11 @@ help:
 	@echo "Workspace gates cover Metrics and Logging; native/Wasm minimum: msrv"
 	@echo "Full release validation (or explicit check request): ci, msrv"
 
+publish publish-check: PACKAGE = ic-metrics ic-logging
+
 publish:
 	+$(MAKE) --no-print-directory clippy
-	+cargo publish -p $(PACKAGE) --locked --registry crates-io
+	+cargo publish $(foreach package,$(PACKAGE),-p $(package)) --locked --registry crates-io
 
 .PHONY: package-check
 
@@ -98,7 +100,7 @@ package-check:
 
 publish-check:
 	+$(MAKE) --no-print-directory clippy
-	+cargo publish -p $(PACKAGE) --locked --registry crates-io --dry-run
+	+cargo publish $(foreach package,$(PACKAGE),-p $(package)) --locked --registry crates-io --dry-run
 
 hook-check:
 	bash scripts/dev/test-format-hook.sh

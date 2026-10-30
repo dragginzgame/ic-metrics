@@ -38,6 +38,8 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(.id) | index("tool_inputs")) < (map(.id) | index("application_sources")) and
     (map(.id) | index("application_sources")) < (map(.id) | index("native_ci")) and
     (map(.id) | index("native_inputs")) < (map(.id) | index("prerequisites")) and
+    (map(select(.id == "native_inputs"))[0].run ==
+        "bash scripts/ci/record-native-inputs.sh\n") and
     (map(select(.id == "tools"))[0].uses == "./.github/actions/prepare-common-tools") and
     (map(select(.id == "native_artifacts"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''") and
@@ -57,7 +59,7 @@ mkdir -p "$fixture/commands" "$fixture/bin" "$fixture/source"
     (map(select(.uses != null and .with.name == "native-${{ matrix.runner }}-${{ github.run_attempt }}"))[0].if ==
         "always() && steps.checkout.outcome == '\''success'\''")
 ' "$fixture/steps.json" > /dev/null
-for step in native_inputs native_host host_tools toolchain tool_inputs application_sources native_ci; do
+for step in native_host host_tools toolchain tool_inputs application_sources native_ci; do
     PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" \
         "$fixture/steps.json" "$step" > "$fixture/commands/$step.sh"
 done
@@ -226,6 +228,50 @@ BASH
 chmod +x "$fixture/bin/bash"
 FIXTURE_REAL_BASH="$real_bash"
 export FIXTURE_REAL_BASH
+# Scenario inputs and expected boundary results have one local owner.
+select_scenario() {
+    FIXTURE_FAILURE=""
+    FIXTURE_FORMATTING=no
+    FIXTURE_COLLECTION_STATUS=0
+    FIXTURE_ARCHIVE_STATUS=0
+    expected_pipeline_status=43
+    expected_collector_status=0
+    failed_log=native-ci.log
+    case "$1" in
+        success|skipped-setup) expected_pipeline_status=0 ;;
+        host-tools) FIXTURE_FAILURE=host-tools; TOOLCHAIN_OUTCOME=skipped ;;
+        tool-inputs) FIXTURE_FAILURE=tool-inputs; failed_log=tool-versions.txt ;;
+        application-sources) FIXTURE_FAILURE=application-sources; failed_log=application-sources.log ;;
+        tools-install) FIXTURE_FAILURE=tools-install; failed_log=tools-setup.log ;;
+        tools-check) FIXTURE_FAILURE=tools-check; failed_log=tools-check.log ;;
+        native) FIXTURE_FAILURE=ci ;;
+        formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
+        collection-partial)
+            FIXTURE_FAILURE=tools-install; failed_log=tools-setup.log
+            FIXTURE_COLLECTION_STATUS=1; expected_collector_status=1 ;;
+        collection-failure)
+            FIXTURE_FAILURE=tools-install; failed_log=tools-setup.log
+            FIXTURE_COLLECTION_STATUS=2; expected_collector_status=2 ;;
+        native-archive-failure)
+            expected_pipeline_status=0; FIXTURE_ARCHIVE_STATUS=23; expected_collector_status=23 ;;
+        collection-archive-failure)
+            FIXTURE_FAILURE=tools-install; failed_log=tools-setup.log
+            FIXTURE_COLLECTION_STATUS=2; FIXTURE_ARCHIVE_STATUS=23; expected_collector_status=2 ;;
+        *) return 2 ;;
+    esac
+}
+
+check_diagnostic_checksum() {
+    bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
+        "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
+        target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
+}
+
+check_retained_recovery_inputs() {
+    [[ "$(cat target/evidence/native-ci/scratch/release/.git/index)" == 'retained index' ]] || return
+    [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]]
+}
+
 # Keep this workflow's action-result projection and Git/evidence custody.
 for scenario in success skipped-setup host-tools tool-inputs application-sources tools-install tools-check native formatting collection-partial collection-failure native-archive-failure collection-archive-failure; do (
     worktree="$fixture/$scenario"
@@ -253,22 +299,8 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     export HOST_TOOLS_OUTCOME=skipped
     export APPLICATION_OUTCOME=skipped
     export TOOLS_OUTCOME=skipped TOOL_INPUT_OUTCOME=skipped NATIVE_OUTCOME=skipped
-    case "$scenario" in
-        host-tools) FIXTURE_FAILURE=host-tools; TOOLCHAIN_OUTCOME=skipped ;;
-        tool-inputs) FIXTURE_FAILURE="tool-inputs" ;;
-        application-sources) FIXTURE_FAILURE=application-sources ;;
-        tools-install|collection-partial|collection-failure|collection-archive-failure) FIXTURE_FAILURE=tools-install ;;
-        tools-check) FIXTURE_FAILURE=tools-check ;;
-        native) FIXTURE_FAILURE=ci ;;
-        formatting) FIXTURE_FAILURE=ci; FIXTURE_FORMATTING=yes ;;
-    esac
-    case "$scenario" in
-        collection-partial) FIXTURE_COLLECTION_STATUS=1 ;;
-        collection-failure) FIXTURE_COLLECTION_STATUS=2 ;;
-        native-archive-failure) FIXTURE_ARCHIVE_STATUS=23 ;;
-        collection-archive-failure) FIXTURE_COLLECTION_STATUS=2; FIXTURE_ARCHIVE_STATUS=23 ;;
-    esac
-    "$real_bash" --noprofile --norc -e -o pipefail "$fixture/commands/native_inputs.sh" > source.log 2>&1
+    select_scenario "$scenario"
+    "$real_bash" scripts/ci/record-native-inputs.sh > source.log 2>&1
     shasum -a 256 -c target/evidence/native-ci/source-sha256.txt > source-check.log
     if [[ "$scenario" == success ]]; then
         for name in "${names[@]}"; do
@@ -298,10 +330,7 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         done
     fi
     printf '%s\n' "$status" > status.txt
-    case "$scenario" in
-        success|skipped-setup|native-archive-failure) [[ "$status" == 0 ]] || exit 1 ;;
-        *) [[ "$status" == 43 ]] || exit 1 ;;
-    esac
+    [[ "$status" == "$expected_pipeline_status" ]] || exit 1
     # No later application/native effect can follow a failed action or fetch.
     : > expected-commands
     if [[ "$scenario" != skipped-setup ]]; then
@@ -319,22 +348,17 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     mkdir -p target/evidence/native-ci/scratch/release/.git/release-state
     printf 'retained index\n' > target/evidence/native-ci/scratch/release/.git/index
     printf 'retained intent\n' > target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan
+    check_retained_recovery_inputs
     # Diagnostics remain readable even when complete evidence collection fails.
     if [[ "$scenario" == native-archive-failure || "$scenario" == collection-archive-failure ]]; then
         archive_status=0
         "$real_bash" scripts/ci/collect-native-evidence.sh > archive.log 2>&1 || archive_status=$?
-        expected_archive_status=23
-        [[ "$scenario" != collection-archive-failure ]] || expected_archive_status=2
-        [[ "$archive_status" == "$expected_archive_status" ]] || exit 1
-        bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
-            "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
-            target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
+        [[ "$archive_status" == "$expected_collector_status" ]] || exit 1
+        check_diagnostic_checksum
         [[ ! -e target/evidence/native-ci.tar.gz && ! -e target/evidence/native-ci.tar.gz.sha256 ]] || exit 1
         grep -Fx 'outer archive stdout' archive.log > /dev/null
         grep -Fx 'outer archive stderr' archive.log > /dev/null
         grep -Fx 'Native recovery archive failed (exit 23)' archive.log > /dev/null
-        [[ "$(cat target/evidence/native-ci/scratch/release/.git/index)" == 'retained index' ]] || exit 1
-        [[ "$(cat target/evidence/native-ci/scratch/release/.git/release-state/fixture.plan)" == 'retained intent' ]] || exit 1
         if [[ "$scenario" == collection-archive-failure ]]; then
             [[ "$(cat .tools/rust/failure:payload)" == 'retained candidate' ]] || exit 1
         fi
@@ -342,10 +366,8 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
     fi
     collection_status=0
     "$real_bash" scripts/ci/collect-native-evidence.sh > archive.log 2>&1 || collection_status=$?
-    [[ "$collection_status" == "$FIXTURE_COLLECTION_STATUS" ]] || exit 1
-    bash "$root/scripts/ci/verify-file-checksum.sh" sha256 \
-        "$(cat target/evidence/native-diagnostics.tar.gz.sha256)" \
-        target/evidence/native-diagnostics.tar.gz > diagnostic-check.log
+    [[ "$collection_status" == "$expected_collector_status" ]] || exit 1
+    check_diagnostic_checksum
     mkdir diagnostic-readback
     tar -xzf target/evidence/native-diagnostics.tar.gz -C diagnostic-readback
     for file in diagnostic-readback/*; do
@@ -396,13 +418,6 @@ for scenario in success skipped-setup host-tools tool-inputs application-sources
         tar -xzf unpacked/target/evidence/native-ci/tool-candidates.tar.gz -C recovered-host-candidates
         cmp .tools/host-set.fixture/failure:payload recovered-host-candidates/.tools/host-set.fixture/failure:payload
     else
-        case "$scenario" in
-            tools-check) failed_log=tools-check.log ;;
-            tools-install|collection-*) failed_log=tools-setup.log ;;
-            application-sources) failed_log=application-sources.log ;;
-            tool-inputs) failed_log="tool-versions.txt" ;;
-            native|formatting) failed_log=native-ci.log ;;
-        esac
         if [[ "$scenario" == tool-inputs ]]; then
             grep -Fx 'reporter partial stdout' "diagnostic-readback/$failed_log" > /dev/null
             grep -Fx 'reporter partial stderr' "diagnostic-readback/$failed_log" > /dev/null

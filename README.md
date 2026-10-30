@@ -29,18 +29,17 @@ for checkpoint, persistence and consumer qualification responsibilities.
 ## Release and package publication
 
 Workspace releases coordinate both package versions. Registry publication is a
-separate maintainer action for each selected package:
+separate maintainer action; the default selects both packages:
 
 ```sh
-make publish-check PACKAGE=ic-metrics
-make publish-check PACKAGE=ic-logging
+make publish-check
 # After reviewing the dry runs and authorizing the uploads:
-make publish PACKAGE=ic-metrics
-make publish PACKAGE=ic-logging
+make publish
 ```
 
-Omitting `PACKAGE` selects `ic-metrics`; it does not publish Logging. Each command
-runs the native/Wasm Clippy gate and publishes only its selected package. Neither
+Use `PACKAGE=ic-metrics` or `PACKAGE=ic-logging` to select only that package,
+including when completing a partial publication after checking registry state.
+Each command runs the native/Wasm Clippy gate before Cargo publication. Neither
 package depends on the other, so there is no publication-order dependency.
 Consumers needing a new Logging API must select a version actually available in
 the registry; a merged PR or workspace release tag alone does not supply it.

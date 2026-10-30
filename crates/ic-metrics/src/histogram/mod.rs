@@ -407,25 +407,26 @@ impl<const N: usize> MeasurementHistogram<N> {
         while index < N {
             cumulative += self.bucket_counts[index] as u128;
             if cumulative >= rank {
-                return Ok(Some(HistogramRange {
-                    lower_exclusive: if index == 0 {
-                        None
-                    } else {
-                        Some(self.upper_bounds[index - 1])
-                    },
-                    upper_inclusive: Some(self.upper_bounds[index]),
-                }));
+                return Ok(Some(self.bucket_range(index)));
             }
             index += 1;
         }
-        Ok(Some(HistogramRange {
-            lower_exclusive: if N == 0 {
+        Ok(Some(self.bucket_range(N)))
+    }
+
+    const fn bucket_range(&self, index: usize) -> HistogramRange {
+        HistogramRange {
+            lower_exclusive: if index == 0 {
                 None
             } else {
-                Some(self.upper_bounds[N - 1])
+                Some(self.upper_bounds[index - 1])
             },
-            upper_inclusive: None,
-        }))
+            upper_inclusive: if index < N {
+                Some(self.upper_bounds[index])
+            } else {
+                None
+            },
+        }
     }
 }
 

@@ -1,87 +1,104 @@
 # Current handoff — 2026-10-30
 
-Source base is `ce510c91037e9c4bb38b53091aacd18edeaf641e`, after merged
-[PR #100 — Add consuming Logging checkpoint accessor](https://github.com/dragginzgame/ic-observability/pull/100).
-Workspace metadata remains 0.17.4; pending compatible notes select 0.17.5.
-Shared Tooling remains reviewed 0.27.4 at
-`83f87cca71a420a61e69b6bdd018be27d4455daf`. Snapshot payloads are unchanged.
-The incoming uncommitted Wire 0.7.23 lock update is preserved and belongs to the
-maintainer; this batch changes no dependencies or release versions.
+Source base is release 0.17.5, `74839f1`. The maintainer authorized all ten
+complexity reductions from the fresh review. Compatible pending notes select
+0.17.6; package versions, dependency selections and both crate identities remain
+unchanged. The incoming checkout was clean.
 
-## Accepted publication, adoption and documentation batch
+## Accepted implementation
 
-The maintainer authorized all three follow-ups from the status review:
+The local batch completes eight reductions:
 
-- Make help and the README explain explicit `PACKAGE=ic-metrics` versus
-  `PACKAGE=ic-logging` publication. The default remains Metrics. Workspace release
-  metadata does not upload either crate. The actual Make fixture checks both
-  explicit selections and the default, including upload/native/Wasm lint failures.
-- Persistence's decoded temporary checkpoint uses the merged consuming accessor
-  in [draft PR #140](https://github.com/dragginzgame/ic-persistence/pull/140), head
-  `600b9600fe818f2846e6e8f335ab795ef1b26de5`. Its isolated contribution is at
-  `/tmp/ic-persistence-consuming-checkpoint-20261030`. Integration awaits a
-  registry Logging release containing the API and an admitted dependency/lock
-  update; no production path override is selected.
-- The README, host guide and Logging boundary describe current ownership and
-  separate package publication. Superseded release/PR narratives are removed
-  from this handoff; their full record remains at
-  `ce510c9:docs/status/current.md` and its linked evidence owners.
+- Native-evidence scenarios select fault inputs and expected boundary statuses
+  together; diagnostic-checksum and recovery-input assertions are shared locally.
+- Release admission has one entrypoint and private cache/tool, source/index and
+  validation-adapter scenario groups, with shared metadata/index custody checks.
+- Publication fixtures share an independent expected lint-command prefix.
+- Native input capture is an owned script called directly by workflow and fixture;
+  unusual filenames and source hash admission retain their real execution proof.
+- Cargo, Bash and Make retention-fault writers have explicit local owners.
+- Logging independently validates a borrowed checkpoint before constructing its
+  engine; histogram queries share private constant-evaluated range construction.
 
-No root staging, commit, version bump, release or registry upload is selected.
-The checkout was fast-forwarded to the already-authorized PR #100 merge without
-changing the incoming dirty lock. Root changes remain reviewable working files.
+Public APIs, error priority, canonical admission, checkpoint formats and numeric
+semantics are unchanged. No platform clocks, endpoints, storage dependencies,
+performance claims or new product modes are introduced.
 
-## Publication and qualification state
+## Shared Tooling contribution and adoption
 
-A registry-index observation on 2026-10-30 found Logging 0.17.1 and 0.17.2,
-with 0.17.2 the latest published entry. The 0.17.3 fixes and merged consuming API
-therefore still need explicit Logging publication. Finish the normal 0.17.5
-workspace release and separately publish each desired package before consumer
-registry adoption. Those actions retain maintainer authorization and full gates.
+The two upstream reductions are in
+[PR #324 — Converge validation checkpoints and Cargo workspace admission](https://github.com/dragginzgame/shared-tooling/pull/324),
+head `045d7bea69dfb09af721de0ba89a32d6b21a2429`, based on remote main
+`11d519c604b1727a2bf6272557a97e770a63b29f` (0.27.7).
+The contribution uses `/tmp/shared-tooling-complexity-ten-20261030`; the dirty
+normal Shared checkout is untouched. No upstream version bump or merge ran.
 
-Root focused evidence is `target/audits/publication-adoption.aTJkdS/`:
-standard-release dispatch, failure-retention fixtures, selected ShellCheck,
-shell syntax and documentation links pass. Cargo/registry effects are substituted.
-No broad local CI/MSRV or real publication ran for this batch.
+Input checkpointing is a declared Perl companion captured with the runner before
+any gate. The source-replacement regression proves later checks use captured
+bytes. Coordinated Cargo workspace admission has one private flow, independently
+called at preparation, post-write and selected-source boundaries. The backed-up
+original lock remains the preparation authority; Cargo JSON, stderr and child/
+logger statuses remain separate, with the first Cargo failure preserved.
 
-Persistence candidate evidence is under its isolated checkout's
-`target/qualification/consuming-checkpoint/`: nine adapter tests and two doctests
-on Rust 1.91, strict native/Wasm Clippy and Rust 1.91 Wasm compilation pass using
-the merged accessor source. The registry-only check explicitly fails with E0599
-on Logging 0.17.2. The candidate config/lock are retained as evidence, excluded
-from the PR; canonical manifests and both tracked locks remain unchanged. Update
-the actual published minimum and lock before repeating checks and marking ready.
+The canonical exporter adopted that exact clean committed PR head here, rather
+than a moving branch or edited vendored payload. `.shared-tooling.snapshot` owns
+all 123 payload hashes/modes. Its display version remains the 0.27.7 source base;
+this is an explicitly reviewed unmerged cleanup revision, not released 0.27.8.
+The impact review includes the intervening observability governance and task
+clarifications. Catalogs, compiler policy and executable pins are unchanged;
+no maintenance schedule or fleet sweep was activated.
 
-PR #100's unchanged Logging source passed its hosted Linux, Apple Silicon macOS,
-Intel macOS and MSRV checks in
-[CI run 40910884595](https://github.com/dragginzgame/ic-observability/actions/runs/40910884595).
-The consuming accessor preserves limits, ordering, owned text and watermarks.
-Earlier code evidence keeps its original source/graph identities: the fit audit
-was `target/audits/logging-fit.3ciyEJ/`, fixes were
-`target/audits/logging-fixes.obEV1R/`, and the six simplifications were
-`target/audits/complexity-cleanup.U2Fhfb/`. These are historical receipt locations,
-not new qualification or a guarantee that user-owned build cleanup retained them.
+## Validation and evidence
 
-## Consumer boundaries and follow-up owners
+Root evidence is `target/audits/complexity-ten.O8GTvB/`. Formatting and strict
+Logging/Metrics Clippy pass, followed by 21 Logging tests, two Logging doctests,
+27 histogram tests and both libraries' Rust 1.91 Wasm compilation. The native
+workflow and release-retention fixtures, selected ShellCheck, actionlint, local documentation links and
+snapshot integrity/source comparison pass. Earlier failed lint/preview logs are
+retained separately from the corrected checks.
 
-Logging stays dependency-free `no_std` + `alloc`, independent of Metrics. The
-[Logging boundary](../logging.md) and [crate guide](../../crates/ic-logging/README.md)
-own the engine/checkpoint contract. Hosts retain clocks, identity, decoding
-limits, authorization, lifecycle, retention scheduling and checkpoint cadence.
+Upstream evidence is the isolated checkout's `target/qualification/complexity-ten/`.
+The validation runner, Cargo release metadata and Shared release-metadata fixtures
+pass, including source replacement, nested drift, rollback, original-lock custody
+and child/logger error precedence. Selected ShellCheck, Perl syntax and links pass.
+No broad local CI/MSRV matrix, native macOS qualification, installed IC runtime,
+release or registry upload ran. Hosted PR qualification remains independently
+observable; an open PR is not a merge or release.
+Hosted [CI run 41037893369](https://github.com/dragginzgame/shared-tooling/actions/runs/41037893369)
+was still running at the last observation; no hosted pass is claimed.
 
-Persistence's [qualification PR #138](https://github.com/dragginzgame/ic-persistence/pull/138)
-and [publication integration PR #139](https://github.com/dragginzgame/ic-persistence/pull/139)
-are merged. Its default branch records release 0.56.0. Those facts alone do not
-establish registry publication or qualify a later graph. Original installed
-receipts and recovery inputs retain the locations and identities recorded in
-`ce510c9:docs/status/current.md`; no installed runtime proof was repeated here.
+## Prior consumer work and recovery
 
-Canic adoption remains separately owned and its dirty checkout is untouched.
-Its observability read budgets are already tracked by
-[#100 — Bound observability read work and encoded page sizes](https://github.com/dragginzgame/canic/issues/100),
-with retention reconciliation at #101. The newly filed
-[#712 — Remove redundant limits from the runtime logging adapter](https://github.com/dragginzgame/canic/issues/712)
-covers the remaining duplicate limits. There is no new dependency-waiting issue;
-publication is owned here. [Jobs PR #77](https://github.com/dragginzgame/ic-jobs/pull/77)
-is merged and remains heap-only. Stable Metrics remains at Persistence; prior
-transport and consolidation receipts retain their historical scopes and owners.
+Persistence's consuming-checkpoint adoption remains separately tracked by
+[draft PR #140](https://github.com/dragginzgame/ic-persistence/pull/140), with its
+source and candidate evidence at `/tmp/ic-persistence-consuming-checkpoint-20261030`.
+Read current PR and registry state before resuming; this batch does not repeat
+its prior publication observation or qualify a released dependency. Canic's
+read budgets, timer reconciliation and duplicate limits remain at #100, #101
+and [#712](https://github.com/dragginzgame/canic/issues/712). No sibling consumer
+checkout was changed by this batch.
+
+The preceding handoff at `74839f1:docs/status/current.md` preserves original
+Logging, stable-adapter, transport and installed-proof receipt locations and
+source identities. User-owned build cleanup may remove local artifacts; old
+receipts never qualify the current graph. The complexity batch selected no root
+staging, commit, own version change, tag, release, publication or artifact cleanup.
+
+## Publication follow-up — 2026-10-30
+
+The maintainer separately authorized ensuring both packages are published.
+Metrics 0.17.5 was already present; Logging 0.17.5 was uploaded from clean release
+commit `74839f1072c6ddac980ff6c9de5273fbb68033db` in
+`/tmp/ic-observability-publish-0175`. Native/Wasm Clippy and Cargo package
+verification passed. Both registry entries are present and not yanked; Logging's
+registry checksum matches the uploaded archive, whose VCS metadata names that
+release commit. The isolated checkout retains its log under
+`target/publication/0.17.5-logging/`. The first root attempt refused dirty source
+before upload when concurrent work appeared; those edits were preserved.
+
+Local `publish` and `publish-check` now select both packages by default and retain
+explicit `PACKAGE=ic-metrics` or `PACKAGE=ic-logging` selection. The actual Make
+fixture passes default/explicit dispatch and upload/native/Wasm failure cases;
+ShellCheck, shell syntax, documentation links and diff checks pass. Root evidence
+is `target/publication/0.17.5-logging/`. These tooling edits join pending 0.17.6
+notes without changing package versions or committing concurrent work.

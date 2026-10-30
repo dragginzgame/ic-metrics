@@ -42,17 +42,7 @@ jobs:
       - name: Record native qualification inputs
         id: native_inputs
         run: |
-          mkdir -p target/evidence/native-ci
-          {
-            git rev-parse HEAD
-            printf 'run=%s attempt=%s event=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_EVENT_NAME"
-            uname -s
-            uname -m
-          } > target/evidence/native-ci/inputs.txt
-          bash scripts/ci/native-source-files.sh > target/evidence/native-ci/source-files.nul
-          while IFS= read -r -d '' file; do
-            shasum -a 256 -- "$file"
-          done < target/evidence/native-ci/source-files.nul > target/evidence/native-ci/source-sha256.txt
+          bash scripts/ci/record-native-inputs.sh
       - name: Verify native host
         id: native_host
         env:

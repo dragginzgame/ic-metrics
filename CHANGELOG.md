@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.17.6]
+
+### 🩹 Fixed
+
+- Make `publish` and `publish-check` select both Metrics and Logging by default,
+  retaining `PACKAGE=...` for single-package publication and partial recovery.
+
+### 🧹 Cleanup
+
+- Group release-admission scenarios and share independent command expectations,
+  fault writers and native archive assertions, preserving failure evidence and
+  the current scenario coverage.
+- Move native source capture into a directly exercised script and keep scenario
+  setup alongside its expected boundary results.
+- Separate Logging checkpoint validation from construction and share histogram
+  range construction without changing public APIs or admission semantics.
+- Adopt reviewed Shared Tooling cleanup for captured input-checkpoint companions
+  and coordinated Cargo workspace admission, retaining original-lock checks and
+  first-error evidence at each boundary.
+
 ## [0.17.5] - 2026-10-30
 
 ### ➕ Added
