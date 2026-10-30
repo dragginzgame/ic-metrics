@@ -10,15 +10,16 @@ description.workspace = true
 readme = "README.md"
 publish = ["crates-io"]
 
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
-ic-wire.workspace = true
-
 [package.metadata.docs.rs]
 all-features = true
 
 [features]
-default = []
+default = ["native-wire"]
+native-wire = ["dep:ic-wire"]
 recording = []
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ic-wire = { workspace = true, optional = true }
 
 [dependencies]
 serde.workspace = true

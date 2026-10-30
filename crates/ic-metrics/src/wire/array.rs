@@ -53,7 +53,7 @@ impl<'de, T: Deserialize<'de> + Copy + Default, const N: usize> Deserialize<'de>
     }
 }
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(feature = "native-wire", not(target_family = "wasm")))]
 impl<T: ic_wire::typescript::Wire, const N: usize> ic_wire::typescript::Wire for FixedArray<T, N> {
     fn native_schema(
         context: &mut ic_wire::typescript::SchemaContext,

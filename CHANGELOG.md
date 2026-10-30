@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.19.0] - Unreleased
+
+### ⚠️ Breaking
+
+- Native Wire metadata now uses the default-enabled `native-wire` feature.
+  Callers disabling defaults must explicitly select it when generating schemas;
+  arithmetic and validated Serde transport remain available without Wire.
+  [Migration](docs/migration-019.md).
+  [#101 — Allow native arithmetic consumers to exclude Wire metadata dependencies](https://github.com/dragginzgame/ic-observability/issues/101).
+
 ## [0.18.0] - 2026-10-30
 
 ### ⚠️ Breaking

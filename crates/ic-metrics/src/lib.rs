@@ -5,7 +5,8 @@
 //! not read platform counters or manufacture measurements. The library is
 //! `no_std` on every target. Measurement arithmetic needs no allocator;
 //! the opt-in `recording` feature uses `alloc` for bounded keyed retention.
-//! Validated aggregate/counter transport and native Wire metadata are always available.
+//! Validated Serde transport is always available. Default `native-wire` adds native
+//! Wire metadata; disable defaults for arithmetic without that dependency.
 
 #![doc = include_str!("application.md")]
 #![no_std]

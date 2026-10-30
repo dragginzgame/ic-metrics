@@ -32,8 +32,12 @@ reset_case() {
     cp "$root/rust-toolchain.toml" "$fixture/workspace/"
     for name in ic-testkit ic-stable-structures ordinary serde ic-wire; do package "$name"; done
     cat >> "$fixture/workspace/crates/ic-metrics/Cargo.toml" <<'TRANSPORT'
+[features]
+default = ["native-wire"]
+native-wire = ["dep:ic-wire"]
+recording = []
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-ic-wire = { path = "../../../vendor/ic-wire", default-features = false, features = ["typescript"] }
+ic-wire = { path = "../../../vendor/ic-wire", optional = true, default-features = false, features = ["typescript"] }
 [dependencies]
 serde = { path = "../../../vendor/serde", default-features = false, features = ["derive"] }
 TRANSPORT
@@ -63,12 +67,14 @@ check_case development-package pass
 reset_case
 check_case standard-transport pass
 cp "$fixture/workspace/crates/ic-metrics/Cargo.toml" "$fixture/standard-manifest"
-sed 's/default-features = false/optional = true, default-features = false/g' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case optional-transport 'transport dependency must be required without defaults'
+sed 's/^serde = { /serde = { optional = true, /' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case optional-serde 'transport dependency has unapproved optionality or defaults'
+sed 's/optional = true/optional = false/; s/native-wire = .*/native-wire = []/' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case required-wire 'native-wire must select only the optional Wire dependency'
 sed 's/default-features = false/default-features = true/g' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case transport-default-features 'transport dependency must be required without defaults'
-sed '/^ic-wire = /d' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
-check_case missing-transport 'missing standard transport dependency'
+check_case transport-default-features 'transport dependency has unapproved optionality or defaults'
+sed '/^ic-wire = /d; s/native-wire = .*/native-wire = []/' "$fixture/standard-manifest" > "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case missing-transport 'native-wire must select only the optional Wire dependency'
 
 # Admit the actual target/feature contract, not merely dependency package names.
 for placement in unconditional wasm narrower serde-target; do
@@ -76,7 +82,7 @@ for placement in unconditional wasm narrower serde-target; do
     case "$placement" in
         unconditional)
             sed '/^\[target\./d; /^ic-wire = /d' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate"
-            printf 'ic-wire = { path = "../../../vendor/ic-wire", default-features = false, features = ["typescript"] }\n' >> "$fixture/candidate" ;;
+            printf '\n[dependencies.ic-wire]\npath = "../../../vendor/ic-wire"\noptional = true\ndefault-features = false\nfeatures = ["typescript"]\n' >> "$fixture/candidate" ;;
         wasm)
             sed 's/not(target_family = "wasm")/target_family = "wasm"/' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate" ;;
         narrower)
@@ -102,12 +108,19 @@ for selection in serde:derive ic-wire:typescript; do
 done
 for edge in serde/std ic-wire/alloc; do
     reset_case
-    printf '\n[features]\nrecording = ["%s"]\n' "$edge" >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+    sed "s|recording = \[\]|recording = [\"$edge\"]|" "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate"
+    mv "$fixture/candidate" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
     check_case "forward-${edge%/*}" 'ic-metrics forwards dependency features'
 done
 reset_case
-printf '\n[features]\nrecording = []\ncombined = ["recording"]\n' >> "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+awk '{ print } /^recording =/ { print "combined = [\"recording\"]" }' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate"
+mv "$fixture/candidate" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
 check_case local-feature-composition pass
+
+reset_case
+sed 's/default = \["native-wire"\]/default = []/' "$fixture/workspace/crates/ic-metrics/Cargo.toml" > "$fixture/candidate"
+mv "$fixture/candidate" "$fixture/workspace/crates/ic-metrics/Cargo.toml"
+check_case default-metadata 'ic-metrics has unapproved default features'
 
 add_declaration() {
     local owner="$1" selection="$2" table=dependencies extra=''

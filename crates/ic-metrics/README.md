@@ -9,7 +9,9 @@ the consuming application owns platform reads, attribution, lifecycle and endpoi
 
 IC Tooling owns Host, Build and Testkit. Those packages support development and
 qualification outside Metrics' production graphs. Numeric transport uses Serde
-and native-only IC Wire metadata. IC Persistence's optional stable package consumes Memory and Storage;
+and default-enabled native-only IC Wire metadata. Select `default-features = false`
+for arithmetic and Serde without Wire, or explicitly select `native-wire` for native
+metadata generation. IC Persistence's optional stable package consumes Memory and Storage;
 their stable-structures dependency is supplied through IC Platform. Metrics
 does not read platform counters or depend on Canic.
 

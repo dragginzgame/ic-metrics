@@ -35,8 +35,8 @@ ref($metadata) eq 'HASH' && ($metadata->{version} // 0) == 1
 my %members = map { $_ => 1 } @{$metadata->{workspace_members}};
 my %owners = ('ic-metrics' => 'measurement', 'ic-logging' => 'logging');
 my %transport_policy = (
-    serde => { target => undef, features => ['derive'] },
-    'ic-wire' => { target => 'cfg(not(target_family = "wasm"))', features => ['typescript'] },
+    serde => { target => undef, features => ['derive'], optional => 0 },
+    'ic-wire' => { target => 'cfg(not(target_family = "wasm"))', features => ['typescript'], optional => 1 },
 );
 my %packages;
 my %observed_members;
@@ -48,7 +48,14 @@ for my $package (@{$metadata->{packages}}) {
     ref($package->{dependencies}) eq 'ARRAY' or die "missing declared dependencies\n";
     my $features = $package->{features};
     ref($features) eq 'HASH' or die "missing declared features\n";
-    !@{$features->{default} // []} or die "$name enables default features\n";
+    my @defaults = $owners{$name} eq 'measurement' ? ('native-wire') : ();
+    join("\0", @{$features->{default} // []}) eq join("\0", @defaults)
+        or die "$name has unapproved default features\n";
+    if ($owners{$name} eq 'measurement') {
+        ref($features->{'native-wire'}) eq 'ARRAY'
+            && join("\0", @{$features->{'native-wire'}}) eq 'dep:ic-wire'
+            or die "native-wire must select only the optional Wire dependency\n";
+    }
     my %transport;
     for my $dependency (@{$package->{dependencies}}) {
         # Metadata includes inactive optional and target-specific declarations.
@@ -58,11 +65,11 @@ for my $package (@{$metadata->{packages}}) {
                 or die "$name declares a production dependency: $dep\n";
             ($dep eq 'serde' || $dep eq 'ic-wire')
                 or die "$name declares a production dependency: $dep\n";
-            !$dependency->{optional} && !$dependency->{uses_default_features}
-                && ($dependency->{kind} // 'normal') eq 'normal'
-                or die "transport dependency must be required without defaults\n";
-            !$transport{$dep}++ or die "duplicate transport declaration\n";
             my $policy = $transport_policy{$dep};
+            !!$dependency->{optional} == $policy->{optional} && !$dependency->{uses_default_features}
+                && ($dependency->{kind} // 'normal') eq 'normal'
+                or die "transport dependency has unapproved optionality or defaults\n";
+            !$transport{$dep}++ or die "duplicate transport declaration\n";
             ($dependency->{target} // '') eq ($policy->{target} // '')
                 or die "$dep has an unapproved target placement\n";
             ref($dependency->{features}) eq 'ARRAY'
@@ -74,9 +81,11 @@ for my $package (@{$metadata->{packages}}) {
             or die "$name directly depends on the stable substrate\n";
     }
     # Local switches may compose one another, never widen dependency features.
-    for my $edges (values %$features) {
+    for my $feature (keys %$features) {
+        my $edges = $features->{$feature};
         ref($edges) eq 'ARRAY' or die "invalid declared features\n";
         for my $edge (@$edges) {
+            next if $owners{$name} eq 'measurement' && $feature eq 'native-wire' && $edge eq 'dep:ic-wire';
             defined($edge) && !ref($edge) && exists($features->{$edge})
                 or die "$name forwards dependency features\n";
         }

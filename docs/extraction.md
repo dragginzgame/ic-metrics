@@ -48,7 +48,8 @@ receipts preserve the supplying packages and repository identities they measured
 | `MeasurementCounter` | Scalar wide total and actual-overflow flag; checked totals and numeric deltas, without observation statistics. Optional stable checkpoints retain only its scalar state. |
 
 Aggregates, counters, summaries and fixed-bound histograms implement standard
-Serde transport with native IC Wire metadata. Decoding uses their canonical
+Serde transport with default-enabled `native-wire` metadata. Disabling defaults
+omits the native Wire dependency while retaining Serde and arithmetic. Decoding uses their canonical
 arithmetic admission; const histogram bounds fix array lengths without dynamic
 collections. Consumer codec limits and report schema adoption remain explicit.
 These report contracts are separate from Persistence's durable record layouts.

@@ -338,12 +338,12 @@ live alongside the table in a consumer-defined struct inside the same window.
 ### Numeric transport
 
 Embed aggregates, counters, summaries and fixed-bound histograms directly in Serde/IC Wire
-reports. Transport is standard: no Metrics feature selection is needed. Serde
-is available on native and Wasm targets, with Wire TypeScript metadata on native
+reports. Serde is always available on native and Wasm targets. Default-enabled
+`native-wire` adds Wire TypeScript metadata on native
 hosts. Measurement arithmetic remains allocation-free; heap recording is opt-in.
 
 ```rust
-# #[cfg(not(target_family = "wasm"))]
+# #[cfg(all(feature = "native-wire", not(target_family = "wasm")))]
 # {
 #[derive(serde::Serialize, serde::Deserialize, ic_wire::Wire)]
 struct OwnerReport {
