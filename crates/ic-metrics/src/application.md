@@ -341,10 +341,10 @@ Embed aggregates, counters, summaries and fixed-bound histograms directly in Ser
 reports. Transport is standard: no Metrics feature selection is needed. Serde
 is available on native and Wasm targets, with Wire TypeScript metadata on native
 hosts. Measurement arithmetic remains allocation-free; heap recording is opt-in.
-The pending 0.19 contract implements Wire 0.8's native metadata trait. Applications
+The pending 0.20 contract implements Wire 0.10's native metadata trait. Applications
 deriving Wire for reports containing Metrics values must select that same Wire
-line; Wire 0.7's trait cannot describe Wire 0.8 implementations. Serde record
-layouts remain unchanged. See the [native metadata migration guide](https://github.com/dragginzgame/ic-observability/blob/main/docs/migration-019.md).
+line; earlier Wire traits cannot describe Wire 0.10 implementations. Serde record
+layouts remain unchanged. See the [native metadata migration guide](https://github.com/dragginzgame/ic-observability/blob/main/docs/migration-020.md).
 
 ```rust
 # #[cfg(not(target_family = "wasm"))]

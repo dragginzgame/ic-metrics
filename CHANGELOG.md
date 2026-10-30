@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.20.0]
+
+### ⚠️ Breaking
+
+- Adopt IC Wire 0.10.0 for Metrics' native metadata. Consumers deriving Wire or
+  generating schemas for reports containing Metrics values must align their
+  direct Wire dependency to 0.10. Numeric layouts, arithmetic and Logging behavior
+  are unchanged. Endpoint applications separately coordinate Platform 0.11;
+  this workspace enables no endpoint runtime. See the
+  [native metadata migration guide](docs/migration-020.md).
+
 ## [0.19.0] - 2026-10-30
 
 ### ⚠️ Breaking
