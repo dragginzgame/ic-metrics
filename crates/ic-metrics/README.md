@@ -238,11 +238,12 @@ make publish-check
 make publish
 ```
 
-`publish-check` is Cargo's dry run; `publish` uploads only the existing
-`ic-metrics` package version to crates.io, using normal Cargo credentials and
-locked dependencies. Both retain Cargo's package verification and dirty-tree
-rejection. Publication does not bump versions, create Git commits/tags or clean
-artifacts. See [Cargo's publication documentation](https://doc.rust-lang.org/cargo/commands/cargo-publish.html).
+Both commands select Metrics and Logging by default. Use `PACKAGE=ic-metrics`
+or `PACKAGE=ic-logging` to select one. The workspace's
+[publication guide](https://github.com/dragginzgame/ic-observability/blob/main/README.md#release-and-package-publication)
+owns the shared adapter, validation, retained evidence and partial-publication
+reconciliation procedure. Publication uses existing versions and normal Cargo
+credentials; it does not bump versions, create Git commits/tags or clean artifacts.
 
 ## Optional bounded recording
 

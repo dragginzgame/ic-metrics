@@ -31,6 +31,11 @@ cp "$root/Makefile" "$fixture/Makefile"
 mkdir -p "$fixture/ci"
 cp "$root/ci/release-delivery.txt" "$fixture/ci/"
 cp "$root/scripts/ci/check-msrv.sh" "$root/scripts/ci/read-cargo-workspace-rust-version.sh" "$fixture/scripts/ci/"
+cat > "$fixture/scripts/ci/check-allocation-free.sh" <<'ALLOCATOR'
+set -euo pipefail
+if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then perl "$JOBSERVER_PROBE"; fi
+printf 'allocation-free-link\n' >> "$EVENTS"
+ALLOCATOR
 real_bash="$(command -v bash)"
 export STANDARD_RELEASE_REAL_BASH="$real_bash"
 export EVENTS="$fixture/events"
@@ -172,18 +177,44 @@ set -euo pipefail
 if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then
     perl "$JOBSERVER_PROBE"
 fi
+if [[ "$*" == 'metadata --no-deps --locked --offline --format-version 1' ]]; then
+    cat "${EVENTS%/*}/publication-metadata.json"
+    exit 0
+fi
 printf '%s\n' "$@" >> "$EVENTS"
 case "$1:${CLIPPY_FAILURE:-}" in
     clippy:native) exit 37 ;;
     clippy:wasm) [[ "$*" != *' --target wasm32-unknown-unknown '* ]] || exit 37 ;;
 esac
 [[ "$1" != package || "${FAIL_PACKAGE:-0}" == 0 ]] || exit 38
-[[ "$1" != publish || "${FAIL_PUBLISH:-0}" == 0 ]] || exit 1
 CARGO
 chmod +x "$fixture/bin/cargo"
+STANDARD_RELEASE_REAL_GIT="$(command -v git)"
+export STANDARD_RELEASE_REAL_GIT
+install_publication_boundary() {
+    printf '#!%s\n' "$real_bash" > "$fixture/bin/git"
+    cat >> "$fixture/bin/git" <<'GIT'
+if [[ "$*" == 'rev-parse --verify HEAD' ]]; then printf '%040d\n' 1;
+else exec "$STANDARD_RELEASE_REAL_GIT" "$@"; fi
+GIT
+    printf '#!%s\n' "$real_bash" > "$fixture/bin/bash"
+    cat >> "$fixture/bin/bash" <<'BASH'
+set -euo pipefail
+case "${1:-}" in
+    */scripts/ci/run-cargo-publication.sh)
+        # The producer owns upload/status/recovery mechanics. Check only this
+        # consumer's admitted selection and validation hook before delegation.
+        if [[ "${REQUIRE_JOBSERVER:-0}" == 1 ]]; then perl "$JOBSERVER_PROBE"; fi
+        printf '%s\n' publication "$2" "$5" "${@:6}" >> "$EVENTS"
+        exit 0 ;;
+    *) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
+esac
+BASH
+    chmod +x "$fixture/bin/git" "$fixture/bin/bash"
+}
 printf '#!%s\nexit 0\n' "$real_bash" > "$fixture/bin/rustc"
 chmod +x "$fixture/bin/rustc"
-cargo_targets=(package-check publish publish-check check check-wasm clippy docs-check test msrv)
+cargo_targets=(package-check publish publish-check check check-wasm clippy docs-check test msrv allocation-free-check)
 metadata_targets=(release-preflight release-prepare-version release-commit-check release-prepared-check release-committed-check release-tagged-check release-push-check)
 cp "$fixture/mode-bash" "$fixture/bin/bash"
 # Shared Tooling owns flag aliases and inheritance permutations. Keep all actual
@@ -193,6 +224,10 @@ PATH="$fixture/bin:$PATH" make_probe_target_admission "$real_make" "$root/Makefi
     "${cargo_targets[@]}" "${metadata_targets[@]}"
 rm "$fixture/bin/bash"
 
+cat > "$fixture/publication-metadata.json" <<'JSON'
+{"version":1,"workspace_members":["metrics","logging"],"packages":[{"id":"metrics","name":"ic-metrics","version":"0.1.0","source":null,"publish":null},{"id":"logging","name":"ic-logging","version":"0.1.0","source":null,"publish":null}]}
+JSON
+install_publication_boundary
 # The real consumer Makefile must leave both pipe descriptors open at every
 # owned Cargo boundary. Cargo effects are substituted; Make admission is real.
 PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 MSRV=prepared-fixture \
@@ -246,7 +281,7 @@ for fail in 0 1; do
     if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" == 2 ]] || exit 1; fi
     printf '%s\n' shared-tooling-check check-doc-links evidence-check tools-check check-pins fmt-check clippy > "$fixture/expected"
     if [[ "$fail" == 0 ]]; then
-        printf '%s\n' production-dependencies-check ci-evidence-check release-tools-check docs-check test package-check >> "$fixture/expected"
+        printf '%s\n' production-dependencies-check allocation-free-check ci-evidence-check release-tools-check docs-check test package-check >> "$fixture/expected"
     fi
     cmp "$fixture/expected" "$EVENTS"
 done
@@ -284,30 +319,30 @@ write_expected_lints() {
     esac
 }
 
-for selection in default ic-metrics ic-logging; do
-    cargo_packages=(-p ic-metrics -p ic-logging)
+# Shared owns selection/error permutations and actual Cargo dispatch. Retain
+# this consumer's two-package roster, one override and both exact lint boundaries.
+install_publication_boundary
+for selection in default ic-logging; do
+    selectors=(--package ic-metrics@0.1.0 --package ic-logging@0.1.0)
     package_args=()
     if [[ "$selection" != default ]]; then
-        cargo_packages=(-p "$selection")
+        selectors=(--package ic-logging@0.1.0)
         package_args=("PACKAGE=$selection")
     fi
     for target in publish publish-check; do
-        for fail in 0 1; do
-            : > "$EVENTS"
-            status=0
-            PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
-                -f "$root/Makefile" "$target" ${package_args[@]+"${package_args[@]}"} > "$fixture/output" 2>&1 || status=$?
-            if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
-            write_expected_lints "$fixture/expected" wasm
-            printf '%s\n' publish "${cargo_packages[@]}" --locked --registry crates-io >> "$fixture/expected"
-            if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
-            if [[ "$assertion_fault" == 1 ]]; then
-                echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
-                printf 'injected mismatched expectation\n' >> "$fixture/expected"
-                shasum -a 256 expected events output bin/cargo > retention-inputs.sha256
-            fi
-            cmp "$fixture/expected" "$EVENTS"
-        done
+        : > "$EVENTS"
+        PATH="$fixture/bin:$PATH" "$real_make" --no-print-directory \
+            -f "$root/Makefile" "$target" ${package_args[@]+"${package_args[@]}"} > "$fixture/output" 2>&1
+        write_expected_lints "$fixture/expected" wasm
+        mode=publish
+        [[ "$target" != publish-check ]] || mode=check
+        printf '%s\n' publication "$mode" crates-io "${selectors[@]}" >> "$fixture/expected"
+        if [[ "$assertion_fault" == 1 ]]; then
+            echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
+            printf 'injected mismatched expectation\n' >> "$fixture/expected"
+            shasum -a 256 expected events output bin/cargo bin/bash bin/git publication-metadata.json > retention-inputs.sha256
+        fi
+        cmp "$fixture/expected" "$EVENTS"
         for failure in native wasm; do
             : > "$EVENTS"
             status=0
@@ -319,5 +354,6 @@ for selection in default ic-metrics ic-logging; do
         done
     done
 done
+
 echo 'release and publication Make adapters passed (command stubs; no Git or registry effects)'
 fixture_complete=true

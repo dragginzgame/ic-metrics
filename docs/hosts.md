@@ -135,6 +135,7 @@ libraries; select direct Cargo commands when only one package or test is affecte
 | Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
 | Logging | `cargo test -p ic-logging --lib --locked`; `cargo test -p ic-logging --doc --locked`; `cargo clippy -p ic-logging --lib --tests --examples --locked -- -D warnings` |
 | Standard numeric transport | `cargo test -p ic-metrics --lib --no-default-features --locked wire::tests`; transport and metadata require no Metrics feature selection |
+| Allocator-free arithmetic link | `make allocation-free-check`; minimum compiler only: `bash scripts/ci/check-allocation-free.sh 1.91.0` |
 | Recording library checks | `cargo check -p ic-metrics --lib --features recording --locked`; Wasm: `cargo check -p ic-metrics --lib --features recording --locked --target wasm32-unknown-unknown`; lint: `cargo clippy -p ic-metrics --lib --tests --features recording --locked -- -D warnings` |
 | Recording tests and examples | `cargo test -p ic-metrics --lib --features recording --locked <test-name>`; doctests: `cargo test -p ic-metrics --doc --features recording --locked` |
 | Snapshot/pins | `make shared-tooling-check check-pins` |
@@ -147,6 +148,13 @@ Default-feature commands above cover allocation-free arithmetic. Recording is
 opt-in: include `--features recording` when selecting its tests, checks or examples.
 A recording test-name filter without that feature can succeed with zero selected
 tests; confirm that the intended cases actually ran.
+
+`make allocation-free-check` links the runtime-input arithmetic example for
+`wasm32-unknown-unknown`, with no standard library or global allocator. Linker
+exports and dead-code retention keep the exercised arithmetic in the executable.
+The check uses locked offline dependencies and this repository's `target/`;
+CI runs it on the pinned compiler, and the MSRV adapter repeats it on its selected
+minimum compiler. This is a link-contract check, not an IC cost measurement.
 
 The release MSRV gate checks all native targets, including tests and development
 dependencies, at Rust 1.91; its Wasm check covers libraries. Public doctests
@@ -264,15 +272,20 @@ bind the selected release commit rather than newer working-tree metadata.
 Late metadata checks use Shared's `--manifest-order-grouped` option to check ordering
 in that same selected source; literal version preparation never sorts it.
 Neither validation nor release performs artifact cleanup.
-Both `make publish` and `make publish-check` run the same native/Wasm Clippy
-gate before Cargo packaging or registry effects. Sequential recipes stop on lint
-failure even under parallel Make; publication remains separately authorized.
+The [shared publication Make adapter](cargo-publication.md#opt-in-make-adapter)
+owns `make publish` and `make publish-check`. This consumer declares the Metrics/
+Logging roster, `crates-io` registry and `clippy` validation target before its
+common include. The same native/Wasm Clippy gate runs before Cargo packaging or
+registry effects, including under parallel Make. Publication remains separately
+authorized; selection and attempt evidence stays under `target/publication`.
 Both commands select Metrics and Logging by default. Select `PACKAGE=ic-metrics`
 or `PACKAGE=ic-logging` for a single package, including completion of a partial
 publication after observing registry state. Workspace release tags
 coordinate versions without uploading either package. The standard-release
-fixture checks default and explicit selection for both packages, publication
-failure and both lint-failure boundaries using substituted Cargo effects.
+fixture checks the declared default roster, one explicit Logging override and
+both exact lint-failure boundaries before delegation. Shared Tooling owns generic
+selection, metadata, upload-status and retained-attempt fixtures. Local effects
+are substituted and do not publish packages.
 
 ## Native evidence
 

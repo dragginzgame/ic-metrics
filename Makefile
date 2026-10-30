@@ -8,6 +8,9 @@ LOCAL_TOOL_INSTALL_TARGETS := install-release-editor
 LOCAL_TOOL_CHECK_TARGETS := release-editor-check
 # Normal setup needs host/Cargo tools only; optional IC tools are selected explicitly.
 IC_TOOLS :=
+CARGO_PUBLISH_PACKAGES := ic-metrics ic-logging
+CARGO_PUBLISH_REGISTRY := crates-io
+CARGO_PUBLISH_VERIFY_TARGETS := clippy
 
 # These frozen manifests use archive-directory paths; retain their original bytes.
 # All other maintained checksum manifests use repository-root paths.
@@ -53,9 +56,10 @@ release-prepared-check release-committed-check release-tagged-check release-push
 release-files:
 	@bash scripts/release/metadata.sh files
 
-.PHONY: help publish publish-check install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
+.PHONY: help install-hooks hook-check check check-wasm clippy docs-check check-doc-links test msrv shared-tooling-check check-pins release-tools-check ci
 .PHONY: ci-evidence-check evidence-check
 .PHONY: production-dependencies-check
+.PHONY: allocation-free-check
 .PHONY: install-release-editor release-editor-check
 
 install-release-editor:
@@ -77,6 +81,7 @@ help:
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, shared-tooling-check, check-pins"
 	@echo "Dependency declarations and boundary fixtures: production-dependencies-check"
+	@echo "Link Metrics arithmetic without an allocator: allocation-free-check"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Frozen evidence archive checksums (read-only): evidence-check"
@@ -86,21 +91,11 @@ help:
 	@echo "Workspace gates cover Metrics and Logging; native/Wasm minimum: msrv"
 	@echo "Full release validation (or explicit check request): ci, msrv"
 
-publish publish-check: PACKAGE = ic-metrics ic-logging
-
-publish:
-	+$(MAKE) --no-print-directory clippy
-	+cargo publish $(foreach package,$(PACKAGE),-p $(package)) --locked --registry crates-io
-
 .PHONY: package-check
 
 # Verify both workspace archives offline. No registry upload or version mutation.
 package-check:
 	+cargo package --workspace --all-features --locked --offline --allow-dirty
-
-publish-check:
-	+$(MAKE) --no-print-directory clippy
-	+cargo publish $(foreach package,$(PACKAGE),-p $(package)) --locked --registry crates-io --dry-run
 
 hook-check:
 	bash scripts/dev/test-format-hook.sh
@@ -150,6 +145,9 @@ production-dependencies-check:
 	perl scripts/ci/check-production-dependencies.pl
 	bash scripts/ci/test-production-dependencies.sh
 
+allocation-free-check:
+	+bash scripts/ci/check-allocation-free.sh
+
 # Retention runs the full release and hook fixtures, plus failure/custody cases.
 release-tools-check:
 	bash scripts/release/test-fixture-retention.sh
@@ -165,6 +163,7 @@ ci:
 	+$(MAKE) --no-print-directory fmt-check
 	+$(MAKE) --no-print-directory clippy
 	+$(MAKE) --no-print-directory production-dependencies-check
+	+$(MAKE) --no-print-directory allocation-free-check
 	+$(MAKE) --no-print-directory ci-evidence-check
 	+$(MAKE) --no-print-directory release-tools-check
 	+$(MAKE) --no-print-directory docs-check

@@ -1,6 +1,8 @@
 use super::*;
 use alloc::format;
 
+mod mixed;
+
 fn positive(value: usize) -> NonZeroUsize {
     NonZeroUsize::new(value).expect("positive fixture value")
 }

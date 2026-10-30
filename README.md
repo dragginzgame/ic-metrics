@@ -41,6 +41,12 @@ Use `PACKAGE=ic-metrics` or `PACKAGE=ic-logging` to select only that package,
 including when completing a partial publication after checking registry state.
 Each command runs the native/Wasm Clippy gate before Cargo publication. Neither
 package depends on the other, so there is no publication-order dependency.
+Shared Tooling owns package-selection mechanics and dispatch. This repository
+declares only its two eligible packages, registry and validation target in the
+Makefile. Exact versions come from locked offline workspace metadata; undeclared
+packages are refused. Selection and attempt evidence is retained under
+`target/publication`, including failed commands. Reconcile that evidence and the
+registry before selecting another upload after a failure.
 Consumers needing a new Logging API must select a version actually available in
 the registry; a merged PR or workspace release tag alone does not supply it.
 

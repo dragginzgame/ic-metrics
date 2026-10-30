@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.17.7]
+
+### 🧪 Testing
+
+- Link a runtime-input Metrics arithmetic consumer as Wasm without supplying an
+  allocator, on the pinned and minimum compilers. Compare mixed Logging append,
+  refusal, retention, paging and checkpoint operations with an independent
+  event-history model, including sequence exhaustion and UTF-8 limits.
+
+### 📚 Documentation
+
+- Align the package publication instructions with the two-package default and
+  record the consuming Logging checkpoint accessor as released in 0.17.5.
+
+### 🧹 Cleanup
+
+- Delegate package selection and upload/dry-run dispatch to Shared Tooling's
+  retained publication adapter. Keep the local package roster, registry and
+  native/Wasm lint gate declarative, with consumer tests focused on their wiring.
+  Both packages remain selected by default; `PACKAGE=` selects a declared subset.
+
 ## [0.17.6] - 2026-10-30
 
 ### 🩹 Fixed

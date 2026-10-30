@@ -13,9 +13,9 @@ rows rather than copying the complete history or computing an exact match total.
 
 `Log::snapshot()` copies a complete checkpoint while retaining the original log.
 `Log::into_snapshot()` consumes the log and moves its owned text into that same
-checkpoint representation. The consuming accessor is merged in
+checkpoint representation. The consuming accessor was introduced in
 [PR #100 — Add consuming Logging checkpoint accessor](https://github.com/dragginzgame/ic-observability/pull/100)
-and is included in the pending 0.17.5 notes. Consumers must select a published
+and included in release 0.17.5. Consumers must select a published
 Logging version containing that API before adopting it in their registry graph.
 
 `Log::restore()` independently admits fixed bounds, contiguous sequence order,
