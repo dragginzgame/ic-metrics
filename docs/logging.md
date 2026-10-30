@@ -1,56 +1,61 @@
-# Logging extraction boundary
+# Logging ownership and consumer boundary
 
-The maintainer selected Logging as a separate crate in the renamed
-IC Observability workspace on 2026-10-29, consolidating it with Metrics rather
-than creating another workspace. The initial non-Canic engine is usable before
-replacing Canic's logger.
+IC Observability owns the independent `ic-logging` heap engine alongside Metrics.
+Both packages share workspace release metadata; neither depends on the other.
+Logging remains dependency-free `no_std` + `alloc`.
 
-Inspected Canic HEAD: `b9ed7f298bdaf8c9cceac142edf7e56b15d33208`, with unrelated
-working changes preserved. Source references:
+## Heap engine and checkpoints
 
-- `crates/canic-core/src/storage/stable/log.rs`: bounded entries, strict retention and UTF-8 truncation.
-- `crates/canic-core/src/ops/runtime/log.rs`: source/topic/severity filtering and paging.
-- `crates/canic-core/src/workflow/runtime/log.rs`: caller-owned time and age deadlines.
-- `crates/canic-contracts/src/log/mod.rs`: severity ordering.
+Logging owns bounded append admission, UTF-8 truncation, explicit age-retention
+batches and scan-bounded cursor pages. Callers supply time and choose limits,
+labels, authorization, scheduling and instance identity. Paging borrows retained
+rows rather than copying the complete history or computing an exact match total.
 
-The dependency-free `no_std` + `alloc` engine owns retention and paging mechanics. It retains the strict age
-boundary and message truncation suffix. Labels are plain bounded strings; Canic
-topics and role labels remain application policy. Paging uses explicit scan
-bounds and sequence cursors rather than copying the whole retained history.
-Sequence and timestamp watermarks remain after all rows expire. Validated
-`LogSnapshot` restoration preserves those watermarks and admits bounds, contiguous
-sequence order, nondecreasing time and consistent truncated messages. This passive
-checkpoint is not a codec, instance identity or authenticity proof. No old stable
-format is imported or migrated.
+`Log::snapshot()` copies a complete checkpoint while retaining the original log.
+`Log::into_snapshot()` consumes the log and moves its owned text into that same
+checkpoint representation. The consuming accessor is merged in
+[PR #100 — Add consuming Logging checkpoint accessor](https://github.com/dragginzgame/ic-observability/pull/100)
+and is included in the pending 0.17.5 notes. Consumers must select a published
+Logging version containing that API before adopting it in their registry graph.
 
-Canic continues to own its current logger, configuration, endpoint authorization,
-topic roster, rendering, memory declarations and retention timer. There is no
-Canic dependency, Metrics dependency or local Cargo override in Logging.
+`Log::restore()` independently admits fixed bounds, contiguous sequence order,
+nondecreasing timestamps, watermarks and consistent truncated messages. Empty
+retained history preserves sequence/time watermarks and permanent exhaustion.
+A checkpoint is passive state, not a byte format, authenticity proof or globally
+unique instance identity. Decoders must bound allocation before constructing it.
+No prior stable format is imported or migrated by the heap engine.
 
-The maintainer selected a separate stable option on 2026-10-29, following Metrics'
-checkpoint model. IC Persistence owns `ic-logging-stable`, its bounded durable
-encoding, checked Memory/Storage map integration and reopen qualification. Hosts
-explicitly load a log, use this engine's append/prune/page operations and save a
-checkpoint at their chosen boundary. Neither package installs a clock, timer,
-endpoint, lifecycle or global recorder. The Logging crate stays dependency-free.
-The separate Persistence candidate is
-[#138 — Qualify stable Logging rollback and upgrade behavior](https://github.com/dragginzgame/ic-persistence/pull/138).
-It selects published Logging 0.17.2. Focused native/Wasm checks and an installed
-original-Wasm probe pass for query non-persistence, update/upgrade rollback and
-reopen with empty-history watermarks. The adapter remains unpublished pending
-Persistence review/release. The PR's hosted runtime jobs also pass original/O3/Os/Oz
-on Linux and both macOS architectures. These checks do not establish installed
-Canic or application acceptance or cost measurements.
+## Durable adapter
 
-The maintainer subsequently selected publication preparation in
-[#139 — Enable coordinated publication of IC Logging Stable](https://github.com/dragginzgame/ic-persistence/pull/139),
-stacked on #138. It adds the fourth archive/receipt digest, extracted-package
-consumer qualification and dependency-ordered publication. It performs no release
-or registry upload; the heap Logging package gains no storage dependency.
+IC Persistence owns the independently selected `ic-logging-stable` package,
+its bounded IC Wire codec, governed Memory/Storage map, continuity checks and
+installed qualification. Hosts load a log, use the heap engine's append/prune/page
+operations and save at explicit checkpoint boundaries. Neither package installs
+a clock, timer, endpoint, lifecycle hook or global recorder.
 
-Before Canic adoption, qualify that storage boundary using IC Memory/Storage, define
-bounded serialization/Wire projections if required, and qualify actual Canic
-update/query/trap and same-release restoration behavior. Delete replaced Canic
-mechanisms as one coherent adoption; do not leave two authoritative log engines.
-An independent native example demonstrates framework independence only, not IC
-message rollback, persistence or production application acceptance.
+The adapter qualification and publication integration are merged:
+[PR #138 — Qualify stable Logging rollback and upgrade behavior](https://github.com/dragginzgame/ic-persistence/pull/138)
+and [PR #139 — Enable coordinated publication of IC Logging Stable](https://github.com/dragginzgame/ic-persistence/pull/139).
+The [adapter guide](https://github.com/dragginzgame/ic-persistence/tree/main/crates/ic-logging-stable)
+owns its current codec, bounds and dependency requirements. These PRs and workspace
+release tags do not by themselves establish registry availability.
+
+Original installed receipts qualify their exact source, graph and tools for
+query non-persistence, update/upgrade rollback, reopen and empty-history
+watermarks. They do not establish a later consumer's installed acceptance or IC
+costs. Consumer lifecycle, decoding, identity, retention and checkpoint cadence
+remain independently qualified contracts.
+
+## Framework composition
+
+Canic owns its configuration, topics, rendering, endpoint authorization and
+retention timer. A heap-only integration may reset logs on upgrade/reinstall;
+stable checkpoint adoption is a separate host choice with governed allocation
+and installed qualification. There must be one authoritative log engine.
+The [worker example](../crates/ic-logging/examples/worker.rs) demonstrates framework
+independence, without qualifying IC rollback or application acceptance.
+
+The [publication guide](../README.md#release-and-package-publication) distinguishes
+workspace release from explicit publication of each package. The
+[current handoff](status/current.md) records observed release/adoption state and
+source-bound qualification, rather than maintaining another version roster here.

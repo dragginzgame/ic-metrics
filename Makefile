@@ -69,7 +69,9 @@ help:
 	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Normal releases start fresh from committed metadata; exact recovery: release-resume VERSION=X.Y.Z"
-	@echo "Registry: publish-check (dry run), publish (upload arithmetic to crates.io)"
+	@echo "Registry: publish-check (dry run), publish (upload the selected package to crates.io)"
+	@echo "Select PACKAGE=ic-metrics or PACKAGE=ic-logging explicitly; the default remains ic-metrics."
+	@echo "A workspace release does not publish either package."
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Release editor (also in install-tools/tools-check): install-release-editor, release-editor-check"
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
@@ -90,7 +92,7 @@ publish:
 
 .PHONY: package-check
 
-# Verify the arithmetic archive offline. No registry upload or version mutation.
+# Verify both workspace archives offline. No registry upload or version mutation.
 package-check:
 	+cargo package --workspace --all-features --locked --offline --allow-dirty
 

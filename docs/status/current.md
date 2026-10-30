@@ -1,106 +1,87 @@
-# Current handoff — 2026-10-29
+# Current handoff — 2026-10-30
 
-Source base is `72f1e4beaa5dcc31c3ed59033aed71f3a2207726` (workspace 0.17.3).
-Shared Tooling remains reviewed 0.27.4, revision
-`83f87cca71a420a61e69b6bdd018be27d4455daf`, with unchanged payloads.
+Source base is `ce510c91037e9c4bb38b53091aacd18edeaf641e`, after merged
+[PR #100 — Add consuming Logging checkpoint accessor](https://github.com/dragginzgame/ic-observability/pull/100).
+Workspace metadata remains 0.17.4; pending compatible notes select 0.17.5.
+Shared Tooling remains reviewed 0.27.4 at
+`83f87cca71a420a61e69b6bdd018be27d4455daf`. Snapshot payloads are unchanged.
+The incoming uncommitted Wire 0.7.23 lock update is preserved and belongs to the
+maintainer; this batch changes no dependencies or release versions.
 
-## Accepted complexity cleanup
+## Accepted publication, adoption and documentation batch
 
-The maintainer authorized and committed all six candidates from the full code
-audit, with compatible pending 0.17.4 changelog notes:
+The maintainer authorized all three follow-ups from the status review:
 
-- Native CI calls an owned evidence collector. Fixtures directly exercise it
-  and check the workflow's outcome mappings and invocation. Sanitized diagnostics,
-  full recovery custody and first-error precedence remain distinct contracts.
-- Release fixture children own named assertion-failure cases and retained-input
-  checksum manifests. The parent verifies those manifests; unexpected command
-  failures and nested hook logs retain their separate probes.
-- Logging shares one private truncation-suffix policy between construction and
-  independent checkpoint validation.
-- Histogram restoration separates derived distribution/range facts from final
-  admission. It stays allocation-free and const, with the same typed refusals;
-  recording, merging and quantile paths are unchanged.
-- Both package dependency fixtures share declaration construction while retaining
-  independent admission policies.
-- Minimum-compiler doctests select the workspace; existing default/native/Wasm
-  checks remain in place.
+- Make help and the README explain explicit `PACKAGE=ic-metrics` versus
+  `PACKAGE=ic-logging` publication. The default remains Metrics. Workspace release
+  metadata does not upload either crate. The actual Make fixture checks both
+  explicit selections and the default, including upload/native/Wasm lint failures.
+- Persistence's decoded temporary checkpoint uses the merged consuming accessor
+  in [draft PR #140](https://github.com/dragginzgame/ic-persistence/pull/140), head
+  `600b9600fe818f2846e6e8f335ab795ef1b26de5`. Its isolated contribution is at
+  `/tmp/ic-persistence-consuming-checkpoint-20261030`. Integration awaits a
+  registry Logging release containing the API and an admitted dependency/lock
+  update; no production path override is selected.
+- The README, host guide and Logging boundary describe current ownership and
+  separate package publication. Superseded release/PR narratives are removed
+  from this handoff; their full record remains at
+  `ce510c9:docs/status/current.md` and its linked evidence owners.
 
-Public APIs, valid checkpoint formats, dependencies, version metadata and package
-identities are unchanged. No sibling edits, staging, commit, merge, release or
-publication is selected. The maintainer committed the cleanup and separately
-updated the lock to Wire 0.7.22; the earlier code evidence below retains its
-original Wire 0.7.21 graph identity.
+No root staging, commit, version bump, release or registry upload is selected.
+The checkout was fast-forwarded to the already-authorized PR #100 merge without
+changing the incoming dirty lock. Root changes remain reviewable working files.
 
-## Release-heading correction
+## Publication and qualification state
 
-The maintainer's fresh 0.17.4 release refused during preflight because the draft
-heading was dated before preparation. No validation, version preparation or saved
-0.17.4 release attempt started. The pending correction is `## [0.17.4]`; the
-release runner owns date finalization. Package versions remain at 0.17.3.
+A registry-index observation on 2026-10-30 found Logging 0.17.1 and 0.17.2,
+with 0.17.2 the latest published entry. The 0.17.3 fixes and merged consuming API
+therefore still need explicit Logging publication. Finish the normal 0.17.5
+workspace release and separately publish each desired package before consumer
+registry adoption. Those actions retain maintainer authorization and full gates.
 
-Latest remote Shared Tooling was checked at 0.27.7,
-`11d519c604b1727a2bf6272557a97e770a63b29f`. Its changelog checker and finalizer
-are byte-identical to the adopted copies, so an update would retain this refusal.
-No snapshot refresh is selected. Evidence in `target/audits/release-heading.md1C2u/`
-reproduces the old refusal, admits the corrected draft and proves preparation
-recreates the original dated document without changing its notes or history.
-Commit the correction before retrying the fresh release; no release was run here.
+Root focused evidence is `target/audits/publication-adoption.aTJkdS/`:
+standard-release dispatch, failure-retention fixtures, selected ShellCheck,
+shell syntax and documentation links pass. Cargo/registry effects are substituted.
+No broad local CI/MSRV or real publication ran for this batch.
 
-## Current validation
+Persistence candidate evidence is under its isolated checkout's
+`target/qualification/consuming-checkpoint/`: nine adapter tests and two doctests
+on Rust 1.91, strict native/Wasm Clippy and Rust 1.91 Wasm compilation pass using
+the merged accessor source. The registry-only check explicitly fails with E0599
+on Logging 0.17.2. The candidate config/lock are retained as evidence, excluded
+from the PR; canonical manifests and both tracked locks remain unchanged. Update
+the actual published minimum and lock before repeating checks and marking ready.
 
-Evidence is `target/audits/complexity-cleanup.U2Fhfb/`. Formatting, shell syntax,
-selected ShellCheck and strict package Clippy pass. Focused tests pass: 27 Metrics
-histogram tests (including independent restoration oracles, const evaluation and
-error priority), 19 Logging tests and its two doctests, all 17 workspace doctests
-on Rust 1.91, and both libraries' all-feature Rust 1.91 Wasm compilation.
-Native-evidence, release fixture-retention and dependency-admission fixtures pass.
-Their retained inputs are identified by the corresponding logs in that directory.
-These substituted effects do not qualify hosted CI or live release behavior.
-No full local CI/MSRV matrix, native macOS qualification or IC cost measurement ran.
+PR #100's unchanged Logging source passed its hosted Linux, Apple Silicon macOS,
+Intel macOS and MSRV checks in
+[CI run 40910884595](https://github.com/dragginzgame/ic-observability/actions/runs/40910884595).
+The consuming accessor preserves limits, ordering, owned text and watermarks.
+Earlier code evidence keeps its original source/graph identities: the fit audit
+was `target/audits/logging-fit.3ciyEJ/`, fixes were
+`target/audits/logging-fixes.obEV1R/`, and the six simplifications were
+`target/audits/complexity-cleanup.U2Fhfb/`. These are historical receipt locations,
+not new qualification or a guarantee that user-owned build cleanup retained them.
 
-The affected downstream boundaries were reviewed read-only. Numeric admission
-and consumer-owned attribution, identity, persistence and endpoints are unchanged;
-each consumer still owns new-source qualification. The
-[host guide](../hosts.md) owns maintained commands and evidence limits.
+## Consumer boundaries and follow-up owners
 
-## Logging and separate consumer work
+Logging stays dependency-free `no_std` + `alloc`, independent of Metrics. The
+[Logging boundary](../logging.md) and [crate guide](../../crates/ic-logging/README.md)
+own the engine/checkpoint contract. Hosts retain clocks, identity, decoding
+limits, authorization, lifecycle, retention scheduling and checkpoint cadence.
 
-Logging remains dependency-free `no_std` + `alloc`, independent of Metrics.
-Its canonical [guide](../../crates/ic-logging/README.md) and
-[ownership boundary](../logging.md) cover bounded history, UTF-8 truncation,
-explicit retention, cursor scans and validated checkpoints. Hosts own clocks,
-identity, lifecycle, authorization, decoding limits and checkpoint cadence.
+Persistence's [qualification PR #138](https://github.com/dragginzgame/ic-persistence/pull/138)
+and [publication integration PR #139](https://github.com/dragginzgame/ic-persistence/pull/139)
+are merged. Its default branch records release 0.56.0. Those facts alone do not
+establish registry publication or qualify a later graph. Original installed
+receipts and recovery inputs retain the locations and identities recorded in
+`ce510c9:docs/status/current.md`; no installed runtime proof was repeated here.
 
-The earlier fit audit is retained in `target/audits/logging-fit.3ciyEJ/`; released
-0.17.3 fixes are qualified in `target/audits/logging-fixes.obEV1R/`, including the
-131,072-step independent model. They reject impossible final-time empty states,
-reserve truncated payloads once and provide standard append-error traits.
-Those receipts retain their own source identities.
-
-Canic adoption is handled separately by the maintainer. The
-[Jobs contribution #77](https://github.com/dragginzgame/ic-jobs/pull/77) is merged
-and remains heap-only. No consumer checkout was modified by this cleanup.
-
-IC Persistence owns `ic-logging-stable` and all stable-adapter qualification.
-[Qualification PR #138](https://github.com/dragginzgame/ic-persistence/pull/138)
-uses `/tmp/ic-logging-stable-20261029`; stacked
-[publication PR #139](https://github.com/dragginzgame/ic-persistence/pull/139)
-uses `/tmp/ic-logging-publication-20261029`. Their last recorded heads are
-`1928117a04655cfc3319060379eae682b2f12e8c` and
-`ac53f1bfa4f8861d2c94bcc65d2f489e95bae85d`. No new external status was observed
-in this batch. The earlier handoff at `6ed52fa:docs/status/current.md` preserves
-the full delivery sequence, observed CI status and source-specific receipt roster.
-Review current PR state before resuming; merge order, required CI, a clean tagged
-release and actual publication remain separate actions.
-
-The installed original-Wasm receipt remains at
-`/tmp/ic-logging-stable-20261029/target/qualification/runtime/attempt.pUTvdW/`
-(Persistence 0.54.1, Testkit CLI 0.69.11, PocketIC 16.1.0). Publication qualification
-retains `/tmp/ic-logging-publication-*.log` and its
-`target/package-qualification/attempt.4wr4s9/`. Neither qualifies Canic/Jobs adoption.
-
-Metrics uses standard Serde/native Wire transport; recording remains opt-in and
-stable storage stays at IC Persistence. Historical evidence remains under
-`target/evidence/standard-transport/` and `target/evidence/transport-99/`, plus
-`/tmp/ic-observability-integration.wIEP78/ic-observability` and
-`/tmp/ic-logging-bootstrap.aOgJT4/ic-logging`. Preserve original inputs and scopes.
+Canic adoption remains separately owned and its dirty checkout is untouched.
+Its observability read budgets are already tracked by
+[#100 — Bound observability read work and encoded page sizes](https://github.com/dragginzgame/canic/issues/100),
+with retention reconciliation at #101. The newly filed
+[#712 — Remove redundant limits from the runtime logging adapter](https://github.com/dragginzgame/canic/issues/712)
+covers the remaining duplicate limits. There is no new dependency-waiting issue;
+publication is owned here. [Jobs PR #77](https://github.com/dragginzgame/ic-jobs/pull/77)
+is merged and remains heap-only. Stable Metrics remains at Persistence; prior
+transport and consolidation receipts retain their historical scopes and owners.

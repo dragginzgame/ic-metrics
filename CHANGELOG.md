@@ -9,6 +9,12 @@
   Borrowed snapshots and canonical restoration retain their existing behavior.
   [Checkpoint guide](crates/ic-logging/README.md).
 
+### 🧪 Testing
+
+- Exercise default Metrics publication and explicit Metrics/Logging selection,
+  including upload and native/Wasm lint failures. Clarify the separate workspace
+  release and per-package publication commands.
+
 ## [0.17.4] - 2026-10-29
 
 ### 🧹 Cleanup

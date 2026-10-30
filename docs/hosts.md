@@ -267,6 +267,11 @@ Neither validation nor release performs artifact cleanup.
 Both `make publish` and `make publish-check` run the same native/Wasm Clippy
 gate before Cargo packaging or registry effects. Sequential recipes stop on lint
 failure even under parallel Make; publication remains separately authorized.
+Select `PACKAGE=ic-metrics` or `PACKAGE=ic-logging` explicitly for both dry-run
+and upload commands. The default selects only Metrics. Workspace release tags
+coordinate versions without uploading either package. The standard-release
+fixture checks default and explicit selection for both packages, publication
+failure and both lint-failure boundaries using substituted Cargo effects.
 
 ## Native evidence
 

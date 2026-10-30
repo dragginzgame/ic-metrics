@@ -23,8 +23,27 @@ logging without Canic.
 [IC Persistence](https://github.com/dragginzgame/ic-persistence) continues to own
 governed Memory/Storage integration, `ic-metrics-stable` and the separately selected
 `ic-logging-stable` adapter. Logging's passive checkpoints carry validated state;
-its heap engine acquires no storage dependency. The separate stable adapter uses
-published Logging 0.17.2; see [the boundary](docs/logging.md).
+its heap engine acquires no storage dependency. See [the boundary](docs/logging.md)
+for checkpoint, persistence and consumer qualification responsibilities.
+
+## Release and package publication
+
+Workspace releases coordinate both package versions. Registry publication is a
+separate maintainer action for each selected package:
+
+```sh
+make publish-check PACKAGE=ic-metrics
+make publish-check PACKAGE=ic-logging
+# After reviewing the dry runs and authorizing the uploads:
+make publish PACKAGE=ic-metrics
+make publish PACKAGE=ic-logging
+```
+
+Omitting `PACKAGE` selects `ic-metrics`; it does not publish Logging. Each command
+runs the native/Wasm Clippy gate and publishes only its selected package. Neither
+package depends on the other, so there is no publication-order dependency.
+Consumers needing a new Logging API must select a version actually available in
+the registry; a merged PR or workspace release tag alone does not supply it.
 
 ## Development
 

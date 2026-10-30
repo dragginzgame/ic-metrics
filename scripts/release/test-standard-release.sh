@@ -273,35 +273,43 @@ for fail in 0 1; do
     cmp "$fixture/expected" "$EVENTS"
 done
 
-for target in publish publish-check; do
-    for fail in 0 1; do
-        : > "$EVENTS"
-        status=0
-        PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
-            -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
-        if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
-        printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
-        printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
-        printf '%s\n' publish -p ic-metrics --locked --registry crates-io >> "$fixture/expected"
-        if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
-        if [[ "$assertion_fault" == 1 ]]; then
-            echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
-            printf 'injected mismatched expectation\n' >> "$fixture/expected"
-            shasum -a 256 expected events output bin/cargo > retention-inputs.sha256
-        fi
-        cmp "$fixture/expected" "$EVENTS"
-    done
-    for failure in native wasm; do
-        : > "$EVENTS"
-        status=0
-        PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 CLIPPY_FAILURE="$failure" "$real_make" "${parallel[@]}" --no-print-directory \
-            -f "$root/Makefile" "$target" > "$fixture/output" 2>&1 || status=$?
-        [[ "$status" == 2 ]] || exit 1
-        printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
-        if [[ "$failure" == wasm ]]; then
+for selection in default ic-metrics ic-logging; do
+    package=ic-metrics
+    package_args=()
+    if [[ "$selection" != default ]]; then
+        package="$selection"
+        package_args=("PACKAGE=$package")
+    fi
+    for target in publish publish-check; do
+        for fail in 0 1; do
+            : > "$EVENTS"
+            status=0
+            PATH="$fixture/bin:$PATH" FAIL_PUBLISH="$fail" "$real_make" --no-print-directory \
+                -f "$root/Makefile" "$target" ${package_args[@]+"${package_args[@]}"} > "$fixture/output" 2>&1 || status=$?
+            if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" != 0 ]] || exit 1; fi
+            printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
             printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
-        fi
-        cmp "$fixture/expected" "$EVENTS"
+            printf '%s\n' publish -p "$package" --locked --registry crates-io >> "$fixture/expected"
+            if [[ "$target" == publish-check ]]; then printf '%s\n' --dry-run >> "$fixture/expected"; fi
+            if [[ "$assertion_fault" == 1 ]]; then
+                echo 'FIXTURE_RETENTION_INJECTED_FAILURE' >&2
+                printf 'injected mismatched expectation\n' >> "$fixture/expected"
+                shasum -a 256 expected events output bin/cargo > retention-inputs.sha256
+            fi
+            cmp "$fixture/expected" "$EVENTS"
+        done
+        for failure in native wasm; do
+            : > "$EVENTS"
+            status=0
+            PATH="$fixture/bin:$PATH" REQUIRE_JOBSERVER=1 CLIPPY_FAILURE="$failure" "$real_make" "${parallel[@]}" --no-print-directory \
+                -f "$root/Makefile" "$target" ${package_args[@]+"${package_args[@]}"} > "$fixture/output" 2>&1 || status=$?
+            [[ "$status" == 2 ]] || exit 1
+            printf '%s\n' clippy --workspace --all-targets --all-features --locked -- -D warnings > "$fixture/expected"
+            if [[ "$failure" == wasm ]]; then
+                printf '%s\n' clippy --workspace --lib --all-features --locked --target wasm32-unknown-unknown -- -D warnings >> "$fixture/expected"
+            fi
+            cmp "$fixture/expected" "$EVENTS"
+        done
     done
 done
 echo 'release and publication Make adapters passed (command stubs; no Git or registry effects)'
