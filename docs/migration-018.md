@@ -1,9 +1,8 @@
-# Preparing for the 0.18 contract
+# The 0.18 contract
 
-This is the pending coordinated workspace contract, not a registry-availability
-claim. Package metadata remains at the maintainer's current release until the
-separately authorized minor-release workflow advances it. Publish selected
-packages before consumers resolve the new dependency. No compatibility aliases,
+This guide describes the coordinated 0.18 workspace contract. A release tag does
+not establish registry availability: publish selected packages before consumers
+resolve the new dependency. No compatibility aliases,
 old topic-filter field, or alternate append method are provided.
 
 ## Logging caller changes

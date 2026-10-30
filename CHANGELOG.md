@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.1]
+
+### ⬆️ Dependencies
+
+- Adopt IC Wire 0.7.25 and Shared Tooling 0.27.11. Align the Wire declaration
+  with the selected lockfile and retain shared publication gate ordering,
+  ordinary Rust module discovery and scoped lint-expectation guidance.
+  Public APIs, report layouts and compiler requirements are unchanged.
+
 ## [0.18.0] - 2026-10-30
 
 ### ⚠️ Breaking

@@ -198,8 +198,8 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-observa
 
 ## Releases and adoption
 
-The arithmetic package requires Rust 1.91 on native and Wasm. After the pending
-coordinated 0.18 contract is published, consumers select it and qualify their integration:
+The arithmetic package requires Rust 1.91 on native and Wasm. Consumers select
+an available published 0.18 release and qualify their integration:
 
 ```toml
 [workspace.dependencies]

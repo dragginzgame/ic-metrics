@@ -10,7 +10,7 @@ Logging owns bounded append admission, UTF-8 truncation, explicit age-retention
 batches and scan-bounded cursor pages. Callers supply time and choose limits,
 labels, authorization, scheduling and instance identity. Paging borrows retained
 rows rather than copying the complete history or computing an exact match total.
-The pending [0.18 contract](migration-018.md) adds a combined retained-text budget,
+The [0.18 contract](migration-018.md) adds a combined retained-text budget,
 append receipts and explicit topic presence matching. The budget counts text
 payload, not all heap costs; count and byte pressure evict oldest rows.
 `visit_page` provides the same bounded scan without a result collection.
