@@ -5,8 +5,8 @@ set -euo pipefail
 evidence=target/evidence/msrv-ci
 output=target/evidence/msrv-ci.tar.gz
 mkdir -p "$evidence"
-printf 'inputs=%s\nhost_tools=%s\ntoolchain=%s\nmsrv=%s\n' \
-    "$INPUT_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOLCHAIN_OUTCOME" "$MSRV_OUTCOME" > "$evidence/outcome.txt"
+printf 'inputs=%s\nhost_tools=%s\ntoolchain=%s\napplication_sources=%s\nmsrv=%s\n' \
+    "$INPUT_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOLCHAIN_OUTCOME" "$APPLICATION_SOURCES_OUTCOME" "$MSRV_OUTCOME" > "$evidence/outcome.txt"
 # This job owns the dedicated evidence root: source records, setup logs, shared
 # validation logs/scratch and the artifact captured immediately after linking.
 [[ ! -e "$output.sha256" && ! -L "$output.sha256" ]] || exit 2

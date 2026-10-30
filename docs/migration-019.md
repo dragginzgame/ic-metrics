@@ -1,14 +1,32 @@
-# 0.19 native metadata selection
+# Native Wire metadata in the 0.19 contract
 
-Metrics arithmetic and validated Serde transport remain available on every
-target. The default-enabled `native-wire` feature selects native Wire TypeScript
-metadata. It adds no Wire dependency on Wasm. Logging remains independent.
+The 0.19 line selects IC Wire 0.8.0. Its native `Wire` implementations
+belong to that Rust dependency identity. Wire 0.7's trait is a different trait,
+so native reports deriving Wire or requesting schemas for embedded Metrics
+values must align their direct Wire dependency to 0.8.
 
-Default-feature consumers need no change. Native schema generators that set
-`default-features = false` must add `features = ["native-wire"]` to retain the
-Wire trait implementations. Arithmetic-only consumers can disable defaults to
-exclude native Wire. The `recording` feature remains independently selectable.
+After a corresponding Metrics release is available, select the coordinated graph:
 
-No numeric API, rounding, error, Serde field or persisted representation changes.
-This release changes the former no-default-features metadata contract; it does
-not authorize consumer deployment or reinterpret stored bytes.
+```toml
+[workspace.dependencies]
+ic-metrics = "0.19"
+ic-wire = { version = "0.8", default-features = false, features = ["typescript"] }
+```
+
+Keep native-only Wire inheritance where appropriate. Libraries exposing Metrics
+types must also agree on the same Metrics package identity throughout the graph.
+Do not use two Wire versions as an implicit metadata compatibility bridge.
+Qualify existing report derives, schema generation and bounded encode/decode
+paths against the selected dependencies. No report fields, Serde layouts,
+arithmetic semantics or Logging operations change in this adoption; Serde-only
+callers acquire no new Wire trait requirement.
+
+The upstream Wire minor release changes its optional endpoint integration to
+Platform 0.9.1. This workspace enables only native metadata, not `endpoint`, and
+adds no Platform runtime dependency. Applications using endpoints coordinate
+their own Platform 0.9 graph and runtime qualification separately.
+
+The 0.19.0 release records that native metadata transition. This guide does not
+establish registry availability or authorize publication. Existing durable record
+layouts and retained state are unchanged. The next source contract is described
+in [the 0.20 guide](migration-020.md).

@@ -4,7 +4,7 @@ IC Observability combines the Metrics and Logging packages in one workspace.
 Their library APIs, dependencies and runtime state remain independent. The root
 workspace owns coordinated versions, dependency selection and validation tooling.
 Existing frozen Metrics evidence retains the original repository/source identities.
-The pending [0.18 migration guide](migration-018.md) owns the Logging source break,
+The [0.18 migration guide](migration-018.md) owns the Logging source break,
 retained-data adoption boundary and new summary/histogram report contracts.
 
 | Package | Owner |

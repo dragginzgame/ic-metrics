@@ -160,6 +160,10 @@ jobs:
           PATH="$PWD/.tools/host/bin:$PATH" bash scripts/dev/prepare-rust-toolchain.sh \
             --workspace-manifest Cargo.toml --target wasm32-unknown-unknown \
             2>&1 | tee target/evidence/msrv-ci/toolchain.log
+      - name: Prepare the locked application sources
+        id: application_sources
+        run: |
+          cargo fetch --locked 2>&1 | tee target/evidence/msrv-ci/application-sources.log
       - name: Check workspace native and Wasm MSRV
         id: check
         env:
@@ -177,6 +181,7 @@ jobs:
           INPUT_OUTCOME: ${{ steps.inputs.outcome }}
           HOST_TOOLS_OUTCOME: ${{ steps.host_tools.outcome }}
           TOOLCHAIN_OUTCOME: ${{ steps.toolchain.outcome }}
+          APPLICATION_SOURCES_OUTCOME: ${{ steps.application_sources.outcome }}
           MSRV_OUTCOME: ${{ steps.check.outcome }}
         run: bash scripts/ci/collect-msrv-evidence.sh
       # actions/upload-artifact v7

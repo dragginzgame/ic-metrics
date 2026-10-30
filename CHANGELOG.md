@@ -1,14 +1,46 @@
 # Changelog
 
-## [0.19.0] - Unreleased
+## [0.22.0] - Unreleased
 
 ### ⚠️ Breaking
 
-- Native Wire metadata now uses the default-enabled `native-wire` feature.
-  Callers disabling defaults must explicitly select it when generating schemas;
+- Make native Wire metadata optional through the default-enabled `native-wire`
+  feature. Callers disabling defaults must explicitly select it for schemas;
   arithmetic and validated Serde transport remain available without Wire.
-  [Migration](docs/migration-019.md).
-  [#101 — Allow native arithmetic consumers to exclude Wire metadata dependencies](https://github.com/dragginzgame/ic-observability/issues/101).
+  See [migration](docs/migration-022.md) and [#101](https://github.com/dragginzgame/ic-observability/issues/101).
+
+## [0.21.0] - 2026-10-30
+
+## [0.20.0] - 2026-10-30
+
+### ⚠️ Breaking
+
+- Adopt IC Wire 0.10.0 for Metrics' native metadata. Consumers deriving Wire or
+  generating schemas for reports containing Metrics values must align their
+  direct Wire dependency to 0.10. Numeric layouts, arithmetic and Logging behavior
+  are unchanged. Endpoint applications separately coordinate Platform 0.11;
+  this workspace enables no endpoint runtime. See the
+  [native metadata migration guide](docs/migration-020.md).
+
+## [0.19.0] - 2026-10-30
+
+### ⚠️ Breaking
+
+- Adopt IC Wire 0.8.0 for Metrics' native metadata. Consumers composing Metrics
+  values in Wire reports must align their direct Wire dependency to 0.8; Wire
+  0.7's metadata trait is a different Rust dependency identity. Arithmetic,
+  Serde layouts and Logging behavior are unchanged. Endpoint users separately
+  coordinate Platform 0.9; this workspace enables no endpoint runtime.
+  See the [native metadata migration guide](docs/migration-019.md).
+
+## [0.18.1] - 2026-10-30
+
+### ⬆️ Dependencies
+
+- Adopt IC Wire 0.7.25 and Shared Tooling 0.27.11. Align the Wire declaration
+  with the selected lockfile and retain shared publication gate ordering,
+  ordinary Rust module discovery and scoped lint-expectation guidance.
+  Public APIs, report layouts and compiler requirements are unchanged.
 
 ## [0.18.0] - 2026-10-30
 
