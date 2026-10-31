@@ -4,7 +4,7 @@ This is the Metrics release-group ledger. Logging has its own
 [canonical changelog](crates/ic-logging/CHANGELOG.md). Releases through 0.23.0
 below retain the original coordinated Metrics/Logging history, once and unchanged.
 
-## [0.23.1]
+## [0.23.1] - 2026-10-31
 
 ### 🔧 Changed
 
