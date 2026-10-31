@@ -37,11 +37,11 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "ic-logging"
-version = "0.22.0"
+version = "0.23.0"
 
 [[package]]
 name = "ic-metrics"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "ic-wire",
  "num-bigint",
