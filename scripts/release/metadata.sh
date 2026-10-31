@@ -3,14 +3,24 @@
 set -euo pipefail
 [[ $# == 1 ]] || exit 2
 operation="$1"
-case "$operation" in files|version|plan|packages|preflight|verify|prepare|check|commit-check) ;; *) exit 2 ;; esac
+case "$operation" in selection|files|version|plan|packages|preflight|verify|prepare|check|commit-check) ;; *) exit 2 ;; esac
 release_cache_prepare="${IC_METRICS_RELEASE_CACHE_PREPARE:-0}"
 unset IC_METRICS_RELEASE_CACHE_PREPARE
 root="${BASH_SOURCE[0]}"
 [[ "$root" == /* ]] || root="$PWD/$root"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
 root="${root%/.}"
-export RELEASE_GROUP="${RELEASE_GROUP:-metrics}"
+if [[ -z "${RELEASE_GROUP:-}" ]]; then
+    echo 'Select RELEASE_GROUP explicitly; see ci/cargo-release-groups.json' >&2
+    exit 2
+fi
+export RELEASE_GROUP
+if ! jq -e --arg group "$RELEASE_GROUP" '[.groups[] | select(.name == $group)] | length == 1' \
+    "$root/ci/cargo-release-groups.json" > /dev/null; then
+    echo 'Unknown RELEASE_GROUP; see ci/cargo-release-groups.json' >&2
+    exit 2
+fi
+[[ "$operation" != selection ]] || exit 0
 bash "$root/scripts/ci/check-release-delivery.sh" "$root/ci/release-delivery.txt" "${RELEASE_DELIVERY-direct}"
 # Initial admission precedes Cargo, tooling preparation and validation effects.
 if [[ "$operation" == preflight || "$operation" == verify ]]; then

@@ -1,5 +1,9 @@
 # ic-metrics
 
+Metrics owns its version and [changelog](../../releases/metrics/CHANGELOG.md), alongside Logging's
+independent version and ledger. See [release groups](../../docs/independent-releases.md)
+for maintainer commands.
+
 Measurement arithmetic with standard numeric transport and optional bounded heap recording.
 
 IC Metrics is a standalone application capability alongside IC Timers, IC Jobs
@@ -217,15 +221,15 @@ for the adapter's separate release line and Memory/Storage compatibility.
 
 Members inherit with `ic-metrics = { workspace = true }`. Published consumers
 resolve the registry package; consumers exposing shared types coordinate the
-same released dependency identity. The [changelog](https://github.com/dragginzgame/ic-observability/blob/main/CHANGELOG.md)
+same released dependency identity. The [Metrics changelog](https://github.com/dragginzgame/ic-observability/blob/main/releases/metrics/CHANGELOG.md)
 owns release history and required hard-cut changes. The [extraction contract](https://github.com/dragginzgame/ic-observability/blob/main/docs/extraction.md)
 maps integration scope and the owning consumer qualification issues;
 the [current handoff](https://github.com/dragginzgame/ic-observability/blob/main/docs/status/current.md)
 distinguishes local preparation, publication and hosted qualification.
 
 Contributions follow the [shared contribution rules](https://github.com/dragginzgame/ic-observability/blob/main/rules/contributions.md).
-Maintainer releases use `make release-patch`, `make release-minor` or
-`make release-major` under the [shared release contract](https://github.com/dragginzgame/ic-observability/blob/main/docs/releases.md).
+Maintainer releases use `make release-patch RELEASE_GROUP=metrics` (or minor/major)
+under the [shared release contract](https://github.com/dragginzgame/ic-observability/blob/main/docs/releases.md).
 This repository supports `RELEASE_DELIVERY=direct` only, defaulting to remote
 `origin` and branch `main`. Standard preflight prepares locked sources,
 common Rust tools and the explicitly selected published IC Build release editor.
@@ -239,12 +243,13 @@ interrupted-release recovery.
 Publication is separate from release delivery:
 
 ```sh
-make publish-check
-make publish
+make publish-check RELEASE_GROUP=metrics
+make publish RELEASE_GROUP=metrics
 ```
 
-Both commands select Metrics and Logging by default. Use `PACKAGE=ic-metrics`
-or `PACKAGE=ic-logging` to select one. The workspace's
+An explicit group is required, on the command line or in the environment;
+`RELEASE_GROUP=logging` selects Logging. A `PACKAGE` override must belong to the
+selected group and cannot infer it. The workspace's
 [publication guide](https://github.com/dragginzgame/ic-observability/blob/main/README.md#release-and-package-publication)
 owns the shared adapter, validation, retained evidence and partial-publication
 reconciliation procedure. Publication uses existing versions and normal Cargo

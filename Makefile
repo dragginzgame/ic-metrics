@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 PACKAGE := ic-metrics
-export RELEASE_GROUP ?= metrics
+export RELEASE_GROUP
 export MSRV
 export RELEASE_DELIVERY ?= direct
 export YQ := $(CURDIR)/.tools/host/bin/yq
@@ -9,7 +9,10 @@ LOCAL_TOOL_INSTALL_TARGETS := install-release-editor
 LOCAL_TOOL_CHECK_TARGETS := release-editor-check
 # Normal setup needs host/Cargo tools only; optional IC tools are selected explicitly.
 IC_TOOLS :=
-override CARGO_PUBLISH_PACKAGES = $(shell RELEASE_GROUP='$(subst ','"'"',$(RELEASE_GROUP))' bash scripts/release/metadata.sh packages)
+# Load the shared publication adapter directly; resolve eligibility only after
+# the public target's group prerequisite, never while parsing unrelated checks.
+override CARGO_PUBLISH_PACKAGES :=
+publish publish-check: override CARGO_PUBLISH_PACKAGES = $(shell RELEASE_GROUP='$(subst ','"'"',$(RELEASE_GROUP))' bash scripts/release/metadata.sh packages)
 CARGO_PUBLISH_REGISTRY := crates-io
 CARGO_PUBLISH_VERIFY_TARGETS := clippy
 
@@ -29,8 +32,14 @@ override SHARED_TOOLING_ROOT := $(CURDIR)
 export SHARED_TOOLING_ROOT
 override RELEASE_DELIVERY_POLICY := $(CURDIR)/ci/release-delivery.txt
 include make/consumer.mk
+include make/cargo-publication.mk
 
 .PHONY: $(SHARED_RELEASE_TARGETS)
+
+.PHONY: release-group-check
+$(SHARED_RELEASE_TARGETS) publish publish-check: | release-group-check
+release-group-check:
+	@bash scripts/release/metadata.sh selection
 
 release-patch release-minor release-major release-resume: export IC_METRICS_RELEASE_CACHE_PREPARE := 1
 
@@ -74,8 +83,8 @@ help:
 	@echo "Local setup: install-tools; offline verification: tools-check"
 	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
-	@echo "Normal releases start fresh from committed metadata; exact recovery: release-resume VERSION=X.Y.Z"
-	@echo "Release/publication selection: RELEASE_GROUP=metrics (default) or logging"
+	@echo "Normal releases start fresh from committed metadata; exact recovery requires VERSION and RELEASE_GROUP"
+	@echo "Release/publication selection required: RELEASE_GROUP=metrics or logging (no default)"
 	@echo "Registry: publish-check (dry run), publish (upload the selected group only)"
 	@echo "Package overrides must belong to the selected group; release does not publish."
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
@@ -132,10 +141,11 @@ docs-check:
 
 check-doc-links:
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
-		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
+		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md releases/*/*.md releases/history.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md tasks/*.md
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
-		crates/ic-metrics/src/application.md crates/ic-metrics/README.md crates/ic-logging/README.md crates/ic-logging/CHANGELOG.md
+		crates/ic-metrics/src/application.md crates/ic-metrics/README.md crates/ic-metrics/CHANGELOG.md \
+		crates/ic-logging/README.md crates/ic-logging/CHANGELOG.md
 
 test:
 	+cargo test --workspace --all-features --locked

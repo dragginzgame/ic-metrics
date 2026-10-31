@@ -286,7 +286,7 @@ and publication authority.
 Release/publication are separate maintainer actions under
 [the release contract](releases.md). Normal release commands start fresh from
 clean committed metadata without scanning or replaying historical plans.
-Select `RELEASE_GROUP=metrics` (default) or `RELEASE_GROUP=logging`; see
+Select `RELEASE_GROUP=metrics` or `RELEASE_GROUP=logging` explicitly; see
 [independent releases](independent-releases.md) for the version/ledger map.
 Use `make release-resume RELEASE_GROUP=logging VERSION=X.Y.Z` for recovery of a
 specific saved Logging attempt.
@@ -298,15 +298,17 @@ Late metadata checks use Shared's `--manifest-order-grouped` option to check ord
 in that same selected source; literal version preparation never sorts it.
 Neither validation nor release performs artifact cleanup.
 The [shared publication Make adapter](cargo-publication.md#opt-in-make-adapter)
-owns `make publish` and `make publish-check`. This consumer projects the selected
-group's public roster and declares `crates-io` and `clippy` before its
-common include. The same native/Wasm Clippy gate runs before Cargo packaging or
+owns `make publish` and `make publish-check`. This consumer includes that adapter
+directly, declares `crates-io` and `clippy`, and projects the selected group's
+public roster only after group admission. Unrelated Make commands do not resolve
+publication eligibility. The same native/Wasm Clippy gate runs before Cargo packaging or
 registry effects, including under parallel Make. Publication remains separately
 authorized; selection and attempt evidence stays under `target/publication`.
-Both commands select Metrics by default; `RELEASE_GROUP=logging` selects Logging.
-A `PACKAGE` override must belong to that group. Group release tags advance only
+Both commands require an explicit group; missing, empty and unknown selections
+refuse before setup, validation or mutation. A `PACKAGE` override must belong to
+that group and never selects it implicitly. Group release tags advance only
 the selected version, without uploading either package. The standard-release
-fixture checks the default Metrics roster, one explicit Logging selection and
+fixture checks explicitly selected Metrics and Logging rosters and
 both exact lint-failure boundaries before delegation. Shared Tooling owns generic
 selection, metadata, upload-status and retained-attempt fixtures. Local effects
 are substituted and do not publish packages.

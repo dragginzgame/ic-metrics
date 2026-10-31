@@ -31,6 +31,9 @@ bash "$root/scripts/ci/prepare-script-fixture.sh" "$root" "$fixture" make/consum
 cp "$root/Makefile" "$fixture/Makefile"
 mkdir -p "$fixture/ci"
 cp "$root/ci/release-delivery.txt" "$fixture/ci/"
+cp "$root/ci/cargo-release-groups.json" "$fixture/ci/"
+mkdir -p "$fixture/scripts/release"
+cp "$root/scripts/release/metadata.sh" "$fixture/scripts/release/"
 cp "$root/scripts/ci/check-msrv.sh" "$root/scripts/ci/read-cargo-workspace-rust-version.sh" "$fixture/scripts/ci/"
 cat > "$fixture/scripts/ci/check-allocation-free.sh" <<'ALLOCATOR'
 set -euo pipefail
@@ -44,14 +47,15 @@ cd "$fixture"
 real_make="$(command -v make)"
 # The actual Make entry projects the metadata owner's NUL-delimited roster.
 (cd "$root" && "$real_make" --no-print-directory release-files) > "$fixture/release-files"
-printf '%s\0' Cargo.toml Cargo.lock CHANGELOG.md > "$fixture/expected-release-files"
+printf '%s\0' Cargo.toml Cargo.lock releases/metrics/CHANGELOG.md crates/ic-metrics/Cargo.toml > "$fixture/expected-release-files"
 cmp "$fixture/expected-release-files" "$fixture/release-files"
 for selection in default direct; do
     if [[ "$selection" == default ]]; then unset RELEASE_DELIVERY; else export RELEASE_DELIVERY=direct; fi
     TMPDIR="$fixture" "$real_bash" "$root/scripts/ci/check-release-commands.sh" "$root" \
         make/consumer.mk make/tools.mk make/release.mk make/rust-format.mk make/execution.mk \
         scripts/ci/check-make-execution.sh scripts/ci/check-release-delivery.sh \
-        ci/release-delivery.txt scripts/ci/run-formatting.sh > "$fixture/output" 2>&1
+        ci/release-delivery.txt scripts/ci/run-formatting.sh \
+        scripts/release/metadata.sh ci/cargo-release-groups.json > "$fixture/output" 2>&1
 done
 
 # Keep one real-consumer include-admission check. Shared Tooling owns the
@@ -74,6 +78,7 @@ cat >> "$fixture/bin/bash" <<'BASH'
 case "${1:-}" in
     */scripts/ci/check-make-execution.sh|*/scripts/ci/check-release-delivery.sh) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
     scripts/release/metadata.sh)
+        if [[ "$2" == selection ]]; then exit 0; fi
         if [[ "$2" == packages ]]; then printf 'ic-%s\n' "$RELEASE_GROUP"; exit 0; fi
         if [[ "${REQUIRE_RUST_CATALOG:-0}" == 1 ]]; then
             [[ "$2" == preflight && "$RUST_TOOL_VERSIONS" == "$EXPECTED_RUST_CATALOG" ]] || exit 1
@@ -204,6 +209,7 @@ GIT
 set -euo pipefail
 case "${1:-}" in
     scripts/release/metadata.sh)
+        if [[ "$2" == selection ]]; then exit 0; fi
         [[ "$2" == packages ]] || exit 99
         printf 'ic-%s\n' "$RELEASE_GROUP"
         exit 0 ;;

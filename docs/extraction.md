@@ -181,8 +181,8 @@ are separate contracts. Histogram investigations remain with
 ## Compatibility and evidence
 
 Reports preserve the tracked accumulator's actual overflow quality.
-[The changelog](../CHANGELOG.md) owns released API changes and required caller
-actions. Metrics never automatically resets retained data. Consumer wire changes
+[The Metrics changelog](../releases/metrics/CHANGELOG.md) owns released API
+changes and required caller actions. Metrics never automatically resets retained data. Consumer wire changes
 and retained-data disposition stay at their owner.
 
 [The current handoff](status/current.md) separates local preparation, package

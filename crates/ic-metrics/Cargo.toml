@@ -2,11 +2,11 @@
 name = "ic-metrics"
 edition.workspace = true
 rust-version.workspace = true
-version.workspace = true
+version = "0.23.1"
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description.workspace = true
+description = "Allocation-free measurement arithmetic with validated numeric transport"
 readme = "README.md"
 publish = ["crates-io"]
 

@@ -36,14 +36,15 @@ for checkpoint, persistence and consumer qualification responsibilities.
 
 ## Release and package publication
 
-Metrics and Logging use independent release groups in one workspace. Metrics is
-the default; select Logging with `RELEASE_GROUP=logging`. Registry publication
-is a separate maintainer action and selects only the chosen group's package:
+Metrics and Logging use independent release groups in one workspace. Release,
+resume and publication require an explicit `RELEASE_GROUP=metrics` or `logging`,
+supplied on the command line or in the environment. Registry publication is a
+separate maintainer action and selects only the chosen group's package:
 
 ```sh
-make publish-check
+make publish-check RELEASE_GROUP=metrics
 # After reviewing the dry runs and authorizing the uploads:
-make publish
+make publish RELEASE_GROUP=metrics
 # Logging:
 make publish-check RELEASE_GROUP=logging
 ```
@@ -84,5 +85,5 @@ and retain their explicit validation authority. Registry publication remains a
 separately selected maintainer action per package; this batch performs none.
 
 [Ownership](docs/extraction.md) · [Logging boundary](docs/logging.md) ·
-[Changelog](CHANGELOG.md) · [Current handoff](docs/status/current.md) ·
+[Changelogs](CHANGELOG.md) · [Current handoff](docs/status/current.md) ·
 [Contribution rules](rules/contributions.md)

@@ -4,9 +4,9 @@
     {
       "name": "metrics",
       "primary": "ic-metrics",
-      "version": "workspace",
+      "version": "package",
       "members": ["ic-metrics"],
-      "changelog": "CHANGELOG.md",
+      "changelog": "releases/metrics/CHANGELOG.md",
       "dependencies": []
     },
     {
@@ -14,7 +14,7 @@
       "primary": "ic-logging",
       "version": "package",
       "members": ["ic-logging"],
-      "changelog": "crates/ic-logging/CHANGELOG.md",
+      "changelog": "releases/logging/CHANGELOG.md",
       "dependencies": []
     }
   ]

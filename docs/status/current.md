@@ -1,88 +1,85 @@
 # Current handoff — 2026-10-31
 
-The current task implements
-[#104 — Version Metrics and Logging independently](https://github.com/dragginzgame/ic-observability/issues/104).
-The incoming checkout was clean at `bc450ef0c4cecdceb32b8f677eff7e6ae6e04f83`
-(Release 0.23.0). Changes remain uncommitted. No staging, root release/tag/push,
-registry publication or sibling checkout edits were performed.
+The maintainer requested adoption of the new Shared Tooling changelog/Cargo
+convention, continuing [#104 — Independent release groups](https://github.com/dragginzgame/ic-observability/issues/104).
+The base remains `017d267f959f1885941deabbb4abe571db088c3d` (Release logging
+0.23.1), with the earlier peer-layout edits already in the working tree.
+The maintainer has now explicitly delegated GitHub delivery and crates.io
+publication for both groups at 0.23.2. Source preparation is followed by each
+standard patch release and selected publication. Current deployment evidence is
+retained under target/audits/deploy-0232-20261031/ and .git/release-state;
+completion is established by the recorded results, remote tags and registry.
+Sibling checkouts remain untouched.
 
-## Independent groups
+## Adopted convention
 
-[The group policy](../../ci/cargo-release-groups.json) declares every current
-member. Metrics is the default group, retaining workspace.package.version and
-the root changelog. Logging uses literal package.version and its own
-[canonical ledger](../../crates/ic-logging/CHANGELOG.md), linked to the shared
-history through 0.23.0. Both numeric versions remain 0.23.0. The new numbered
-pending notes are 0.23.1 in each ledger; no version bump was executed.
+Shared Tooling was refreshed through the canonical exporter from isolated clean
+commit `99d04d1b6b7cf4ed060e9b72a139196d32c35954`, verified against remote main.
+The snapshot records version 0.27.17; the commit subject says 0.27.18, and the
+sibling has an uncommitted VERSION edit. Neither that edit nor a claimed published
+0.27.18 is adopted. Only baseline/release documentation changed in the imported
+payload; common tool catalogs and helper implementations are unchanged. Impact,
+refresh and source receipts are under target/audits/shared-layout-20261031/.
 
-[The maintainer guide](../independent-releases.md) records selection, publication,
-exact plans, group tags and recovery. Use RELEASE_GROUP=logging for Logging;
-an explicit PACKAGE must belong to the chosen group. Full ci/msrv gates remain
-mandatory for either release. The existing shared runner/editor owns rendering,
-transactions, staging, commits, tags, pushes and resume; the adapter supplies
-policy, validation and group-bound validated/prepared receipts.
+Both packages retain literal version 0.23.1 in their own manifests. The root
+Cargo.toml contains shared metadata/catalog/lints/compiler policy and no version.
+Metrics' unchanged description remains in its own manifest. Every group owns
+its canonical ledger under releases/metrics or releases/logging, matching
+[the declared policy](../../ci/cargo-release-groups.json) and root comment map.
 
-Shared Tooling was refreshed through its canonical exporter from clean committed
-revision `39ba9836a269ee7ea7f073a3f23d9cefe3c7d03c`, including merged
-[#330 — Explicitly shared consumer metadata](https://github.com/dragginzgame/shared-tooling/pull/330).
-The snapshot records version 0.27.16 despite the commit subject naming 0.27.17;
-this is committed availability, not a claim of published 0.27.17. Common tool
-catalog selections did not change. No additional shared metadata file is needed.
+[Root CHANGELOG.md](../../CHANGELOG.md) is now an index only. Original coordinated
+entries through 0.23.0 moved once to [shared history](../../releases/history.md),
+with relative links rebased. Published group 0.23.1 entries retain their release
+prose and dates. Former crate-local ledgers are short navigation pointers, with
+no duplicated notes. Both canonical ledgers have pending 0.23.2 entries for their
+compatible maintainer-flow changes; no numeric bump ran and no runtime API changed.
 
-The managed metadata editor selection is published IC Build 0.73.0 with cli.
-Explicit setup installed/admitted that selection. The initial unprivileged
-shared-cache lock refusal and successful approved setup logs remain retained.
-Other hosts must prepare this selection before group preparation.
+## Explicit selection and recovery
 
-## Focused results and limits
+Release, resume, publication and group metadata commands require an explicit
+RELEASE_GROUP=metrics or logging, from the command line or environment. Missing,
+empty and unknown groups refuse before setup, Cargo, validation or mutation;
+PACKAGE cannot infer a group. Workspace-wide checks and setup need no selection.
+[The guide](../independent-releases.md), READMEs and host commands are updated.
 
-Logs are retained under `target/audits/independent-groups-104/`:
+The local selection check is reused by Make prerequisites and the metadata CLI.
+The shared publication adapter is included directly, with eligibility resolved
+only inside selected public targets after admission. This avoids eager Cargo
+resolution while unrelated Make targets are parsed. All actual release rendering,
+transactions, delivery, publication dispatch and resume stay with existing shared
+machinery. No shared helper copy was patched.
 
-- `release-tools-check-2.log`: the complete focused release/hook/retention gate
-  passes. Actual group plans, adapter, installed editor, runner and Git execute
-  both directions in disposable repositories with local bare remotes. Tests
-  cover exact staged/committed files, unchanged unrelated identities/requirements
-  and pending notes, transactional rollback, source/index refusal, failed CI and
-  MSRV gates, input drift, selected-commit checks, receipts and exact resume.
-- The same fixture runs a consumer pinned to each unaffected identity, testing
-  Logging append/page/prune or Metrics wide arithmetic and typed failures.
-  Suppliers are workspace-owned source copies with unchanged bytes. This is
-  source-level compatibility, not publication of simulated versions. Setup,
-  full validation, archive compilation and registry uploads are substituted;
-  actual publication admission selects only the chosen group and refuses the
-  other package before uploading.
-- Successful grouped inputs/receipts and injected failure evidence remain at
-  `target/evidence/native-ci/fixture-retention.IfgB4u/`. Earlier failed runs and
-  their inputs are preserved. The first enclosing run was invalidated by editing
-  its running script; it is not claimed as a passing gate.
-- Snapshot integrity, dependency pins, formatting, selected ShellCheck and
-  documentation links pass. All four Metrics/Logging production graph profiles
-  and four minimal Serde tests pass. Logging's library checks for Wasm on Rust
-  1.91.0 with the same explicit version.
+The original metrics-0.23.1/logging-0.23.1 journals remain complete, with their
+validated/prepared receipts retained under .git/release-state. Recovery remains
+bound to the recorded source/policy/file plan, not the migrated worktree layout.
+Neither historical journals nor previous failed release evidence were rewritten.
 
-The root lock, dependency selections and both libraries' Rust sources are
-unchanged. There is no Metrics/Logging dependency edge. Previous native Wire,
-TypeScript/byte, arithmetic-only Wasm and compiler-floor evidence in
-[the Wire identity receipt](../evidence/wire-stable-identities-0121/README.md)
-retains its original inputs and scope; unchanged runtime checks were not repeated.
-No full local ci/msrv, hosted matrix, macOS or installed IC qualification ran.
-Hosted/native obligations remain in [the host guide](../hosts.md); the release
-fixture's substituted gates do not establish them. No code blocker remains from
-the focused checks; maintainer review/delivery and actual release gates remain.
+## Focused evidence and limits
 
-## Retained integration boundaries
+Evidence is retained at target/audits/shared-layout-20261031/:
 
-The base source already selects Wire/Derive 0.12.1. Canonical Platform Types is
-0.1.0, also reexported by Platform 0.14; the earlier 0.14 clarification concerned
-that façade, not a Types 0.14 release. Product dependencies exclude Platform,
-Types and Endpoint. This task changes none of those selections or runtime
-contracts, so it requires no paired upgrade of a persistence adapter or other
-group. Native schema consumers still need a registry Metrics version supplying
-their matching Wire identity; registry delivery of base 0.23.0 was not rechecked
-for this release-group task.
+- Snapshot/pin admission, formatting, selected ShellCheck, links and both actual
+  pending-ledger checks pass. Full locked/offline Cargo metadata equals the prior
+  peer-layout result; dependencies, features and descriptions are unchanged.
+- History bodies match their original bytes after reversing only relative-link
+  rebasing. Published 0.23.1 entries retain their prose and dates; the final empty
+  separator in the moved Metrics ledger is trimmed for Git whitespace admission.
+- Cargo package input listing admits both packages, including their README and
+  changelog pointers. Canonical ledgers remain repository release material.
+- The full release/hook/retention fixture gate passes; final results are in
+  release-tools-check-2.log. It exercises real disposable Git/renderer flows for
+  both groups, invalid public Make/CLI selection, custody, rollback and resume.
+  Setup, broad validation/archive gates and registry uploads remain substituted.
+  Successful inputs and receipts remain under
+  target/evidence/native-ci/fixture-retention.v65yfi/. The first failed run and
+  all earlier receipts remain retained.
 
-Earlier Wire adoption work updated Wire #36 and Tooling #274/#268. Canic sediment
-remains covered by Canic #712 and #100. Preserve the original release failure
-logs under .git/release-state/validation-failures and earlier evidence under
-target/audits/release-fixture-order-20261031, wasm-json-boundary-20261031 and
-wire-0110-20261031; none was cleaned or repurposed.
+No library Rust sources or root lock entries changed. Prior runtime, native Wire,
+TypeScript, arithmetic-only Wasm and MSRV evidence retains its original scope;
+see [the identity receipt](../evidence/wire-stable-identities-0121/README.md).
+The authorized releases run the complete local ci/msrv gates; hosted/macOS and
+installed IC qualification remain separate evidence.
+The managed editor remains published Build 0.73.0, with Wire 0.12.1 and the same
+production graphs. Persistence ownership and Canic #712/#100 follow-ups remain
+unchanged. The deployment delegation covers the selected commits, standard
+release effects and package publication; no sibling release is included.

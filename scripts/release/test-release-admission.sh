@@ -34,6 +34,7 @@ mkdir -p "$fixture/repo/.tools/host/bin"
 cp "$root/.tools/host/bin/jq" "$root/.tools/host/bin/yq" "$fixture/repo/.tools/host/bin/"
 printf '#!%s\n' "$BASH" > "$fixture/bin/cargo"
 cat >> "$fixture/bin/cargo" <<'CARGO'
+printf '%s\n' "$*" >> "$FIXTURE_CARGO_EVENTS"
 if [[ "${1:-}" == publish ]]; then printf '%s\n' "$@" >> "$FIXTURE_PUBLICATION_EVENTS"; exit 0; fi
 exec "$FIXTURE_REAL_CARGO" "$@"
 CARGO
@@ -42,6 +43,7 @@ printf '#!%s\nexit 52\n' "$BASH" > "$fixture/broken-editor"
 chmod +x "$fixture/broken-editor"
 export FIXTURE_BROKEN_EDITOR="$fixture/broken-editor"
 export FIXTURE_PUBLICATION_EVENTS="$fixture/publication-events"
+export FIXTURE_CARGO_EVENTS="$fixture/cargo-events"
 export PATH="$fixture/bin:$PATH" RELEASE_DELIVERY=direct RELEASE_REMOTE=origin RELEASE_BRANCH=main
 cd "$fixture/repo"
 cat >> Makefile <<'MAKE'
@@ -108,6 +110,27 @@ git commit -qm 'Disposable group baseline'
 git init -q --bare "$fixture/remote.git"
 git remote add origin "$fixture/remote.git"
 git push -q -u origin main
+cp Cargo.toml "$fixture/root-manifest"
+cp CHANGELOG.md "$fixture/root-history-index"
+cp releases/history.md "$fixture/shared-history"
+# Public release/publication and metadata CLI entries refuse invalid group
+# selections before setup, Cargo, validation or creation of release state.
+: > "$FIXTURE_CARGO_EVENTS"
+for selection in missing empty unknown; do
+    selected_environment=(env -u RELEASE_GROUP)
+    [[ "$selection" != empty ]] || selected_environment=(env RELEASE_GROUP=)
+    [[ "$selection" != unknown ]] || selected_environment=(env RELEASE_GROUP=unknown)
+    for target in release-patch release-minor release-major release-resume publish publish-check; do
+        if "${selected_environment[@]}" make "$target" VERSION=0.23.2 PACKAGE=ic-logging \
+            > "$fixture/$selection-$target.log" 2>&1; then exit 1; fi
+    done
+    for operation in plan preflight prepare; do
+        if "${selected_environment[@]}" bash scripts/release/metadata.sh "$operation" \
+            > "$fixture/$selection-cli-$operation.log" 2>&1; then exit 1; fi
+    done
+    [[ ! -s "$FIXTURE_CARGO_EVENTS" && ! -e .git/gates && ! -e .git/release-state ]]
+    [[ -z "$(git status --porcelain)" ]]
+done
 freeze_consumer() {
     local group="$1" supplier="$2" version="$3"
     consumer="$fixture/$group-consumer"
@@ -221,6 +244,9 @@ for group in metrics logging; do
     [[ "$(git --git-dir="$fixture/remote.git" rev-parse "refs/tags/$group-v$candidate^{}")" == "$commit" ]]
     [[ "$(git --git-dir="$fixture/remote.git" rev-parse refs/heads/main)" == "$commit" ]]
     [[ -z "$(git status --porcelain)" ]]
+    cmp Cargo.toml "$fixture/root-manifest"
+    cmp CHANGELOG.md "$fixture/root-history-index"
+    cmp releases/history.md "$fixture/shared-history"
     cmp "$other_ledger" "$fixture/$group-other-ledger"
     cmp "crates/ic-$other/Cargo.toml" "$fixture/$group-other-manifest"
     diff -qr "crates/ic-$other/src" "$consumer/supplier/src" > "$fixture/$group-consumer-source-check"
@@ -234,11 +260,7 @@ for group in metrics logging; do
         identity($before[0]) == identity($after[0])' >/dev/null
     # The admitted plan includes unchanged Cargo.toml for literal-version groups;
     # the committed diff contains exactly the files whose bytes actually changed.
-    if [[ "$group" == metrics ]]; then
-        printf '%s\n' CHANGELOG.md Cargo.lock Cargo.toml > "$fixture/expected-changed"
-    else
-        printf '%s\n' Cargo.lock crates/ic-logging/CHANGELOG.md crates/ic-logging/Cargo.toml > "$fixture/expected-changed"
-    fi
+    printf '%s\n' Cargo.lock "releases/$group/CHANGELOG.md" "crates/ic-$group/Cargo.toml" > "$fixture/expected-changed"
     git diff-tree --no-commit-id --name-only -r HEAD | LC_ALL=C sort > "$fixture/changed"
     LC_ALL=C sort "$fixture/expected-changed" > "$fixture/expected-sorted"
     cmp "$fixture/expected-sorted" "$fixture/changed"
