@@ -135,6 +135,7 @@ libraries; select direct Cargo commands when only one package or test is affecte
 | Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
 | Logging | `cargo test -p ic-logging --lib --locked`; `cargo test -p ic-logging --doc --locked`; `cargo clippy -p ic-logging --lib --tests --examples --locked -- -D warnings` |
 | Standard numeric transport | `cargo test -p ic-metrics --lib --no-default-features --locked wire::tests`; transport and metadata require no Metrics feature selection |
+| Rust/TypeScript report conformance | `make typescript-check`; requires prepared Node from `ci/node-version.txt`, executes five report cases and malformed-input checks |
 | Allocator-free arithmetic link | `make allocation-free-check`; minimum compiler only: `bash scripts/ci/check-allocation-free.sh 1.91.0` |
 | Recording library checks | `cargo check -p ic-metrics --lib --features recording --locked`; Wasm: `cargo check -p ic-metrics --lib --features recording --locked --target wasm32-unknown-unknown`; lint: `cargo clippy -p ic-metrics --lib --tests --features recording --locked -- -D warnings` |
 | Recording tests and examples | `cargo test -p ic-metrics --lib --features recording --locked <test-name>`; doctests: `cargo test -p ic-metrics --doc --features recording --locked` |
@@ -148,6 +149,17 @@ Default-feature commands above cover allocation-free arithmetic. Recording is
 opt-in: include `--features recording` when selecting its tests, checks or examples.
 A recording test-name filter without that feature can succeed with zero selected
 tests; confirm that the intended cases actually ran.
+
+The separate TypeScript CI job runs on Linux. Prepare the exact Node version in
+`ci/node-version.txt` explicitly (for example, `nvm install` and `nvm use` with that
+version), then run `make typescript-check` with locked Cargo sources already
+available. Validation checks the prepared Node version and never installs it.
+No npm packages are required: Node's `--experimental-transform-types` executes
+the generated TypeScript and runtime exported by the locked Wire crate. This
+checks execution and byte parity, not TypeScript static type checking or a
+browser/IC runtime. Inputs, generated code and outputs remain in
+`target/typescript-conformance/`. The Node-dependent test is explicitly ignored
+by ordinary Rust library tests and MSRV checks; CI invokes it separately.
 
 `make allocation-free-check` links the runtime-input arithmetic example for
 `wasm32-unknown-unknown`, with no standard library or global allocator. Linker

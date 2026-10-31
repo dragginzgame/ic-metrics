@@ -1,5 +1,7 @@
 //! Independent event-history model for interactions across the public Log API.
 
+extern crate std;
+
 use super::{input, log, request};
 use crate::{
     AppendError, AppendReceipt, Entry, EntryInput, Filter, Label, Level, Log, LogSnapshot,
@@ -245,8 +247,7 @@ impl History {
     }
 }
 
-#[test]
-fn mixed_operations_match_independent_event_history() {
+fn check_schedules(operations: &(impl Iterator<Item = Action> + Clone)) {
     // Include exhausted identities, UTF-8/suffix boundaries and one-row capacity.
     for start in [0, u64::MAX - 2] {
         for capacity in [1, 2, 5] {
@@ -279,28 +280,7 @@ fn mixed_operations_match_independent_event_history() {
                     .unwrap();
                 }
                 let mut cursors = [None, None];
-                // Repeated appends wrap storage; refusals also occur at capacity
-                // and after complete pruning/restoration. Cursors survive edits.
-                let operations = [
-                    Append,
-                    SameTime,
-                    Append,
-                    SourceTooLong,
-                    TopicTooLong,
-                    RegressedTime,
-                    PruneNone,
-                    MoveRestore,
-                    Append,
-                    Append,
-                    PruneOne,
-                    CopyRestore,
-                    Append,
-                    PruneAll,
-                    RegressedTime,
-                    SameTime,
-                    MoveRestore,
-                ];
-                for (step, operation) in operations.into_iter().cycle().take(204).enumerate() {
+                for (step, operation) in (*operations).clone().enumerate() {
                     let time = model.time.unwrap_or(10);
                     match operation {
                         Append | SameTime | SourceTooLong | TopicTooLong | RegressedTime => {
@@ -343,5 +323,78 @@ fn mixed_operations_match_independent_event_history() {
                 }
             }
         }
+    }
+}
+
+#[test]
+fn mixed_operations_match_independent_event_history() {
+    // Repeated appends wrap storage; refusals also occur at capacity and after
+    // complete pruning/restoration. Cursors survive edits.
+    check_schedules(
+        &[
+            Append,
+            SameTime,
+            Append,
+            SourceTooLong,
+            TopicTooLong,
+            RegressedTime,
+            PruneNone,
+            MoveRestore,
+            Append,
+            Append,
+            PruneOne,
+            CopyRestore,
+            Append,
+            PruneAll,
+            RegressedTime,
+            SameTime,
+            MoveRestore,
+        ]
+        .into_iter()
+        .cycle()
+        .take(204),
+    );
+}
+
+#[test]
+fn seeded_operations_match_independent_event_history() {
+    const ACTIONS: [Action; 10] = [
+        Append,
+        SameTime,
+        SourceTooLong,
+        TopicTooLong,
+        RegressedTime,
+        PruneOne,
+        PruneNone,
+        PruneAll,
+        MoveRestore,
+        CopyRestore,
+    ];
+    // Fixed seeds and wrapping arithmetic make failures replayable without a
+    // random dependency, wall clock or platform-specific usize arithmetic.
+    for seed in [
+        0,
+        1,
+        7,
+        42,
+        0x1234_5678,
+        0xdead_beef,
+        u64::MAX - 1,
+        u64::MAX,
+    ] {
+        std::eprintln!("logging operation seed={seed}");
+        let states = core::iter::successors(Some(seed), |state| {
+            Some(
+                state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1),
+            )
+        });
+        check_schedules(
+            &states
+                .skip(1)
+                .take(256)
+                .map(|state| ACTIONS[usize::try_from((state >> 32) % 10).unwrap()]),
+        );
     }
 }

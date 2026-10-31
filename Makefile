@@ -60,6 +60,7 @@ release-files:
 .PHONY: ci-evidence-check evidence-check
 .PHONY: production-dependencies-check
 .PHONY: allocation-free-check
+.PHONY: typescript-check
 .PHONY: install-release-editor release-editor-check
 
 install-release-editor:
@@ -82,6 +83,7 @@ help:
 	@echo "Focused: format-tools-check, fmt, fmt-check, check, check-wasm, clippy, docs-check, check-doc-links, shared-tooling-check, check-pins"
 	@echo "Dependency declarations and boundary fixtures: production-dependencies-check"
 	@echo "Link Metrics arithmetic without an allocator: allocation-free-check"
+	@echo "Execute Metrics Rust/TypeScript codec conformance (prepared Node): typescript-check"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Frozen evidence archive checksums (read-only): evidence-check"
@@ -135,6 +137,12 @@ check-doc-links:
 
 test:
 	+cargo test --workspace --all-features --locked
+
+# Explicit Node-dependent acceptance; ordinary library tests need only Rust.
+typescript-check:
+	+IC_METRICS_NODE_VERSION="$$(cat ci/node-version.txt)" \
+		cargo test -p ic-metrics --lib --no-default-features --locked --offline \
+		wire::tests::browser::generated_codecs_round_trip_between_rust_and_typescript -- --ignored --exact
 
 msrv:
 	+bash scripts/ci/check-msrv.sh

@@ -19,7 +19,7 @@ Applications own attribution, labels, clocks, authorization, lifecycle and
 endpoints. Logging supplies no global recorder, timer or IC exports. The
 [independent worker example](crates/ic-logging/examples/worker.rs) demonstrates
 logging without Canic.
-The pending [0.20 native metadata contract](docs/migration-020.md) selects Wire
+The [0.20–0.21 native metadata contract](docs/migration-020.md) selects Wire
 0.10 and requires matching native report dependencies. Release availability and
 consumer qualification remain separate from these source changes.
 The [0.18 migration guide](docs/migration-018.md) covers combined Logging
