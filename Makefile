@@ -61,6 +61,7 @@ release-files:
 .PHONY: production-dependencies-check
 .PHONY: allocation-free-check
 .PHONY: typescript-check
+.PHONY: metrics-profiles-check
 .PHONY: install-release-editor release-editor-check
 
 install-release-editor:
@@ -84,6 +85,7 @@ help:
 	@echo "Dependency declarations and boundary fixtures: production-dependencies-check"
 	@echo "Link Metrics arithmetic without an allocator: allocation-free-check"
 	@echo "Execute Metrics Rust/TypeScript codec conformance (prepared Node): typescript-check"
+	@echo "Minimal Serde execution and native/Wasm dependency graphs: metrics-profiles-check"
 	@echo "Tooling fixtures: hook-check, release-tools-check (no release Git effects)"
 	@echo "CI evidence fixture: ci-evidence-check (substitute action results and Make effects, no hosted run)"
 	@echo "Frozen evidence archive checksums (read-only): evidence-check"
@@ -144,6 +146,10 @@ typescript-check:
 		cargo test -p ic-metrics --lib --no-default-features --features native-wire --locked --offline \
 		wire::tests::browser::generated_codecs_round_trip_between_rust_and_typescript -- --ignored --exact
 
+metrics-profiles-check:
+	perl scripts/ci/check-metrics-profiles.pl
+	+cargo test -p ic-metrics --lib --no-default-features --locked --offline wire::serde_tests
+
 msrv:
 	+bash scripts/ci/check-msrv.sh
 
@@ -172,6 +178,7 @@ ci:
 	+$(MAKE) --no-print-directory fmt-check
 	+$(MAKE) --no-print-directory clippy
 	+$(MAKE) --no-print-directory production-dependencies-check
+	+$(MAKE) --no-print-directory metrics-profiles-check
 	+$(MAKE) --no-print-directory allocation-free-check
 	+$(MAKE) --no-print-directory ci-evidence-check
 	+$(MAKE) --no-print-directory release-tools-check

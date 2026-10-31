@@ -7,7 +7,19 @@
 - Make native Wire metadata optional through the default-enabled `native-wire`
   feature. Callers disabling defaults must explicitly select it for schemas;
   arithmetic and validated Serde transport remain available without Wire.
-  See [migration](docs/migration-022.md) and [#101](https://github.com/dragginzgame/ic-observability/issues/101).
+  See [migration](docs/migration-022.md) and [#101 — Allow native arithmetic consumers to exclude Wire metadata dependencies](https://github.com/dragginzgame/ic-observability/issues/101).
+
+### 🧪 Testing
+
+- Execute Serde round trips and malformed-state admission without native Wire,
+  sharing report fixtures with the generated TypeScript codec checks. CI also
+  checks resolved minimal, recording, default and Wasm production dependency
+  graphs so optional metadata remains an explicit selection.
+
+### 🧹 Cleanup
+
+- Reuse admitted message parts when constructing log entries, keeping truncation
+  and retained-text accounting on one calculation with unchanged behavior.
 
 ## [0.21.1] - 2026-10-31
 

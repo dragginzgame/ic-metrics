@@ -46,6 +46,7 @@ dependencies = [
  "ic-wire",
  "num-bigint",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

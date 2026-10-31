@@ -136,6 +136,7 @@ libraries; select direct Cargo commands when only one package or test is affecte
 | Logging | `cargo test -p ic-logging --lib --locked`; `cargo test -p ic-logging --doc --locked`; `cargo clippy -p ic-logging --lib --tests --examples --locked -- -D warnings` |
 | Numeric transport and native metadata | `cargo test -p ic-metrics --lib --no-default-features --features native-wire --locked wire::tests` |
 | Arithmetic without native Wire | `cargo test -p ic-metrics --lib --no-default-features --locked ratio::tests`; inspect native/Wasm normal/build graphs with defaults disabled |
+| Minimal Serde and feature graphs | `make metrics-profiles-check`; runs Serde round trips/refusals without Wire and checks resolved normal/build closures for native minimal, recording, default and all-feature Wasm profiles |
 | Rust/TypeScript report conformance | `make typescript-check`; requires prepared Node from `ci/node-version.txt`, executes five report cases and malformed-input checks |
 | Allocator-free arithmetic link | `make allocation-free-check`; minimum compiler only: `bash scripts/ci/check-allocation-free.sh 1.91.0` |
 | Recording library checks | `cargo check -p ic-metrics --lib --features recording --locked`; Wasm: `cargo check -p ic-metrics --lib --features recording --locked --target wasm32-unknown-unknown`; lint: `cargo clippy -p ic-metrics --lib --tests --features recording --locked -- -D warnings` |

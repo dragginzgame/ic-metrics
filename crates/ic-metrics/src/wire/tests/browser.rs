@@ -1,10 +1,9 @@
 //! Execute the locked Wire generator/runtime against independently declared JS values.
 
 use super::*;
-use ic_wire::{
-    __private::serde_json::{self, json},
-    typescript::{RUNTIME, generate_payload_registry, native_schema, payload_limits},
-};
+use crate::wire::serde_tests::{Report, reports};
+use ic_wire::typescript::{RUNTIME, generate_payload_registry, native_schema, payload_limits};
+use serde_json::json;
 use std::{collections::BTreeMap, fs, path::Path, process::Command, string::String, vec::Vec};
 
 const LIMITS: Limits = Limits {
@@ -13,59 +12,6 @@ const LIMITS: Limits = Limits {
     nodes: 2048,
     depth: 16,
 };
-
-#[derive(Debug, PartialEq, Serialize, Deserialize, ic_wire::Wire)]
-struct Report {
-    aggregate: MeasurementAggregate,
-    counter: MeasurementCounter,
-    summary: MeasurementSummary,
-    histogram: MeasurementHistogram<37>,
-}
-
-fn reports() -> Vec<(&'static str, Report)> {
-    [
-        ("empty", 0, 0, None, false),
-        ("zero", 1, 0, Some(0), false),
-        ("wide", 2, 2 * u128::from(u64::MAX), Some(u64::MAX), false),
-        (
-            "cap",
-            u64::MAX,
-            u128::from(u64::MAX).pow(2),
-            Some(u64::MAX),
-            false,
-        ),
-        ("lost", u64::MAX, u128::MAX, Some(u64::MAX), true),
-    ]
-    .into_iter()
-    .map(|(name, samples, total, maximum, lost)| {
-        let aggregate =
-            MeasurementAggregate::from_parts(samples, total, maximum, lost, lost).unwrap();
-        let mut counts = [0; 37];
-        let overflow = if name == "zero" {
-            counts[0] = 1;
-            0
-        } else {
-            samples
-        };
-        let report = Report {
-            aggregate,
-            counter: MeasurementCounter::from_parts(if samples > 1 { u128::MAX } else { 0 }, lost)
-                .unwrap(),
-            summary: MeasurementSummary::from_parts(aggregate, maximum).unwrap(),
-            histogram: MeasurementHistogram::from_parts(
-                core::array::from_fn(|index| index as u64),
-                counts,
-                overflow,
-                [false; 37],
-                lost,
-                aggregate,
-            )
-            .unwrap(),
-        };
-        (name, report)
-    })
-    .collect()
-}
 
 #[test]
 #[ignore = "requires the pinned Node runtime; run make typescript-check"]

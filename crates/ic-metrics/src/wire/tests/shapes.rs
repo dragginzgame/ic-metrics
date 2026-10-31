@@ -1,10 +1,8 @@
 //! Public summary/distribution transport, with independent malformed field inputs.
 
 use super::*;
-use ic_wire::{
-    __private::serde_json::{self, json},
-    typescript::native_schema,
-};
+use ic_wire::typescript::native_schema;
+use serde_json::json;
 
 const fn shape_limits() -> Limits {
     Limits {
@@ -82,11 +80,6 @@ fn histogram_round_trip<const N: usize>(bounds: [u64; N]) {
         ),
         Err(ic_wire::Error::Limit)
     );
-    let json = serde_json::to_string(&histogram).unwrap();
-    assert_eq!(
-        serde_json::from_str::<MeasurementHistogram<N>>(&json).unwrap(),
-        histogram
-    );
 }
 
 #[test]
@@ -154,12 +147,6 @@ fn malformed_distribution_fields_cannot_bypass_canonical_admission() {
             Err(ic_wire::Error::Malformed)
         );
     }
-    for values in [json!([1]), json!([1, 2, 3])] {
-        assert!(serde_json::from_value::<FixedArray<u64, 2>>(values).is_err());
-    }
-    let mut json = serde_json::to_value(MeasurementHistogram::new([10, 20]).unwrap()).unwrap();
-    json["bucket_counts"] = json!([0]);
-    assert!(serde_json::from_value::<MeasurementHistogram<2>>(json).is_err());
 }
 
 #[derive(Serialize, Deserialize, ic_wire::Wire, Debug, PartialEq)]

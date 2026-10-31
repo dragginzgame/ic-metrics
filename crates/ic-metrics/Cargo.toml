@@ -26,6 +26,7 @@ serde.workspace = true
 
 [dev-dependencies]
 num-bigint.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true

@@ -182,3 +182,6 @@ metadata!(MeasurementSummary, SummaryFields);
 
 #[cfg(all(test, feature = "native-wire", not(target_family = "wasm")))]
 mod tests;
+
+#[cfg(test)]
+mod serde_tests;

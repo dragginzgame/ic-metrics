@@ -462,7 +462,7 @@ impl Log {
             level: input.level,
             source: String::from(input.source),
             topic: input.topic.map(String::from),
-            message: bounded_message(input.message, self.limits.max_message_bytes),
+            message: bounded_message(prefix, suffix),
             truncated,
         };
         let mut evicted = 0;
@@ -683,8 +683,7 @@ fn valid_retained_message(entry: &Entry, max_bytes: usize) -> bool {
     budget.saturating_sub(prefix.len()) < 4
 }
 
-fn bounded_message(message: &str, max_bytes: usize) -> String {
-    let (prefix, suffix) = message_parts(message, max_bytes);
+fn bounded_message(prefix: &str, suffix: &str) -> String {
     let mut retained = String::with_capacity(prefix.len() + suffix.len());
     retained.push_str(prefix);
     retained.push_str(suffix);
