@@ -6,7 +6,7 @@ Shared Metrics/Logging release history through 0.23.0 remains once in the
 The version remains 0.23.0 when adopting groups; no new Logging release is
 created by this change. Future Logging notes belong here.
 
-## [0.23.1]
+## [0.23.1] - 2026-10-31
 
 ### 🔧 Changed
 
