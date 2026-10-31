@@ -5,7 +5,7 @@ Shared Metrics/Logging release history through 0.23.0 remains once in the
 [shared historical ledger](../history.md#0230---2026-10-31).
 Metrics and Logging each own their package version and release notes.
 
-## [0.23.2]
+## [0.23.2] - 2026-10-31
 
 ### 🔧 Changed
 
