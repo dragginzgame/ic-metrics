@@ -134,7 +134,8 @@ libraries; select direct Cargo commands when only one package or test is affecte
 | Focused library checks | `cargo check -p PACKAGE --all-targets --locked`; library Wasm: `cargo check -p PACKAGE --locked --target wasm32-unknown-unknown`; `cargo clippy -p PACKAGE --all-targets --locked -- -D warnings` |
 | Named tests | `cargo test -p ic-metrics --locked <test-name>`; package doctests: `cargo test -p PACKAGE --locked --doc` |
 | Logging | `cargo test -p ic-logging --lib --locked`; `cargo test -p ic-logging --doc --locked`; `cargo clippy -p ic-logging --lib --tests --examples --locked -- -D warnings` |
-| Standard numeric transport | `cargo test -p ic-metrics --lib --no-default-features --locked wire::tests`; transport and metadata require no Metrics feature selection |
+| Numeric transport and native metadata | `cargo test -p ic-metrics --lib --no-default-features --features native-wire --locked wire::tests` |
+| Arithmetic without native Wire | `cargo test -p ic-metrics --lib --no-default-features --locked ratio::tests`; inspect native/Wasm normal/build graphs with defaults disabled |
 | Rust/TypeScript report conformance | `make typescript-check`; requires prepared Node from `ci/node-version.txt`, executes five report cases and malformed-input checks |
 | Allocator-free arithmetic link | `make allocation-free-check`; minimum compiler only: `bash scripts/ci/check-allocation-free.sh 1.91.0` |
 | Recording library checks | `cargo check -p ic-metrics --lib --features recording --locked`; Wasm: `cargo check -p ic-metrics --lib --features recording --locked --target wasm32-unknown-unknown`; lint: `cargo clippy -p ic-metrics --lib --tests --features recording --locked -- -D warnings` |
@@ -196,11 +197,11 @@ adapter ordering check uses `--manifest-order-grouped` against its current or
 selected committed source. No paired formatter override is needed here.
 
 `make production-dependencies-check` admits both libraries through successful
-locked, offline Cargo metadata. Metrics admits only required Serde and IC Wire
-transport declarations without dependency defaults; its default features remain
-empty. Serde is unconditional with only `derive`; Wire is selected only under
+locked, offline Cargo metadata. Metrics admits required Serde and optional IC Wire
+transport declarations without dependency defaults. Serde is unconditional with
+only `derive`; default-enabled `native-wire` selects Wire only under
 `cfg(not(target_family = "wasm"))` with only `typescript`. Package features may
-compose local switches but cannot forward dependency features. These declaration
+compose local switches; only `native-wire` may select `dep:ic-wire`. These declaration
 checks do not depend on which features or targets are active on the checking host.
 Logging admits no production dependencies, including Metrics itself.
 Other normal/build dependencies are rejected, including optional and inactive

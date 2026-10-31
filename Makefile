@@ -141,7 +141,7 @@ test:
 # Explicit Node-dependent acceptance; ordinary library tests need only Rust.
 typescript-check:
 	+IC_METRICS_NODE_VERSION="$$(cat ci/node-version.txt)" \
-		cargo test -p ic-metrics --lib --no-default-features --locked --offline \
+		cargo test -p ic-metrics --lib --no-default-features --features native-wire --locked --offline \
 		wire::tests::browser::generated_codecs_round_trip_between_rust_and_typescript -- --ignored --exact
 
 msrv:

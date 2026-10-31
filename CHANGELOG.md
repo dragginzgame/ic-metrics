@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.22.0] - Unreleased
+
+### ⚠️ Breaking
+
+- Make native Wire metadata optional through the default-enabled `native-wire`
+  feature. Callers disabling defaults must explicitly select it for schemas;
+  arithmetic and validated Serde transport remain available without Wire.
+  See [migration](docs/migration-022.md) and [#101](https://github.com/dragginzgame/ic-observability/issues/101).
+
 ## [0.21.1] - 2026-10-31
 
 ### 🧪 Testing

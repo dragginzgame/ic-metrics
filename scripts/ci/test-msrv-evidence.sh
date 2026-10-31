@@ -21,13 +21,15 @@ jq="$root/.tools/host/bin/jq"
     (map(.id) | index("checkout")) < (map(.id) | index("inputs")) and
     (map(.id) | index("inputs")) < (map(.id) | index("host_tools")) and
     (map(.id) | index("host_tools")) < (map(.id) | index("toolchain")) and
-    (map(.id) | index("toolchain")) < (map(.id) | index("check")) and
+    (map(.id) | index("toolchain")) < (map(.id) | index("application_sources")) and
+    (map(.id) | index("application_sources")) < (map(.id) | index("check")) and
     (map(.id) | index("check")) < (map(.id) | index("artifacts")) and
     (map(select(.id == "artifacts"))[0].if == "always() && steps.checkout.outcome == '\''success'\''") and
     (map(select(.id == "artifacts"))[0].env == {
         "INPUT_OUTCOME": "${{ steps.inputs.outcome }}",
         "HOST_TOOLS_OUTCOME": "${{ steps.host_tools.outcome }}",
         "TOOLCHAIN_OUTCOME": "${{ steps.toolchain.outcome }}",
+        "APPLICATION_SOURCES_OUTCOME": "${{ steps.application_sources.outcome }}",
         "MSRV_OUTCOME": "${{ steps.check.outcome }}"
     }) and
     (map(select(.id == "check"))[0].env == {
@@ -41,7 +43,7 @@ jq="$root/.tools/host/bin/jq"
         .with.path == "target/evidence/msrv-ci.tar.gz\ntarget/evidence/msrv-ci.tar.gz.sha256\n" and
         .with["retention-days"] == 30 and .with["if-no-files-found"] == "error")
 ' "$fixture/steps.json" > /dev/null
-for step in inputs host_tools toolchain check artifacts; do
+for step in inputs host_tools toolchain application_sources check artifacts; do
     PATH="${jq%/*}:$PATH" bash "$root/scripts/ci/extract-workflow-step.sh" "$fixture/steps.json" "$step" > "$fixture/$step.sh"
 done
 mkdir "$fixture/bin"
@@ -70,6 +72,10 @@ set -euo pipefail
 [[ "$1" != +* ]] || shift
 case "$1" in
     --version) echo 'cargo fixture-minimum-compiler' ;;
+    fetch)
+        [[ "$*" == 'fetch --locked' ]]
+        echo locked-application-sources-output
+        [[ "$MSRV_FIXTURE_SCENARIO" != sources-failure ]] || exit 49 ;;
     rustc)
         [[ "$MSRV_FIXTURE_SCENARIO" != link-failure ]] || exit 39
         mkdir -p target/wasm32-unknown-unknown/debug/examples
@@ -82,7 +88,7 @@ CARGO
 printf '#!%s\necho "rustc fixture-minimum-compiler"\n' "$BASH" > "$fixture/bin/rustc"
 chmod +x "$fixture/bin/"*
 
-for scenario in success inputs-failure host-failure toolchain-failure before-link link-failure after-link cancelled; do (
+for scenario in success inputs-failure host-failure toolchain-failure sources-failure before-link link-failure after-link cancelled; do (
     work="$fixture/$scenario"
     mkdir -p "$work/.github/workflows" "$work/target/wasm32-unknown-unknown/debug/examples"
     bash "$root/scripts/ci/prepare-script-fixture.sh" "$root" "$work" \
@@ -103,9 +109,9 @@ for scenario in success inputs-failure host-failure toolchain-failure before-lin
     export MSRV_FIXTURE_SCENARIO="$scenario" GITHUB_RUN_ID=fixture GITHUB_RUN_ATTEMPT=1 GITHUB_EVENT_NAME=pull_request
     export VALIDATION_LOG_DIR="$work/target/evidence/msrv-ci" VALIDATION_FAILURE_LOG_DIR="$work/target/evidence/msrv-ci/failures"
     export ALLOCATION_FREE_EVIDENCE_ROOT="$work/target/evidence/msrv-ci" TMPDIR="$work/target/evidence/msrv-ci/scratch"
-    export INPUT_OUTCOME=skipped HOST_TOOLS_OUTCOME=skipped TOOLCHAIN_OUTCOME=skipped MSRV_OUTCOME=skipped
+    export INPUT_OUTCOME=skipped HOST_TOOLS_OUTCOME=skipped TOOLCHAIN_OUTCOME=skipped APPLICATION_SOURCES_OUTCOME=skipped MSRV_OUTCOME=skipped
     status=0
-    for step in inputs host_tools toolchain check; do
+    for step in inputs host_tools toolchain application_sources check; do
         if [[ "$scenario" == cancelled && "$step" == check ]]; then MSRV_OUTCOME=cancelled; break; fi
         "$MSRV_FIXTURE_REAL_BASH" --noprofile --norc -e -o pipefail "$fixture/$step.sh" > "$work/$step.log" 2>&1 || status=$?
         outcome=success
@@ -114,6 +120,7 @@ for scenario in success inputs-failure host-failure toolchain-failure before-lin
             inputs) INPUT_OUTCOME="$outcome" ;;
             host_tools) HOST_TOOLS_OUTCOME="$outcome" ;;
             toolchain) TOOLCHAIN_OUTCOME="$outcome" ;;
+            application_sources) APPLICATION_SOURCES_OUTCOME="$outcome" ;;
             check) MSRV_OUTCOME="$outcome" ;;
         esac
         [[ "$status" == 0 ]] || break
@@ -124,7 +131,7 @@ for scenario in success inputs-failure host-failure toolchain-failure before-lin
         target/evidence/msrv-ci.tar.gz > checksum.log
     mkdir replay
     tar -xzf target/evidence/msrv-ci.tar.gz -C replay
-    printf 'inputs=%s\nhost_tools=%s\ntoolchain=%s\nmsrv=%s\n' "$INPUT_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOLCHAIN_OUTCOME" "$MSRV_OUTCOME" > expected-outcome
+    printf 'inputs=%s\nhost_tools=%s\ntoolchain=%s\napplication_sources=%s\nmsrv=%s\n' "$INPUT_OUTCOME" "$HOST_TOOLS_OUTCOME" "$TOOLCHAIN_OUTCOME" "$APPLICATION_SOURCES_OUTCOME" "$MSRV_OUTCOME" > expected-outcome
     cmp expected-outcome replay/outcome.txt
     if [[ "$INPUT_OUTCOME" == success ]]; then
         (cd "$work"; shasum -a 256 -c replay/source-sha256.txt) > source-check.log
@@ -132,6 +139,7 @@ for scenario in success inputs-failure host-failure toolchain-failure before-lin
     fi
     if [[ "$HOST_TOOLS_OUTCOME" != skipped ]]; then grep -Fx host-setup-output replay/host-tools.log > /dev/null; fi
     if [[ "$TOOLCHAIN_OUTCOME" != skipped ]]; then grep -Fx minimum-toolchain-setup-output replay/toolchain.log > /dev/null; fi
+    if [[ "$APPLICATION_SOURCES_OUTCOME" != skipped ]]; then grep -Fx locked-application-sources-output replay/application-sources.log > /dev/null; fi
     if [[ "$MSRV_OUTCOME" == success || "$MSRV_OUTCOME" == failure ]]; then
         logs=(replay/validation.*/0.log)
         [[ ${#logs[@]} == 1 && -f "${logs[0]}" ]]

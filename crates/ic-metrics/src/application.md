@@ -338,8 +338,8 @@ live alongside the table in a consumer-defined struct inside the same window.
 ### Numeric transport
 
 Embed aggregates, counters, summaries and fixed-bound histograms directly in Serde/IC Wire
-reports. Transport is standard: no Metrics feature selection is needed. Serde
-is available on native and Wasm targets, with Wire TypeScript metadata on native
+reports. Serde is always available on native and Wasm targets. Default-enabled
+`native-wire` adds Wire TypeScript metadata on native
 hosts. Measurement arithmetic remains allocation-free; heap recording is opt-in.
 The 0.20–0.21 contract implements Wire 0.10's native metadata trait. Applications
 deriving Wire for reports containing Metrics values must select that same Wire
@@ -347,7 +347,7 @@ line; earlier Wire traits cannot describe Wire 0.10 implementations. Serde recor
 layouts remain unchanged. See the [native metadata migration guide](https://github.com/dragginzgame/ic-observability/blob/main/docs/migration-020.md).
 
 ```rust
-# #[cfg(not(target_family = "wasm"))]
+# #[cfg(all(feature = "native-wire", not(target_family = "wasm")))]
 # {
 #[derive(serde::Serialize, serde::Deserialize, ic_wire::Wire)]
 struct OwnerReport {
