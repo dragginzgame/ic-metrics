@@ -1,15 +1,15 @@
-# Native Wire metadata in the pending 0.20 contract
+# Native Wire metadata in the 0.20–0.21 contract
 
 This source selects IC Wire 0.10.0. Metrics' native metadata implementations now
 belong to Wire 0.10's Rust dependency identity. Native reports deriving `Wire` or
 requesting schemas for embedded Metrics values must use that same Wire line;
 Wire 0.9 and earlier traits are different traits.
 
-After a corresponding Metrics release is available, select the coordinated graph:
+Select an available Metrics release and the coordinated Wire graph:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.20"
+ic-metrics = "0.21"
 ic-wire = { version = "0.10", default-features = false, features = ["typescript"] }
 ```
 
@@ -27,6 +27,7 @@ dependencies and qualification separately. This workspace needs neither integrat
 it enables only native `typescript` metadata with defaults disabled, and adds no
 Platform runtime dependency.
 
-Pending notes select 0.20.0 because the native metadata trait identity is exposed
-to consumers. Own package metadata remains at 0.19.0 until a separately authorized
-minor release. A workspace release alone does not establish registry availability.
+Release 0.20.0 introduced this native metadata trait identity. Release 0.21.0 repeats
+that contract after an accidental second minor release, with no further API,
+behavior or dependency changes. Workspace metadata is now 0.21.0; release records
+alone do not establish registry availability or consumer qualification.

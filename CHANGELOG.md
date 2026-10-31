@@ -9,7 +9,28 @@
   arithmetic and validated Serde transport remain available without Wire.
   See [migration](docs/migration-022.md) and [#101](https://github.com/dragginzgame/ic-observability/issues/101).
 
+## [0.21.1] - 2026-10-31
+
+### 🧪 Testing
+
+- Execute generated Metrics TypeScript codecs against Rust report bytes, covering
+  wide integers, exact caps, overflow quality and fixed-bound histograms. Run
+  `make typescript-check` with the pinned Node runtime; a separate CI job retains
+  the generated inputs and outputs without adding npm dependencies.
+- Exercise logging's independent event-history model with reproducible generated
+  operation schedules across append, retention, restoration and cursor scans.
+
+### 📚 Documentation
+
+- Reconcile current guides with the 0.20–0.21 releases and their Wire 0.10 contract.
+
 ## [0.21.0] - 2026-10-30
+
+### 📝 Summary
+
+- Repeat the 0.20.0 release under 0.21.0 after an accidental second minor release.
+  IC Wire remains at 0.10.0; there are no additional API, behavior or dependency
+  changes. The [0.20 migration guide](docs/migration-020.md) also applies to 0.21.
 
 ## [0.20.0] - 2026-10-30
 

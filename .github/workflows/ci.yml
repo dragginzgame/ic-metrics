@@ -18,6 +18,38 @@ defaults:
     shell: /bin/bash --noprofile --norc -e -o pipefail {0}
 
 jobs:
+  typescript:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Prepare pinned Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: ci/node-version.txt
+          package-manager-cache: false
+      - name: Prepare host parsers and development Rust
+        run: |
+          bash scripts/dev/install-host-tools.sh --consumer "$PWD"
+          PATH="$PWD/.tools/host/bin:$PATH" bash scripts/dev/prepare-rust-toolchain.sh \
+            --toolchain-file rust-toolchain.toml
+      - name: Prepare locked sources
+        run: cargo fetch --locked
+      - name: Execute Rust and TypeScript report codecs
+        run: |
+          mkdir -p target/typescript-conformance
+          make typescript-check 2>&1 | tee target/typescript-conformance/check.log
+      # actions/upload-artifact v7
+      - name: Retain conformance inputs and outputs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: typescript-conformance-${{ github.run_attempt }}
+          path: target/typescript-conformance/
+          if-no-files-found: ignore
+          retention-days: 30
+
   native:
     # Cold tool setup and the complete fixture suite share this job budget.
     timeout-minutes: 60

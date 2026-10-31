@@ -2,6 +2,7 @@ extern crate std;
 use super::*;
 use ic_wire::{Limits, native};
 
+mod browser;
 mod shapes;
 
 const fn limits() -> Limits {
