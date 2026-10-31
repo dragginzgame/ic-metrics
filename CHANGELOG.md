@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.23.0]
+
+### ⚠️ Breaking
+
+- Adopt Wire core 0.12.1 for native Metrics metadata. Native report/schema
+  consumers must align Wire 0.12 and select `native-wire` when disabling defaults.
+  Principal/Account metadata uses canonical Platform Types 0.1, also reexported by
+  Platform 0.14. Arithmetic, typed errors, schema shapes and encoded bytes remain
+  unchanged. Metrics adds no identity, Platform runtime or endpoint dependency.
+  See [migration](docs/migration-023.md).
+
 ## [0.22.0] - 2026-10-31
 
 ### ⚠️ Breaking

@@ -52,8 +52,8 @@ for my $profile (@profiles) {
         }
         my @wire = grep { $packages{$_}{name} eq 'ic-wire' } keys %seen;
         my @derive = grep { $packages{$_}{name} eq 'ic-wire-derive' } keys %seen;
-        !grep { $packages{$_}{name} eq 'ic-platform' } keys %seen
-            or die "$name: $owner selects Platform\n";
+        !grep { $packages{$_}{name} =~ /\A(?:ic-platform|ic-platform-types|ic-wire-endpoint)\z/ } keys %seen
+            or die "$name: $owner selects a Platform or endpoint integration\n";
         if ($owner eq 'ic-logging') {
             keys(%seen) == 1 or die "$name: Logging has production dependencies\n";
         } else {

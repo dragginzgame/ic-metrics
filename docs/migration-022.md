@@ -1,4 +1,4 @@
-# Native metadata selection in the pending 0.22 contract
+# Native metadata selection in the 0.22 contract
 
 Metrics arithmetic and validated Serde transport remain available on every
 target. The default-enabled `native-wire` feature selects native Wire TypeScript
@@ -31,6 +31,7 @@ selects only native `typescript` metadata, without Platform or an endpoint runti
 
 Numeric APIs, rounding, errors, Serde fields and persisted representations are
 unchanged. The exposed Wire trait identity and former no-default-features metadata
-contract require a minor release. Own package metadata remains 0.21.1; publication
-and consumer adoption remain separate. The [0.20–0.21 guide](migration-020.md)
-retains the previous Wire 0.10 contract.
+contract required the 0.22 minor release. Registry availability and consumer
+qualification remain separate. The [0.20–0.21 guide](migration-020.md) retains the
+previous Wire 0.10 contract; the [pending 0.23 guide](migration-023.md) describes
+the next stable-identity pairing.
