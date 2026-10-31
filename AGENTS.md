@@ -1,7 +1,7 @@
 # IC Observability Agent Rules
 
 Read [DRAGGINZGAME.md](DRAGGINZGAME.md) first. The reviewed Shared Tooling revision
-`62edfbd43087a718bf0283e9040676a49211976d` (0.27.11)
+`39ba9836a269ee7ea7f073a3f23d9cefe3c7d03c` (snapshot version 0.27.16)
 and file digests are recorded in
 [.shared-tooling.snapshot](.shared-tooling.snapshot). This is the local overlay;
 there are no baseline exceptions. Read [the current handoff](docs/status/current.md)
@@ -11,8 +11,10 @@ consumer-contract or persistence-boundary changes.
 ## Ownership
 
 - This renamed workspace owns the independent `ic-metrics` and `ic-logging`
-  packages. They share the root catalog, lockfile and version, with no dependency
-  on one another. Existing Metrics package identities remain unchanged.
+  packages. They share the root catalog and lockfile, with no dependency on one
+  another. The `metrics` group inherits the workspace version and root changelog;
+  `logging` owns its literal version and crates/ic-logging/CHANGELOG.md. Group
+  membership is explicit in ci/cargo-release-groups.json and root Cargo comments.
 - Logging owns a dependency-free `no_std` + `alloc` heap engine with explicit
   input time, fixed text/count bounds, retention batches and cursor scans.
   It owns no global recorder, endpoint, authorization, clock or timer.
@@ -39,8 +41,9 @@ consumer-contract or persistence-boundary changes.
   and Rust floor. Optional evidence experiments select their own qualified tool
   identity; Metrics owns no inspector wrapper, pin or workspace dependency.
   Source-less lock packages must be workspace-owned; external path dependencies
-  are not permitted. Release metadata advances coordinated workspace members,
-  including Logging. Publication remains selected per package.
+  are not permitted. Release metadata advances only the selected release group;
+  other groups' identities and ledgers remain unchanged. Publication selects the
+  group's packages separately from release delivery.
 - Consumer code owns measurement attribution, labels, registry limits, replication
   policy, reset authorization, restart identity, persistence, lifecycle hooks, and endpoints.
 - Metrics' maintainer-selected bounded recording extension (2026-10-28) permits

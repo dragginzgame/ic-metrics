@@ -1,4 +1,7 @@
 [workspace]
+# Release groups (all workspace members):
+# metrics: ic-metrics; workspace.package.version; CHANGELOG.md.
+# logging: ic-logging; explicit package.version; crates/ic-logging/CHANGELOG.md.
 members = ["crates/ic-logging", "crates/ic-metrics"]
 default-members = ["crates/ic-logging", "crates/ic-metrics"]
 resolver = "3"

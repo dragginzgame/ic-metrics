@@ -1,5 +1,22 @@
 # Changelog
 
+This is the Metrics release-group ledger. Logging has its own
+[canonical changelog](crates/ic-logging/CHANGELOG.md). Releases through 0.23.0
+below retain the original coordinated Metrics/Logging history, once and unchanged.
+
+## [0.23.1]
+
+### 🔧 Changed
+
+- Release Metrics and Logging independently in one workspace. Select
+  `RELEASE_GROUP=metrics` (default) or `logging` for release, resume and
+  publication. Existing numeric versions remain 0.23.0; arithmetic, log behavior
+  and dependency boundaries are unchanged. See [group ownership and commands](docs/independent-releases.md)
+  and [#104 — Version Metrics and Logging independently](https://github.com/dragginzgame/ic-observability/issues/104).
+- Adopt the committed Shared Tooling group machinery and published IC Build
+  0.73.0 metadata editor through managed setup; prepare the new editor before
+  using the group commands.
+
 ## [0.23.0] - 2026-10-31
 
 ### ⚠️ Breaking

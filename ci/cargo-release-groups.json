@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "groups": [
+    {
+      "name": "metrics",
+      "primary": "ic-metrics",
+      "version": "workspace",
+      "members": ["ic-metrics"],
+      "changelog": "CHANGELOG.md",
+      "dependencies": []
+    },
+    {
+      "name": "logging",
+      "primary": "ic-logging",
+      "version": "package",
+      "members": ["ic-logging"],
+      "changelog": "crates/ic-logging/CHANGELOG.md",
+      "dependencies": []
+    }
+  ]
+}

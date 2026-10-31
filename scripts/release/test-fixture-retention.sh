@@ -26,21 +26,10 @@ trap cleanup EXIT
 # shellcheck source=scripts/ci/fixture-retention-probes.sh
 source "$root/scripts/ci/fixture-retention-probes.sh"
 real_bash="$(command -v bash)"
-real_cargo="$(command -v cargo)"
-export FIXTURE_RETENTION_REAL_CARGO="$real_cargo"
 export FIXTURE_RETENTION_REAL_BASH="$real_bash"
 FIXTURE_RETENTION_REAL_MAKE="$(command -v make)"
 export FIXTURE_RETENTION_REAL_MAKE
 git -C "$root" rev-parse HEAD > "$evidence/source-commit.txt"
-
-write_cargo_fault() {
-    local destination="$1"
-    cat >> "$destination" <<'CARGO'
-if [[ "${1:-}" != generate-lockfile ]]; then
-    exec "$FIXTURE_RETENTION_REAL_CARGO" "$@"
-fi
-CARGO
-}
 
 write_bash_fault() {
     local destination="$1"
@@ -79,15 +68,13 @@ MAKE
     esac
 }
 
-for kind in standard metadata hook; do
+for kind in standard hook; do
     case "$kind" in
         standard) script=scripts/release/test-standard-release.sh; prefix=standard-release-entry; child=bash ;;
-        metadata) script=scripts/release/test-metadata.sh; prefix=metrics-metadata-test; child=cargo ;;
         hook) script=scripts/dev/test-format-hook.sh; prefix=metrics-format-hook; child='make' ;;
     esac
     cp "$root/$script" "$evidence/$kind-source.sh"
     scenarios=(success child)
-    if [[ "$kind" == metadata ]]; then scenarios+=(assertion); fi
     if [[ "$kind" == standard ]]; then scenarios+=(publication-child publication-assertion); fi
     if [[ "$kind" == hook ]]; then scenarios=(success baseline); fi
     for scenario in "${scenarios[@]}"; do
@@ -101,7 +88,6 @@ for kind in standard metadata hook; do
             case "$scenario" in publication-child|baseline) executable='make' ;; esac
             printf '#!%s\n' "$real_bash" > "$run/bin/$executable"
             case "$executable" in
-                cargo) write_cargo_fault "$run/bin/$executable" ;;
                 bash) write_bash_fault "$run/bin/$executable" ;;
                 make) write_make_fault "$run/bin/$executable" "$scenario" ;;
                 *) exit 2 ;;
@@ -146,9 +132,6 @@ FAIL
                     [[ -f "$retained/events" && -f "$retained/bin/cargo" ]] || exit 1
                 fi
                 ;;
-            metadata)
-                [[ -f "$retained/prepared/Cargo.toml" && -f "$retained/prepared/setup.log" ]] || exit 1
-                ;;
             hook)
                 grep -Fq FIXTURE_RETENTION_INJECTED_FAILURE "$retained"/formatting-adoption.*/baseline.log
                 ;;
@@ -174,12 +157,11 @@ done
 for directory in logs failures; do
     [[ "$(ls -A "$run/$directory")" == sentinel ]] || exit 1
 done
-for remaining in "$run/tmp"/*; do [[ ! -e "$remaining" ]] || exit 1; done
-echo 'Admission fixture preserves inherited parent logs and summary'
+echo 'Group admission fixture preserves inherited parent logs and summary; its receipts remain retained'
 
 # Probe actual initialization/cleanup prefixes through the shared owner.
 # Consumer rosters and successful diagnostic retention remain explicit here.
-for script in scripts/release/test-standard-release.sh scripts/release/test-metadata.sh \
+for script in scripts/release/test-standard-release.sh \
     scripts/dev/test-format-hook.sh \
     scripts/release/test-release-admission.sh \
     scripts/ci/test-native-evidence.sh scripts/release/test-fixture-retention.sh; do
@@ -187,7 +169,7 @@ for script in scripts/release/test-standard-release.sh scripts/release/test-meta
     success=completed
     directory_variable=fixture
     case "$script" in
-        scripts/ci/test-native-evidence.sh) success='retained-completed' ;;
+        scripts/ci/test-native-evidence.sh|scripts/release/test-release-admission.sh) success='retained-completed' ;;
         scripts/release/test-fixture-retention.sh) success='retained-completed'; directory_variable=evidence ;;
     esac
     for scenario in nounset premature "$success"; do

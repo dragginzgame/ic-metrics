@@ -243,7 +243,7 @@ The shared locked release-preflight helper owns fetch/tool sequencing and pin
 rechecks; Metrics admits source/recovery first and selects preparation authority,
 tool targets and pin files. Checks remain offline and never install tools.
 
-`ci/release-tools.env` selects published IC Build 0.64.0's
+`ci/release-tools.env` selects published IC Build 0.73.0's
 `ic-build-release-metadata` executable with its required `cli` feature and a
 1 MiB allowance for each input document. This selects the current Host artifact,
 filesystem and process implementations through Build's tool graph, without
@@ -286,7 +286,10 @@ and publication authority.
 Release/publication are separate maintainer actions under
 [the release contract](releases.md). Normal release commands start fresh from
 clean committed metadata without scanning or replaying historical plans.
-Use `make release-resume VERSION=X.Y.Z` for recovery of a specific saved attempt.
+Select `RELEASE_GROUP=metrics` (default) or `RELEASE_GROUP=logging`; see
+[independent releases](independent-releases.md) for the version/ledger map.
+Use `make release-resume RELEASE_GROUP=logging VERSION=X.Y.Z` for recovery of a
+specific saved Logging attempt.
 Standard release preflight prepares the
 locked dependency cache, common Cargo tools and the selected release editor before offline validation;
 standalone preflight only fetches/checks offline. Preparation and late checks
@@ -295,16 +298,15 @@ Late metadata checks use Shared's `--manifest-order-grouped` option to check ord
 in that same selected source; literal version preparation never sorts it.
 Neither validation nor release performs artifact cleanup.
 The [shared publication Make adapter](cargo-publication.md#opt-in-make-adapter)
-owns `make publish` and `make publish-check`. This consumer declares the Metrics/
-Logging roster, `crates-io` registry and `clippy` validation target before its
+owns `make publish` and `make publish-check`. This consumer projects the selected
+group's public roster and declares `crates-io` and `clippy` before its
 common include. The same native/Wasm Clippy gate runs before Cargo packaging or
 registry effects, including under parallel Make. Publication remains separately
 authorized; selection and attempt evidence stays under `target/publication`.
-Both commands select Metrics and Logging by default. Select `PACKAGE=ic-metrics`
-or `PACKAGE=ic-logging` for a single package, including completion of a partial
-publication after observing registry state. Workspace release tags
-coordinate versions without uploading either package. The standard-release
-fixture checks the declared default roster, one explicit Logging override and
+Both commands select Metrics by default; `RELEASE_GROUP=logging` selects Logging.
+A `PACKAGE` override must belong to that group. Group release tags advance only
+the selected version, without uploading either package. The standard-release
+fixture checks the default Metrics roster, one explicit Logging selection and
 both exact lint-failure boundaries before delegation. Shared Tooling owns generic
 selection, metadata, upload-status and retained-attempt fixtures. Local effects
 are substituted and do not publish packages.
@@ -337,29 +339,28 @@ actual callers; it does not replay those generic matrices in its own gates.
 
 | Local entrypoint | Metrics-owned qualification |
 | --- | --- |
-| `make release-tools-check` | Complete standard-release, arithmetic metadata, hook and source-admission fixtures, followed by injected failure/custody cases. Actual Make dispatch, parallel jobserver access, catalog overrides, selected commits, index admission, gate ordering and retained logs stay checked. |
+| `make release-tools-check` | Standard Make dispatch, grouped release admission, hook and failure/custody fixtures. The actual group adapter, renderer and runner exercise local Git releases, exact staging/commits, rollback, receipts/resume, publication selection and consumers pinned to the unaffected identity. Broad gates and registry uploads are substituted. |
 | `make hook-check` | Standalone hook adoption; the actual baseline formatter failure must retain and replay its diagnostic log. |
 | `make ci-evidence-check` | Source selection/hash inputs, actual workflow setup bodies, collector wiring and direct collector/recovery-packager execution with substituted external effects. |
 
 Retention is the single CI entry for release and hook bodies; they are not run
 again as separate gates. The admission fixture isolates inherited parent
-validation/failure logs and summaries. Its private scenario groups separate cache
-and tool admission, source/index custody, and validation adapter behavior; one
-entrypoint still runs each group once. Successful cleanup affects only owned
-scratch; failed inputs remain under caller-selected `TMPDIR`, defaulting to
-native CI evidence in the retention fixture. Standard-release and metadata fixtures
-own their assertion-failure cases and retained-input checksum manifests; the parent
-verifies the exit and manifest without matching private assertion filenames. External-command failures
-and nested hook logs remain separately checked. These substitutes perform no real
-Metrics release or registry publication and do not qualify hosted execution.
+validation/failure logs and summaries. Each group checks source and tool refusal,
+failed validation, transactional rollback, wrong-group/altered receipts and
+resumption after a real disposable commit/tag. Successful grouped inputs and
+receipts remain retained alongside failed inputs under caller-selected `TMPDIR`,
+defaulting to native CI evidence. The standard fixture owns its assertion-failure
+case and retained-input checksum manifest; the parent verifies both. External
+command failures and nested hook logs remain separately checked. These fixtures
+perform no release in the maintained checkout or registry publication and do not
+qualify hosted execution.
 
-The metadata fixture uses the arithmetic package name and rejects a stale
-local lock identity without repairing it. `scripts/release/metadata.sh files` owns the NUL-delimited release-file
-roster projected by `make release-files`; listing works without Cargo, Git or
-prepared parsers. Its bootstrap fixture is deliberately minimal. Other release
-fixtures select the declared closure of `make/consumer.mk` or the metadata
-adapter, adding only their local inputs. Consumer checks retain unsafe Make-mode
-refusal before effects, explicit tool-catalog routing and selected-source checks.
+`scripts/release/metadata.sh files` projects the shared admitted group's exact
+NUL-delimited file plan through `make release-files`. Plan admission uses the
+prepared parsers and locked offline Cargo metadata. Consumer fixtures retain
+unsafe Make-mode refusal before effects, explicit tool-catalog routing and
+selected-source checks. The old coordinated metadata/admission helpers have been
+replaced by the actual grouped integration fixture.
 
 Native input selection includes pending maintained files, excludes generated and
 private evidence, and keeps missing tracked source selected so hashing refuses

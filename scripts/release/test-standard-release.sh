@@ -3,6 +3,7 @@ set -euo pipefail
 unset MAKEFLAGS MFLAGS MAKEOVERRIDES GNUMAKEFLAGS MAKEFILES
 unset VALIDATION_REPOSITORY_ROOT VALIDATION_RUNNER_SNAPSHOT_PATH
 export RELEASE_DELIVERY=direct
+export RELEASE_GROUP=metrics
 root="${BASH_SOURCE[0]}"
 [[ "$root" == /* ]] || root="$PWD/$root"
 root="$(cd -P "${root%/*}/../.." && printf '%s/.' "$PWD")"
@@ -73,6 +74,7 @@ cat >> "$fixture/bin/bash" <<'BASH'
 case "${1:-}" in
     */scripts/ci/check-make-execution.sh|*/scripts/ci/check-release-delivery.sh) exec "$STANDARD_RELEASE_REAL_BASH" "$@" ;;
     scripts/release/metadata.sh)
+        if [[ "$2" == packages ]]; then printf 'ic-%s\n' "$RELEASE_GROUP"; exit 0; fi
         if [[ "${REQUIRE_RUST_CATALOG:-0}" == 1 ]]; then
             [[ "$2" == preflight && "$RUST_TOOL_VERSIONS" == "$EXPECTED_RUST_CATALOG" ]] || exit 1
             printf '%s\n' "$RUST_TOOL_VERSIONS" >> "$EVENTS"
@@ -201,6 +203,10 @@ GIT
     cat >> "$fixture/bin/bash" <<'BASH'
 set -euo pipefail
 case "${1:-}" in
+    scripts/release/metadata.sh)
+        [[ "$2" == packages ]] || exit 99
+        printf 'ic-%s\n' "$RELEASE_GROUP"
+        exit 0 ;;
     */scripts/ci/run-cargo-publication.sh)
         # The producer owns upload/status/recovery mechanics. Check only this
         # consumer's admitted selection and validation hook before delegation.
@@ -323,11 +329,11 @@ write_expected_lints() {
 # this consumer's two-package roster, one override and both exact lint boundaries.
 install_publication_boundary
 for selection in default ic-logging; do
-    selectors=(--package ic-metrics@0.1.0 --package ic-logging@0.1.0)
+    selectors=(--package ic-metrics@0.1.0)
     package_args=()
     if [[ "$selection" != default ]]; then
         selectors=(--package ic-logging@0.1.0)
-        package_args=("PACKAGE=$selection")
+        package_args=("RELEASE_GROUP=logging" "PACKAGE=$selection")
     fi
     for target in publish publish-check; do
         : > "$EVENTS"

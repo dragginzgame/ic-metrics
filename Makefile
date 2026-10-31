@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := help
 
 PACKAGE := ic-metrics
+export RELEASE_GROUP ?= metrics
 export MSRV
 export RELEASE_DELIVERY ?= direct
 export YQ := $(CURDIR)/.tools/host/bin/yq
@@ -8,7 +9,7 @@ LOCAL_TOOL_INSTALL_TARGETS := install-release-editor
 LOCAL_TOOL_CHECK_TARGETS := release-editor-check
 # Normal setup needs host/Cargo tools only; optional IC tools are selected explicitly.
 IC_TOOLS :=
-CARGO_PUBLISH_PACKAGES := ic-metrics ic-logging
+override CARGO_PUBLISH_PACKAGES = $(shell RELEASE_GROUP='$(subst ','"'"',$(RELEASE_GROUP))' bash scripts/release/metadata.sh packages)
 CARGO_PUBLISH_REGISTRY := crates-io
 CARGO_PUBLISH_VERIFY_TARGETS := clippy
 
@@ -40,8 +41,7 @@ release-preflight:
 	+@RUST_TOOL_VERSIONS="$(RUST_TOOL_VERSIONS)" bash scripts/release/metadata.sh preflight
 
 release-verify:
-	+env -u IC_METRICS_RELEASE_CACHE_PREPARE CARGO_NET_OFFLINE=true VALIDATION_FAILURE_LOG_DIR="$$(git rev-parse --git-path release-state)/validation-failures" \
-		bash scripts/ci/run-validation-targets.sh --fail-fast --input Cargo.toml --input Cargo.lock ci msrv
+	+@bash scripts/release/metadata.sh verify
 
 release-prepare-version:
 	+@bash scripts/release/metadata.sh prepare
@@ -75,9 +75,9 @@ help:
 	@echo "Reports: cloc (this workspace); fleet reports run in Shared Tooling"
 	@echo "Maintainer releases: release-patch, release-minor, release-major; release-resume VERSION=X.Y.Z"
 	@echo "Normal releases start fresh from committed metadata; exact recovery: release-resume VERSION=X.Y.Z"
-	@echo "Registry: publish-check (dry run), publish (upload both packages to crates.io)"
-	@echo "Select PACKAGE=ic-metrics or PACKAGE=ic-logging to publish only that package."
-	@echo "A workspace release does not publish either package."
+	@echo "Release/publication selection: RELEASE_GROUP=metrics (default) or logging"
+	@echo "Registry: publish-check (dry run), publish (upload the selected group only)"
+	@echo "Package overrides must belong to the selected group; release does not publish."
 	@echo "Rust setup: install-rust-tools; offline verification: rust-tools-check"
 	@echo "Release editor (also in install-tools/tools-check): install-release-editor, release-editor-check"
 	@echo "Clone setup: install-hooks (requires prepared manifest formatter and rustfmt)"
@@ -135,7 +135,7 @@ check-doc-links:
 		README.md AGENTS.md DRAGGINZGAME.md CHANGELOG.md docs/*.md \
 		docs/principles/*.md docs/evidence/*.md docs/status/*.md rules/*.md audits/*.md tasks/*.md
 	perl scripts/ci/check-documentation-links.pl --root "$(CURDIR)" \
-		crates/ic-metrics/src/application.md crates/ic-metrics/README.md crates/ic-logging/README.md
+		crates/ic-metrics/src/application.md crates/ic-metrics/README.md crates/ic-logging/README.md crates/ic-logging/CHANGELOG.md
 
 test:
 	+cargo test --workspace --all-features --locked

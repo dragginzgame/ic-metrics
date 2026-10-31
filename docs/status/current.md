@@ -1,78 +1,88 @@
 # Current handoff — 2026-10-31
 
-Source base is release 0.22.0, `402168f`. The incoming checkout was clean. The
-maintainer requested the published Wire stable-identity adoption and real
-Principal/Account compatibility evidence. Current source selects Wire/Derive
-0.12.1, the latest patch of core 0.12. Own metadata remains 0.22.0; pending 0.23
-notes reflect the exposed native Wire trait change. No staging, commit, release
-or publication was performed. Source changes are uncommitted.
+The current task implements
+[#104 — Version Metrics and Logging independently](https://github.com/dragginzgame/ic-observability/issues/104).
+The incoming checkout was clean at `bc450ef0c4cecdceb32b8f677eff7e6ae6e04f83`
+(Release 0.23.0). Changes remain uncommitted. No staging, root release/tag/push,
+registry publication or sibling checkout edits were performed.
 
-## Selected boundary
+## Independent groups
 
-Official registry versions/checksums and package VCS metadata identify published
-Wire/Derive 0.12.1 at `ae9a3eda0449729008d849c6e078a8b7f849ab9e`, Rust floor 1.91.
-Only the Wire pair changes in the root lock. The stable identity supplier is
-published ic-platform-types 0.1.0. Published ic-platform 0.14.0 reexports those
-same types; the maintainer's 0.14 clarification was verified against both index
-records. There is no published Types 0.14 package.
+[The group policy](../../ci/cargo-release-groups.json) declares every current
+member. Metrics is the default group, retaining workspace.package.version and
+the root changelog. Logging uses literal package.version and its own
+[canonical ledger](../../crates/ic-logging/CHANGELOG.md), linked to the shared
+history through 0.23.0. Both numeric versions remain 0.23.0. The new numbered
+pending notes are 0.23.1 in each ledger; no version bump was executed.
 
-Metrics keeps optional, default-enabled native-wire with native typescript only.
-Its minimal/recording/Wasm graphs exclude Wire; all product profiles exclude
-Platform, Types and Endpoint. The resolved graph guard now checks the new Types
-and Endpoint package names too. No arithmetic, typed-error, Serde-layout or
-Logging implementation changed. No endpoint caller exists here, so no endpoint
-package was introduced. Shared Tooling remains reviewed 0.27.11 at
-`62edfbd43087a718bf0283e9040676a49211976d`; no tooling adoption is included.
+[The maintainer guide](../independent-releases.md) records selection, publication,
+exact plans, group tags and recovery. Use RELEASE_GROUP=logging for Logging;
+an explicit PACKAGE must belong to the chosen group. Full ci/msrv gates remain
+mandatory for either release. The existing shared runner/editor owns rendering,
+transactions, staging, commits, tags, pushes and resume; the adapter supplies
+policy, validation and group-bound validated/prepared receipts.
 
-Current READMEs, compiled application prose and
-[the pending 0.23 migration](../migration-023.md) describe one Metrics/Wire identity
-for native schema consumers. The [0.22 guide](../migration-022.md) is historical
-Wire 0.11 guidance. Dependency selections were reviewed read-only across the
-required downstream owners; no sibling source was edited or qualified.
+Shared Tooling was refreshed through its canonical exporter from clean committed
+revision `39ba9836a269ee7ea7f073a3f23d9cefe3c7d03c`, including merged
+[#330 — Explicitly shared consumer metadata](https://github.com/dragginzgame/shared-tooling/pull/330).
+The snapshot records version 0.27.16 despite the commit subject naming 0.27.17;
+this is committed availability, not a claim of published 0.27.17. Common tool
+catalog selections did not change. No additional shared metadata file is needed.
 
-## Actual qualification and evidence
+The managed metadata editor selection is published IC Build 0.73.0 with cli.
+Explicit setup installed/admitted that selection. The initial unprivileged
+shared-cache lock refusal and successful approved setup logs remain retained.
+Other hosts must prepare this selection before group preparation.
 
-The [identity receipt](../evidence/wire-stable-identities-0121/README.md), probe
-source and manifest snapshot are tracked inputs. Raw logs/graphs/source copies
-are retained under `target/audits/wire-0121-20261031/`:
+## Focused results and limits
 
-- Pre-edit graph verification recorded Wire 0.11 and passed all four profiles.
-  The fresh baseline TypeScript check captured report bytes/generated codecs.
-- Strict selected Metrics Clippy, eight native transport tests and 15 doctests
-  pass; transport/doctest execution includes Rust 1.91. Node conformance passes
-  five reports. Rust payload vectors and generated codecs exactly match baseline.
-- All four dependency profiles and four minimal Serde tests pass. The separate
-  allocator-free Wasm fixture links on Rust 1.91. Pins/declaration admission pass.
-- Three real identity tests pass at Rust 1.91, and that consumer checks for Wasm.
-  Canonical Types and Platform 0.14 reexports share schema traits; composed
-  Metrics reports preserve subaccounts, numeric fields and typed failures.
-- The probe's locked graph contains one Types/Core identity and no Endpoint,
-  CDK, IC0 or runtime guard. Its façade dependency is principal-only. Root Metrics
-  remains free of that façade/types selection.
-- Probe and Metrics strict Clippy, formatting, docs links and diff checks pass.
+Logs are retained under `target/audits/independent-groups-104/`:
 
-The temporary probe workspace copies current Metrics source verbatim and adds
-only a workspace-owned test consumer. Wire/Types/façade are published registry
-suppliers; the Metrics dependency alignment is unpublished source evidence,
-not registry Metrics 0.23. No package source was patched or sibling path used.
-No full local CI/MSRV suite, hosted run, macOS, browser or installed IC test ran.
+- `release-tools-check-2.log`: the complete focused release/hook/retention gate
+  passes. Actual group plans, adapter, installed editor, runner and Git execute
+  both directions in disposable repositories with local bare remotes. Tests
+  cover exact staged/committed files, unchanged unrelated identities/requirements
+  and pending notes, transactional rollback, source/index refusal, failed CI and
+  MSRV gates, input drift, selected-commit checks, receipts and exact resume.
+- The same fixture runs a consumer pinned to each unaffected identity, testing
+  Logging append/page/prune or Metrics wide arithmetic and typed failures.
+  Suppliers are workspace-owned source copies with unchanged bytes. This is
+  source-level compatibility, not publication of simulated versions. Setup,
+  full validation, archive compilation and registry uploads are substituted;
+  actual publication admission selects only the chosen group and refuses the
+  other package before uploading.
+- Successful grouped inputs/receipts and injected failure evidence remain at
+  `target/evidence/native-ci/fixture-retention.IfgB4u/`. Earlier failed runs and
+  their inputs are preserved. The first enclosing run was invalidated by editing
+  its running script; it is not claimed as a passing gate.
+- Snapshot integrity, dependency pins, formatting, selected ShellCheck and
+  documentation links pass. All four Metrics/Logging production graph profiles
+  and four minimal Serde tests pass. Logging's library checks for Wasm on Rust
+  1.91.0 with the same explicit version.
 
-## Issues and publication prerequisites
+The root lock, dependency selections and both libraries' Rust sources are
+unchanged. There is no Metrics/Logging dependency edge. Previous native Wire,
+TypeScript/byte, arithmetic-only Wasm and compiler-floor evidence in
+[the Wire identity receipt](../evidence/wire-stable-identities-0121/README.md)
+retains its original inputs and scope; unchanged runtime checks were not repeated.
+No full local ci/msrv, hosted matrix, macOS or installed IC qualification ran.
+Hosted/native obligations remain in [the host guide](../hosts.md); the release
+fixture's substituted gates do not establish them. No code blocker remains from
+the focused checks; maintainer review/delivery and actual release gates remain.
 
-[#36 — Keep codec and schema identities stable across Platform integration releases](https://github.com/dragginzgame/ic-wire/issues/36)
-and [#274 — Align Testkit typed Wire calls with the Platform 0.12-compatible Wire release](https://github.com/dragginzgame/ic-tooling/issues/274)
-were reviewed and updated with this scope/results.
-[#268 — Delegate Testkit scaled benchmark averages to ic-metrics](https://github.com/dragginzgame/ic-tooling/issues/268)
-records shipped arithmetic-only Metrics 0.22
-use with defaults disabled. That use does not need a new Observability publication
-before Tooling's own core 0.12 adoption. Native metadata consumers require a
-published ic-metrics containing this candidate (pending 0.23). ic-logging has no
-Wire publication prerequisite; Tooling owns its Limits/Error pairing acceptance.
+## Retained integration boundaries
 
-Release 402168f preserves the earlier handoff, release-fixture ordering repair
-and native-only JSON test fix. Preserve original failed release logs/artifacts
-and earlier receipts at target/audits/release-fixture-order-20261031/,
-wasm-json-boundary-20261031/ and wire-0110-20261031/; they retain their own graphs.
-Canic sediment remains covered by
-[#712 — Remove redundant limits from the runtime logging adapter](https://github.com/dragginzgame/canic/issues/712)
-and [#100 — Bound observability read work and encoded page sizes](https://github.com/dragginzgame/canic/issues/100).
+The base source already selects Wire/Derive 0.12.1. Canonical Platform Types is
+0.1.0, also reexported by Platform 0.14; the earlier 0.14 clarification concerned
+that façade, not a Types 0.14 release. Product dependencies exclude Platform,
+Types and Endpoint. This task changes none of those selections or runtime
+contracts, so it requires no paired upgrade of a persistence adapter or other
+group. Native schema consumers still need a registry Metrics version supplying
+their matching Wire identity; registry delivery of base 0.23.0 was not rechecked
+for this release-group task.
+
+Earlier Wire adoption work updated Wire #36 and Tooling #274/#268. Canic sediment
+remains covered by Canic #712 and #100. Preserve the original release failure
+logs under .git/release-state/validation-failures and earlier evidence under
+target/audits/release-fixture-order-20261031, wasm-json-boundary-20261031 and
+wire-0110-20261031; none was cleaned or repurposed.

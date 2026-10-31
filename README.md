@@ -9,7 +9,8 @@ application-selected crates.
 | [ic-logging](crates/ic-logging/README.md) | Bounded heap logs, UTF-8-safe truncation, explicit age retention and scan-bounded cursor pages | Heap engine with validated checkpoint restoration |
 
 The workspace is the renamed IC Metrics repository. It shares one catalog,
-lockfile, compiler policy and coordinated release version. Neither library
+lockfile and compiler policy, with independent `metrics` and `logging` release
+groups. Neither library
 depends on the other. Consumers can keep selecting `ic-metrics` by its existing
 package name; logging is a separate opt-in dependency.
 
@@ -35,22 +36,26 @@ for checkpoint, persistence and consumer qualification responsibilities.
 
 ## Release and package publication
 
-Workspace releases coordinate both package versions. Registry publication is a
-separate maintainer action; the default selects both packages:
+Metrics and Logging use independent release groups in one workspace. Metrics is
+the default; select Logging with `RELEASE_GROUP=logging`. Registry publication
+is a separate maintainer action and selects only the chosen group's package:
 
 ```sh
 make publish-check
 # After reviewing the dry runs and authorizing the uploads:
 make publish
+# Logging:
+make publish-check RELEASE_GROUP=logging
 ```
 
-Use `PACKAGE=ic-metrics` or `PACKAGE=ic-logging` to select only that package,
-including when completing a partial publication after checking registry state.
+Any `PACKAGE` override must belong to the selected group. See
+[independent releases](docs/independent-releases.md) for version/ledger ownership,
+release commands and recovery.
 Each command runs the native/Wasm Clippy gate before Cargo publication. Neither
 package depends on the other, so there is no publication-order dependency.
 Shared Tooling owns package-selection mechanics and dispatch. This repository
-declares only its two eligible packages, registry and validation target in the
-Makefile. Exact versions come from locked offline workspace metadata; undeclared
+declares its group policy, registry and validation target. Exact versions come
+from locked offline workspace metadata; undeclared
 packages are refused. Selection and attempt evidence is retained under
 `target/publication`, including failed commands. Reconcile that evidence and the
 registry before selecting another upload after a failure.
