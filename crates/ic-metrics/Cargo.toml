@@ -10,6 +10,9 @@ description.workspace = true
 readme = "README.md"
 publish = ["crates-io"]
 
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
+serde_json.workspace = true
+
 [package.metadata.docs.rs]
 all-features = true
 
@@ -26,7 +29,6 @@ serde.workspace = true
 
 [dev-dependencies]
 num-bigint.workspace = true
-serde_json.workspace = true
 
 [lints]
 workspace = true

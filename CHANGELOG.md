@@ -16,6 +16,11 @@
   checks resolved minimal, recording, default and Wasm production dependency
   graphs so optional metadata remains an explicit selection.
 
+### 🩹 Fixed
+
+- Keep the JSON test dependency native-only so Wasm examples retain their
+  allocator-free, `no_std` arithmetic link contract.
+
 ### 🧹 Cleanup
 
 - Reuse admitted message parts when constructing log entries, keeping truncation
