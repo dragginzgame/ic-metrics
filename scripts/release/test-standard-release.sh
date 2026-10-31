@@ -281,7 +281,7 @@ for fail in 0 1; do
     if [[ "$fail" == 0 ]]; then [[ "$status" == 0 ]] || exit 1; else [[ "$status" == 2 ]] || exit 1; fi
     printf '%s\n' shared-tooling-check check-doc-links evidence-check tools-check check-pins fmt-check clippy > "$fixture/expected"
     if [[ "$fail" == 0 ]]; then
-        printf '%s\n' production-dependencies-check allocation-free-check ci-evidence-check release-tools-check docs-check test package-check >> "$fixture/expected"
+        printf '%s\n' production-dependencies-check metrics-profiles-check allocation-free-check ci-evidence-check release-tools-check docs-check test package-check >> "$fixture/expected"
     fi
     cmp "$fixture/expected" "$EVENTS"
 done

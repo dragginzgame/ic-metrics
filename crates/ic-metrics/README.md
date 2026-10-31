@@ -201,13 +201,14 @@ procedures live in the [task catalog](https://github.com/dragginzgame/ic-observa
 ## Releases and adoption
 
 The arithmetic package requires Rust 1.91 on native and Wasm. Consumers select
-an available published release and qualify their integration. The
-[0.20–0.21 native metadata contract](https://github.com/dragginzgame/ic-observability/blob/main/docs/migration-020.md)
-requires Wire 0.10 for reports composing Metrics metadata:
+an available published release and qualify their integration. The pending
+[0.22 native metadata contract](https://github.com/dragginzgame/ic-observability/blob/main/docs/migration-022.md)
+requires Wire 0.11 for reports composing Metrics metadata. Select this graph after
+the corresponding Metrics release is published:
 
 ```toml
 [workspace.dependencies]
-ic-metrics = "0.21"
+ic-metrics = "0.22"
 ```
 
 For optional durable metrics, follow

@@ -8,6 +8,11 @@
   feature. Callers disabling defaults must explicitly select it for schemas;
   arithmetic and validated Serde transport remain available without Wire.
   See [migration](docs/migration-022.md) and [#101 — Allow native arithmetic consumers to exclude Wire metadata dependencies](https://github.com/dragginzgame/ic-observability/issues/101).
+- Adopt IC Wire 0.11 for native metadata. Consumers composing Metrics in native
+  Wire reports must align their direct Wire dependency to 0.11. Numeric layouts,
+  arithmetic and Logging behavior are unchanged. This workspace enables neither
+  Platform schemas nor endpoints; applications selecting those integrations
+  coordinate Platform 0.12 separately. See [migration](docs/migration-022.md).
 
 ### 🧪 Testing
 
@@ -20,6 +25,7 @@
 
 - Keep the JSON test dependency native-only so Wasm examples retain their
   allocator-free, `no_std` arithmetic link contract.
+- Update release-fixture gate ordering to include the minimal-profile check.
 
 ### 🧹 Cleanup
 
